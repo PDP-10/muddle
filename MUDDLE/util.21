@@ -1,0 +1,230 @@
+<SETG DEFINE
+ <FUNCTION (FUNNAME  DEF)
+   <SETG .FUNNAME .DEF>
+   <PRINT .FUNNAME>   >>
+
+
+<DEFINE FRAMEN 
+  <FUNCTION (N)
+   <COND (<0? .N> <FRAME>)
+         (T <FRAME <FRAMEN <- .N 1>>>)>>>
+
+
+
+<DEFINE CLEANUP
+  <FUNCTION CF () 
+    <FINALIZE>
+    <BUMPER>>>
+
+
+<DEFINE BUMPER
+  <FUNCTION ()
+   <FAILPOINT FP ()
+      <> (M A)
+      <RESTORE .FP (FAILURE CAUGHT WITH M = .M AND A = .A)>>   >>
+
+
+
+<DEFINE THSET
+  <FUNCTION (VAR\  VAL "AUX" (OV <RLVAL .VAR\ >))
+      <FAILPOINT ()
+         <SET .VAR\  <RLVAL VAL>>
+         (M A)
+         <SET .VAR\  <RLVAL OV>>
+         <FAIL .M .A>>   >>
+
+
+<DEFINE THDELQ
+ <FUNCTION (ELT L)
+   <COND (<EMPTY? .L> .L)
+         (<==? .ELT <1 .L>>
+          <CHTYPE <REST .L> <TYPE .L>>)
+         (T <THDELQ1 .ELT .L>)   >>>
+
+
+<DEFINE THDELQ1
+ <FUNCTION (ELT L)
+   <COND (<EMPTY? <REST .L>> .L)
+         (<==? <2 .L> .ELT> <THPUTREST .L <REST .L 2>>)
+         (T <THDELQ1 .ELT <REST .L>>)   >  >>
+
+
+<DEFINE THPUTREST
+ <FUNCTION (LIST1 LIST2)
+   <FAILPOINT ((OREST <REST .LIST1>))
+      <PUTREST .LIST1 .LIST2>
+      (M A)
+      <PUTREST .LIST1 .OREST>
+      <FAIL .M .A>   >>>
+
+
+<DEFINE THPUT
+ <FUNCTION (THING IND "OPTIONAL" PROP)
+   <FAILPOINT ((OPROP <GET .THING .IND>))
+      <COND (<ASSIGNED? PROP>
+             <PUT .THING .IND .PROP>)
+            (T <PUT .THING .IND>)   >
+      (M A)
+      <COND (.OPROP <PUT .THING .IND .OPROP>)
+            (<PUT .THING .IND>)   >
+      <FAIL .M .A>   >>>
+
+
+<DEFINE THSETLOC
+ <FUNCTION (LOC VAL "AUX" (OVAL <IN .LOC>))
+   <FAILPOINT ()
+      <SETLOC .LOC <RLVAL VAL>>
+      (M A)
+      <SETLOC .LOC <RLVAL OVAL>>
+      <FAIL .M .A>   >>><DEFINE FALSE
+  <FUNCTION ("ARGS" A) <CHTYPE <EVAL .A> FALSE>  >>
+
+
+<DEFINE FORM
+  <FUNCTION ("ARGS" A) <CHTYPE <EVAL .A> FORM>  >>
+
+<DEFINE UNASSIGNED
+  <FUNCTION ("ARGS" A) <CHTYPE <EVAL .A> UNASSIGNED>  >>
+
+<DEFINE SEGMENT
+  <FUNCTION ("REST" 'A) <CHTYPE <EVAL .A> SEGMENT>  >>
+
+<DEFINE CONSTRUCTOR
+ <FUNCTION (TYPE)
+   <GET .TYPE 'CONSTRUCTOR>   >>
+
+
+<PUT LIST CONSTRUCTOR ,CONSL>
+<PUT FORM CONSTRUCTOR ,FORM>
+<PUT FALSE CONSTRUCTOR ,FALSE>
+<PUT VECTOR  CONSTRUCTOR ,CONSV>
+<PUT SEGMENT CONSTRUCTOR ,SEGMENT>
+<PUT UVECTOR CONSTRUCTOR ,CONSU>
+
+
+
+<DEFINE AVAL
+  <FUNCTION (ATOM)
+   <COND (<GASSIGNED? .ATOM> <GVAL .ATOM>)
+         (<LVAL .ATOM>)>  >>
+<DEFINE CLIP
+ <FUNCTION (VAR)
+   <FAILPOINT CLIPPER ((VAL ..VAR))
+      <FAIL> 
+      ()
+      <COND (<EMPTY? .VAL> <FAIL>)
+            (<RESTORE .CLIPPER
+                      <PROG1 <1 .VAL>
+                             <SET .VAR <SET VAL <REST .VAL>>>>>)   >>  >>
+
+
+<DEFINE FULL?
+ <FUNCTION (FOO) <NOT <EMPTY? <RLVAL FOO>>>>>
+
+
+<DEFINE FINSPLICE
+ <FUNCTION ACT (CURRENTENV NEWENV)
+   <PROG1 <SPLICE .CURRENTENV .NEWENV>
+          <FINALIZE .ACT>>   >>
+
+
+<DEFINE ENVIRON
+ <FUNCTION ("BIND" FOO) .FOO>><DEFINE RESET
+ <FUNCTION (VAR)
+   <FAILPOINT ((VAL <RLVAL .VAR>)) <> ()
+      <SET .VAR <RLVAL VAL>>
+      <FAIL>>  >>
+
+<DEFINE PROG1
+ <FUNCTION ("REST" A) <1 .A>   >>
+
+
+<DEFINE PROG2
+ <FUNCTION ("REST" A) <2 .A>   >><DEFINE MULTILEVEL
+ <FUNCTION (OBJECT)
+   <AND <NOT <MONAD? .OBJECT>>
+        <MEMQ <TYPE .OBJECT> '(LIST FORM VECTOR SEGMENT VECTOR)>>   >>
+
+<DEFINE REVERSE 
+ <FUNCTION REV (L "OPTIONAL" (CFUNC <CONSTRUCTOR <TYPE .L>>)
+                "AUX" (RESULT ()))
+   <COND (<EMPTY? .L> <.CFUNC !.RESULT>)
+         (T <SET RESULT (<1 .L> !.RESULT)>
+            <SET L <REST .L>>
+            <AGAIN .REV>)   >   >>
+
+
+<DEFINE NCONC
+ <FUNCTION ("REST" LSTUPL)
+   <COND (<EMPTY? .LSTUPL> ())
+         (T <CHTYPE <NCONC1 .LSTUPL> <TYPE <1 .LSTUPL>>>)   >>>
+
+
+<DEFINE NCONC1
+ <FUNCTION (LSTUPL)
+   <COND (<EMPTY? <REST .LSTUPL>> <1 .LSTUPL>)
+         (T <NCONC2 <1 .LSTUPL> <REST .LSTUPL>>)   >>>
+
+
+<DEFINE NCONC2
+ <FUNCTION (L1 LREST)
+   <COND (<EMPTY? .L1> <NCONC1 .LREST>)
+         (T <PUTREST .L1 <NCONC2 <REST .L1> .LREST>>)   >>><DEFINE ANOTHER
+ <FUNCTION (OBJ BOUND)
+   <FAILPOINT FP ()
+     .OBJ ()
+     <AND <==? .OBJ .BOUND> <FAIL>>
+     <RESTORE .FP <SET OBJ <REST .OBJ>>>>  >>
+
+
+<DEFINE MAPCAR
+ <FUNCTION MAPPER (FUN "REST" EXPS "AUX" (RESULT ()) RES1 LAS)
+   <SET RES1 <APPLY .FUN <LISTFIRSTS .EXPS>>>
+   <COND (<EMPTY? .RESULT>
+          <SET LAS <SET RESULT (.RES1)>>)
+         (T <PUTREST .LAS <SET LAS (.RES1)>>)   >
+   <AGAIN .MAPPER>   >>
+
+
+<DEFINE MAPC
+ <FUNCTION MAPPER (FUN "REST" EXPS "AUX" (RESULT ()))
+   <REPEAT () <APPLY .FUN <LISTFIRSTS .EXPS>>>   >>
+
+
+<DEFINE MAPCAN
+ <FUNCTION MAPPER (FUN "REST" EXPS 
+                   "AUX" (RESULT ()) RES1 LAS1)
+   <SET RES1 <APPLY .FUN <LISTFIRSTS .EXPS>>>
+   <COND (<EMPTY? .RESULT>
+          <SET RESULT .RES1>)
+         (T <PUTREST .LAS1 .RES1>)   >
+   <SET LAS1 <LAST .RES1>>
+   <AGAIN .MAPPER>   >>
+
+
+<DEFINE LISTFIRSTS
+ <FUNCTION (EXPTUPL)
+   <COND (<EMPTY? .EXPTUPL> ())
+         (<EMPTY? <SET RES1 <1 .EXPTUPL>>> <.MAPPER .RESULT>)
+         ((<PROG1 <1 .RES1>
+                  <PUT .EXPTUPL 1 <REST .RES1>>>
+           !<LISTFIRSTS <REST .EXPTUPL>>))   >   >>
+
+
+<DEFINE LAST
+ <FUNCTION L (EXP)
+   <COND (<EMPTY? .EXP> ())
+         (<EMPTY? <REST .EXP>> .EXP)
+         (T <SET EXP <REST .EXP>>
+            <AGAIN .L>)   >>><DEFINE BOTTOM
+ <FUNCTION (THING)
+   <COND (<MONAD? .THING> .THING)
+         (<==? <TYPE .THING> LIST> ())
+         (T <REST .THING <LENGTH .THING>>)>  >>
+
+
+
+
+<DEFINE SPREAD
+ <FUNCTION (VEC "REST" VARS)
+   <MAPC ,SET .VARS .VEC>   >>

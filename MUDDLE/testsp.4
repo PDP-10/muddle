@@ -1,0 +1,18 @@
+<SETG ENVIRON 
+  <FUNCTION ("BIND" E) .E>>
+
+
+<SET E0 <ENVIRON>>
+
+<PROG ((A 100) E1)
+   <SET E1 <ENVIRON>>
+   <PRINT .A>
+   <PROG ((A 10) E2)
+      <SET E2 <ENVIRON>>
+      <PRINT .A>
+      <PROG ((A 1) E3)
+         <PRINT .A>
+         <SPLICE <ENVIRON> .E1>
+         <PRINT .A>>
+      <PRINT .A>>
+   <PRINT .A>>

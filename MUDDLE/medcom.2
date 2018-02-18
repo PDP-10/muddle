@@ -1,0 +1,41 @@
+Commands:
+NAME	ARGS	MEANING
+?	none	Type this summary out.
+O	1	Open object; takes ATOM, LOCATIVE, or CURSOR.
+HERE	1,ATOM	save your current CURSOR as the LVAL of ARG.
+UT	none	Up Top -- go to the place you were just after O.
+&	none	"Ampersand print" (normally done automatically).
+	none	(Empty command) equivalent to &.
+Q	none	Quit -- return to MUDDLE.
+^K	1	Exit from MUDDLE and VALRET arg (STRING or ATOM).
+P	none	(P)PRINT the next object.
+PA	1,FIX	(P)PRINT the object arg levels above position.
+PT	none	(P)PRINT the whole object open.
+V	none	toggle Verbosity.
+R	1,FIX	move Right arg objects.
+L	1,FIX	move Left arg objects.
+B	none	move to the Back of the object.
+F	none	move to the Front of the object.
+U	1,FIX	move Up arg levels (and to the left).
+D	1,FIX	move Down arg levels (and to the right).
+UR	1,FIX	move Up arg levels (and to the right).
+DL	1,FIX	move Down arg levels (and to the left).
+S	1,any	Search -- tree-walk right until you find arg.
+-S	1,any	Search left -- tree-walk left until you find arg.
+WR	1,FIX	Walk Right arg positions.
+WL	1,FIX	Walk Left arg positions.
+C	1,any	Change the next object to arg.
+I	any,any	Insert args to the left of the cursor.
+K	1,FIX	Kill (delete) the next arg objects.
+K:	none	Remove the "brackets" around the next object.
+I:	2	Make the next (arg 2) objects into a TYPE (arg 1).
+C:	1,TYPE	Change the Type of the next object to arg.
+SC	1,any	Put arg on next object as a comment.
+PC	none	Print comment on next object.
+BK	any,any	BreaKpoint on next object; args typed at break.
+KB	none	Kill all Breakpoints in open object.
+OB     any,ATOM	BLOCK to list of OBLISTs whose names are given.
+EB	none	ENDBLOCK.
+OB?	none	type names of OBLISTs in current list of OBLISTs.
+<MERDE> returns you to MEDDLE from a higher level.
+

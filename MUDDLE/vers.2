@@ -1,0 +1,17 @@
+
+<FLOAD "EDITOR" ">">
+
+
+<DEFINE VERSION ()
+	<REPEAT ((OB <ERRORS>) SUB)
+		<COND (<EMPTY? .OB><RETURN DONE>)>
+		<SET SUB <1 .OB>>
+L2		<COND (<EMPTY? .SUB><GO L1>)>
+		<PRIN1 <1 .SUB>>
+		<PRINC " VERSION ">
+		<PRIN1 ,<1 .SUB>>
+		<TERPRI>
+		<SET SUB <REST .SUB>>
+L1		<SET OB <REST .OB>>>>
+
+

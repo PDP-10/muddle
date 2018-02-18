@@ -1,0 +1,49 @@
+<SETG FRAMEN 
+  <FUNCTION (N)
+   <COND (<0? .N> <FRAME>)
+         (T <FRAME <FRAMEN <- .N 1>>>)>>>
+
+
+<SETG PATH 
+ <FUNCTION TL (START FINISH)
+   <PROG ((VAL <FAILPOINT () <PATH1 .START .FINISH ()>
+                    ()
+                    <EXIT .TL <>>   >))
+    <FINALIZE .TL>
+    <RETURN .VAL>>>>
+
+
+<SETG PATH1
+ <FUNCTION  (START FINISH AVOID)
+   <COND (<==? .START .FINISH>
+          (.FINISH))
+         (<MEMBER .START .AVOID>
+          <FAIL>)
+         (T (.START 
+             !<PATH1
+               <FAILPOINT FP (N (NODES <GET .START CONNECTED>))
+                        <FAIL> ()
+                        <COND (<EMPTY? .NODES> <FAIL>)
+                              (<SET N <1 .NODES>>
+                               <SET NODES <REST .NODES>>
+                               <RESTORE .FP .N>)>   >
+               .FINISH
+               (.START !.AVOID)>))>>   >
+
+
+<PUT ALPHA CONNECTED (B D K)>
+<PUT B CONNECTED (ALPHA I C)>
+<PUT I CONNECTED (B H J)>
+<PUT H CONNECTED (I)>
+<PUT J CONNECTED (I)>
+<PUT C CONNECTED (B G D)>
+<PUT G CONNECTED (C)>
+<PUT D CONNECTED (ALPHA C F)>
+<PUT F CONNECTED (D)>
+<PUT K CONNECTED (ALPHA M L)>
+<PUT M CONNECTED (K L N O)>
+<PUT L CONNECTED (K M)>
+<PUT N CONNECTED (M)>
+<PUT O CONNECTED (M P OMEGA)>
+<PUT P CONNECTED (O)>
+<PUT OMEGA CONNECTED (O)>

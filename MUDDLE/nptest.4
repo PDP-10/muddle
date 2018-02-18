@@ -1,0 +1,35 @@
+<SETG PATH
+ <FUNCTION (START FINISH)
+   <PATH1 .START .FINISH ()>  >>
+
+
+<SETG PATH1
+ <FUNCTION P1 (START FINISH AVOID)
+   <COND (<==? .START .FINISH>
+          (.FINISH))
+         (<MEMBER .START .AVOID> <>)
+         (T (.START
+             !<REPEAT REP (PATH (NODES <GET .START CONNECTED>))
+                 <COND (<EMPTY? .NODES> <EXIT .P1 <>>)
+                       (<SET PATH <PATH1 <1 .NODES> .FINISH (.START !.AVOID)>>
+                        <EXIT .REP .PATH>)
+                       (T <SET NODES <REST .NODES>>)   >>))   >>>
+                        
+
+
+<PUT ALPHA CONNECTED (B D K)>
+<PUT B CONNECTED (ALPHA I C)>
+<PUT I CONNECTED (B H J)>
+<PUT H CONNECTED (I)>
+<PUT J CONNECTED (I)>
+<PUT C CONNECTED (B G D)>
+<PUT G CONNECTED (C)>
+<PUT D CONNECTED (ALPHA C F)>
+<PUT F CONNECTED (D)>
+<PUT K CONNECTED (ALPHA M L)>
+<PUT M CONNECTED (K L N O)>
+<PUT L CONNECTED (K M)>
+<PUT N CONNECTED (M)>
+<PUT O CONNECTED (M P OMEGA)>
+<PUT P CONNECTED (O)>
+<PUT OMEGA CONNECTED (O)>

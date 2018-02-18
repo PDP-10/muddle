@@ -1,0 +1,524 @@
+<DEFINE ACTOR
+  <FUNCTION ("ARGS" A) <CHTYPE .A ACTOR>  >>
+
+<DEFINE ACTOR-FUNCTION
+  <FUNCTION ("ARGS" A) <CHTYPE .A ACTOR-FUNCTION>  >>
+
+<DEFINE ACTOR?
+  <FUNCTION (EXP)
+   <AND <ATOM? .EXP> <SET EXP <AVAL .EXP>>>
+   <AND <MEMQ <TYPE .EXP> '(ACTOR ACTOR-FUNCTION)>
+        .EXP>  >>
+
+<DEFINE ACTORFORM?
+ <FUNCTION (EXP)
+   <AND <MEMQ <TYPE .EXP> '(FORM SEGMENT)>
+        <NOT <EMPTY? .EXP>>
+        <ACTOR? <1 .EXP>>>  >>
+
+
+<DEFINE PRECEDENCE
+ <FUNCTION (ATOM) <OR <GET .ATOM PRECEDENCE> 0>   >>
+
+
+<DEFINE INVOKE
+ <FUNCTION INVOKER (F OBJECT "OPTIONAL" (BOUND <BOTTOM .OBJECT>)
+                      (OBL T) (ENV <>) (OBJENV <>) (PURE? T)
+                      (UV1 <UARGS .F .ENV>)
+                    "AUX" (UV2 ()))
+   <SET F <CHTYPE .F FORM>>
+   <COND (<OR <EMPTY? .UV1> <GET <1 .F> FACTOR>>
+          <.INVOKER <INVOKE1 .F .OBJECT .BOUND .OBL .PURE? .ENV .OBJENV>>)
+         (.PURE?
+          <COND (.OBL)
+                (T <SET BOUND <ANOTHER .OBJECT .BOUND>>)   >)
+         (.OBL
+          <COND (<==? <TYPE .OBJECT> FORM>
+                 <COND (<OR <EMPTY? <SET UV2 <UARGS .OBJECT .OBJENV>>>
+                            <GET <1 .F> FACTOR>>
+                        <.INVOKER <INVOKE1 .OBJECT .F '<> T <> .OBJENV .ENV .UV2>>)   >)
+                (T <SET UV2 <UVARS .OBJECT .BOUND .OBJENV>>)   >)
+         (T <SET OBJECT <FRONT .OBJECT <> <LLOC BOUND> .OBJENV <LLOC UV2>>>)   >
+   <LINKVARS .UV1 .UV2 .F .OBJECT <OR .ENV .TOPMATCH> <OR .OBJENV .TOPMATCH>>
+   .BOUND   >><DEFINE INVOKE1
+ <FUNCTION ("BIND" CUR
+            F OBJECT BOUND OBL PURE? ENV OBJENV
+            "AUX" ACTR VAL)
+   <COND (<OR <EMPTY? .F> <NOT <SET ACTR <ACTOR? <1 .F>>>>>
+          <SET VAL <EVAL .F .ENV>>
+          <COND (.PURE?
+                 <COND (.OBL
+                        <OR <=UPTO? .VAL .OBJECT .BOUND> <FAIL>>
+                        .BOUND)
+                       (T <PREFIX1 .VAL <BOTTOM .VAL> .OBJECT .BOUND>)   >)
+                (.OBL
+                 <IS1 .OBJECT .VAL .OBJENV <BOTTOM .VAL> .BOUND>)
+                (T <MATCH1 .VAL .OBJECT .ENV .OBJENV <BOTTOM .VAL> .BOUND <>>)   >)
+         (<==? <TYPE .ACTR> ACTOR-FUNCTION>
+          <FINSPLICE .CUR .ENV>
+          <EVAL <FORM <CHTYPE .ACTR FUNCTION>
+                      '.OBJECT '.BOUND '.OBL '.PURE? '<OR .ENV .TOPMATCH>
+                      '<OR .OBJENV .PURE? .TOPMATCH> !<REST .F>>>)
+         (<==? <TYPE .ACTR> ACTOR>
+          <FINSPLICE .CUR .ENV>
+          <BIND .ACTR <REST .F>
+                ((BODY <REST .ACTR <COND (<ATOM? <1 .ACTR>> 2) (1)   >>))
+             <APPLY <CHTYPE ,ET FUNCTION> 
+                    (.OBJECT .BOUND .OBL .PURE? <ENVIRON> .OBJENV !.BODY)>   >)
+         (T <ERROR NON-INVOKABLE-TYPE>)   >   >><DEFINE GIVEN
+ <ACTOR-FUNCTION GA (OBJECT BOUNDARY OBLIGATORY PURE? ENV OBJENV VAR
+                     "AUX" (VAL <RLVAL .VAR>) RS (VALRS ()) (UV ()) PURESOFAR NEWVAL
+                           NEWBOUND (VARLOC <LLOC .VAR>) VARFORM RS2)
+   <COND (<ASSIGNED? .VAR>
+          <COND (.OBLIGATORY
+                 <COND (.PURE?
+                        <OR <=UPTO? .VAL .OBJECT .BOUNDARY> <FAIL>>)
+                       (T <IS1 .OBJECT .VAL .OBJENV <BOTTOM .VAL> T .BOUNDARY>)   >
+                 <.GA .BOUNDARY>)
+                (.PURE?
+                 <.GA <PREFIX1 .VAL <BOTTOM .VAL> .OBJECT .BOUNDARY>>)
+                (T <.GA <MATCH1 .VAL .OBJECT .ENV .OBJENV <BOTTOM .VAL> .BOUND <>>>)   >)   >
+   <SET RS <CHTYPE <RLVAL VAL> LIST>>
+   <COND (<AND .PURE? .OBLIGATORY>
+          <THSET .VAR <UPTO .OBJECT .BOUNDARY>>
+          <CHECKRESTRICTS .RS () ..VAR>
+          <.GA .BOUNDARY>)   >
+   <COND (<AND <==? .OBJECT <SET VARFORM <FORM GIVEN .VAR>>>
+               <==? .VARLOC
+                    <EVAL <PUT '<LLOC VAR> 2 .VAR> .OBJENV>>>
+          <.GA .BOUNDARY>)
+         (<SET RS2 <MEMRES .OBJECT .BOUNDARY .OBJENV .RS>>
+          <THPUT .RS2 1 ()>)
+         (T
+          <THSET .VAR ?()>
+          <REPEAT CHECK (RS1)
+             <AND <EMPTY? .RS> <.CHECK <>>>
+             <SET RS1 <1 .RS>>   <SET RS <REST .RS>>
+             <COND (<MONAD? .RS1>)
+                   (<==? <1 .RS1> PATTERN>
+                    <SET BOUNDARY
+                         <COND (.PURE?
+                                <IS1 <2 .RS1> .OBJECT <3 .RS1> .BOUNDARY .OBLIGATORY>)
+                               (T
+                                <MATCH1 <2 .RS1> .OBJECT <3 .RS1> .OBJENV
+                                        <BOTTOM <2 .RS1>> .BOUNDARY
+                                        .OBLIGATORY>)   >>
+                    <SET OBLIGATORY T>
+                    <COND (<ASSIGNED? .VAR>
+                            <CHECKRESTRICTS .RS .VALRS ..VAR>
+                            <.GA .BOUNDARY>)
+                          (<FULL? <RLVAL .VAR>>
+                            <THSET RS <NCONC <CHTYPE <RLVAL .VAR> LIST>
+                                            .RS>>
+                            <THSET .VAR ?()>)   >)
+                   (T <THSET VALRS (.RS1 !.VALRS)>)   >>)   >
+   <THTRYSET .VARLOC .VARFORM .OBJECT .BOUNDARY .OBLIGATORY .PURE?
+             .ENV .OBJENV .RS .VALRS>   >>
+
+<PUT GIVEN PRECEDENCE 3><DEFINE ALTER
+ <ACTOR-FUNCTION (OBJECT BOUND OBL? PURE? ENV OBJENV VAR)
+   <THTRYSET <LLOC .VAR> <FORM GIVEN .VAR> .OBJECT .BOUND .OBL?
+             .PURE? .ENV .OBJENV>   >>
+
+<PUT ALTER PRECEDENCE 4>
+
+
+<DEFINE BE
+ <ACTOR (PRED)
+   <DO <OR .PRED <FAIL>>>   >>
+
+<PUT BE PRECEDENCE 30>
+
+
+<DEFINE DO
+ <ACTOR (ACTION)
+   <?>   >>
+
+<PUT DO PRECEDENCE 29>
+
+
+<DEFINE ?
+ <ACTOR-FUNCTION (OBJECT BOUND OBL? PURE? ENV OBJENV "OPTIONAL" (N <>)
+                  "AUX" UV)
+   <COND (.OBL?
+          <COND (.PURE?
+                 <OR <NOT .N>
+                     <==? .N <BLENGTH .OBJECT .BOUND>>
+                     <FAIL>>)
+                (<OR <PROG2 <SET OBJECT <INSTANTIATE .OBJECT UV .BOUND .OBJENV>>
+                            .UV>
+                     <NOT <UNCERTAINLENGTH .OBJECT>>>
+                 <OR <NOT .N> <==? .N <LENGTH .OBJECT>> <FAIL>>)
+                (<EMPTY? .UV> <FAIL>)
+                (T <LINKVARS () .UV <SET FORM1 <FORM ? .N>> .OBJECT
+                             <> .OBJENV .FORM1 .BOUND>)   >
+          .BOUND)
+         (.PURE?
+          <COND (.N
+                 <COND (<G? .N <BLENGTH .OBJECT .BOUND>> <FAIL>)
+                       (T <REST .OBJECT .BOUND>)   >)
+                (T <ANOTHER .OBJECT .BOUND>)   >)
+         (T 
+          <SET OBJECT <FRONT .OBJECT T <LLOC BOUND> .OBJENV>>
+          <COND (.N
+                 <OR <==? .N <LENGTH .OBJECT>> <FAIL>>)   >
+          .BOUND)   >   >>
+
+<PUT ? PRECEDENCE 2><DEFINE ET
+ <ACTOR-FUNCTION (OBJECT BOUND OBL? PURE? ENV OBJENV "REST" 'PATS)
+   <REPEAT ACTITER
+                <COND (<EMPTY? .PATS>
+                       <.ACTITER <COND (.OBL? .BOUND)
+                                       (.PURE? <ANOTHER .OBJECT .BOUND>)
+                                       (T <REAR .OBJECT .OBJENV .BOUND>)   >>)   >
+                <SET BOUND
+                     <COND (.PURE?
+                            <IS1 <1 .PATS> .OBJECT .ENV .BOUND .OBL?>)
+                           (T <MATCH1 <1 .PATS>
+                                      .OBJECT
+                                      .ENV
+                                      .OBJENV
+                                      <BOTTOM <1 .PATS>>
+                                      .BOUND
+                                      .OBL?>)   >>
+                <SET OBL? T>
+                <THSET PATS <REST .ITER>>   >   >>
+
+<PUT ET PRECEDENCE 10>   <PUT ET FACTOR T>
+
+
+
+<DEFINE VEL
+ <ACTOR-FUNCTION (OBJECT BOUND OBL? PURE? ENV OBJENV "REST" 'PATS
+                  "AUX" (PAT1 <CLIP PATS>))
+   <COND (.PURE?
+         <IS1 .PAT1 .OBJECT <> .BOUND .OBL?>)
+        (T <MATCH1 .PAT1 .OBJECT <> .OBJENV <BOTTOM .PAT1> .BOUND .OBL?>)   >   >>
+
+
+<PUT VEL PRECEDENCE 20>   <PUT VEL FACTOR T>
+
+<DEFINE NON
+ <ACTOR-FUNCTION (OBJECT BOUND OBL? PURE? ENV OBJENV 'PAT)
+   <OR .OBL?
+       <SET OBJECT
+            <COND (.PURE? <UPTO .OBJECT <SET BOUND <ANOTHER .OBJECT .BOUND>>>)
+                  (T <FRONT .OBJECT <> <LLOC BOUND> .OBJENV>)   >>   >
+   <FAILPOINT NAY-SAYER ()
+      <PROG2 <COND (.PURE? <IS1 .PAT .OBJECT>)
+                   (T <MATCH1 .PAT .OBJECT <> .OBJENV>)   >
+             <FAIL <> .NAY-SAYER>>
+      ()
+      <.NAY-SAYER .BOUND>   >>>
+
+<PUT NON PRECEDENCE 6>   <PUT NON FACTOR T><DEFINE WHEN
+ <ACTOR-FUNCTION WA (OBJECT BOUND OBL? PURE? ENV OBJENV "REST" 'CLAUSES
+                     "AUX" (CLAUSE <CLIP CLAUSES>) NEWBOUND)
+   <SET NEWBOUND
+        <COND (<EMPTY? .CLAUSE> <ERROR EMPTY-CLAUSE--WHEN>)
+              (.PURE? <IS1 <1 .CLAUSE> .OBJECT <> .BOUND .OBL?>)
+              (T <MATCH1 <1 .CLAUSE> .OBJECT <> .OBJENV
+                         <BOTTOM <1 .CLAUSE>> .BOUND .OBL?>)   >>
+   <FAILPOINT () <> () <FAIL <> .WA>>
+   <APPLY <CHTYPE ,ET FUNCTION>
+          (.OBJECT .NEWBOUND T .PURE? .ENV .OBJENV !<REST .CLAUSE>)>
+   .NEWBOUND   >>
+
+<PUT WHEN PRECEDENCE 25>   <PUT WHEN FACTOR T><DEFINE THTRYSET
+ <FUNCTION (VARLOC VARFORM OBJECT BOUND OBL? PURE? ENV OBJENV "OPTIONAL"
+              (RS ()) (VALRS ()) 
+            "AUX" VAR2)
+   <COND (.OBL?
+          <COND (.PURE?
+                 <CHECKRESTRICTS .RS .VALRS <THSETLOC .VARLOC <UPTO .OBJECT .BOUND>>>)
+                (<PROG2
+                    <SET OBJECT <INSTANTIATE .OBJECT PURE? .BOUND .OBJENV>>
+                    .PURE?>
+                 <CHECKRESTRICTS .RS .VALRS <THSETLOC .VARLOC .OBJECT>>)
+
+                (<SET VAR2 <UVAR? .OBJECT>>
+                 <THPSEUDOSETLOC <LLOC .VAR2> .VARFORM .ENV>
+                 <THPSEUDOSETLOC .VARLOC .OBJECT .OBJENV>)
+                (T <THIMPURESETLOC .VARLOC .PURE? .VARFORM .OBJECT .ENV .OBJENV>)   >)
+         (.PURE?
+          <THSETLOC .VARLOC <UPTO .OBJECT <SET BOUND <ANOTHER .OBJECT .BOUND>>>>)
+         (<PROG2
+             <SET OBJECT <FRONT .OBJECT T <LLOC BOUND> .OBJENV <LLOC PURE?>>>
+             .PURE?>
+          <CHECKRESTRICTS .RS .VALRS <THSETLOC .VARLOC .OBJECT>>)
+         (T <THIMPURESETLOC .VARLOC .PURE? .VARFORM .OBJECT .ENV .OBJENV>)   >
+   .BOUND   >>
+
+
+<DEFINE THIMPURESETLOC
+   <FUNCTION (LOC UV VARFORM OBJECT ENV OBJENV)
+   <COND (<MEMQ .VARLOC <LINKVARS () .UV .VARFORM .OBJECT .ENV .OBJENV>>
+          <FAIL>)
+         (T <THPSEUDOSETLOC .VARLOC .OBJECT .OBJENV>)   >  >>
+
+
+<DEFINE THPSEUDOSETLOC
+ <FUNCTION (LOC OBJ OBJENV)
+   <THSETLOC .LOC 
+             <CHTYPE ([PATTERN .OBJ .OBJENV] !<CHTYPE <IN .LOC> LIST>)
+                     UNASSIGNED>>   >><DEFINE PREFIX1
+ <FUNCTION P (L1 TERM1 L2 TERM2)
+   <COND (<OR <EMPTY? .L1> <==? .L1 .TERM1>>
+          <EXIT .P .L2>)
+         (<==? .L2 .TERM2> <FAIL>)>
+   <OR <=? <1 .L1> <1 .L2>> <FAIL>>
+   <SET L1 <REST .L1>>   <SET L2 <REST .L2>>
+   <AGAIN .P>  >>
+
+
+
+<DEFINE FRONT
+ <FUNCTION ("BIND" CUR
+            OBJECT EV? BOUNDLOC "OPTIONAL" (ENV <>)
+               (PURELOC <>)
+            "AUX" V P (LP <LLOC P>) (CONSTRUCT <CONSTRUCTOR <TYPE .OBJECT>>)
+               (BOUND <IN .BOUNDLOC>))
+   <SETLOC .BOUNDLOC .OBJECT>
+   <AND .PURELOC <SETLOC .PURELOC ()>>
+   <FINSPLICE .CUR .ENV>
+   <SET RESULT
+      <FAILPOINT EXTENDER ()
+         <BOTTOM .OBJECT>
+         ()
+         <COND (<==? .OBJECT .BOUND> <FAIL>)
+               (<==? <TYPE <1 .OBJECT>> SEGMENT>
+                <SET V <FORMSUBST <1 .OBJECT> .LP>>
+                <COND (<EMPTY? .V>
+                       <SET OBJECT <REST .OBJECT>>
+                       <AGAIN .EXTENDER>)   >
+                <SET OBJECT <BACKTO .OBJECT <REST .V> .BOUNDLOC>>
+                <RESTORE .EXTENDER <.CONSTRUCT !.RESULT <1 .V>>>)
+               (.EV? <SET V <INSTANTIATE <1 .OBJECT> P>>
+                     <AND .PURELOC <NOT .P> <SETLOC .PURELOC <NCONC .P <IN .PURELOC>>>>
+                     <SETLOC .BOUNDLOC <SET OBJECT <REST .OBJECT>>>
+                     <RESTORE .EXTENDER <.CONSTRUCT !.RESULT .V>>)
+               (T <AND .PURELOC
+                       <FULL? <SET P <UVARS <1 .OBJECT>>>>
+                       <SETLOC .PURELOC <NCONC <CHTYPE .P FALSE> <IN .PURELOC>>>>
+                  <RESTORE .EXTENDER
+                           <PROG1 <.CONSTRUCT !.RESULT <1 .OBJECT>>
+                                  <SETLOC .BOUNDLOC  <SET OBJECT <REST .OBJECT>>>>>)   >>>  >><DEFINE REAR
+ <FUNCTION ("BIND" CUR
+            OBJECT "OPTIONAL" (ENV <>) (BOUND <BOTTOM .OBJECT>)
+            "AUX" V P (LP <LLOC P>))
+   <FINSPLICE .CUR .ENV>
+   <FAILPOINT CHOPPER ()
+      .BOUND
+      ()
+      <COND (<==? .OBJECT .BOUND> <FAIL>)
+            (<==? <TYPE <1 .OBJECT>> SEGMENT>
+             <SET V <FORMSUBST <1 .OBJECT> .LP>>
+             <COND (<EMPTY? .V>
+                    <SET OBJECT <REST .OBJECT>>
+                    <AGAIN .CHOPPER>)   >
+             <RESTORE .CHOPPER <SET OBJECT <BACKTO .OBJECT <REST .V>>>>)
+            (T <RESTORE .CHOPPER <SET OBJECT <REST .OBJECT>>>)   >   >>><DEFINE INSTANTIATE
+ <FUNCTION ("BIND" CUR
+            EXP UVAR "OPTIONAL" (BOUND <BOTTOM .EXP>) (ENV <>)
+              (LUV <LLOC .UVAR>))
+   <FINSPLICE .CUR .ENV>
+   <COND (<==? <TYPE .EXP> FORM>
+          <FORMSUBST .EXP .LUV>)
+         (<MONAD? .EXP>
+          <SETLOC .LUV ()>
+          .EXP)
+         (T <INSTANTIATE1 .EXP .LUV .BOUND>)   >>>
+
+
+<DEFINE INSTANTIATE1
+ <FUNCTION INSTLP (EXP LUV "OPTIONAL" (BOUND <BOTTOM .EXP>)
+                   "AUX" (RESULT ()) (P ()) P1 (LP1 <LLOC P1>) EXP1)
+   <COND (<==? .EXP .BOUND> <SETLOC .LUV .P>
+          <.INSTLP <REVERSE .RESULT <CONSTRUCTOR <TYPE .EXP>>>>)
+         (<==? <TYPE <SET EXP1 <1 .EXP>>> SEGMENT>
+          <SET RESULT (<REVERSE <FORMSUBST .EXP1 .LP1> ,CONSL>
+                       !.RESULT)>)
+         (T <SET RESULT (<INSTANTIATE .EXP1 P1> !.RESULT)>)   >
+   <OR .P1 <SET P <NCONC .P1 .P>>>
+   <SET EXP <REST .EXP>>
+   <AGAIN .INSTLP>   >>
+
+
+<DEFINE FORMSUBST
+ <FUNCTION (F PURELOC "AUX" P A1 VAR)
+   <COND (<FULL? <SET P <UARGS .F>>>
+          <SETLOC .PURELOC <CHTYPE .P FALSE>>
+          .F)
+         (<OR <EMPTY? .F> <NOT <SET A1 <ACTOR? <1 .F>>>>>
+          <SETLOC .PURELOC ()>
+          <EVAL .F>)
+         (<EMPTY? <REST .F>>
+          <SETLOC .PURELOC <>>
+          .F)
+         (<==? .A1 ,ALTER>
+          <THSET <SET VAR <EVAL <2 .F>>> ?()>
+          <SETLOC .PURELOC <FALSE .VAR>>
+          <FORM GIVEN .VAR>)
+         (<==? .A1 ,GIVEN>
+          <COND (<ASSIGNED? <SET VAR <EVAL <2 .F>>>>
+                 <SETLOC .PURELOC ()>
+                 <LVAL .VAR>)
+                (T <SETLOC .PURELOC <FALSE .VAR>>
+                   .F)   >)
+         (T <SETLOC .PURELOC <>>
+            .F)   >>><DEFINE UVARS
+ <FUNCTION ("BIND" CUR
+            EXP "OPTIONAL" (BOUND <BOTTOM .EXP>) (ENV <>)
+            "AUX" UA ACTR VAR)
+   <FINSPLICE .CUR .ENV>
+   <COND (<==? <TYPE .EXP> FORM>
+          <COND (<FULL? <SET UA <UARGS .EXP>>> .UA)
+                (<AND <==? <LENGTH .EXP> 2>
+                      <SET ACTR <ACTOR? <1 .EXP>>>>
+                 <COND (<==? .ACTR ,GIVEN>
+                        <COND (<OR <NOT <BOUND? <SET VAR <EVAL <2 .EXP>>>>>
+                                   <UNASSIGNED? .VAR>>
+                               (.VAR))   >)
+                       (<==? .ACTR ,ALTER>
+                        <THSET <SET VAR <EVAL <2 .EXP>>> ?()>
+                        (.VAR))   >)   >)
+         (<==? .EXP .BOUND> ())
+         (T <NCONC <UVARS <1 .EXP>> <UVARS <REST .EXP> .BOUND>>)   >>>
+
+
+<DEFINE UARGS
+ <FUNCTION ("BIND" C
+            F "OPTIONAL" (ENV <>)
+            "AUX" VAR)
+   <FINSPLICE .C .ENV>
+   <COND (<MULTILEVEL .F>
+          <COND (<AND <MEMQ <TYPE .F> '(FORM SEGMENT)>
+                      <==? <1 .F> LVAL>
+                      <ATOM? <SET VAR <2 .F>>>
+                      <OR <NOT <BOUND? .VAR>> <UNASSIGNED? .VAR>>>
+                 (.VAR))
+                (T <MAPCAN ,UARGS .F>)   >)   >   >>
+
+
+<DEFINE UVAR?
+ <FUNCTION (OBJECT "AUX" RES)
+   <AND <==? <TYPE .OBJECT> FORM>
+        <==? <LENGTH .OBJECT> 2>
+        <==? <1 .OBJECT> GIVEN>
+        <ATOM? <SET RES <EVAL <2 .OBJECT>>>>
+        .RES>   >>
+
+
+<DEFINE UNCERTAINLENGTH
+ <FUNCTION (OBJECT)
+   <OR <==? <TYPE .OBJECT> FORM>
+       <AND <MULTILEVEL .OBJECT>
+            <MAPC #FUNCTION ((EL) <AND <==? <TYPE .EL> SEGMENT> <.UNC T>>)
+                  .OBJECT>
+            <>>>   >><DEFINE UPTO
+ <FUNCTION (OBJECT BOUNDARY)
+   <COND (<MONAD? .OBJECT> .OBJECT)
+         (T <REVERSE <UPTO1 .OBJECT .BOUNDARY>
+                     <CONSTRUCTOR <TYPE .OBJECT>>>)   >   >>
+
+
+<DEFINE UPTO1
+ <FUNCTION LOOP (OBJ BOU "AUX" (RES ()))
+   <COND (<==? .OBJ .BOU> .RES)
+         (T <SET RES (<1 .OBJ> !.RES)>
+            <SET OBJ <REST .OBJ>>
+            <AGAIN .LOOP>)   >>>
+
+
+<DEFINE BACKTO
+ <FUNCTION (PAT BEG "OPTIONAL" (BOUNDLOC <>))
+   <COND (<EMPTY? .BEG> .PAT)
+         (<ISREST .PAT .BEG> .BEG)
+         (T <SET PAT <REVERSE (!<REVERSEUPTO .PAT <IN .BOUNDLOC>>
+                               !<REVERSE .BEG ,CONSL>)
+                              <CONSTRUCTOR <TYPE .PAT>>>>
+            <SETLOC .BOUNDLOC <BOTTOM .PAT>>
+             .PAT)   >>>
+
+
+<DEFINE REVERSEUPTO
+ <FUNCTION REV (EXP1 EXP2 "AUX" (RESULT()))
+   <COND (<==? .EXP1 .EXP2> .RESULT)
+         (T <SET RESULT (<1 .EXP1> !.RESULT)>
+            <SET EXP1 <REST .EXP1>>
+            <AGAIN .REV>)   >>>
+
+
+<DEFINE ISREST
+ <FUNCTION CHECKER (EXP1 EXP2)
+   <COND (<==? .EXP1 .EXP2> T)
+         (<EMPTY? .EXP2> <>)
+         (T <SET EXP2 <REST .EXP2>>
+            <AGAIN .CHECKER>)   >>><DEFINE CHECKRESTRICTS
+ <FUNCTION CH (RS VALRS OBJECT "OPTIONAL" (BOUNDARY <BOTTOM .OBJECT>))
+   <REPEAT CR (RS1)
+      <AND <EMPTY? .RS> <EXIT .CR <>>>
+      <COND (<MONAD? <SET RS1 <1 .RS>>>)
+            (<==? <1 .RS1> PATTERN>
+             <IS1 <2 .RS1> .OBJECT <3 .RS1> .BOUNDARY>)
+            (<THSET VALRS (.RS1 !.VALRS)>)   >
+      <THSET RS <REST .RS>>   >
+   <REPEAT (VALRS1)
+      <AND <EMPTY? .VALRS> <EXIT .CH <>>>
+      <SET VALRS1 <1 .VALRS>>
+      <OR <==? <1 .VALRS1> VALUE>
+          <ERROR MEANINGLESS-RESTRICTION--CHECKRESTRICTS>>
+      <REPEAT REMTAGS ((LOCS <REST .VALRS1 7>))
+         <AND <EMPTY? .LOCS> <EXIT .REMTAGS<>>>
+         <COND (<==? <TYPE <IN <1 .LOCS>>> UNASSIGNED>
+                <THSETLOC <1 .LOCS> <THDELQ .VALRS1 <IN <1 .LOCS>>>>)   >
+         <SET LOCS <REST .LOCS>>   >
+      <MATCH1 <2 .VALRS1> <3 .VALRS1> <4 .VALRS1> <5 .VALRS1>
+              <6 .VALRS1> <7 .VALRS1>>
+      <THSET VALRS <REST .VALRS>>   >   >>
+
+
+<DEFINE MEMRES
+ <FUNCTION CHECK (EXP BOUND ENV RESTRICTIONS "AUX" R1)
+   <REPEAT ()
+      <AND <EMPTY? .RESTRICTIONS> <EXIT .CHECK <>>>
+      <SET R1 <1 .RESTRICTIONS>>
+      <COND (<AND <NOT <MONAD? .R1>>
+                  <==? <1 .R1> PATTERN>
+                  <==? .ENV <3 .R1>>
+                  <=UPTO? <2 .R1> .EXP .BOUND>>
+             <.CHECK T>)   >
+      <SET RESTRICTIONS <REST .RESTRICTIONS>>   >   >>
+
+
+<DEFINE =UPTO?
+ <FUNCTION (EXP1 EXP2 BOUND)
+   <COND (<AND <MONAD? .EXP1> <FULL? .EXP1>>
+          <=? .EXP1 .EXP2>)
+         (<AND <MONAD? .EXP2> <FULL? .EXP2>> <>)
+         (<PROG =CHECK ()
+             <COND (<EMPTY? .EXP1> <==? .EXP2 .BOUND>)
+                   (<==? .EXP2 .BOUND> <>)
+                   (<=? <1 .EXP1> <1 .EXP2>>
+                    <SET EXP1 <REST .EXP1>>   <SET EXP2 <REST .EXP2>>
+                    <AGAIN .=CHECK>)   >>)   >>><DEFINE LINKVARS
+ <FUNCTION LINKER (VARS1 VARS2 PAT1 PAT2 ENV1 ENV2 "OPTIONAL"
+                     (BOUND1 <BOTTOM .PAT1>) (BOUND2 <BOTTOM .PAT2>)
+                   "AUX" (LOCS <NCONC <GENLOCS .VARS1 .ENV1>
+                                      <GENLOCS .VARS2 .ENV2>>))
+  <REPEAT ((LOCS1 .LOCS)
+           (R [VALUE .PAT1 .PAT2 .ENV1 .ENV2 .BOUND1 .BOUND2 !.LOCS]))
+      <AND <EMPTY? .LOCS1> <.LINKER .LOCS>>
+      <THSETLOC <1 .LOCS1>
+                <CHTYPE (.R !<CHTYPE <IN <1 .LOCS>> LIST>) UNASSIGNED>>
+      <SET LOCS1 <REST .LOCS1>>   >   >>
+
+
+<DEFINE GENLOCS
+ <FUNCTION ("BIND" C VARS ENV)
+   <COND (<EMPTY? .VARS> ())
+         (T <SPLICE .C .ENV>
+            <REPEAT GEN ((LOCS ()))
+               <SET LOCS (<LLOC <1 .VARS>> !.LOCS)>
+               <SET VARS <REST .VARS>>
+               <AND <EMPTY? .VARS> <.GEN .LOCS>>   >)   >>>

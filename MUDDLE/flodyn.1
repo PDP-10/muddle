@@ -1,0 +1,89 @@
+		"DYNAMIC LOADER - USES 2 LIBRARY FILES AND RELATIVE ACCESS POINTERS"
+
+"Expects ERROR to have been SETGd to the proper thing.  See FLODYN bootstrapper."
+
+
+<BLOCK <SETG NDYN!- (<MOBLIST NDYN!- 37> <ROOT>)>>
+
+
+"Each library specification is a vector of four elements."
+
+<SETG MLIB <EVAL <SETG ULIB [	[]		;"Vector of PNAMEs"
+				![]		;"Uvector of relative access pointers."
+				#FALSE ()	;"Channel to library."
+				0		;"Base of access." ]>>>
+
+"Library setup."
+
+<DEFINE NEWLIB OUTNEW (WHERE "AUX" (LIBVEC <IVECTOR 4>))
+	<PUT .LIBVEC 3 <OPEN "READ" !.WHERE>>
+	<COND (<3 .LIBVEC>
+		<PUT .LIBVEC 1 <READ '<EXIT .OUTNEW <ERROR NO-PNAME-VECTOR!-ERRORS NEWLIB>>
+				      <3 .LIBVEC>>>
+		<PUT .LIBVEC 2 <READ '<EXIT .OUTNEW <ERROR NO-ACCESS-VECTOR!-ERRORS NEWLIB>>
+				      <3 .LIBVEC>>>
+		<PUT .LIBVEC 4 <17 <3 .LIBVEC>>>)>
+	.LIBVEC>
+
+"Initializer."
+
+<DEFINE LIBINIT ()
+	<AND <3 ,ULIB> <NOT <0? <1 <3 ,ULIB>>>> <CLOSE <3 ,ULIB>>>
+	<SETG ULIB <NEWLIB ("NMUDLI")>>
+	<AND <3 ,MLIB> <NOT <0? <1 <3 ,MLIB>>>> <CLOSE <3 ,MLIB>>>
+	<SETG MLIB <NEWLIB ("NMUDLI" ">" "DSK" "MUDDLE")>>
+	"DONE">
+
+<LIBINIT>
+
+"Error checker. Calls dynamic loader."
+
+<SETG RERR <FUNCTION (TR)
+	 <COND (<AND <==? 3 <LENGTH .TR>>
+		     <==? UNBOUND-VARIABLE!-ERRORS <1 .TR>>
+		     <==? VALUE <3 .TR>>
+		     <FLODYN <2 .TR>>>)
+	      (ELSE <FORM REAL.ERROR !.TR>)>>>
+
+
+"Real dynamic loader."
+
+<DEFINE FLODYN (ATM "AUX" (PNAM <PNAME .ATM>) T1)
+	<COND (<AND <SET T1 <LOOKUP .PNAM <1 ,NDYN>>>
+		    <GASSIGNED? .T1>>
+		<EXIT .ERRACT <SETG .ATM ,.T1>>)
+	      (<SET T1 <OR <DIRLOAD .PNAM '()>
+			   <SET T1 <LIBLOAD .PNAM ,ULIB>>
+			   <DIRLOAD .PNAM '("DSK" "MUDDLE")>
+			   <SET T1 <LIBLOAD .PNAM ,MLIB>>
+			   <SPECLOAD .ATM>>>
+		<COND (<GASSIGNED? .ATM> <EXIT .ERRACT ,.ATM>)
+		      (<ASSIGNED? .ATM> <EXIT .ERRACT ..ATM>)
+		      (ELSE <EXIT .ERRACT <SETG .ATM .T1>>)>)>>
+
+"Loader from directories."
+
+<DEFINE DIRLOAD (PN WHERE "AUX" (THERE <OPEN "READ" .PN ">" !.WHERE>))
+	<AND .THERE <LOAD .THERE> <CLOSE .THERE>>>
+
+"Loader from libraries"
+"Expects USEROB to have been given a GVAL by BOOT."
+
+<DEFINE LIBLOAD (PN LIBR "OPTIONAL" (ROBL ,USEROB) "AUX" TLS)
+	<COND (<AND <3 .LIBR> <NOT <0? <1 <3 .LIBR>>>> <SET TLS <MEMBER .PN <1 .LIBR>>>>
+		<ACCESS <3 .LIBR>
+			<+ <4 .LIBR> <<- <LENGTH <1 .LIBR>> <LENGTH .TLS> -1> <2 .LIBR>>>>
+		<SET TLS <EVAL <READ '<ERROR OVERRAN-END-OF-FILE!-ERRORS LIBLOAD><3 .LIBR> .ROBL>>>
+		<COND (<==? <TYPE .TLS> ATOM> ,.TLS) (ELSE .TLS)>)>>
+
+<SETG SPECR ![PPRINF!- FRM!- PF!- TRACEF!- ]>
+
+<SETG SPECF <UVECTOR	("TRACE" ">" "DSK" "MUDDLE")
+			("LF" ">" "DSK" "MUDDLE")
+			("FRAMES" ">" "DSK" "MUDDLE")
+			("PPRINT" ">" "DSK" "MUDDLE")>>
+
+<DEFINE SPECLOAD (ATM "AUX" (T <MEMQ .ATM ,SPECR>)) <AND .T <FLOAD !<<LENGTH .T> ,SPECF>>>>
+
+<ENDBLOCK>
+ð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒ

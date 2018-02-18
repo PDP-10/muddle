@@ -1,0 +1,216 @@
+<DEFINE IS
+ <FUNCTION ("BIND" TOPMATCH
+            'PAT EXP)
+   <IS1 .PAT .EXP>
+   T   >>
+
+
+<DEFINE IS?
+ <FUNCTION ("BIND" TOPMATCH
+            'PAT EXP)
+   <FAILPOINT ()
+      <PROG2 <IS1 .PAT .EXP> T>
+      ()
+      <>   >>>
+
+
+<DEFINE MATCH
+ <FUNCTION ("BIND" TOPMATCH
+            'PAT1 'PAT2)
+   <MATCH1 .PAT1 .PAT2>
+   T   >>
+
+
+<DEFINE MATCH?
+ <FUNCTION ("BIND" TOPMATCH
+            'PAT1 'PAT2)
+   <FAILPOINT ()
+      <PROG2 <MATCH1 .PAT1 .PAT2> T>
+      ()
+      <>   >>>
+
+
+<DEFINE ASSIGN
+ <FUNCTION ("BIND" TOPMATCH
+            'PAT EXP)
+  <FAILPOINT ()
+      <PROG2 <IS1 .PAT .EXP> .EXP>
+      ()
+      <ERROR IMPOSSIBLE-ASSIGNMENT>   >>><DEFINE IS1
+ <FUNCTION S ("BIND" C
+              PAT EXP "OPTIONAL" (ENV <>) (BOUND <BOTTOM .EXP>)
+                (OBLIGATORY T) (PBOUND <BOTTOM .PAT>)
+              "AUX" PURE ENDP K BETA ENDE)
+   <COND (<==? <TYPE .PAT> FORM>
+          <.S <INVOKE .PAT .EXP .BOUND .OBLIGATORY .ENV>>)
+         (<EMPTY? .PAT>
+          <OR <==? .EXP .BOUND> <FAIL>>
+          .BOUND)
+         (<MONAD? .PAT>
+          <.S <OR <=? .PAT .EXP> <FAIL>>>)
+         (<MONAD? .EXP>
+          <OR <EMPTY? .EXP> <FAIL>>)   >
+   <FINSPLICE .C .ENV>
+   <HACKPAT .PAT .PBOUND ENDP K BETA>
+   <SET ENDE <POST .EXP .BOUND .K .BETA>>
+   <REPEAT R ()
+      <COND (<==? .PAT .ENDP> <.R <GOTEND .EXP .ENDE .OBLIGATORY>>)
+            (<==? <TYPE <1 .PAT>> SEGMENT>
+             <THSET EXP <INVOKE <1 .PAT> .EXP .ENDE <AND <==? .PAT .ENDP> .OBLIGATORY>>>)
+            (<==? .EXP .ENDE> <FAIL>)
+            (T <IS1 <1 .PAT> <1 .EXP>>
+               <THSET EXP <REST .EXP>>)   >
+      <THSET PAT <REST .PAT>>   >
+   <REPEAT ()
+      <COND (<==? .PAT .PBOUND>
+             <.S .EXP>)
+            (T <IS1 <1 .PAT> <1 .EXP>>)   >
+      <THSET PAT <REST .PAT>>
+      <THSET EXP <REST .EXP>>   >  >><DEFINE MATCH1
+ <FUNCTION MATCHER (PAT1 PAT2 "OPTIONAL" (ENV1 <>) (ENV2 <>)
+                      (BOUND1 <BOTTOM .PAT1>) (BOUND2  <BOTTOM .PAT2>)
+                      (OBL T))
+   <COND (<==? <TYPE .PAT1> FORM>
+          <COND (<AND <==? <TYPE .PAT2> FORM>
+                      <G? <PRECEDENCE <1 .PAT2>> <PRECEDENCE <1 .PAT1>>>>
+                 <.MATCHER <INVOKE .PAT2 .PAT1 .BOUND1 T .ENV2 .ENV1 <>>>)   >
+          <.MATCHER <INVOKE .PAT1 .PAT2 .BOUND2 .OBL .ENV1 .ENV2 <>>>)
+         (<==? <TYPE .PAT2> FORM>
+          <.MATCHER <INVOKE .PAT2 .PAT1 .BOUND1 T .ENV2 .ENV1 <>>>)
+         (<AND <MONAD? .PAT1> <FULL? .PAT1>>
+          <.MATCHER <OR <=? .PAT1 .PAT2> <FAIL>>>)
+         (<AND <MONAD? .PAT2> <FULL? .PAT2>>
+          <FAIL>)
+         (<AND <EMPTY? .PAT1> <EMPTY? .PAT2>>
+          <.MATCHER .PAT2>)   >
+   <PROG (END1 END2 K1 K2 ALPHA1 ALPHA2 BETA1 BETA2 S1 S2 SEG1 SEG2 FORM1 INC)
+      <SPREAD <PATSOFTEN .PAT1 .BOUND1> ALPHA1 SEG1>
+      <SPREAD <PATSOFTEN .PAT2 .BOUND2> ALPHA2 SEG2>
+      <COND (<G? .ALPHA1 .ALPHA2>
+             <COND (<==? .SEG2 .BOUND2>
+                    <FAIL>)
+                   (<SET SEG1 <REST .PAT1 <SET ALPHA1 .ALPHA2>>>)   >)
+            (<G? .ALPHA2 .ALPHA1>
+             <COND (<AND .OBL <==? .SEG1 .BOUND1>>
+                    <FAIL>)
+                   (<SET SEG2 <REST .PAT2 <SET ALPHA2 .ALPHA1>>>)   >)   >
+      <REPEAT R ()
+         <COND (<==? .PAT1 .SEG1> <.R <>>)
+               (T <MATCH1 <1 .PAT1> <1 .PAT2> .ENV1 .ENV2>)   >
+         <THSET PAT1 <REST .PAT1>>
+         <THSET PAT2 <REST .PAT2>>   >
+      <SPREAD <PATHACK .SEG1 .BOUND1 .ENV1> END1 K1 BETA1 S1>
+      <SPREAD <PATHACK .SEG2 .BOUND2 .ENV2> END2 K2 BETA2 S2>
+      <COND (<G? .BETA1 .BETA2>
+             <OR .OBL <FAIL>>
+             <SET END1 <REST .END1 <SET INC <- .BETA1 .BETA2>>>>
+             <SET K1 <+ .K1 .INC>>
+             <SET BETA1 .BETA2>)
+            (<G? .BETA2 .BETA1>
+             <COND (.OBL
+                    <SET END2 <REST .END2 <SET INC <- .BETA2 .BETA1>>>>
+                    <SET K2 <+ .K2 .INC>>
+                    <SET BETA2 .BETA1>)
+                   (T <OR <==? .PAT2 .END2> <FAIL>>
+                      <SET END2 <POST .END2 .BOUND2 .K1 .BETA1 .BETA2>>)   >)   >
+      <COND (<AND <==? .S1 1> <0? .K1>>
+             <COND (<AND <==? .S2 1> <0? .K2>>
+                    <SET FORM1 <CHTYPE <1 .SEG2> FORM>>
+                    <INVOKE <1 .SEG1> .FORM1 .FORM1 T .ENV1 .ENV2 <>>)
+                   (T <INVOKE <1 .SEG1> .SEG2 .END2 T .ENV1 .ENV2 <>>)  >)
+            (<AND <==? .S2 1> <0? .K2>>
+             <INVOKE <1 .SEG2> .SEG1 .END1 T .ENV1 .ENV2 <>>)
+            (<0? .S2>
+             <COND (<G? .K1 .K2> <FAIL>)
+                   (T <THSET END2
+                             <SEGMATCH .SEG1 .SEG2 .ENV1 .ENV2 .END1 .END2 .OBL>>)   >)
+            (<0? .S1>
+             <COND (<G? .K2 .K1> <FAIL>)
+                   (<SEGMATCH .SEG2 .SEG1 .ENV2 .ENV1 .END2 .END1>)   >)
+            (T <#FUNCTION ((UV1 UV2) 
+                           <AND <EMPTY? .UV1> <EMPTY? .UV2> <FAIL>>
+                           <LINKVARS .UV1 .UV2 .SEG1 .SEG2 .ENV1 .ENV2 .END1 .END2>)
+                <UVARS .SEG1 .END1 .ENV1>
+                <UVARS .SEG2 .END2 .ENV2>>)   >
+      <REPEAT ()
+         <COND (<==? .END1 .BOUND1> <EXIT .MATCHER .END2>)   >
+         <MATCH1 <1 .END1> <1 .END2> .ENV1 .ENV2>
+         <THSET END1 <REST .END1>>
+         <THSET END2 <REST .END2>>   >   >   >><DEFINE SEGMATCH
+ <FUNCTION SMATCHER (PAT1 PAT2 ENV1 ENV2 "OPTIONAL" (BOUND1 <BOTTOM .PAT1>)
+                       (BOUND2 <BOTTOM .PAT2>) (OBL T)
+                     "AUX" FORM1)
+   <REPEAT ()
+      <COND (<==? .PAT1 .BOUND1>
+             <.SMATCHER .PAT2>)
+            (<==? <TYPE <1 .PAT1>> SEGMENT>
+             <THSET PAT2
+                    <INVOKE <1 .PAT1> .PAT2 .BOUND2 <AND <==? <REST .PAT1> .BOUND1> .OBL> .ENV1 .ENV2 <>>>)
+            (<==? .PAT2 .BOUND2> <FAIL>)
+            (T <MATCH1 <1 .PAT1> <1 .PAT2> .ENV1 .ENV2>
+               <THSET PAT2 <REST .PAT2>>)   >
+      <THSET PAT1 <REST .PAT1>>   >   >><DEFINE HACKPAT
+ <FUNCTION P (PAT PBOUND ENDV KV BETAV)
+   <REPEAT ((END .PAT) (KS 0) (BETAS 0))
+      <COND (<==? .PAT .PBOUND>
+             <SET .KV .KS> <SET .BETAV .BETAS>
+             <SET .ENDV .END>  <EXIT .P <>>)
+            (<==? <TYPE <1 .PAT>> SEGMENT>
+             <SET KS <+ .KS .BETAS>>
+             <SET BETAS 0>
+             <SET END <REST .PAT>>)
+            (T <SET BETAS <+ .BETAS 1>>)>
+      <SET PAT <REST .PAT>>  >  >>
+
+
+<DEFINE POST
+ <FUNCTION (L LBOUND K BETA "OPTIONAL" (KOUNT <BLENGTH .L .LBOUND>))
+   <AND <G? <+ .K .BETA> .KOUNT>
+        <FAIL>>
+   <REST .L <- .KOUNT .BETA>>  >>
+
+
+
+<DEFINE BLENGTH
+ <FUNCTION BL (L LB "AUX" (K 0))
+   <COND (<==? .L .LB> .K)
+         (T <SET L <REST .L>>
+            <SET K <+ .K 1>>
+            <AGAIN .BL>)>  >>
+
+
+<DEFINE GOTEND
+ <FUNCTION (EXP BOUND OBLIGATORY)
+   <OR <==? .EXP .BOUND>
+       <NOT .OBLIGATORY>
+       <FAIL>>
+   .EXP  >>
+<DEFINE PATSOFTEN
+ <FUNCTION SOFTENER (PAT BOUND "AUX" (ALPHA 0))
+   <REPEAT ()
+      <COND (<OR <==? .PAT .BOUND> <==? <TYPE <1 .PAT>> SEGMENT>>
+             <.SOFTENER [.ALPHA .PAT]>)   >
+      <SET ALPHA <+ .ALPHA 1>>
+      <SET PAT <REST .PAT>>   >   >>
+
+
+<DEFINE PATHACK
+ <FUNCTION HACKER ("BIND" CURENV
+                   PAT PBOUND ENV
+                   "AUX" (END .PAT) (K 0) (BETA 0) (S 0)
+                         PAT1)
+   <FINSPLICE .CURENV .ENV>
+   <REPEAT ()
+      <COND (<==? .PAT .PBOUND>
+             <.HACKER [.END .K .BETA .S]>)
+            (<==? <TYPE <SET PAT1 <1 .PAT>>> SEGMENT>
+             <COND (<OR <FULL? <UARGS .PAT1>>
+                        <AND <FULL? .PAT1>
+                             <SET ACTR <ACTOR? <1 .PAT1>>>>>
+                    <SET S <+ .S 1>>)   >
+             <SET K <+ .K .BETA>>
+             <SET BETA 0>
+             <SET END <REST .PAT>>)
+            (T <SET BETA <+ .BETA 1>>)   >
+      <SET PAT <REST .PAT>>   >   >>
+

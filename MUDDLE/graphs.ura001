@@ -1,0 +1,227 @@
+         
+<SET FNCTG <FUNCTION (XL XH FNCT "OPTIONAL" (SCALE (0 0)) (XYDIS (0 0))
+    (P 60) );"THIS FUNCTION WILL PLOT ANY FUNCTION OF THE FORM
+              Y=F(X),FOR X = .XL TO .XH WITH P POINTS IN IT.
+              SCALE,XYDIS, AND P ARE OPTIONAL, AND IF OMITTED
+              THE PROGRAM WILL AUTOMATICALLY SCALE F(X)."
+    <PROG (X Y DX X1 YM HPTS N SX SY)
+        <SET DX </ <FLOAT <- .XH .XL>> .P>> <SET X1 .XL>
+        <SET X <SET Y ()>>
+     LFX <SET X (!.X .X1)>
+        <SET Y (!.Y <.FNCT .X1>)>
+        <SET X1 <+ .X1 .DX>>
+        <COND (<NOT <G? .X1 .XH>> <GO LFX>)>
+        <COND (<NOT <==? <+ !.SCALE> 0>> <SET HPTS .XYDIS>
+            <GO NAS>)>
+        <SET YM <MINIMAX .Y>>
+        <SET SCALE (</ 800.0 <- .XH .XL>> </ -800.0 <- !.YM>>)>
+        <SET HPTS (<* 0.5 <+ .XL .XH>> <* 0.5 <+ !.YM>>)>
+    NAS <SET N 1>
+    LSC <PUT .X .N <FIX <+ <* <1 .SCALE> <- <.N .X> <1 .HPTS> >>
+           500>>>
+       <PUT .Y .N <FIX <+ <* <2 .SCALE> <- <.N .Y> <2 .HPTS> >>
+           400>>>
+        <SET N <+ .N 1>>
+         <COND (<NOT <G? .N <LENGTH .X>>> <GO LSC>)>
+         <PLOTV .X .Y>
+         <COND ( <NOT <G? 100 <SET SX <FIX <+ <* <1 .SCALE>
+              <- 0.0 <1 .HPTS>>> 500>>> >>
+                  <COND ( <NOT <G? .SX 900>> <LINE .SX 00 .SX 800> )> )>
+         <COND ( <NOT <G? 0 <SET SY <FIX <+ <* <2 .SCALE>
+              <- 0.0 <2 .HPTS>>> 400>>> >>
+                  <COND ( <NOT <G? .SY 800 >> <LINE 100 .SY 900 .SY> )> )>
+         <MOVE 0 800>
+         <RETURN ("XMIN
+" .XL "
+XMAX
+" .XH "
+YMIN
+" <1 .YM> "
+YMAX
+" <2 .YM> "
+SCALE
+" .SCALE )>
+>>>
+<SET MINIMAX <FUNCTION (X)
+    <REPEAT ((N 2) (L <LENGTH .X>) (BIG <1 .X>) (SMALL <1 .X>))
+       <COND ( <G? <.N .X> .BIG> <SET BIG <.N .X>> )>
+       <COND ( <L? <.N .X> .SMALL> <SET SMALL <.N .X>> )>
+       <SET N <+ .N 1>>
+       <COND ( <G? .N .L> <RETURN (.SMALL .BIG)> )>
+>>>
+<SET MTRIANGLE <FUNCTION ()
+    <MOVE 170 285><DRAW 170 650><DRAW 200 670>
+    <DRAW 515 485><DRAW 515 450><DRAW 200 260>
+    <DRAW 170 285>
+
+    <DRAW 200 300><DRAW 200 670><MOVE 200 630>
+    <DRAW 515 450><MOVE 480 470><DRAW 480 505>
+    <MOVE 480 470><DRAW 200 300><DRAW 230 280>
+
+    <MOVE 235 360><DRAW 235 605><MOVE 235 570>
+    <DRAW 445 445><MOVE 410 465><DRAW 200 340>
+
+    <MOVE 0 200> "MOBIUS TRANGLE"
+>>
+
+<SET ELIPSE <FUNCTION (X Y A B P) ;"THIS FUNCTION WILL DRAW AN
+                                    ELIPSE WITH CENTER AT (X Y)
+                                    ,(A B),AND P POINTS IN IT."
+     <PROG (I)
+        <MOVE <+ .X .A > .Y>
+        <SET I </ 6.283 .P>>
+        <REPEAT ((Q .I))
+            <DRAW <FIX <+ .X <* .A <COS .Q>>>>
+                  <FIX <+ .Y <* .B <SIN .Q>>>>>
+            SET Q <+ .Q .I>>
+            <COND ( <G? .Q <+ .I  6.283>> <RETURN "DONE"> )>
+>>>><SET CIRCLE <FUNCTION (X Y R P) ;"THIS FUNCTION WILL DRAW
+                                   A CIRLE WITH CENTER AT (X Y)
+                                  ,RADIUS R,AND P POINTS IN IT."
+   <PROG (I)
+       <MOVE <+ .X .R> .Y>
+       <SET I </ 6.283 .P>>
+       <REPEAT ((Q .I))
+           <DRAW <FIX <+ .X <* .R <COS .Q>>>>
+                 <FIX <+ .Y <* .R <SIN .Q>>>>>
+           <SET Q <+ .Q .I>>
+           <COND ( <G? .Q <+ .I 6.283>>  <RETURN "DONE"> )>
+>>>>
+<SET PLVTEST <FUNCTION ()
+    <PROG (X Y XY)
+    <SET X ( <+ 500 <1 <WITCH .2>>> )>
+        <SET Y ( <2 <WITCH .2>> )>
+        <LINE 0 0 1000 0>
+        <LINE 500 0 500 800>
+        <REPEAT ((P .2))
+            <SET XY <WITCH .P>>
+            <SET X ( !.X <1 .XY> )>
+            <SET Y (!.Y <2 .XY>)>
+            <SET P <+ .P .04>>
+            <COND ( <G? .P 2.9> <RETURN <PLOTV .X .Y>>)>
+>>>>
+<SET WITCH <FUNCTION (P)
+    ( <FIX <+ 500 <* 100.0 </ <COS .P> <SIN .P>>>>> 
+      <FIX <* 200.0 <- 1.0 <COS <* 2.0 .P>>>>> )
+>>
+<SET PLOTV <FUNCTION (X Y) "THIS FUNCTION PLOTS VECTOR X AGAINST
+                             VECTOR Y,IT WORKS FOR LISTS TOO.
+                             IT MOVES TO THE FIRST POINT AND DRAWS
+                             TO THE REST."
+    <PROG (L LIST N)
+        <COND ( <NOT <==? <LENGTH .X> <LENGTH .Y>>>
+            <RETURN "ERROR...LENGTHS NOT EQUAL."> )>
+        <SET L <LENGTH .X>>
+        <SET LIST (29)>
+        <SET N 1>
+ LOOP   <SET LIST (!.LIST !<TRANS <.N .X> <.N .Y>> )>
+        <SET N <+ .N 1>>
+        <COND ( <G? .N .L>
+            <GO ZAP>)>
+        <GO LOOP>
+  ZAP   <SEND .LIST>
+        <RETURN "DONE">
+>>>
+<SET SINCURV <FUNCTION ()
+                        <MOVE 0 400>
+                       <REPEAT ((X 0)<F <* 400.0 <+ 1.0
+                                       <SIN </ .X 100.0>>>>>>
+                                       <COND (<G? .X 625> <RETURN
+                                       "DONE"> )> <SET X <+ .X 5>>
+>>>
+<SET TEST3 <FUNCTION ()
+                      <LINE 0 0 0 800>
+                      <LINE 0 400 1000 400>
+                      <TEST>
+                      <SINCURV>
+>>
+<SET MOVE <FUNCTION (X Y) ;"THIS FUNCTION WILL MOVE THE BEAM
+                             OF THE SCOPE TO (X Y). IT MUST BE CALLED
+                             BEFORE DRAW BECAUSE IT SETS THE SCOPE IN
+                             GRAPHICS MODE."
+                     <SEND (29 !<TRANS .X .Y> )>
+>>
+
+<SET DRAW <FUNCTION (X Y) ;"THIS FUNCTION DRAWS FROM WHERE THE BEAM
+                           WAS TO (X Y).MOVE MUST BE USED BEFORE THE
+                           FIRST DRAW, ALSO DON'T GO BACK INTO
+                           ALPHA MODE INBETWEEN DRAWS."
+                    <SEND <TRANS .X .Y>>
+>>
+<SET TEST2 <FUNCTION () <PROG (X Y Z)
+                               <SET Z <LINE 300 0 700 0>>
+                               <SET Z <LINE 500 0 500 780>>
+                               <SET X 300>
+                          LOOP <SET Y </ <* <- .X 500> <- .X 500>> 40>>
+                               <SET Z <POINT .X .Y>>
+                               <COND (<G? .X 699> <RETURN "DONE">)>
+                               <SET X <+ .X 1>>
+                               <GO LOOP>
+>>>
+<SET LINE <FUNCTION (X1 Y1 X2 Y2) <PROG (A B)
+                      ;"THIS PROGRAM WILL DRAW A LINE FROM (X1,Y1)
+                         TO (X2,Y2) ON THE SCOPE. AGAIN THE RANGE
+                         OF THE X'S AND Y'S IS 0 TO 1024."
+                       <SET A <TRANS .X1 .Y1>>
+                       <SET B <TRANS .X2 .Y2>>
+                       <RETURN <SEND (29 !.A !.B)>>
+>>>
+<SET TEST1 <FUNCTION () <PROG (X Y Z D)
+                                 <SET X 400>
+                            LOOP <SET Y </ <* <- .X 500> <- .X 500>> 10>>
+                                 <SET Z <POINT .X .Y>>
+                                 <SET D <POINT .X 0>>
+                                 <SET D <POINT 500 .Y>>
+                                 <COND (<G? .X 599> <RETURN "DONE"> )>
+                                 <SET X <+ .X 1>>
+                                 <GO LOOP>
+>>>
+<SET TEST <FUNCTION () <PROG (X Y Z D)
+                              <SET X 0>
+                         LOOP <SET Y </ <* .X .X> 10>>
+                              <SET Z <POINT .X .Y>>
+                             <COND (<==? .X 100> <RETURN "DONE">)>
+                             <SET X <+ .X 1>>
+                     <GO LOOP>
+>>>
+<SET POINT <FUNCTION (X Y) <PROG (D LIST) ;"THIS PROGRAMM DISPLAYS A 
+                                            POINT ON THE 4010'S SCREEN
+                                           THE X AND Y CO-ORDINENTS
+                                            SHOULD BE IN THE RANGE OF
+                                            0 THRU 1024."
+                                 <SET D <TRANS .X .Y>>
+                                 <SET LIST (29 !.D !.D)>
+                                 <RETURN <SEND .LIST>>
+>>>
+<SET SEND <FUNCTION (LIST) ;"THIS FUNCTION TRANSMITS THE CHARACTERS TO
+                              THE TECKRONIX 4010.TO WORK RIGHT YOU MUST
+                              HAVE TYPED (^_)S(CR) AT MONIT."
+                     <PROG (L N D) ;"D IS A DUMMY VAR. THAT HOLDS THE
+                                     UNWANTED THINGS THAT IMAGE RETURNS"
+                           <SET L <LENGTH .LIST>>
+                           <SET N 1>
+                      LOOP <COND ( <G? .N .L> <RETURN 1> )>
+                                  ;"ALL GOOD FUNCTIONS RETURN SOMETHING
+                                    THEREFORE SEND RETURNS 1."
+                           <SET D <IMAGE <.N .LIST>>>
+                           <SET N <+ .N 1>>
+                           <GO LOOP>
+>>>
+<SET PAGE <FUNCTION () ;"THIS FUNCTION ERASES THE SCREEN ON THE 4010."
+                     <SEND (27 12)>
+>>
+<SET TRANS <FUNCTION (X Y) ;"THIS FUNCTION TAKES THE X,Y CO-ORDINANTS
+                              AND TRANSLATES THEM INTO 4 ASCII CHARATERS
+                             FOR THE 4010"
+                      <PROG (LX HX LY HY)
+                            <SET HX <FIX </ .X 32>>>
+                            <SET HY <FIX </ .Y 32>>>
+                            <SET LX <- .X <* .HX 32>>>
+                            <SET LY <- .Y <* .HY 32>>>
+                            <SET HY <+ .HY 32>>
+                            <SET LY <+ .LY 96>>
+                            <SET HX <+ .HX 32>>
+                            <SET LX <+ .LX 64>>
+                            <RETURN (.HY .LY .HX .LX)>
+>>>
+

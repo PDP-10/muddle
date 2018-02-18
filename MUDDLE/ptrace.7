@@ -1,0 +1,114 @@
+<DEFINE TRACE
+ <FUNCTION ("REST" 'SPECS)
+   <MAPCAR ,TRACE1 .SPECS>   >>
+
+
+<DEFINE UNTRACE 
+ <FUNCTION ("REST" PROCNS "AUX" OTYP)
+   <MAPCAR 
+       #FUNCTION ((PROCN)
+                  <SET OTYP <TYPE ,.PROCN>>
+                  <SETG .PROCN <2 <1 <LAST <1 ,.PROCN>>>>>
+                  <COND (<==? .OTYP ACTOR-FUNCTION>
+                         <SETG .PROCN <CHTYPE ,.PROCN ACTOR-FUNCTION>>)   >
+                  .PROCN)
+       .PROCNS>  >><DEFINE TRACE1
+ <FUNCTION TR1 (SPEC "AUX" PROCN ARGL PROC SPEC1)
+   <COND (<ATOM? .SPEC>
+          <SET SPEC (.SPEC EN '<DISPLAY .*ARGS> EX '<DISPLAY .*VAL>)>)   >
+   <SET PROCN <1 .SPEC>>
+   <OR <MEMQ <TYPE <SET PROC ,.PROCN>> '(SUBR FSUBR FUNCTION ACTOR-FUNCTION)>
+       <.TR1 <ERROR MEANINGLESS-TRACE-REQUEST .PROCN>>>
+   <SETG .PROCN
+    <CHTYPE ((!<SET ARGL <ARGDECLS .PROC>>
+              "AUX" !<COND (<MEMQ <TYPE .PROC> '(FUNCTION ACTOR-FUNCTION)>
+                            ((*ARGS <ARGVALS .ARGL>)))>
+                    *VAL
+                    (*OFUNC <COND (<==? <TYPE .PROC> ACTOR-FUNCTION>
+                                   <CHTYPE .PROC FUNCTION>)
+                                  (.PROC)  >))
+             !<COND (<SET SPEC1 <MEMQ EN .SPEC>>
+                     (<FORM PRINT (ENTERING .PROCN)>
+                      !<UPTONEXTATOM <REST .SPEC1>>))>
+             !<COND (<SET SPEC1 <MEMQ FO .SPEC>>
+                     (<FORM FAILPOINT ()
+                            <>
+                            '(*MES *ACT)
+                            <FORM PRINT (FAILING OUT OF .PROCN)>
+                            !<UPTONEXTATOM <REST .SPEC1>>
+                            '<FAIL .*MES .*ACT>   >))   >
+             '<SET *VAL <APPLY .*OFUNC (!.*ARGS)>>
+             !<COND (<SET SPEC1 <MEMQ FI .SPEC>>
+                     (<FORM FAILPOINT ()
+                            <>
+                            '(*MES *ACT)
+                            <FORM PRINT (FAILING INTO .PROCN)>
+                            !<UPTONEXTATOM <REST .SPEC1>>
+                            '<FAIL .*MES .*ACT>   >))   >
+             !<COND (<SET SPEC1 <MEMQ EX .SPEC>>
+                     (<FORM PRINT (EXITING .PROCN)>
+                      !<UPTONEXTATOM <REST .SPEC1>>))   >
+             <FORM LVAL *VAL>   )
+            <COND (<==? <TYPE .PROC> ACTOR-FUNCTION> ACTOR-FUNCTION)
+                  (FUNCTION)   >>>
+   .PROCN   >><DEFINE ARGDECLS
+ <FUNCTION (PROC "AUX" (TP <TYPE .PROC>) DECLS R)
+   <COND (<==? .TP SUBR>
+          '("REST" *ARGS))
+         (<==? .TP FSUBR>
+          '("REST" '*ARGS))
+         (T <AND <ATOM? <1 .PROC>> <SET PROC <REST .PROC>>>
+            <SET DECLS <1 .PROC>>
+            <COND (<OR <SET R <MEMBER "AUX" .DECLS>>
+                       <SET R <MEMBER "ACT" .DECLS>>>
+                   <UPTO .DECLS .R>)
+                  (.DECLS)   >)   >   >>
+
+
+<DEFINE ARGVALS
+ <FUNCTION (ARGL)
+   <MAPCAN
+      #FUNCTION ((DECL "AUX" (TP <TYPE  .DECL>))
+                 <COND (<==? .TP STRING> ())
+                       ((<FORM LVAL
+                               <COND (<ATOM? .DECL> .DECL)
+                                     (<==? .TP FORM>
+                                      <LEGALFORMDECL .DECL>)
+                                     (<==? .TP LIST>
+                                      <OR <==? <LENGTH .DECL> 2> 
+                                          <TRCOMPLAIN .PROCN>>
+                                      <SET DECL <1 .DECL>>
+                                      <COND (<ATOM? .DECL> .DECL)
+                                            (<==? .TP FORM>
+                                             <LEGALFORMDECL .DECL>)
+                                            (T <TRCOMPLAIN .PROCN>)>)   >>))   >)
+      .ARGL>   >>
+
+
+<DEFINE LEGALFORMDECL
+ <FUNCTION (DECL)
+   <COND (<AND <==? <LENGTH .DECL> 2>
+               <==? <1 .DECL> QUOTE>
+               <ATOM? <2 .DECL>>>
+          <2 .DECL>)
+         (<TRCOMPLAIN .PROCN>)   >   >>
+
+
+<DEFINE TRCOMPLAIN
+ <FUNCTION (PROCN)
+   <PRINT (MEANINGLESS PARAMETER DECLARATION IN .PROCN)>
+   <.TR1 (.PROCN *NOT TRACED*)>   >><DEFINE UPTONEXTATOM
+ <FUNCTION (L)
+   <COND (<OR <EMPTY? .L> <ATOM? <1 .L>>> ())
+         ((<1 .L> !<UPTONEXTATOM <REST .L>>))   >>>
+
+
+<DEFINE DISPLAY
+ <FUNCTION ("REST" 'ITEMS)
+   <MAPC
+      #FUNCTION ((ITEM)
+                 <PRINT .ITEM>
+                 <PRINC "= " >
+                 <PRIN1 <EVAL .ITEM>>)
+      .ITEMS>
+   <TERPRI>   >>

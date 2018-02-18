@@ -1,0 +1,40 @@
+	"BOOTSTRAP FOR DYNAMIC FLOADER"
+
+"Expects floader to be FLOADYN > DSK:MUDDLE;
+FLODYN must SETG RERR to the function it must be
+for real floading.  The RERR here calls the new one
+after FLOADing it."
+
+
+ELSE!- MUTS!- PPRINT!- FRAMES!- FRM!- PPRINF!- MMED!- XMED!- MEDDLE!-
+
+<BLOCK <SETG NDYN!- (<MOBLIST NDYN!- 37> <ROOT>)>>
+
+<SETG REAL.ERROR ,ERROR>
+
+<DEFINE DYNERROR ERRACT ("TUPLE" TUPP) <EVAL <RERR .TUPP>>>
+
+<DEFINE RERR (TR)
+	 <COND (<AND <==? 3 <LENGTH .TR>>
+		     <==? UNBOUND-VARIABLE!-ERRORS <1 .TR>>
+		     <==? VALUE <3 .TR>>>
+		<FLOAD "FLODYN" ">" "DSK" "MUDDLE">
+		<RERR .TR>)
+	      (ELSE <FORM REAL.ERROR !.TR>)>>
+
+"Function to allow user library OBLIST specification.
+In here so INIT files can use it."
+
+<DEFINE FLOB!- ("OPTIONAL" (OBL ,NDYN)) <SETG USEROB .OBL>>
+
+<FLOB>
+
+<SETG ERROR ,DYNERROR>
+
+<ENDBLOCK>
+<TERPRI>
+<PRINC "ARDS? ">
+<COND (<MEMQ <READCHR> '![!"Y !"y]> <READCHR> <PUT .OUTCHAN 13 75>)
+	(<PUT .OUTCHAN 13 98>)>
+
+ð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒ

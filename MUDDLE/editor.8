@@ -1,0 +1,140 @@
+"MUDDLE EDITOR, PRETTY-PRINT, AND OTHER ASSORTED ROUTINES"
+
+%%<BLOCK (<ROOT>)>
+FRAMES
+LINPOS
+LINLNT
+PAGPOS
+PAGLNT
+LPT
+TPL
+1+
+1-
+INC
+DEC
+CHOP
+DEFINE
+PPRINT
+EPPRINT
+EDITOR
+%%<ENDBLOCK>
+"PAGE 2"
+%%<BLOCK <SETG EDITOR (<MOBLIST 7> <ROOT>)>>
+
+<SETG DEFINE <FUNCTION (NAME "ARGS" BODY "NAME" REDEF)
+	<COND (<GASSIGNED? .NAME><COND (<LISTEN
+			DO-YOU-REALLY-WANT-TO-REDEFINE .NAME
+			IF-SO-ERRET-TRUE-OTHERWISE-FALSE>)
+			(ELSE <EXIT .REDEF>)>)>
+	<SETG .NAME <CHTYPE .BODY FUNCTION>>
+	.NAME >>
+
+<SETG FRAMES 	<FUNCTION (I)
+	<REPEAT ((FRM <FRAME>)(SMALL 1))
+	<COND (<L? .I .SMALL >  <RETURN FUNCT---ARGS>)>
+	<SET FRM <FRAME .FRM>>
+	<PRINT .SMALL >
+	<PRINC <FUNCT .FRM>>
+	<PRINC "	">
+	<PRINC <ARGS .FRM>>
+	<SET SMALL <+ .SMALL 1>>
+	>>>
+
+<SETG LINPOS 14>
+<SETG LINLNT 13>
+<SETG PAGPOS 16>
+<SETG PAGLNT 15>
+
+<SETG 1+ <FUNCTION (NUMBER)  <+ .NUMBER 1>>>
+<SETG 1- <FUNCTION (NUMBER)  <- .NUMBER 1>>>
+
+<SETG INC <FUNCTION (ATOM "OPTIONAL" (VAL 1))
+	<SET .ATOM <+ ..ATOM .VAL>>>>
+
+<SETG DEC <FUNCTION (ATOM "OPTIONAL" (VAL 1))
+	<SET .ATOM <- ..ATOM .VAL>>>>
+
+<SETG CHOP <FUNCTION (ATOM "OPTIONAL" (VAL 1))
+	<SET .ATOM <REST ..ATOM .VAL>>>>
+
+
+<SETG TPL <FUNCTION ()
+	<OPEN "PRINT" "" "" "TPL">>>
+
+<SETG LPT <FUNCTION ("OPTIONAL" (DEFAULT TRUE))
+	<COND (<OPEN "PRINT" "" "" "LPT">)
+		(.DEFAULT <TPL>)>>>
+"PAGE 3"
+<SET TABS ["" "	" "		" "			"
+"				" "					"
+"						"
+"							"
+"								"]>
+
+
+
+
+<SET SPACES ["" " " "  " "   " "    " "     " "      " "       "]>
+
+
+<SETG INDENT-TO <FUNCTION ( N "AUX" (NOW <LINPOS .OUTCHAN>))
+	<COND (<G? .N .NOW>
+		<PRINC <<- </ .N 8> </ .NOW 8 > -1> .TABS>>
+		<PRINC <<- .N <* </ .N 8> 8> -1> .SPACES>>)>>>
+
+<SETG COMPONENTS <FUNCTION (L M)
+	<REPEAT ((N <LINPOS .OUTCHAN>))
+		<FORMS <1 .L>>
+		<COND (<EMPTY? <SET L <REST .L>>><RETURN DONE>)>
+		<TERPRI>
+		<INDENT-TO .N>>>>
+
+
+"PAGE 4"
+<SETG FORMS <FUNCTION (L)
+	<COND (<FLATSIZE .L <- <LINLNT .OUTCHAN> <LINPOS .OUTCHAN> .M>>
+		<PRIN1 .L>)
+
+
+
+	      (<==? <TYPE .L> FORM> <PRINC "<">
+		<PRIN1 <1 .L>>
+		<PRINC " ">
+		<FORM1 <REST .L> <+ .M 1>>
+		<PRINC ">">)
+	      (<==? <TYPE .L> LIST><PRINC "(">
+		<FORM1 .L <+ .M 1>>
+		<PRINC ")">)
+	      (<==? <TYPE .L> VECTOR><PRINC "["> 
+		<FORM1 .L <+ .M 1>>
+		<PRINC "]"> )
+	      (<==? <TYPE .L> FUNCTION>
+		<PRINC "<FUNCTION " >
+		<FORM1 .L <+ .M 1>>
+		<PRINC ">" >)
+	      (<MONAD? .L> <PRIN1 .L>)
+	      (ELSE <PRINC "#">
+		<PRIN1 <TYPE .L>>
+		<PRINC " (">
+		<FORM1 .L <+ .M 1>>
+		<PRINC ")"> )>
+>>
+"PAGE 5"
+
+<SETG PPRINT <FUNCTION  (L "OPTIONAL" (OUTCHAN .OUTCHAN))
+	<COND (<GASSIGNED? .L>
+	       <EPPRINT <CHTYPE (SETG .L ,.L) FORM>>)
+	      (<ASSIGNED? .L>
+	       <EPPRINT <CHTYPE (SET .L ..L) FORM>>)
+	      (ELSE UNASSIGNED)>>>
+
+
+<SETG EPPRINT <FUNCTION ( L "AUX" (M 1))
+	<TERPRI>
+	<FORMS .L>
+	<TERPRI>
+	DONE>>
+
+%%<ENDBLOCK>
+
+

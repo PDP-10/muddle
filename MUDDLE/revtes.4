@@ -1,0 +1,10 @@
+<DEFINE REV 
+ <ACTOR (EXP "AUX" FRONT BACK)
+   <WHEN (() .EXP)
+         ((_FRONT !_BACK)
+          <BE <IS? (!<REV .BACK> ?FRONT) .EXP>>)   >>>
+
+
+<DEFINE PAL
+ <ACTOR ("AUX" END)
+   <VEL () (_END) (_END !<PAL> ?END)>   >>

@@ -1,0 +1,165 @@
+<PRINC "/MICROMED">
+<BLOCK (<MOBLIST M!- 13> <ROOT>)>
+CO CI CL+1 LST LOC
+O GETC NC
+PUSHO POPO
+L R DR DL UR UL
+I K G C
+SR SL WR WL
+CWR CWL
+<ENDBLOCK>
+
+<BLOCK (<MOBLIST IM!-M!- 23> <GET M!- OBLIST> <ROOT>)>
+
+<SETG O <FUNCTION (IT)
+	<SET LOC .IT>
+	<SET LST ()>
+	<SET CL+1 2>
+	<SET CI 1>
+	<SET CO (<IN .IT>)>
+	T>>
+
+<NEWTYPE CURSOR!- VECTOR>
+
+<SET OPDL ()>
+
+<SETG GETC <FUNCTION () <CHTYPE [.CO .CI .CL+1 .LST .LOC] CURSOR>>>
+
+<SETG PUSHO <FUNCTION (IT) <PUSH!- OPDL <GETC>> <O .IT>>>
+
+<SETG POPO <FUNCTION () <NC <POP!- OPDL>>>>
+
+<SETG NC <FUNCTION (IT)
+	<SET CO <1 .IT>>
+	<SET CI <2 .IT>>
+	<SET CL+1 <3 .IT>>
+	<SET LST <4 .IT>>
+	<SET LOC <5 .IT>>
+	T>>
+<SETG L <FUNCTION (N "AUX" (T <- .CI .N>))
+		<==? .T <SET CI <MAX 1 .T>>>>>
+
+<SETG R <FUNCTION (N "AUX" (T <+ .CI .N>))
+		<==? .T <SET CI <MIN .CL+1 .T>>>>>
+
+
+<SETG DR <FUNCTION ()
+		<COND	(<==? .CI .CL+1> #FALSE("NO-RIGHT"))
+			(ELSE <PRID .CI T>)>>>
+
+
+<SETG DL <FUNCTION ()
+		<COND	(<1? .CI> #FALSE("NO-LEFT"))
+			(ELSE <PRID <- .CI 1> #FALSE()>)>>>
+
+<SETG PRID <FUNCTION (N T)
+		<COND (<MONAD? <.N .CO>> #FALSE("MONAD"))
+		      (ELSE
+			<SET LST (.CO .N .CL+1 !.LST)>
+			<SET CO <.N .CO>>
+			<SET CL+1 <+ 1 <LENGTH .CO>>>
+			<SET CI <COND (.T 1) (ELSE .CL+1)>>)>>>
+
+<SETG UL <FUNCTION ()
+		<COND (<EMPTY? .LST> #FALSE("TOP"))
+		      (ELSE <SET CI <2 .LST>> <PRIU>)>>>
+
+<SETG UR <FUNCTION ()
+		<COND (<EMPTY? .LST> #FALSE("TOP"))
+		      (ELSE <SET CI <+ 1 <2 .LST>>> <PRIU>)>>>
+
+<SETG PRIU <FUNCTION ()
+	<SET CO <1 .LST>>
+	<SET CL+1 <3 .LST>>
+	<SET LST <REST .LST 3>>
+	T>>
+<SETG WR <FUNCTION () <OR <DR> <R 1> <UR>>>>
+<SETG WL <FUNCTION () <OR <DL> <L 1> <UL>>>>
+
+<SETG SR <FUNCTION (IT) <PRIMS .IT ,DR ,R ,UR>>>
+<SETG SL <FUNCTION (IT) <PRIMS .IT ,DL ,L ,UL>>>
+
+<SETG PRIMS <FUNCTION (IT DOWN ACROSS UP)
+     <REPEAT ()
+	<COND (<AND <L? .CI .CL+1> <=? .IT <.CI .CO>>>
+		<RETURN T>)
+	      (<.DOWN>) (<.ACROSS 1>) (<.UP>)
+	      (ELSE <RETURN #FALSE ("NOT-FOUND")>)>>>>
+
+<SETG CWR <FUNCTION (C) <PRIMCW .C ,DR ,R ,UR>>>
+<SETG CWL <FUNCTION (C) <PRIMCW .C ,DL ,L ,UL>>>
+
+<SETG PRIMCW <FUNCTION (C DOWN ACROSS UP)
+     <REPEAT ()
+	<COND	(<EVAL .C> <RETURN T>)
+		(<.DOWN>) (<.ACROSS 1>) (<.UP>)
+		(ELSE <RETURN #FALSE ("END")>)>>>>
+<SETG I <FUNCTION (IT "AUX" (RCI <- .CI 1>) (LIT <LENGTH .IT>) (OCI .CI))
+	<SET CI <+ .CI .LIT>>
+	<SET CL+1 <+ .CL+1 .LIT>>
+	<COND (<==? <PRIMTYPE .CO> LIST>
+		<COND	(<EMPTY? .IT> T)
+			(ELSE	<SET IT (!.IT)>
+				<PUTREST <REST .IT <- .LIT 1>> <REST .CO .RCI>>
+				<LIPSTIC .IT>)>)
+	      (ELSE
+		<SET CO <CHTYPE <NEWSTRUC ,<PRIMTYPE .CO>
+					(.CO .IT <REST .CO .RCI>)
+					(.RCI .LIT <- .CL+1 .CI>)>
+				<TYPE .CO>>>
+		<UPDATE>)>>>
+
+
+<SETG K <FUNCTION (N "AUX" (RCO <REST .CO <MIN <- .CL+1 1> <+ .CI .N -1>>>) 
+				(LCO <LENGTH .RCO>) (OCI .CI))
+	<SET CL+1 <+ .CI .LCO>>
+	<COND (<==? <PRIMTYPE .CO> LIST> <LIPSTIC .RCO>)
+	      (ELSE
+		<SET CO <CHTYPE <NEWSTRUC ,<PRIMTYPE .CO>
+					(.CO .RCO)
+					(<- .CI 1> .LCO)>
+				<TYPE .CO>>>
+		<UPDATE>)>>>
+
+<SETG LIPSTIC <FUNCTION (L)
+	<COND (<1? .OCI> <SET CO <CHTYPE .L <TYPE .CO>>> <UPDATE>)
+	      (ELSE <PUTREST <REST .CO <- .OCI 2>> .L> T)>>>
+
+
+
+<SETG UPDATE <FUNCTION ("AUX" (LLST <LENGTH .LST>))
+	<COND (<0? .LLST>
+		<SETLOC .LOC
+			<COND (<AND <NOT <MONAD? .CO>> <1? <LENGTH .CO>>> <1 .CO>)
+			      (ELSE .CO)>>)
+	      (ELSE <COND (<==? 3 .LLST> <SETLOC .LOC .CO>)>
+		   <SETLOC <AT <1 .LST> <2 .LST>> .CO>)>
+	T>>
+
+<SETG G <FUNCTION (N "AUX" (M <MIN .N <- .CL+1 .CI>>) (N <- .CI 1>))
+	<ILIST .M '<<SET N <+ .N 1>> .CO>>>>
+
+<SETG C <FUNCTION (N)
+	<COND	(<==? .CI .CL+1> #FALSE ("RIGHT-EDGE"))
+		(ELSE <SETLOC <AT .CO .CI> .N>)>>>
+
+<SETG NEWSTRUC
+      <FUNCTION (FN OL NL "AUX" T (O <1 .OL>) (N <1 .NL>) (IX 0))
+  ;"Actual structure hacker.  STACKFORMs FN, gobbling <1 .NL> members from <1 .OL> 'till gone."
+		<STACKFORM .FN
+			   .T
+			   <COND (<==? .N .IX>
+				  <REPEAT ()
+					  <COND (<EMPTY? <SET OL <REST .OL>>>
+						 <RETURN #FALSE ()>)
+						(ELSE
+						 <COND (<0? <SET N
+								 <1 <SET NL
+									 <REST .NL>>>>>
+							<AGAIN>)>
+						 <SET IX 1>
+						 <SET T <1 <SET O <1 .OL>>>>
+						 <RETURN <SET O <REST .O>>>)>>)
+				 (ELSE <SET T <1 .O>> <SET IX <+ .IX 1>> <SET O <REST .O>>)>>>>
+<ENDBLOCK>
+ð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒ

@@ -1,0 +1,370 @@
+<FLOAD "MICROM" ">" "DSK" >
+<PRINC "/XMED">
+
+XMED!-
+MMED!-
+MEDDLE!-
+
+<BLOCK (<MOBLIST MM!- 13> <ROOT>)>
+O UT ? HERE OB EB OB?
+P PA PT PC
+S -S I C R L K U D UR DL WR WL B F
+C: I: K:
+SC V & Q 
+BK KB
+<ENDBLOCK>
+
+<BLOCK (<MOBLIST IMM!-MM 23> <GET MM OBLIST> <ROOT>)>
+
+<NEWTYPE OBANDCURS LIST>
+
+<SETG INITOB ("NOTHING OPEN")>
+
+<DEFINE MMED MMEDACT	("AUX"	(CI!-M 1) (CO!-M ,INITOB)
+				(CL+1!-M 2) (LST!-M ())
+				(LOC!-M <GLOC INITOB>)
+				(CLLN <- <13 .OUTCHAN> 4>)
+				(OBPDL ())
+				(VERBSW #FALSE ()))
+	<PRINC "
+MEDDLE 2 Running.">
+	<RDBRAK (<GET MM!- OBLIST><GET M!- OBLIST>)>>
+
+<SETG MEDDLE <SETG XMED ,MMED>>
+
+<DEFINE O (IT "AUX" (HOW <GET <TYPE .IT> O>))
+	<COND (.HOW
+		<COND (<SET HOW <EVAL .HOW>>
+			<OR <==? <TYPE .IT> OBANDCURS> <==? <TYPE .IT> CURSOR> <D>>)
+		      (ELSE .HOW)>)
+	      (ELSE #FALSE ("BAD TYPE"))>>
+
+<PUT LOCD O '<O!-M .IT>>
+
+<PUT CURSOR O '<NC!-M .IT>>
+
+<PUT OBANDCURS O '<PROG ((LOBS ()) (NOBPDL <1 .IT>))
+			<UNOB>
+			<SET OBPDL <REST .NOBPDL>>
+			<NC!-M <2 .IT>>
+			<REPEAT () <AND <EMPTY? <REST .NOBPDL>> <RETURN T>>
+				<SET LOBS (<1 .NOBPDL> !.LOBS)>
+				<SET NOBPDL <REST .NOBPDL 4>>>
+			<REPEAT () <AND <EMPTY? .LOBS> <RETURN T>>
+				<BLOCK <1 .LOBS>>
+				<SET LOBS <REST .LOBS>>>
+			<SET NOB .OBLIST>
+			<SET UTOP <1 .NOB>>
+			<SET ROB (.UTOP !.NOB)>> >
+
+<PUT ATOM O '<COND (<GASSIGNED? .IT> <O!-M <GLOC .IT>>)
+		   (<ASSIGNED? .IT> <O!-M <LLOC .IT>>)
+		   (ELSE '#FALSE ("UNASSIGNED"))>>
+
+
+<DEFINE UT () <O!-M .LOC!-M> <D>>
+<DEFINE PT () <PRIMP <IN .LOC!-M>> <AGAIN .RDBRAKEXIT>>
+
+<DEFINE PA ("OPTIONAL" (N 0) "AUX" (QUICKPRINT!- #FALSE ()) (RI <- <* .N 3> 2>))
+	<PUTCURS>
+	<PRIMP	<COND (<L? .RI 0> <COND (<EMPTY? .LST!-M> <1 .CO!-M>) (T .CO!-M)>)
+		      (<G? .RI <- <LENGTH .LST!-M> 3>> <IN .LOC!-M>)
+		      (ELSE <.RI .LST!-M>)>>
+	<REMCURS>
+	<AGAIN .RDBRAKEXIT>>
+
+<DEFINE P ()
+	<PRIMP <COND (<==? .CI!-M .CL+1!-M> '#FALSE ("RIGHT-EDGE")) (ELSE <.CI!-M .CO!-M>)>>
+	<AGAIN .RDBRAKEXIT>>
+
+<DEFINE PRIMP (NP)
+	<COND (<GASSIGNED? EPRINT!->
+		<COND (<LOOKUP "MEDSW" <GET PP!- OBLIST>>)
+		      (T <FLOAD "MEDPP" ">" "DSK" "MUDDLE">)>
+		<EPRINT!- .NP>
+		<SETG PRIMP ,EPRINT!->)
+	      (ELSE <PRINT .NP>)>>
+
+<SET MEDDLE_CURSOR!- "/\\">
+
+<DEFINE PUTCURS ()
+	<COND	(<==? .CI!-M .CL+1!-M> <SET SPECAFT!- <REST .CO!-M <- .CI!-M 2>>>)
+		(ELSE <SET SPECBEF!- <REST .CO!-M <- .CI!-M 1>>>)>>
+
+<DEFINE REMCURS () <SET SPECBEF <SET SPECAFT 0>>>
+
+<DEFINE Q () <UNOB> <EXIT .MMEDACT "muddle">>
+
+<DEFINE UNOB ()
+	<REPEAT ()	<AND <EMPTY? .OBPDL> <RETURN T>>
+			<ENDBLOCK>
+			<SET OBPDL <REST .OBPDL 4>> >>
+
+<DEFINE  (ARG)
+	<VALRET <COND (<==? <TYPE .ARG> STRING> .ARG) (ELSE <UNPARSE .ARG>)>>>
+
+<DEFINE ? ("AUX" (FIL <OPEN "READ" "MEDCOM" ">" "DSK" "MUDDLE">))
+	<COND (.FIL
+		<REPEAT () <PRINC <READCHR '<RETURN T> .FIL>>>
+		<CLOSE .FIL>
+		<AGAIN .RDBRAKEXIT>)
+	      (ELSE #FALSE("Where's my file???"))>>
+
+<DEFINE HERE (ATM)
+	<COND (<==? <TYPE .ATM> ATOM>
+		<SET .ATM <CHTYPE ((.OBLIST !.OBPDL) <GETC!-M>) OBANDCURS>>)
+	      (ELSE #FALSE ("ARG NOT ATOM"))>>
+
+<DEFINE OB EOB ("TUPLE" BLOK)
+	<REPEAT ((BLK .BLOK))
+		<AND <EMPTY? .BLK> <RETURN T>>
+		<PUT .BLK 1 <COND (<==? <TYPE <1 .BLK>> OBLIST> <1 .BLK>)
+				  (<GET <1 .BLK> OBLIST>)
+				  (ELSE <EXIT .EOB #FALSE ("ARG NOT OBLIST OR OBLIST NAME")>)>>
+		<SET BLK <REST .BLK>> >
+	<SET OBPDL (.NOB .UTOP .ROB .OBLIST !.OBPDL)>
+	<SET NOB (!.BLOK !<COND (<MEMQ <ROOT> .BLOK> '()) (ELSE (<ROOT>))>)>
+	<BLOCK .NOB>
+	<SET UTOP <1 .NOB>>
+	<SET ROB (.TOB !.NOB)>
+	<AGAIN .RDBRAKEXIT>>
+
+<DEFINE EB ()
+	<COND (<EMPTY? .OBPDL> #FALSE ("NO MORE BLOCKS"))
+	      (ELSE
+		<SET NOB <1 .OBPDL>>
+		<SET UTOP <2 .OBPDL>>
+		<SET ROB <3 .OBPDL>>
+		<SET OBPDL <REST .OBPDL 4>>
+		<ENDBLOCK>
+		<AGAIN .RDBRAKEXIT>)>>
+
+<DEFINE OB? ()
+	<REPEAT ((FOB .OBLIST))
+		<AND <EMPTY? .FOB> <AGAIN .RDBRAKEXIT>>
+		<TERPRI>
+		<PRIN1 <GET <1 .FOB> OBLIST>>
+		<SET FOB <REST .FOB>> >>
+<DEFINE V () <SET VERBSW <NOT .VERBSW>> T>
+
+<DEFINE & () <AMPERSAND> <AGAIN .RDBRAKEXIT>>
+
+<SETG CLOBOT <REST <IVECTOR 5 '(1)> 5>>
+<SETG FSLBOT <REST <IUVECTOR 5 -1> 5>>
+
+<DEFINE AMPERSAND ()
+	<COND (<FLATSIZE .CO!-M .CLLN>	<TERPRI>
+					<BRACK OPENBRAK .CO!-M>
+					<REPEAT ((IX 0))
+						<AND <==? <SET IX <+ .IX 1>> .CI!-M>
+							<PRINC "/\\">>
+						<AND <==? .IX .CL+1!-M> <RETURN T>>
+						<PRIN1 <.IX .CO!-M>>
+						<PRINC !" >>
+					<BRACK CLOSEBRAK .CO!-M>)
+	      (ELSE
+	       <PROG ((CLOB ,CLOBOT) (FSL ,FSLBOT) FS BEGIN STOP
+			(LLN <COND (<GET OPENBRAK <TYPE .CO!-M>> .CLLN)
+				   (ELSE <- .CLLN 2 <FLATSIZE <TYPE .CO!-M> .CLLN>>)>))
+		<COND (<G? .CL+1!-M 5>
+			<COND (<L? .CI!-M 4> <SET BEGIN .CO!-M> <SET LLN <- .LLN 1>>)
+			      (<L? <- .CL+1!-M .CI!-M> 4> <SET BEGIN <REST .CO!-M <- .CL+1!-M 5>>>
+							  <SET LLN <- .LLN 4>>)
+			      (ELSE <SET BEGIN <REST .CO!-M <- .CI!-M 3>>>
+				    <SET LLN <- .LLN 9>>)>
+			<SET STOP <REST .BEGIN <MIN 4 <LENGTH .BEGIN>>>>
+			<AND <L? <FSZ> .LLN> <RETURN <EP1>>>)
+		      (ELSE <SET BEGIN .CO!-M>
+			    <SET STOP <REST .CO!-M <- .CL+1!-M 1>>>
+			    <AND <L? <FSZ> .LLN> <RETURN <EP1>>>)>
+		<REPEAT ()
+		    <REPEAT ((FL <REST .FSL>) (VIC .FSL))
+			<COND (<G? <1 .FL> <1 .VIC>> <SET VIC .FL>)
+			      (<EMPTY? <SET FL <REST .FL>>>
+				<SET CLOB <PUT <BACK .CLOB> 1
+					    <REST .BEGIN <- <LENGTH .VIC> 1>>>>
+				<SET FS <- .FS <1 .VIC> -4>>
+				<PUT .VIC 1 4>
+				<RETURN T>)>>
+		    <AND <L? .FS .LLN> <EP1> <RETURN T>>>>)>>
+
+<DEFINE FSZ ()
+	<REPEAT ((OBJ <REST .BEGIN 0>))
+		<SET FSL <PUT <BACK .FSL> 1
+				<COND (<FLATSIZE <1 .OBJ> .LLN>)
+				      (ELSE <SET CLOB <PUT <BACK .CLOB> 1 .OBJ>> 4)>>>
+		<AND <==? <SET OBJ <REST .OBJ>> .STOP> <RETURN <SET FS <+ !.FSL>>>>>>
+
+<DEFINE EP1 ()
+	<TERPRI>
+	<BRACK OPENBRAK .CO!-M>
+	<OR <==? .BEGIN .CO!-M> <PRINC "...& ">>
+	<SET BEGIN <REST .BEGIN 0>>
+	<REPEAT ((CP <REST .CO!-M <- .CI!-M 1>>))
+		<AND <==? .BEGIN .CP> <PRINC "/\\">>
+		<COND (<==? .BEGIN .STOP> <RETURN T>)
+		      (<MEMQ .BEGIN .CLOB> <BRACK OPENBRAK <1 .BEGIN>>
+					   <PRINC !"&>
+					   <BRACK CLOSEBRAK <1 .BEGIN>>)
+		      (ELSE <PRIN1 <1 .BEGIN>>)>
+		<PRINC !" >
+		<SET BEGIN <REST .BEGIN>>>
+	<OR <EMPTY? .STOP> <PRINC "&...">>
+	<BRACK CLOSEBRAK .CO!-M>>
+
+<DEFINE BRACK (WHICH WHAT "AUX" (BK <GET .WHICH <TYPE .WHAT>>))
+	<COND (.BK <PRINC .BK>)
+	      (<MEMQ <TYPE .WHAT> '![ATOM FIX FLOAT]>)
+	      (<==? .WHICH CLOSEBRAK> <PRINC <GET CLOSEBRAK <PRIMTYPE .WHAT> !"?>>)
+	      (ELSE
+	       <PRINC !"#>
+	       <PRIN1 <TYPE .WHAT>>
+	       <PRINC !" >
+	       <PRINC <GET OPENBRAK <PRIMTYPE .WHAT> !"?>>)>>
+
+<PUT OPENBRAK LIST !"(>		<PUT CLOSEBRAK LIST !")>
+<PUT OPENBRAK FORM !"<>		<PUT CLOSEBRAK FORM !">>
+<PUT OPENBRAK VECTOR !"[>	<PUT CLOSEBRAK VECTOR !"]>
+<PUT OPENBRAK UVECTOR "![">	<PUT CLOSEBRAK UVECTOR "!]">
+<PUT OPENBRAK STRING !"">	<PUT CLOSEBRAK STRING !"">
+<PUT OPENBRAK TUPLE !"[>	<PUT CLOSEBRAK TUPLE !"]>
+<PUT OPENBRAK SEGMENT "!<">	<PUT CLOSEBRAK SEGMENT "!>">
+<DEFINE I ("ARGS" L) <I!-M .L>>
+<DEFINE C ('IT) <C!-M .IT> T>
+<DEFINE R ("OPTIONAL" (N 1) "AUX" (OCI .CI!-M))
+	<COND (<R!-M .N>) (T <SET CI!-M .OCI> #FALSE ("RIGHT-EDGE"))>>
+<DEFINE L ("OPTIONAL" (N 1) "AUX" (OCI .CI!-M))
+	<COND (<L!-M .N>) (T <SET CI!-M .OCI> #FALSE ("LEFT-EDGE"))>>
+<DEFINE B () <SET CI!-M .CL+1!-M>>
+<DEFINE F () <SET CI!-M 1>>
+<DEFINE K ("OPTIONAL" (N 1) "AUX" (OCI .CI!-M))
+	<COND (<L? .N 0> <L!-M <- .N>> <SET N <- .OCI .CI!-M>>)>
+	<K!-M .N> >
+<DEFINE U ("OPTIONAL" (N 1)) <PRIMREP ,UL!-M .N>>
+<DEFINE D ("OPTIONAL" (N 1)) <PRIMREP ,DR!-M .N>>
+<DEFINE UR ("OPTIONAL" (N 1)) <PRIMREP ,UR!-M .N>>
+<DEFINE DL ("OPTIONAL" (N 1)) <PRIMREP ,DL!-M .N>>
+<DEFINE WR ("OPTIONAL" (N 1)) <PRIMREP ,WR!-M .N>>
+<DEFINE WL ("OPTIONAL" (N 1)) <PRIMREP ,WL!-M .N>>
+
+<DEFINE PRIMREP (WHAT MANY "AUX" (OLDC <GETC!-M>))
+	<REPEAT (T1)
+		<COND (<L? .MANY 1> <RETURN T>)
+		      (<SET T1 <.WHAT>>)
+		      (ELSE <NC!-M .OLDC> <RETURN .T1>)>
+		<SET MANY <- .MANY 1>> >>
+
+<DEFINE S ('IT) <AND <PS .IT ,SR!-M> <R!-M 1>>>
+<DEFINE -S ('IT)<AND <PS .IT ,SL!-M>>>
+
+<DEFINE PS (WHAT HOW "AUX" (T <GETC!-M>))
+	<COND (<.HOW .WHAT>)
+	      (ELSE <NC!-M .T> #FALSE ("NOT-FOUND"))>>
+
+<DEFINE C: (NTYP) <C!-M <SETYPE <.CI!-M .CO!-M> .NTYP>> T>
+
+<DEFINE I: (NTYP "OPTIONAL" (N 1) "AUX" (T <G!-M .N>))
+	<K .N>
+	<I!-M (<SETYPE .T .NTYP>)>
+	<L!-M 1>>
+
+<DEFINE K: ("AUX" (T <G!-M 1>) LINS)
+	<COND (<MONAD? <1 .T>> #FALSE ("NOT-STRUCTURED"))
+	      (ELSE  <SET LINS <LENGTH <1 .T>>> <K!-M 1> <I!-M <1 .T>> <L!-M .LINS>)>>
+
+<DEFINE SETYPE (OBJ NTYPE)
+	<COND (<MONAD? .OBJ> <SET OBJ (.OBJ)>)>
+	<CHTYPE <APPLY ,<TYPEPRIM .NTYPE> !.OBJ> .NTYPE>>
+
+<DEFINE SC ("OPTIONAL" COMM)
+	<COND (<==? .CL+1!-M .CI!-M> #FALSE ("RIGHT-EDGE"))
+	      (<ASSIGNED? COMM> <PUT <REST .CO!-M <- .CI!-M 1>> COMMENT .COMM> "put.")
+	      (T <PUT <REST .CO!-M <- .CI!-M 1>> COMMENT> "Removed.")>>
+<DEFINE BK ("ARGS" L)
+	<COND	(<==? .CI!-M .CL+1!-M> '#FALSE ("RIGHT-EDGE"))
+		(ELSE <C!-M <CHTYPE (M_B .L <.CI!-M .CO!-M>) FORM>>
+		      "busted")>>
+
+<DEFINE KB ()
+	<UT>
+	<REPEAT (SV)
+		<COND (<SR!-M M_B> <SET SV <3 .CO!-M>>
+				<UL!-M> <C!-M .SV>)
+		      (ELSE <RETURN 1>)>>
+	<UT>
+	"DONE">
+
+<DEFINE M_B ("BIND" CENV 'DOLIST 'SAVE
+			"AUX"	(OUTCHAN ,OUTCHAN)
+				(INCHAN ,INCHAN))
+	<TERPRI>
+	<PRINC "*BREAK*">
+	<REPEAT ()  <COND (<EMPTY? .DOLIST> <RETURN T>)
+			  (ELSE	<TERPRI>
+				<PRIN1 <1 .DOLIST>>
+				<PRINC " = ">
+				<PRIN1 <EVAL <1 .DOLIST> .CENV>>
+				<SET DOLIST <REST .DOLIST>>)>>
+	<LISTEN>
+	<EVAL .SAVE .CENV>>
+MERDE!-
+
+<DEFINE OMERDE () <COND (<ASSIGNED? RDBRAKEXIT> <AGAIN .RDBRAKEXIT>) ("Not in MEDDLE.")>>
+
+<SETG GOFORM '<EXIT .RDBRAKEXIT "out of reader">>
+
+<SETG SPECS ![
+	!" 		;"SPACE"
+	!"		;"TAB"
+	!"
+			;"CARRIAGE-RETURN"
+	!"		;"LINE-FEED"
+	!"		;"ALTMODE"
+]>
+
+<SETG ALTGETTER <MEMQ !" ,SPECS>>
+
+<DEFINE RDBRAK ("BIND" UENV COB "OPTIONAL" (NOB .OBLIST)
+			"AUX"	(TOB <MOBLIST TOB 1>)
+				(ROB (.TOB !.NOB))
+				(UTOP <1 .NOB>)
+				FRST CMND FLIST EFLIST)
+	<READCHR>	;"FLUSH THE CRETINOUS INITIAL ALTMODE."
+	<REPEAT RDBRAKEXIT ()
+		<SET MERDE <CLOSURE ,OMERDE RDBRAKEXIT>>
+	P2GO	<TERPRI>
+		<PRINC !"*>
+	 P1GO	<COND (<==? <NEXTCHR> <1 ,ALTGETTER>>
+			<READCHR>
+			<AMPERSAND>
+			<GO P2GO>)>
+		<COND (<NOT <==? ATOM <TYPE <SET FRST <READ ,GOFORM .INCHAN .ROB>>>>>
+			<REPEAT ((TTOB <1 .TOB>))
+				<AND <EMPTY? .TTOB> <RETURN T>>
+				<INTERN <REMOVE <1 .TTOB>> .UTOP>
+				<SET TTOB <REST .TTOB>>>
+			<PRINT <EVAL .FRST .UENV>>
+			<AND <==? <NEXTCHR> !"> <READCHR>>
+			<GO P2GO>)
+		      (<NOT <SET CMND <OR <LOOKUP <SET FLIST <PNAME .FRST>> <1 .COB>>
+					  <LOOKUP .FLIST <2 .COB>>>>>
+			<AND <==? <OBLIST? .FRST> .TOB> <INTERN <REMOVE .FRST> .UTOP>>
+			<PRINT .FRST>
+			<GO P2GO>)>
+		<AND <==? <OBLIST? .FRST> .TOB> <REMOVE .FRST>>
+		<SET FLIST <SET EFLIST <FORM .CMND>>>
+		<REPEAT (TEM)
+			<COND (<SET TEM <MEMQ <NEXTCHR ,GOFORM> ,SPECS>>
+				<READCHR>
+				<AND <==? .TEM ,ALTGETTER> <RETURN T>>)
+			      (ELSE <SET EFLIST <REST <PUTREST .EFLIST (<READ ,GOFORM>)>>>)>>
+		<COND (<SET FLIST <EVAL .FLIST>>)
+		      (ELSE <PRIN1 .FLIST>)>
+		<AND .VERBSW <GO P1GO>>
+		<AMPERSAND>>>
+
+
+<ENDBLOCK>
+
+<COND (<LOOKUP "XMED" <1 .OBLIST>> <SETG <LOOKUP "XMED" <1 .OBLIST>> ,XMED!-> <REMOVE XMED>)>
+

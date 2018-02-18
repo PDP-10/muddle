@@ -1,0 +1,26 @@
+<SETG PFUNCT <FUNCTION (OBLST CHAN)
+	<PROG (A B C D E (F 0))
+		<SET A 1>
+		<SET B <LENGTH .OBLST>>
+
+L2		<SET C <.A .OBLST>>
+L1		<COND (<=? .C ()> <GO FOO>)>
+
+		<COND (<GASSIGNED? <SET D <1 .C>>>
+			<SET E <TYPE <GVAL .D>>>
+			<COND (<OR <=? .E SUBR><=? .E FSUBR>>
+				<PRIN1 .D .CHAN>
+				<PRINC "  " .CHAN>
+				<PRIN1 .E .CHAN>
+				<COND (<=? 5 <SET F <+ .F 1>>> <SET F 0> <TERPRI .CHAN><TERPRI .CHAN>)
+					(ELSE <PRINC "	" .CHAN>
+					<SET FO <FLATSIZE .D 24>>
+					<COND (<1? .FO> <PRINC "		" .CHAN>)
+						(<L? .FO 10><PRINC "	" .CHAN>)>)>)>)>
+		<SET C <REST .C>>
+		<GO L1>
+FOO		<SET A <+ .A 1>>
+		<COND (<1? <- .A .B>> <RETURN "DONE">)>
+		<GO L2>
+>>>
+

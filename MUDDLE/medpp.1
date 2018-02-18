@@ -1,0 +1,81 @@
+<PRINC "/MEDPP">
+"File to convert a PPRINT with comments to a MEDPP."
+"PPRINT MUST!!! be loaded FIRST!!!"
+
+"Add the ATOMs needed for intercommunication with MEDDLE."
+<BLOCK (<ROOT>)>
+"Cursor arrangements."
+MEDDLE_CURSOR
+SPECBEF
+SPECAFT
+"Other."
+PRINE
+<ENDBLOCK>
+"Now add and change things within PPRINT."
+<BLOCK (<GET PP OBLIST> <ROOT>)>
+
+MEDSW	;"The existence of this atom in PP shows that MEDPP has been loaded."
+
+<SET SPECBEF 0>
+<SET SPECAFT 0>
+
+<SETG PRINMED <FUNCTION ()	;"Print the cursor and speed things up."
+	<PRINC .MEDDLE_CURSOR>
+	<SETG FORMS ,FASTFORMS>>>
+
+<SETG COMPONENTS	;"Print the components of a structure in a column" 
+      <FUNCTION (L "OPTIONAL" (OM <+ .M 1>) (STOP 0))
+	<SET L <REST .L 0>>		;"So cursor point can be recognized."
+	<REPEAT ((N <LINPOS .OUTCHAN>) (M 0))
+		<AND <EMPTY? <REST .L>> <SET M .OM>>
+		<AND <==? .L .SPECBEF> <PRINMED>>
+		<FORMS <1 .L>>
+		<AND <==? .L .SPECAFT> <PRINMED>>
+		<COMMENTS>
+		<AND <OR <EMPTY? <SET L <REST .L>>> <==? .L .STOP>> <RETURN DONE>>
+		<TERPRI>
+		<INDENT-TO .N>>>>
+
+
+<SETG ELEMENTS		;"Print the components of a structure in a line."
+      <FUNCTION (L "OPTIONAL" (M <+ .M 1>) (STOP 0))
+	<COND (<EMPTY? .L>)
+	      (ELSE
+		<SET L <REST .L 0>>		;"So cursor point can be recognized."
+		<REPEAT ((N <LINPOS .OUTCHAN>) COM)
+			<AND <==? .L .SPECBEF> <PRINMED>>
+			<FORMS <1 .L>>
+			<AND <==? .L .SPECAFT> <PRINMED>>
+			<SET COM <COMMENTS>>
+			<AND <OR <EMPTY? <SET L <REST .L>>> <==? .L .STOP>> <RETURN DONE>>
+			<COND (.COM <TERPRI> <INDENT-TO .N>)>
+			<PRINC !" >>)>>>
+
+<SETG PRINE <FUNCTION (L "OPTIONAL" (OUTCHAN .OUTCHAN)
+			 "AUX" (M 0) (COMELE ,COMPONENTS))
+	<SPEEDSEL>
+	<COND	(<MONAD? .L>)
+		(<==? <TYPE .L> STRING> <TERPRI> <PRINC .L> <TERPRI>)
+		(<FLATSIZE .L <- <LINLNT .OUTCHAN> <LINPOS .OUTCHAN>>>
+			<TERPRI> <ELEMENTS .L>)
+		(ELSE <TERPRI><COMPONENTS .L>)>
+	,NULL>> ;"The rubout atom is there."
+
+
+<SETG NORMFORM <FUNCTION ("AUX" (PN <+ 1 <LINPOS .OUTCHAN>>))
+			<PRINC "<" >
+			<AND <==? <REST .L 0> .SPECBEF> <PRINMED>>
+			<FORMS <1 .L>>
+			<AND <==? .L .SPECAFT> <PRINMED>>
+			<COND (<==? .COMELE ,ELEMENTS> <COMEND>)
+			      (<FORMAHEAD .L> <COMMENTS> <TERPRI> <INDENT-TO .PN>
+				<COND (<FLATSIZE <REST .L> <- <LINLNT .OUTCHAN>
+								<LINPOS .OUTCHAN>
+								.M 3>>
+						<ELEMENTS <REST .L>>)
+				      (T <COMPONENTS <REST .L>>)>)
+			      (T <COMEND>)>
+			<PRINC ">">>>
+
+<ENDBLOCK>
+ð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒð`Áƒ

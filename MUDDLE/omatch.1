@@ -1,0 +1,456 @@
+<SETG FRAMEN 
+  <FUNCTION (N)
+   <COND (<0? .N> <FRAME>)
+         (T <FRAME <FRAMEN <- .N 1>>>)>>>
+
+
+
+<SETG CLEANUP
+  <FUNCTION CF () 
+    <FINALIZE>
+    <BUMPER>>>
+
+
+<SETG BUMPER
+  <FUNCTION ()
+   <FAILPOINT FP ()
+      <> (M A)
+      <RESTORE .FP (FAILURE CAUGHT WITH M = .M AND A = .A)>>   >>
+
+
+
+<SETG THSET
+  <FUNCTION (VAR VAL "AUX" (OV <RLVAL .VAR>))
+      <FAILPOINT ()
+         <SET .VAR <RLVAL VAL>>
+         (M A)
+         <SET .VAR <RLVAL OV>>
+         <FAIL .M .A>>   >>
+
+
+<SETG INSTANTIATE
+  <FUNCTION ("BIND" CUR EXP "OPTIONAL" (ENV <>)
+               "AUX" (TP <TYPE .EXP>) VAL EXP1)
+   <SPLICE .CUR .ENV>
+   <COND (<==? .TP FORM>
+          <EVAL <CHTYPE <INSTANTIATE <CHTYPE .EXP LIST>>
+                        FORM>>)
+         (<MEMQ .TP '(ACTORFORM SACTORFORM)>
+          <COND (<==? <SET EXP1 <1 .EXP>> GIVEN>
+                 <OR <AND <ASSIGNED? <2 .EXP>>
+                          <LVAL <2 .EXP>>>
+                     .EXP>)
+                (<==? .EXP1 ALTER>
+                 <THSET <2 .EXP> ?()>
+                 <CHTYPE (GIVEN <2 .EXP>) .TP>)
+                (<==? .EXP1 VEL>
+                 <FAILPOINT FP ((PATS <REST .EXP>) P1)
+                     <FAIL> ()
+                     <AND <EMPTY? .PATS> <FAIL>>
+                     <SET P1 <1 .PATS>>
+                     <SET PATS <REST .PATS>>
+                     <RESTORE .FP <INSTANTIATE .P1>>>)
+                (<==? .EXP1 BE>
+                 <OR <EVAL <2 .EXP>> <FAIL>>
+                 .EXP)
+                (<==? .EXP1 ET>
+                 <OR <AND <EMPTY? <REST .EXP>> .EXP>
+                     <REPEAT R ((P1 <2 .EXP>) (PATS <REST .EXP 2>))
+                          <AND <EMPTY? .PATS>
+                               <EXIT .R <INSTANTIATE .P1>>>
+                          <MATCH1 .P1 <1 .PATS>>
+                          <SET PATS <REST .EXP>>   >>)
+                (T .EXP)>)
+        (<MONAD? .EXP> .EXP)
+        (<==? <TYPE <SET EXP1 <1 .EXP>> > SEGMENT>
+         (!<EVAL <CHTYPE .EXP1 FORM>>
+          !<INSTANTIATE <REST .EXP>>))
+        (<==? <TYPE .EXP1> SACTORFORM>
+         <SET VAL <INSTANTIATE .EXP1>>
+         <OR <AND <MEMQ <TYPE .VAL> '(ACTORFORM SACTORFORM)>
+                  (<CHTYPE .VAL SACTORFORM>
+                   !<INSTANTIATE <REST .EXP>>)>
+             (!.VAL !<INSTANTIATE <REST .EXP>>)>)
+        (T (<INSTANTIATE .EXP1> !<INSTANTIATE <REST .EXP>>))>   >><SETG FALSE
+  <FUNCTION ("ARGS" A) <CHTYPE <EVAL .A> FALSE>  >>
+
+
+<SETG FORM
+  <FUNCTION ("ARGS" A) <CHTYPE <EVAL .A> FORM>  >>
+
+<SETG UNASSIGNED
+  <FUNCTION ("ARGS" A) <CHTYPE <EVAL .A> UNASSIGNED>  >>
+
+<SETG SEGMENT
+  <FUNCTION ("REST" 'A) <CHTYPE <EVAL .A> SEGMENT>  >>
+
+<SETG ACTOR
+  <FUNCTION ("ARGS" A) <CHTYPE .A ACTOR>  >>
+
+<SETG ACTOR-FUNCTION
+  <FUNCTION ("ARGS" A) <CHTYPE .A ACTOR-FUNCTION>  >>
+
+<SETG INVOKE
+  <FUNCTION ("BIND" CUR AFORM OBJECT 
+             "OPTIONAL" (BOUNDARY <BOTTOM .OBJECT>) (OBLIGATORY T) (ENV <>)
+             "AUX" ACTOR)
+   <SPLICE .CUR .ENV>
+   <COND (<ATOM? <1 .AFORM>>
+          <SET ACTOR <AVAL <1 .AFORM>>>)
+         (<SET ACTOR <EVAL <1 .AFORM>>>)>
+   <COND (<==? <TYPE .ACTOR> ACTOR-FUNCTION>
+          <EVAL <FORM <CHTYPE .ACTOR FUNCTION>
+                      '.OBJECT
+                      '.BOUNDARY
+                      .OBLIGATORY
+                      !<REST .AFORM>>>)
+         (<==? <TYPE .ACTOR> ACTOR>
+          <ERROR ATTEMPT-TO-INVOKE-ACTOR>)
+         (<ERROR NON-INVOKABLE-TYPE>)>  >>
+
+
+<SETG AVAL
+  <FUNCTION (ATOM)
+   <COND (<GASSIGNED? .ATOM> <GVAL .ATOM>)
+         (<LVAL .ATOM>)>  >>
+
+
+<SETG ACTOR?
+  <FUNCTION (EXP)
+   <AND <ATOM? .EXP> <SET EXP <AVAL .EXP>>>
+   <MEMQ <TYPE .EXP> '(ACTOR ACTOR-FUNCTION)>  >><SETG ACTORSUBST1
+  <FUNCTION AS (AFORM PURESWITCH
+                "AUX" (A1 <1 .AFORM>) (TP <TYPE .AFORM>) 
+                      (A2 <OR <EMPTY? <REST .AFORM>> <2 .AFORM>>))
+   <COND (<==? .A1 GIVEN>
+          <COND (<ASSIGNED? .A2>
+                 <SET .PURESWITCH T>
+                 <LVAL .A2>)
+                (T <SET .PURESWITCH <FALSE .A2>>
+                   .AFORM)>)         
+         (<==? .A1 ALTER>
+          <THSET .A2 ?()>
+          <SET .PURESWITCH <FALSE .A2>>
+          <CHTYPE (GIVEN .A2) .TP>)
+         (<==? .A1 VEL>
+          <PROG ((PAT <ANOTHERPAT <REST .AFORM> .PURESWITCH>))
+             <COND (<OR ..PURESWITCH
+                        <NOT <==? <TYPE .PAT> FORM>>>
+                    .PAT)
+                   (<CHTYPE .PAT .TP>)>>)
+         (<==? .A1 BE>
+          <OR <EVAL .A2> <FAIL>>
+          <CHTYPE '<?> .TP>)
+         (<==? .A1 ET>
+          <AND <EMPTY? <REST .AFORM>>
+               <EXIT .AS <CHTYPE '<?> .TP>>>
+          <REPEAT R ((PATS <REST .AFORM 2>) (SPATS ())
+                     (BEG ()) (P <>))
+             <COND (<EMPTY? <SET BEG <CHOMP PATS .BEG P>>>
+                    <SET .PURESWITCH <>>
+                    <EXIT .R <CHTYPE (ET !.SPATS) .TP>>)
+                   (<OR .P <NOT <EMPTY? .P>>>
+                    <SET .PURESWITCH .P>
+                    <SET A2 <1 .BEG>>
+                    <REPEAT RESTRICT ()
+                       <AND <EMPTY? .SPATS> <EXIT .RESTRICT <>>>
+                       <MATCH1 .A2 <1 .SPATS>>
+                       <SET SPATS <REST .SPATS>>  >
+                    <REPEAT ()
+                       <AND <EMPTY? <SET BEG <CHOMP PATS .BEG P>>>
+                            <EXIT .R .A2>>
+                       <MATCH1 .A2 <1 .BEG>>  >)
+                   (T <SET SPATS (<1 .BEG> !.SPATS)>)>  >)
+         (.AFORM)>   >><SETG ANOTHERPAT
+  <FUNCTION (PATSVAL PURESWITCH
+             "AUX" (VAL1 <CLIP PATSVAL>))
+   <COND (<SET .PURESWITCH <MONAD? .VAL1>>
+           .VAL1)
+         (<==? <TYPE .VAL1> FORM>
+          <COND (<ACTOR? <1 .VAL1>>
+                 <ACTORSUBST1 .VAL1 .PURESWITCH>)
+                (<SET .PURESWITCH T>
+                 <EVAL <ACTORSUBST .VAL1>>)   >)
+         (T .VAL1)   >   >>
+
+
+<SETG CLIP
+  <FUNCTION (VAR "AUX" (VAL ..VAR))
+   <COND (<EMPTY? .VAL> <FAIL>)>
+   <PROG1 <1 .VAL> <SET .VAR <REST .VAL>>>   >><SETG CHOMP
+ <FUNCTION CHOMP ("BIND" C VAR ENDVAR BEG PURESWITCH "OPTIONAL" (ENV <>)
+                  "AUX" (VAL ..VAR) VAL1)
+   <COND (<OR <EMPTY? .BEG>
+              <EMPTY? <SET BEG <REST .BEG>>>
+              <==? .BEG .VAL>>
+          <COND (<OR <MONAD? .VAL> <==? .VAL .ENDVAR>>
+                 <SET .PURESWITCH <>>
+                 <EXIT .CHOMP ()>)>
+          <THSET .VAR <REST .VAL>>
+          <COND (<SET .PURESWITCH <MONAD? <SET VAL1 <1 .VAL>>>>
+                 .VAL)
+                (<==? <TYPE .VAL1> FORM>
+                 <SPLICE .C .ENV>
+                 (<COND (<ACTOR? <1 .VAL1>>
+                         <ACTORSUBST1 .VAL1 .PURESWITCH>)
+                        (<SET .PURESWITCH T>
+                         <EVAL <ACTORSUBST .VAL1 >>)   >))
+                (<==? <TYPE .VAL1> SEGMENT>
+                 <SPLICE .C .ENV>
+                 <SET VAL1
+                      <COND (<ACTOR? <1 .VAL1>>
+                             <SET VAL1 <ACTORSUBST1 .VAL1 .PURESWITCH>>
+                             <OR <AND <OR ..PURESWITCH
+                                          <NOT <==? <TYPE .VAL1> SEGMENT>>>
+                                      .VAL1>
+                                 (.VAL1)>)
+                            (<SET .PURESWITCH T>
+                             <EVAL <ACTORSUBST .VAL1>>)   >>
+                 <COND (<EMPTY? .VAL1>
+                        <SET BEG ()>
+                        <SET .VAR <SET VAL <REST .VAL>>>
+                        <AGAIN .CHOMP>)
+                       (T .VAL1)>)
+                (T .VAL)>)
+         (.BEG)>   >>
+
+<SETG RESET
+ <FUNCTION (VAR)
+   <FAILPOINT ((VAL <RLVAL .VAR>)) <> ()
+      <SET .VAR <RLVAL VAL>>
+      <FAIL>>  >>
+
+<SETG PROG1
+ <FUNCTION ("REST" A) <1 .A>   >><SETG ACTORSUBST
+ <FUNCTION A ("BIND" C EXP "OPTIONAL" (ENV <>)
+              "AUX" (PURE <>) TP EXP1)
+   <OR <MULTILEVEL .EXP> <EXIT .A .EXP>>
+   <SPLICE .C .ENV>
+   <COND (<ACTORFORM? <SET EXP1 <1 .EXP>>>
+          <SET TP <TYPE .EXP1>>
+          <SET EXP1 <ACTORSUBST1 .EXP1 PURE>>
+          <AND <==? .TP SEGMENT>
+               <OR .PURE <NOT <==? <TYPE .EXP1> FORM>>>
+               <EXIT .A
+                     <<CONSTRUCTOR <TYPE .EXP>>
+                      !.EXP1
+                      !.<ACTORSUBST <REST .EXP>>>>>)
+         (T <SET EXP1 <ACTORSUBST .EXP1>>)   >
+   <<CONSTRUCTOR <TYPE .EXP>> .EXP1 !.<ACTORSUBST <REST .EXP>>>   >>
+
+
+<SETG MULTILEVEL
+ <FUNCTION (OBJECT)
+   <AND <NOT <MONAD? .OBJECT>>
+        <MEMQ <TYPE .OBJECT> '(LIST FORM VECTOR SEGMENT VECTOR)>>   >>
+
+
+<SETG ACTORFORM?
+ <FUNCTION (EXP)
+   <AND <MEMQ <TYPE .EXP> '(FORM SEGMENT)>
+        <NOT <EMPTY? .EXP>>
+        <ACTOR? <1 .EXP>>>  >>
+
+
+<SETG GIVEN
+ <ACTOR-FUNCTION (OBJECT BOUNDARY OBLIGATORY VAR
+                  "AUX" (VAL <RLVAL .VAR>))
+   <AND <==? <TYPE <RLVAL VAL>> UNASSIGNED>
+        <REPEAT R ((V <CHTYPE <RLVAL VAL> LIST>))
+           <AND <EMPTY? .V> <EXIT .R <>>>
+           <SET BOUNDARY <IS2 <1 <1 .V>> .OBJECT .BOUNDARY .OBLIGATORY <2 <1 .V>>>>
+           <SET OBLIGATORY T>
+           <SET V <REST .V>>  >>
+   <COND (<ASSIGNED? .VAR>
+          <COND (<OR <MONAD? .OBJECT> .OBLIGATORY>
+                 <OR <=? ..VAR .OBJECT> <FAIL>>)
+                (T
+                 <SET BOUNDARY <PREFIX1 ..VAR () .OBJECT .BOUNDARY>>)>)
+         (T <THSET .VAR
+                   <UPTO .OBJECT
+                         <COND (<OR <MONAD? .OBJECT> .OBLIGATORY>
+                                .BOUNDARY)
+                               (T <SET BOUNDARY 
+                                       <ANOTHER .OBJECT .BOUNDARY>>)>>>)>
+   .BOUNDARY  >>
+
+
+
+<SETG BE
+ <ACTOR-FUNCTION (OBJECT BOUNDARY OBLIGATORY PRED)
+   <OR .PRED <FAIL>>
+   <COND (.OBLIGATORY .BOUNDARY)
+         (T <ANOTHER .OBJECT .BOUNDARY>)>  >>
+
+
+
+<SETG ?
+ <ACTOR-FUNCTION (OBJECT BOUNDARY OBLIGATORY "OPTIONAL" (N <>))
+   <COND (.OBLIGATORY
+          <OR <NOT .N> <==? .N <BLENGTH .OBJECT .BOUNDARY>> <FAIL>>
+          .BOUNDARY)
+         (.N
+          <COND (<G? .N <BLENGTH .OBJECT .BOUNDARY>>
+                 <FAIL>)
+                (T <REST .OBJECT .N>)>)
+         (T <ANOTHER .OBJECT .BOUNDARY>)>  >>
+
+
+
+<SETG ALTER
+ <ACTOR-FUNCTION (OBJECT BOUNDARY OBLIGATORY VAR)
+   <THSET .VAR
+          <UPTO .OBJECT
+                <COND (<OR <MONAD? .OBJECT> .OBLIGATORY>
+                       .BOUNDARY)
+                      (T <SET BOUNDARY
+                              <ANOTHER .OBJECT .BOUNDARY>>)>>>
+   .BOUNDARY  >>
+
+
+<SETG VEL
+ <ACTOR-FUNCTION (OBJECT BOUNDARY OBLIGATORY "ARGS" A)
+   <ERROR VEL-UNDER-CONSTRUCTION> >><SETG ANOTHER
+ <FUNCTION (OBJ BOUND)
+   <FAILPOINT FP ()
+     .OBJ ()
+     <AND <==? .OBJ .BOUND> <FAIL>>
+     <RESTORE .FP <SET OBJ <REST .OBJ>>>>  >>
+
+
+
+<SETG HACKPAT
+ <FUNCTION P (PAT ENDV KV BETAV)
+   <REPEAT ((END .PAT) (KS 0) (BETAS 0))
+      <COND (<EMPTY? .PAT>
+             <SET .KV .KS> <SET .BETAV .BETAS>
+             <SET .ENDV .END>  <EXIT .P <>>)
+            (<==? <TYPE <1 .PAT>> SEGMENT>
+             <SET KS <+ .KS .BETAS>>
+             <SET BETAS 0>
+             <SET END <REST .PAT>>)
+            (T <SET BETAS <+ .BETAS 1>>)>
+      <SET PAT <REST .PAT>>  >  >>
+
+
+<SETG POST
+ <FUNCTION (L LBOUND K BETA "AUX" (KOUNT <BLENGTH .L .LBOUND>))
+   <AND <G? <+ .K .BETA> .KOUNT>
+        <FAIL>>
+   <REST .L <- .KOUNT .BETA>>  >>
+
+
+
+<SETG BLENGTH
+ <FUNCTION BL (L LB "AUX" (K 0))
+   <COND (<==? .L .LB> .K)
+         (T <SET L <REST .L>>
+            <SET K <+ .K 1>>
+            <AGAIN .BL>)>  >>
+
+<SETG PREFIX1
+ <FUNCTION P (L1 TERM1 L2 TERM2)
+   <COND (<OR <EMPTY? .L1> <==? .L1 .TERM1>>
+          <EXIT .P .L2>)
+         (<==? .L2 .TERM2> <FAIL>)>
+   <OR <=? <1 .L1> <1 .L2>> <FAIL>>
+   <SET L1 <REST .L1>>   <SET L2 <REST .L2>>
+   <AGAIN .P>  >>
+
+
+<SETG CONSTRUCTOR
+ <FUNCTION (TYPE)
+   <GET .TYPE 'CONSTRUCTOR>   >>
+
+
+<PUT LIST CONSTRUCTOR ,CONSL>
+<PUT FORM CONSTRUCTOR ,FORM>
+<PUT VECTOR  CONSTRUCTOR ,CONSV>
+<PUT SEGMENT CONSTRUCTOR ,SEGMENT>
+<PUT UVECTOR CONSTRUCTOR ,CONSU><SETG IS1
+ <FUNCTION S ("BIND" C PAT EXP
+              "OPTIONAL" (BOUND <BOTTOM .EXP>) (OBLIGATORY T) (ENV <>)
+              "AUX" (BEG ()) PURE ENDP BETA ENDE K ENDP1)
+   <COND (<EMPTY? .PAT> <EXIT .S <OR <EMPTY? .EXP> <FAIL>>>)
+         (<MONAD? .PAT>
+          <EXIT .S <OR <=? .PAT .EXP> <FAIL>>>)
+         (<MONAD? .EXP>
+          <OR <EMPTY? .EXP> <FAIL>>)>
+   <SPLICE .C .ENV>
+   <SET ENDP1 <BOTTOM .PAT>>
+   <REPEAT R ()
+      <COND (<EMPTY? <THSET BEG <CHOMP PAT .ENDP1 .BEG PURE>>>
+             <EXIT .S <GOTEND .EXP .BOUND .OBLIGATORY>>)
+            (.PURE
+             <THSET EXP <PREFIX1 .BEG .PAT .EXP .BOUND>>
+             <SET BEG ()>)
+            (<==? <TYPE <1 .BEG>> SEGMENT>
+             <EXIT .R <>>)
+            (T <IS2 <1 .BEG> <1 .EXP>>
+               <THSET EXP <REST .EXP>>)>  >
+   <HACKPAT .PAT ENDP K BETA>
+   <SET ENDE <POST .EXP .BOUND .K .BETA>>
+   <REPEAT R ()
+      <COND (.PURE
+             <THSET EXP <PREFIX1 .BEG .PAT .EXP .ENDE>>
+             <SET BEG ()>)
+            (<==? <TYPE <1 .BEG>> SEGMENT>
+             <THSET EXP <INVOKE <1 .BEG>
+                                .EXP
+                                .ENDE
+                                <AND <==? .PAT .ENDP> .OBLIGATORY>>>)
+            (<==? .EXP .ENDE> <FAIL>)
+            (T <IS2 <1 .BEG> <1 .EXP>>
+               <THSET EXP <REST .EXP>>)>
+      <COND (<EMPTY? <THSET BEG <CHOMP PAT .ENDP .BEG PURE>>>
+             <EXIT .R <OR <==? .EXP .ENDE> <NOT .OBLIGATORY> <FAIL>>>)>   >
+   <THSET ENDE .EXP>
+   <REPEAT ()
+      <COND (<EMPTY? <THSET BEG <CHOMP ENDP .ENDP1 .BEG PURE>>>
+             <EXIT .S .ENDE>)
+            (.PURE
+             <OR <=? <1 .BEG> <1 .ENDE>> <FAIL>>)
+            (T <IS2 <1 .BEG> <1 .ENDE>>) >
+      <SET ENDE <REST .ENDE>>  >  >><SETG GOTEND
+ <FUNCTION (EXP BOUND OBLIGATORY)
+   <OR <==? .EXP .BOUND>
+       <NOT .OBLIGATORY>
+       <FAIL>>
+   .EXP  >>
+
+
+<SETG IS2
+ <FUNCTION (PAT EXP "OPTIONAL" (BOUND <BOTTOM .EXP>) (OBLIGATORY T) (ENV <>))
+   <COND (<==? <TYPE .PAT> FORM>
+          <INVOKE .PAT .EXP .BOUND .OBLIGATORY .ENV>)
+         (<IS1 .PAT .EXP .BOUND .OBLIGATORY .ENV>)  >  >>
+
+
+<SETG UPTO
+ <FUNCTION (EXP1 EXP2)
+   <COND (<MONAD? .EXP1>
+          .EXP1)
+         (<==? .EXP1 .EXP2>
+          ())
+         ((<1 .EXP1> !<UPTO <REST .EXP1> .EXP2>))>  >>
+
+
+<SETG IS
+ <FUNCTION S ('PAT EXP "AUX" (PURE <>))
+   <COND (<ACTORFORM? .PAT>
+          <SET PAT <ACTORSUBST1 .PAT PURE>>
+          <AND .PURE
+               <EXIT .S <=? .PAT .EXP>>>
+          <FAILPOINT ()
+             <PROG1 T <INVOKE .PAT .EXP>>
+             () <>>)
+         (T <FAILPOINT ()
+               <PROG1 T <IS1 .PAT .EXP>>
+               () <>>)>  >>
+
+
+<SETG BOTTOM
+ <FUNCTION (THING)
+   <COND (<MONAD? .THING> <>)
+         (<==? <TYPE .THING> LIST> ())
+         (T <REST .THING <LENGTH .THING>>)>  >>

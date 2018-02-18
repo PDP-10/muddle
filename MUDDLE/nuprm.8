@@ -1,0 +1,532 @@
+
+TITLE PRIMITIVE FUNCTIONS FOR THE MUDDLE SYSTEM
+
+RELOCATABLE
+
+.INSRT MUDDLE >
+
+.GLOBAL CALER,CALER1,NWORDT,CHARGS,CHFRM,CHLOCI,TFA,TMA,IFALSE,IPUTP,IGETP,WTYP1
+.GLOBAL ITRUTH
+
+
+; BUILD DISPATCH TABLE FOR PRIMITIVE FUNCTIONS USAGE
+
+PRMTYP:
+
+REPEAT NUMSAT,[0]			;INITIALIZE TABLE TO ZEROES
+
+IRP A,,[2WORD,2NWORD,NWORD,ARGS,CHSTR,BYTE]
+
+LOC PRMTYP+S!A
+P!A==.IRPCN+1
+P!A
+
+TERMIN
+
+LOC PRMTYP+NUMSAT
+
+PNUM==PBYTE+1
+
+; MACRO TO BUILD PRIMITIVE DISPATCH TABLES
+
+DEFINE PRDISP NAME,DEFAULT,LIST
+	TBLDIS NAME,DEFAULT,[LIST]PNUM
+	TERMIN
+
+
+; SUBROUTINE TO RETURN PRIMITIVE TYPE AND PRINT ERROR IF ILLEGAL
+
+PTYPE:	GETYP	A,(B)	;CALLE D WITH B POINTING TO PAIR
+	CAIN	A,TILLEG	;LOSE IF ILLEGAL
+	JRST	ILLCHOS
+
+	PUSHJ	P,SAT		;GET STORAGE ALLOC TYPE
+	CAIN	A,SARGS		;SPECIAL HAIR FOR ARGS
+	PUSHJ	P,CHARGS
+	CAIN	A,SFRAME
+	PUSHJ	P,CHFRM
+PTYP1:	MOVE	A,PRMTYP(A)	;GET PRIM TYPE,
+	POPJ	P,
+
+
+; PROCESS TYPE ILLEGAL
+
+ILLCHO:	HRRZ	B,1(B)	;GET CLOBBERED TYPE
+	CAIN	B,TARGS	;WAS IT ARGS?
+	JRST	ILLARG
+	CAIN	B,TFRAME		;A FRAME?
+	JRST	ILFRAM
+	CAIN	B,TLOCD		;A LOCATIVE TO AN ID
+	JRST	ILLOC
+
+	LSH	B,1		;NONE OF ABOVE LOOK IN TABLE
+	ADDI	B,TYPVEC+1(TVP)
+	PUSH	TP,$TATOM
+	PUSH	TP,MQUOTE ILLEGAL
+	PUSH	TP,$TATOM
+	PUSH	TP,(B)		;PUSH ATOMIC NAME
+	MOVEI	A,2
+	JRST	CALER		;GO TO ERROR REPORTER
+
+; CHECK AN ARGS POINTER
+
+CHARGS:	PUSH	P,A		;SAVE SOME ACS
+	PUSH	P,B
+	PUSH	P,C
+	MOVE	C,1(B)	;GET POINTER
+	HLRE	A,C		;FIND ASSOCIATED FRAME
+	SUBI	C,(A)		;C POINTS TO FRAME OR FRAME POINTER
+	ANDI	C,-1
+	CAILE	C,(TP)		;WITHIN STACK?
+	JRST	ILLARG		;NO, LOSE
+	HLRZ	A,(C)		;GET TYPE OF NEXT GOODIE
+	CAIE	A,TENTRY	;MUST BE EITHER ENTRY OR TTB
+	CAIN	A,TTB
+	JRST	CHARG1		;WINNER
+
+ILLARG:	PUSH	TP,$TATOM
+	PUSH	TP,MQUOTE ILLEGAL-ARGUMENT-BLOCK
+	JRST	CALER1
+
+CHARG1:	CAIN	A,TTB		;POINTER TO FRAME?
+	MOVE	C,1(C)		;YES, GET IT
+	CAIN	A,TENTRY		;POINTS TO ENTRT?
+	MOVEI	C,FRAMLN(C)	;YES POINT TO END OF FRAME
+	HLRZ	C,OTBSAV(C)	;GET TIME FROM FRAME
+	HRRZ	B,(B)		;AND ARGS TIME
+	HRRZ	B,1(B)		;TIME IS IN INFO CELL
+	CAIE	B,(C)		;SAME?
+	JRST	ILLARG
+POPBCJ:	POP	P,C
+	POP	P,B
+	POP	P,A
+	POPJ	P,		;GO GET PRIM TYPE
+
+
+
+; CHECK A FRAME POINTER
+
+CHFRM:	PUSH	P,A		;SAVE SOME REGISTERS
+	PUSH	P,B
+	PUSH	P,C
+	HRRZ	C,1(B)		;GET POINTER PART
+	CAILE	C,(TP)		;STILL WITHIN STACK
+	JRST	ILFRAM
+	HLRZ	A,FSAV(C)	;CHECK STILL AN ENTRY BLOCK
+	CAIE	A,TENTRY
+	JRST	ILFRAM
+	HLRZ	A,1(B)		;GET TIME FROM POINTER
+	HLRZ	C,OTBSAV(C)	;AND FROM FRAME
+	CAIN	A,(C)		;SAME?
+	JRST	POPBCJ		;YES, WIN
+
+ILFRAM:	PUSH	TP,$TATOM
+	PUSH	TP,MQUOTE ILLEGAL-FRAME
+	JRST	CALER1
+
+; CHECK A LOCATIVE TO AN IDENTIFIER
+
+CHLOCI:	PUSH	P,A
+	PUSH	P,B
+	PUSH	P,C
+
+	HRRZ	A,(B)		;GET TIME FROM POINTER
+	JUMPE	A,POPBCJ	;ZERO, GLOBAL VARIABLE NO TIME
+	HRRZ	C,1(B)		;POINT TO STACK
+	HRRZ	C,2(C)
+	CAMN	A,C
+	JRST	POPBCJ
+
+ILLOC:	PUSH	TP,$TATOM
+	PUSH	TP,MQUOTE ILLEGAL-LOCATIVE
+	JRST	CALER1
+
+	
+
+
+; FUNCTION TO GET THE LENGTH OF LISTS,VECTORS AND CHAR STRINGS
+
+MFUNCTION LENGTH,SUBR
+
+	ENTRY	1
+
+	MOVE	B,AB		;POINT TO ARGS
+	PUSHJ	P,PTYPE		;GET ITS PRIM TYPE
+	JUMPE	A,WTYP1		;IF 1 WORD, LOSE
+	MOVEI	B,0
+	SKIPE	C,1(AB)		;IF NON-ZERO, FIND LENGTH
+	AOJA	B,@LENTBL(A)
+	JRST	LFINIS		;OTHERWISE USE 0
+
+PRDISP LENTBL,IWTYP1,[[P2WORD,LNLST],[P2NWORD,LNVEC],[PNWORD,LNUVEC]
+[PARGS,LNVEC],[PCHSTR,LNCHAR]]
+
+LNLST:	MOVSI	A,TLIST		;WILL BECOME INTERRUPTABLE
+	HLLM	A,CSTO(PVP)	;AND C WILL BE A LIST POINTER
+LNLST1:	INTGO		;IN CASE CIRCULAR LIST
+	HRRZ	C,(C)		;STEP
+	JUMPE	C,.+2		;DONE, RETRUN LENGTH
+	AOJA	B,LNLST1	;COUNT AND GO
+	SETZM	CSTO(PVP)
+
+
+LFINIS:	MOVSI	A,TFIX		;LENGTH IS AN INTEGER
+	JRST	FINIS
+
+LNVEC:	ASH	C,-1		;GENERAL VECTOR DIVIDE BY 2
+LNUVEC:	HLRE	B,C		;GET LENGTH
+	MOVMS	B		;MAKE POS
+	JRST	LFINIS
+
+LNCHAR:	LDB	D,[360600,,C]	;GET POSITION FIELD
+	LDB	E,[300600,,C]	;AND SIZE FIELD
+	MOVEI	A,(E)		;COPY E
+	IDIVI	D,(E)		;D=> NUMBER OF BYTES IN WORD-1
+	MOVEI	B,1(D)		;EXACT # OF BYTES IN 1ST WORD
+	MOVEI	D,36.
+	IDIVI	D,(A)		;MAX BYTES PER WORD
+	HRRZ	E,(AB)		;POINT TO DOPE WORD
+	SUBI	E,2(C)		;NUMBER OF WORDS IN ENTIRE STRING
+	JUMPL	E,LSTCH2	;NULL STRING
+	ADDI	C,(E)		;POINT TO LAST WORD
+	JUMPLE	E,LSTCH1	;IF <0, NONE IN OTHER WORDS
+	IMULI	E,(D)		;NO. OF CHARS IN THIS PART OF STRING
+	ADDI	B,(E)		;ADD IN NO. IN 1ST WORD
+
+LSTCH1:	LSH	A,24.		;START TO BUILD BYTE POINTER TO LAST WORD
+	TLO	A,440000+C
+	HRLI	B,-5		;MAX OF 5
+	ILDB	0,A		;GET A BYTE
+	SKIPE	0
+	AOBJN	B,.-2
+
+	HRREI	B,-5(B)		;FUDGE FOR DOUBLE USE OF WORD 1
+	JUMPGE	B,LFINIS
+LSTCH2:	MOVEI	B,0
+	JRST	LFINIS
+
+
+
+MFUNCTION ATOMP,SUBR,ATOM?
+
+	ENTRY	1
+
+	GETYP	A,(AB)
+	CAIE	A,TATOM
+	JRST	IFALSE
+
+IDNT1:	MOVE	A,(AB)		;RETURN THE ATOM
+	MOVE	B,1(AB)
+	JRST	FINIS
+
+MFUNCTION QUOTE,FSUBR
+
+	ENTRY	1
+
+	GETYP	A,(AB)
+	CAIE	A,TLIST		;ARG MUST BE A LIST
+	JRST	ERRIFS
+	SKIPN	B,1(AB)		;SHOULD HAVE A BODY
+	JRST	ERRTFA
+
+	GETYP	C,(B)		;GET TYPE
+	MOVSI	C,(C)		;TO LH
+
+QUOT2:	CAMN	C,$TDEFER	;DEFERRED?
+	JRST	QUOT1
+	PUSHJ	P,PTYPE		;CHECK FOR LOSERS
+	MOVE	A,C
+	MOVE	B,1(B)		;GET DATUM
+	JRST	FINIS
+
+
+QUOT1:	HRRZ	B,1(B)		;POINT TO DEFERRED VALUE
+	GETYPF	C,(B)		;GET TYPE
+	JRST	QUOT2
+
+MFUNCTION EQ,SUBR,[==?]
+
+	ENTRY	2
+
+	MOVE	B,AB		;POINT TO FIRST ARG
+	PUSHJ	P,PTYPE		;CHECK ON IT
+	ADD	B,[2,,2]	;SAME FOR SECOND
+	PUSHJ	P,PTYPE
+
+	GETYP	A,(AB)		;GET 1ST TYPE
+	GETYP	C,2(AB)		;AND 2D TYPE
+	MOVE	B,1(AB)
+	CAIN	A,(C)		;CHECK IT
+	CAME	B,3(AB)
+	JRST	IFALSE
+
+ITRUTH:	MOVSI	A,TATOM		;RETURN TRUTH
+	MOVE	B,MQUOTE T
+	JRST	FINIS
+
+IFALSE:	MOVSI	A,TFALSE		;RETURN FALSE
+	MOVEI	B,0
+	JRST	FINIS
+
+
+
+MFUNCTION EMPTY,SUBR,EMPTY?
+
+	ENTRY	1
+
+	MOVE	B,AB
+	PUSHJ	P,PTYPE		;GET PRIMITIVE TYPE
+
+	JUMPE	A,IFALSE
+	MOVE	B,1(AB)		;GET THE ARG
+
+	CAIE	A,P2WORD		;A LIST?
+	JRST	EMPT1		;NO VECTOR OR CHSTR
+	JUMPE	B,ITRUTH		;0 POINTER MEANS EMPTY LIST
+	JRST	IFALSE
+
+
+EMPT1:	CAIE	A,PCHSTR		;CHAR STRING?
+	JRST	EMPT2		;NO, VECTOR
+	JUMPE	B,ITRUTH	;0 STRING WINS
+	HRRZ	A,(AB)		;POINT TO DOPE WORD
+	LDB	C,B		;CHECK POINTED TO CHAR
+	JUMPE	C,ITRUTH
+	CAILE	A,1(B)		;PAST DOPE WORD?
+	JRST	IFALSE		;NO, RETURN
+	JRST	ITRUTH
+
+EMPT2:	JUMPGE	B,ITRUTH
+	JRST	IFALSE
+
+
+MFUNCTION EQUAL,SUBR,[=?]
+
+	ENTRY	2
+
+	MOVE	C,AB		;SET UP TO CALL INTERNAL
+	MOVE	D,AB
+	ADD	D,[2,,2]	;C POINTS TO FIRS, D TO SECOND
+	PUSHJ	P,IEQUAL	;CALL INTERNAL
+	JRST	IFALSE		;NO SKIP MEANS LOSE
+	JRST	ITRUTH
+
+
+; INTERNAL EQUAL SUBROUTINE
+
+IEQUAL:	MOVE	B,C		;NOW CHECK THE ARGS
+	PUSHJ	P,PTYPE
+	MOVE	B,D
+	PUSHJ	P,PTYPE
+	GETYP	0,(C)		;NOW CHECK FOR EQ
+	GETYP	B,(D)
+	MOVE	E,1(C)
+	CAIN	0,(B)		;DONT SKIP IF POSSIBLE WINNER
+	CAME	E,1(D)		;DEFINITE WINNER, SKIP
+	JRST	IEQ1
+CPOPJ1:	AOS	(P)		;EQ, SKIP RETURN
+	POPJ	P,
+
+
+IEQ1:	CAIE	0,(B)		;SKIP IF POSSIBLE MATCH
+CPOPJ:	POPJ	P,		;NOT POSSIBLE WINNERS
+	JRST	@EQTBL(A)	;DISPATCH
+
+PRDISP EQTBL,CPOPJ,[[P2WORD,EQLIST],[P2NWORD,EQVEC],[PNWORD,EQUVEC]
+[PARGS,EQVEC],[PCHSTR,EQCHST]]
+
+
+EQLIST:	PUSHJ	P,PUSHCD	;PUT ARGS ON STACK
+
+EQLST1:	INTGO			;IN CASE OF CIRCULAR
+	HRRZ	C,-2(TP)		;GET FIRST
+	HRRZ	D,(TP)		;AND 2D
+	CAIN	C,(D)		;EQUAL?
+	JRST	EQLST2	;YES, LEAVE
+	JUMPE	C,EQLST3	;NIL LOSES
+	JUMPE	D,EQLST3
+	HLRZ	0,(C)		;CHECK DEFERMENT
+	CAIN	0,TDEFER
+	HRRZ	C,1(C)		;PICK UP POINTED TO CROCK
+	HLRZ	0,(D)
+	CAIN	0,TDEFER
+	HRRZ	D,1(D)		;POINT TO REAL GOODIE
+	PUSHJ	P,IEQUAL	;CHECK THE CARS
+	JRST	EQLST3	;LOSE
+	HRRZ	C,@-2(TP)		;CDR THE LISTS
+	HRRZ	D,@(TP
+	HRRZM	C,-2(TP)		;AND STORE
+	HRRZM	D,(TP)
+	JRST	EQLST1
+
+EQLST2:	AOS	(P)		;SKIP RETRUN
+EQLST3:	SUB	TP,[4,,4]	;REMOVE CRUFT
+	POPJ	P,
+
+
+
+EQVEC:	HLRE	A,1(C)		;GET LENGTHS
+	HLRZ	B,1(D)
+	CAIE	B,(A)		;SKIP IF EQUAL LENGTHS
+	POPJ	P,		;LOSE
+	JUMPGE	A,CPOPJ1	;SKIP RETRUN WIN
+	PUSHJ	P,PUSHCD	;SAVE ARGS
+
+EQVEC1:	INTGO			;IN CASE LONG VECTOR
+	MOVE	C,(TP)
+	MOVE	D,-2(TP)	;ARGS TO C AND D
+	PUSHJ	P,IEQUAL
+	JRST	EQLST3
+	MOVE	C,[2,,2]	;GET BUMPER
+	ADDM	C,(TP)
+	ADDB	C,-2(TP)	;BUMP BOTH POINTERS
+	JUMPL	C,EQVEC1
+	JRST	EQLST2
+
+EQUVEC:	HLRE	A,1(C)		;GET LENGTHS
+	HLRE	B,1(D)
+	CAIE	A,(B)		;SKIP IF EQUAL
+	POPJ	P,
+
+	HRRZ	B,1(C)		;START COMPUTING DOPE WORD LOCN
+	SUB	B,A		;B POINTS TO DOPE WORD
+	HLRZ	0,(B)		;GET UNIFORM TYPE
+	HRRZ	B,1(D)		;NOW FIND OTHER DOPE WORD
+	SUB	B,A
+	HLRZ	B,(B)	;OTHER UNIFORM TYPE
+	CAIE	0,(B)		;TYPES THE SAME?
+	POPJ	P,		;NO, LOSE
+
+	JUMPGE	A,CPOPJ1	;IF ZERO LENGTH ALREADY WON
+
+	HRLZI	B,(B)		;TYPE TO LH
+	PUSH	P,B		;AND SAVED
+	PUSHJ	P,PUSHCD	;SAVE ARGS
+
+EQUV1:	MOVEI	C,1(TP)		;POINT TO WHERE WILL GO
+	PUSH	TP,(P)
+	PUSH	TP,-3(TP)	;PUSH ONE OF THE VECTORS
+	MOVEI	D,1(TP)		;POINT TO 2D ARG
+	PUSH	TP,(P)
+	PUSH	TP,-3(TP)	;AND PUSH ITS POINTER
+	PUSHJ	P,IEQUAL
+	JRST	UNEQUV
+
+	SUB	TP,[4,,4]		;POP TP
+	MOVE	A,[1,,1]
+	ADDM	A,(TP)		;BUMP POINTERS
+	ADDB	A,-2(TP)
+	JUMPL	A,EQUV1		;JUMP IF STILL MORE STUFF
+	SUB	P,[1,,1]	;POP OFF TYPE
+	JRST	EQLST2
+
+UNEQUV:	SUB	P,[1,,1]
+	SUB	TP,[10,,10]
+	POPJ	P,
+
+
+
+EQCHST:	PUSHJ	P,PUSHCD	;SAVE ARGS TWICE
+	PUSHJ	P,PUSHCD
+	MCALL	1,LENGTH		;FIND LENGTH
+	PUSH	P,B		;AND SAVE
+	MCALL	1,LENGTH
+	POP	P,A		;RESTORE OLD LENGTH
+	CAIE	A,(B)		;SAME
+	JRST	EQLST3	;NO, LOSE
+	JUMPE	A,EQLST2	;BOTH 0 LENGTH, WINS
+	MOVE	A,(TP)		;GET BYTE POINTERS
+	MOVE	B,-2(TP)
+	HRRZ	C,-1(TP)	;POINT TO DOPE WORD
+	HRRZ	D,-3(TP)
+
+	LDB	0,A		;GET BYTES
+	LDB	E,B
+
+EQCHS2:	CAIG	C,1(A)		;STILL WINNING?
+	JRST	EQCHS3		;NO, SEE IF OTHER STRING EMPTY
+	CAIE	0,(E)		;CHARS EQUAL?
+	JRST	EQCHS4	;NO, LOSE
+	JUMPE	E,EQLST2	;NULL CHAR, WINS
+
+	ILDB	0,A		;GET NEXT CHARS
+	ILDB	E,B
+	JRST	EQCHS2
+
+EQCHS3:	JUMPE	E,EQLST2		;IF E NULL , WIN
+	CAIG	D,1(B)		;CHECK OVERFLOW
+	JRST	EQLST2
+	JRST	EQLST3
+
+EQCHS4:	JUMPE	0,EQCHS3		;SEE IF OTHER EMPTY
+	JRST	EQLST3
+
+
+PUSHCD:	PUSH	TP,(C)
+	PUSH	TP,1(C)
+	PUSH	TP,(D)
+	PUSH	TP,1(D)
+	POPJ	P,
+
+; NTH, AT AND REST
+
+MFUNCTION NTH,SUBR
+
+	ENTRY
+	MOVEI	E,1		;E IS A SWITCH
+	JRST	INTH
+
+
+
+MFUNCTION GET,SUBR
+	ENTRY
+	HLRE A,AB	;GET -NUM OF A
+	ASH A,-1	;DIVIDE BY 2
+	AOJGE A,TFA	;0 OR 1 ARGS IS TOO FEW
+	GETYP	A,2(AB)		;GET FIRST TYPE
+	CAIE A,TFIX	;IF INDICATOR IS TFIX THEN WORRY
+	JRST IGETP
+	MOVEI B,(AB)	;GET OBJECT
+	PUSHJ P,PTYPE
+	MOVEI E,1	;E IS A SWITCH
+	JRST @IGETBL(A)	;DISPATCH
+PRDISP IGETBL,IIGETP,[[P2WORD,INTH],[P2WORD,INTH],[P2NWORD,INTH],[PARGS,INTH],[PNWORD,INTH],[PCHSTR,INTH]]
+
+MFUNCTION PUT1,SUBR
+	JRST IPUT1
+
+MFUNCTION PUT,SUBR
+IPUT1:	 y0C+@y/õ` ±õ` 7'(ô  õ` ‡@@  , j÷¤ ‡õ` ‡7 y/î.0  : .ô ­ë \y0)öè<°Wõ` «!<  øW<°Qô<°O.\ rô<°Sõ× åöw€®½õ` ©ö‹€—ös€®½+  76|y/ü?  +  N7 y/+  7ô|¯/(@  ö‹€3|%zõ`  y/õ   öH€¥õ+  7 y/(@   \%zô€¥õô€ +  7ô<°Oõç<°S?    <   .\ u+  I4^ 7þök»ïx Yô<°QöÈ<°Wa|  õ` »ô<°O.\ rô<°Sõ× å+  7`|  +  7ô<°Oõç<°S?    <   .\ s+  77@y/+  7ô<°Q`|  +  7ô<°Oõç<°S.\ s+  7ô€Õöè Kïö	€ ,z     föÏ€Ë2>-g+  k6@y/öÈ<°Q, !4> !"  øð¼°Q F fô€Ë y.y`|  õ` ã6@y/õ` õ†€G,z   :   "l" @ ö€ øð¼°Q  h÷P Í+   y/%òé §Q y/&ùð Ñ(ï{<')õ  1<  X  ü1ÿÿ+  	Q2D@Q&D@ F gô€Ïòâ Ï g÷@  E D h4H ÷p ÑöÐ<¯ö2ÿÿ+  aB  +  ø(€ÿûBTw=H ô€Ëõ†€í+  ô€Õ1&  ?` i,z     hô€Ë`D‡÷¡ ùmd  +  ùð Ë!$  øñ<°Q+  fòé€§Q/&  4f û  ô¼¯Kô¼¯M+  w!<   ø÷<°Qõ` ã÷P Kïõb #ô€§S B nõ†€N§ø  +ùð Kï  nõ` öè<°Q,z   /'ùð Kï+  @@ iùð Ëþ—½‰Õïx ,z   öÈ Kï,z   ûg€ ûX  , LI"  `B  õ` =ùð ß,z   ø(€ÿôI€ õ†€í,z   õ` ;ùð ÍôO€ "< õÇ ­ë 2 Xô	€ 22-gõ` m7@I/7@I/õ` kô$°QöÐ$°O`d  õ` kô€ `d  õ` W2<I0)= 17@I/öÐ$¯+  14$'* .  7 I/î= 1öè$°W+  17 I/9 1 .  öi€ õ` köQ€ +  4+@Dõ` k 8Dô€ ô€ 	.2 l+  $ö€Ÿöè<°W,z   ô<°Qad  7@y/öÐ<¯,z   ô<°Oö)  «õ` õá<°S.-uõá ®›õÁ Õ/ jõá åö¹ Ÿ!$  øñ<°W÷@ çô<°OöI é,z    ^ tô é,z   3jI0)3jI0)öJ¤°OöJ¤°OöJ¤°O2*I0,2*I0,öð §õ` )ò€§U`b  õ` ±öˆ€™`b  õ` µZB i,z   ûa  ø)  ?$$ l6@     ab  +  Vô<°Oõâ<°S4('+ö’ Ÿþ ô€Ëùð Í.H i!(  øò<°Qþ ,z   ú € , öÈ ßô€ßõ` ³ô §W6	‡Y=d Yb',õ` ± ^&Hø ¦‘@@&Iùð ¦“ûØ  ô€¦,z          ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿòx*g‡@b                               ÿÿÿÿÿEïÿÿüÑÿÿÿÿÿ‡pQ‡pk   lð  Ù‡@(r‡pm        dÿÿà7ÿÿüßÿÿÿÿÿ‡p_‡xqð   ‡pd‡hs         ÿÿÿÿÿï~@/ÿþ í F v B n1"  xö(€ -õb ñ÷P Kï,z   ZR)ûQ€Ýùð Kïûa ö±   mþ ¿7,9+  `ô€Ûôœ—+3*0~ 69öÈ—77`X  +  ;!"  GB9þ ¿ "o/õ†€e> X  !"  BB9ô €Ýòû€§Yú2 ÷P Kï,z   :   #þ ¿  nûa„Twö±€9!&ïzòëŒ]eN  õ` ø+€ÿ1N  + õY€!&  GFR)þ ¿ '-. nòë€ õŽ€ O@ oõ†€N§@  )õ–€ òû€ ô€ òû€§[þ ¿  n!$  BDR)ôÀÝ7  oaf @ õ` ; .  òû€§[:  e, P{+  (ùð Kï+  `1"  xö(€ -õb =ûA Ýô1Twô	„Twô€×ô€×XF8  ÷@ Õ:  eûaˆ ú1„S‡õƒÿñö	€ + %ô	  ÷d'ô	  òù §?õ†€!ùð Kïõ` ¿1~ lõb SõŽ€ 3^ võ` a y.y`|  õ` a7@y/õ` _!<   ø÷<°Qõ` aõ†€G+  G y/%dN  @ô¼¯Kõƒÿÿ.&8  Q&$@öè  Q& @òë€ 4N'.aN  +  :ÿR‡ô¿ÿþ m(Nïx0n  @@ o1N  ô€ òû€ ÷@<°Sõ–€ ,z   þ ¿ôJ  ô€½öè—7õ` }6@9õ` ‡ôK€ ô*ƒÿýöè—7õ` …öj—+ûC€ öj—+ô—+õZ€ö‹€§]ZN möš Ÿ * P6@9 *  dô€Ûõ` ù/'/  n!.  BNR)ùð Kï,z   ô,ÿý76@_+  Oô ÁQ@b@l  ô á, Fô áO@@_õ\ •,z   ô áö” §_ô Ç4*'0GJY/ "   ,z   ô€ ø á Y0( Y/% Y/& *   (Dï{<')õ  1<  Z  ü1ÿÿõ` ËQ&D@Q(D@òà€   `B  õ` Éö”€Éö4ƒÿÿõ` ÉõŽ€ õŽ€ ,:  ,:  Q6  @l  , F,Z  ,Z  õ–€ õ–€ ö€Ÿ÷@  =d [0j  @õ` ¥ Y0(/$  ö™ ¥ *  @ô¬¯Kô,¯Mõ` ­öð<¯#3^.5,z   : h  2^-i3^-p,z   2^-s3^ W,z   2^-l3^-m,z   3^-k,z    y.y`|  : h  ,z   ô §E6@y/øç<¯ô<°[ø„ §ED  þìQþ½ÿþ íø'  4\ ;-< fõ†€Gõ` ô<°[ù¤<¯A  ø €§E6@y/4B m!<  ø÷<¯ô  öï¼¯!õ` úG  G\y/ûX  02x  +  9+  77 A/î+  7ô °]`|  +     õ†€	# < 	. \y.y!<  øW<¯ø|¯/õ`  <   ø÷ ¦+  7öÐ çõ` Qöï€ õ` 6@y/õ` 9*%{ö€#3^%{õ` +   ô<¯    \y/ô ó \y0'7>%{õ` Cô<¯ \   y/ \   y0'ô óú¯  øW<¯=, < y.y \  p!<y/û §õO ©ôO   \&O %{!>y/õO€ +  p!<   üW<°Q+   !<P øW<°Q@@y/õ` õ†€G+    õ` þ€§a!<Z  \ îTú¯  øW ¯=@@&OD/+'1: .^! X@ô€ *>  ô€§cõ`€ 7> tõ` ôG<°S.-uõç ®›õÇ Õ/ jõç å. u. s1<  õ` !<  øW<°WO@ tø é:   '÷ð ç+  ; >   ôM  !<  2>-g+  9öè<°W7@y/+  8öo<°Oú¡.ÿŸÿÿm+  8ô  ô<°O.> lõ` g T t7    <   ô éö‹€Yõ` ô<¯Iô ãõŽ€ ,:  õŽ€ 4^ LûA€ at  +  C`T  +  SZ  `t   õ` § /%`t  +  U ".zb'2 Dy/ô<¯Kat  õ` •ô žY`T  õ` •ô(¯Kat    Q/%`t  ô(¯Kô<¯?Dy/òè€§eö€ õb ›p	y/îô@€ &" l!$  (D  p  õ–€ ,Z  õ–€ ,z   öá žYô(¯K " V+  E "/+  EùÚ®Ûïx ^7@y/+  <Dy0.ø'<¯4\ <-< fõ†€Gõ`  <   *y/   Ay0.GPy/Dy0.l<  +  p!*  6@y/ür¼°Q+ p  !*  ür¼°Q+ p      y0C+@y/+  7+ (  + lõb Ù <   *y/ô<°[A  GPy/D  öè<¯Eõ` :   ! 4   õ†€yf'37y.yõ` ýö€öè<¯1l"  ò §gm"  õ` ýd'4õ` ñõ` ý@@y/."   By.yBy/÷@  Aõ` d|  õ` ûG\y/,z   G\y/,z   By/õ†€÷òï §iõÿÿd\   öà¼¯M y/&Q"$@7   Q" @òê€ 4J |úG¯=`|   +  Ry.yõÿûXy.yô<¯;!<  ø÷<¯=!<  ø÷<°Qõ` õ†€÷ "  Gby/õ` ç \%z y/(@  ô ¥õô€ +  73\%z+   y/õ £ÿýöH€¥õ+  7õ` ¥ y/(@  õ` #ô X\y/+  7!"   >   .> l2>-g,z   7@y/+  <'55\ ô<¯ø!  GDy/+  üä€ 	ô€§kô¼¯ISbDU8ïx þ , !õ` ³üä€ 	ô€§kô¼¯IBy/,:  , <,Z  ,z   ÷@  C4~'6 < l&^  $< löw  7@y/+ ' y/î`|   õb QöÐ<¯õ` ¥öß<¯#+  3 y/öW §mõ` i y.ya|  õ` a@@y/!<P øW<°Q: h  ,z   6@y/+  : '7 \y/,z   ø<¯#ø8¯#+  +7@y/,z   öW §Iõ` o!<  G\y/ y.y`|  õb qô §m \y/ y.y \y/!>y/ \y.yø<¯I@@y/!<p øW<°Q6\y/+  ( <y/Q<y.zõO<¯õ` ¥öƒÿÿ3B%{,z   öÐ ¦õ†€¤ÓõŽ€ ô€  %{þ õ†€G+  I÷@<¯þ ô € õ–€ ,z   öÐ<¯#õ` öÐ¯#+  PMû¼¯#û„¯#öÐ ¦õ†€¤ÓöÐ¯#, 	võ` ô € õ–€ öÐ ¦õ†€¤ÓöÐ¯#, 	võ` ƒöƒÿÿ3B%{,z   ÷À¯,z   þ  %{ <  G\y/õ` õŽ€ öï@¦‹!<  , fõ` Çöï@¦‹õ` Éô §oô<¯%S<  û   \y.y <y/Q< 	&ý4þ«Uïx ^õO<¯ô<¯%ô<¯ø|¯/ø<¯÷G ¦‹0<&Eô ¦…ô ¦‹>@&Fõ` ¯õ–€ ,z   ô¸  p  +  [ >   2>-gõ` Ó7@y/+  o.> lõ` Í7 ',z    > l.-g,:   0(ö?<®Á+  u,Z  ùð<­C*-g, x <y.hô<®áø<®Áú/<®ÁX<y.a*<y.hQ<y/û<¯@@y/õO<¯õ` ¥ o‡/'8!<  @øW ¦!<  õ` ÍO@y/ \y/4< 	%õŽ€ ô‚ ú7¸F!>  B^pFõ–€ õÏ ­íô<¯/ø<°Q@@y0)ø<°Sø<°Oùð<°YO@y0-@@y0( <y/g \y/&.<   ô<¯M <y/'Q<  @ \y/%.<   ô<¯K@@y/'!<y/'û<¯OõO<°M!<pû<¯ô<¯!<  ô<¯ùð<¯!ø<¯5O@y/ô §qô<¯7@@y/ô<¯;ú/;ÿÿõO<¯Aô/  ô<¯= - \y/ !< ô<¯A y/ \y/õŽ€ ,:  õŽ€ õŽ€ ô	¼¯5öÈ -* 'õ–€ õ–€ ,Z  õ–€ @@y/@@y/ùð<¯9!<   \y.yQ<ìX<y0/ \y0/ø<¯ø<¯ô §m \y/õ0¾æ“ïx 	ô ' \y/îûX<¯Eùð<¯@@y/@@y/O@y/@@y/ø<¯-@@y/ø<¯1ø<°]ùð<®ó,z    <.+  }+    ñ€ +    `  ñ    +   ð >sCSwQLW@    Y>@     ø   ÿÿÿÿÿð    %{ô€	]ô€© y0/ $   , T %{!< 	&X<y.zõO<¯ô<¯%ô<®ý '9ô ©!<  B\y/î+  îdôK€ õ†€	, Yr, Wm3^ a	, ^kõ†€V‘õ†€Cð <¯5û@€®½öp€ ùð ®½3^.5O@.5õ†€G…ô<®Á, \14y.h÷% 	} .   õŽ€ X^h   "   ûB„¯!6@	/0Jx  õ` 	ŸõŽ€ ô€ , $ô   y0/,:  öè+ÿÿõ` 	¥õ†€	o h  öè7ÿÿõ` 	 $   , Xô<¯-ô<¯/.L  y/.L *õ†€	§þ õ–€ Zh  ." l3"-g+  	BZh  /'8,z   õ†€	õ` 	‘ "x  Q"  , R+    ô  òÿ §s "   6@	/õ†€	¿." l3"-g+  	Wþ öÐ<°Oõb 	µöÏ<¯õ` 	ç@@y/ùð<¯ô €  %{û$Îƒïx 	^!<  @ø÷ ¦,z   ,:  ,:  @@  õ†€9, 	d,Z  6@  õ†€¥+  P[P  öW  +  	oZP  [p0a\ ,z   ý±ÿÿõ†€ƒZP  7 p0õ` 	Ùö½ 	ÛZ  õï®Áô8B÷G\	/@@P  ,z    <  1 \P  ,z   öè<¯,z   öW<¯,z   ZP  [p0`\ @@P  ,z   O@p(^p9B 	\O@p+  	\þ +@ îT7>%{õb 	ï \y0C \y/	,Zy.y <y/õO<¯ y.y7w‡ p  X=  ü   \y/h<\ a|ïpõ` 	÷!< øW<°Qöè<¯#+  ô¼¯O@&Nþ õb 
+ô §öW §Iõ` 
+!<  ø÷ ©÷Ç ©õ†€w+  ô<¯#õ` þ ¿öÐ ¦õ†€¤Ó+Ah  , 	vþ ¿+Ah  +  õ` ¥öÐ ¦õ†€¤Ó <  Q\h   =h  7!h  õ` 
+%ûg8 ø/  ?$< l3\%{+ 6!h  , 	vþ :Ah  õ` 
+% =h  õŽ€ ,:   %{&< l.<   %{Qy/õ–€ ô7<  %{Z^q/õ–€ +  Y <  Q\h  +  þ üœßT±ïx öÐ ¦õ†€¤Ó+Ah  , 	vþ +Ah  õ` 
+;õ` ¥öÐ ¦õ†€¤Ó <  Q\h  !<  õ†€
+öèwÿÿG]h   h  6 p  þ ¿ =h  ,:   ,  , t,Z  õ` ¥öÐ ¦õ†€¤ÓõŽ€ ,:  ,:   <y/õO<¯ûG7ÿýõ†€
+m, 	vûG7ÿý p  `b~ +  >$':òê §u6@  .  ûX  0(  õb 
+iõp
+õ` 
+ƒ*\ 0 p  `b~ õ` ¥$':òê §uö‘ 
+uõÁ  ./0(  + ;+@ =,z   ÷' 
+m6   7   ,Z  ,Z  õ–€ /'8+ p  õ†€
+‡, G[  4B .õ†€= B:@  ,z   *  õ†€
++õb 
+‹*  õ` ¥þ ¿7   +  `!$  GD  þ ¿*  ,:   ,  , t,Z  +  F,:   ,@õ` 
+á h  ú/7ÿÿ,:   , @, t,Z  õ` ¥,:   , õ` 
+á,:   , `õ` 
+á,:   ,`õ` 
+á h  ú/7ÿÿ,:   , @, t,Z  õ` ¥,:   , õ†€
+¹,Z  õ` ¥õŽ€ ,:  ô<°‘sDlXïx ^öð  +  d.0  öð  +  d.0  öð  +  d.0  öð  +  dõb 
+Ç oï~þ ,:p  ,Z@   Pp  Q\@   @  üÿÿQPp  þ õ` 
+ù,:   ,@õ` 
+á,:   ,  õ` 
+á,:   ,   , t,Z  ,z   ,:   , @õ` 
+á*h  ôwÿÿ =  *h  , t,Z  õ` ¥õŽ€  %{,:  ô<°‘öð  +  |.0  öð  +  |.0  öð  +  |.0  öð  +  |õb 
+÷ \@  ô  &< l %{Qy/G  ô7  ZPy/õ` Ã,:  7\y/+  Wõ†€+  : h  õŽ€  %{l>  7\y/õb , +  V,:  ô8 Z\y/, ,Z  ö ®Áø8 ,z   õŽ€    <';`b  5> ab  +  O5> Oõ–€ + p+  +  +  #+  õ` ;õ` Cõ` +õ` 3ô7ÿÿO@p  ,z   ôwÿÿO@p  ,z   ôwÿÿõŽ€ !"  BBp  +  OôwÿÿõŽ€ ô(ƒÿÿ.Bp  +  Oôwÿÿ> p  ,z   ùð ¦e~f/ïx ô'wÿÿY\p  !`  üÿÿP\p  ø ¦e,z   ôwÿÿ: p  ,z   ô7ÿÿ p  5> %+ p  Z\y.yüÿÿû7<¯l~  + ',z   õŽ€ ,:  ô8 Z\y/, ,Z  Xh  ö ®Áø8 6\y/õ` Q/'8e~  +  ?öØ ¦@@y/#õ` c,:  õŽ€ ,:   %{7^y/+ 3ûDwÿýô  3^  +  7ûG¼ ö—€§w÷' i,Z  õ–€ õ†€÷@7ÿÿ+  WõŽ€  %{,:  7\y/õb w, =õ` «,:  ûD8 ZPy/ö ®Áø8 ,Z  ,z   õ†€‡, ,z   õ†€‡, =,z   õŽ€  %{l>  ,:     ô<¯3<P Lô8 =p G   ûG8 ,:y/õpwÿýZy/û  ,Zy/+  a y/+Ao‡+  a,Z  ÷`7ÿÿ,Z  õ–€ ,z   ,Z  ,z   : h  ; h  õ–€ : h  ,z   ÷@7ÿÿõ–€ 	,z   ÷`7ÿÿ,Z  õ–€ ,z   ,Z  ,z   þ +  R: h  þ ,z   : h  þ õ` þ ‡,z   : h  þ Ÿl0rïx^,z   þ ,z   : h  þ ¿,z   : o‡,Z  õ–€ ,z   ÷@7ÿÿ/'8,z   /'<,z   õæ€§y,z   /',z   Or*D     OsHð   OpL|    OTnð   ùæ9Ï    ùæ._Ïð   ùæ0ÿ]    Or@ð   ùæ4;    OZh^ð   	Ob;    ùæ7ZÉð   OZsJ    OK#Jð   ùæ7)Ï    Ohoð   ùæ0ÿ+    Oað   OrK]    	Or Gð   Ol]O    ùæ1n‹ð   ùæ-6#    ùæ%¤íð   ùæ7[    OrE}ð   OZG-    îOJw-ð   ùæ-_•    ùæ%•ð   ùæ-b]    ùæ%’]ð   O\lD    OfNDð   !OlW    OBð   #OLL    ùæ1]‹ð   %OZ(    OJXð   'ùæ-(    ùæ%Xð   )OPP(    OPP<ð   +OZl$     OZnd    (OZn(    0Oh5I    @O@:D    OAXð  O>\|   O"~ð  ùæ`-Ï   ùæUoÏð  òÙKÛÿÿþ ;ùæX]   O@Pð  ùæ[/;   O(x^ð  	O0';   ùæ^jÉð  O)J   O3Jð  ùæ^9Ï   O6,oð  ùæX+   O0ð  O@[]   	O@Gð  O:mO   ùæX~‹ð  ùæTF#   ùæL´íð  ùæ^k   O@U}ð  O(W-   îO-ð  ùæTo•   ùæLŸ•ð  ùæTr]   ùæL¢]ð  O*|D   O4^Dð  !O:g   O/ð  #O\   ùæXm‹ð  %O(8   Ohð  'ùæT8   ùæLhð  )O`(   O`<ð  +'U@    }U@    }V@   1Y\ñ  ñåC'ÿ@  .,ñ  ñæPµ5@  ñæPµñ  ñãæl×ñ  ñæœ¯…@  @<|ñ  	*l|@  ñäÓÁuñ  '@A@  ñäŸ…ñ  (qA@  ñæ(ªñ  Q&4@  l ñ  ñæ—_@  	ñä{ö+ñ  (oH@  ñä{õ	ñ  ñæPµ	@  ñä
+§Iñ  ñåsæE@  ÷„`ž“ÿþ»ñä{Ð«@  îñåH¸Gñ  R.'@  ñæúyÏñ  ñæ©OW@  S[ñ  <d@  9d@  ñãŸ:Iñ  #ñä¾I@  ñæ8gñ  %ñæ(5@  =vTñ  'n@@  ñäÓÙñ  )ñæ7q[@  ñæ`=ñ  +ñåÚŠ@  ñãž=ñ  -73+@  '>cñ  /ñäØÙÅ@  ñåbgÿñ  1'@  ñåcEñ  3f@  S1ñ  5ñä
+Pƒ@  '*?ñ  7<\@  '$ñ  9)x@  {xñ  ;R?t@  [ñ  =ñæ­SÏ@  Eñ  ?yMJ@   ``gñ  Añæ(5ƒ@  !Ngñ  CM5D@  "zMñ  ECRh@  #7x`   ñä
+¦ëb   ñæ„ ‹f   ñæÁÌgh   Zlhj   Rk,l    Gn   (o*p   ñäS?r   (qˆt   @M[v   Pxx   &%z   ñååJ|   X$8	    ñãÄ÷	    ñæ^å	@   ñã5µ	`   R%      G@÷W²ßïx îð   î`    71 ð   ñæ§(g    ñäùxgð   DfD    YHð   ñåßaE    %]0ð   	L*8    A/4ð   ñäÔ;    ñãœ;ð   2,    >fð   D^\    ñåbað   \U    	Eð   r X    gE\ð   uJ    8Eð   A;t    Zoð   ñäÍ¦#    îñã•&#ð   ñäÑo]    ñã˜ï]ð   ñäÑÞ‹    ñã™^‹ð   vu     }E ð   !p     NZ@ð   #lf     b\ð   %@(     @(ð   '@<     @<ð   )@    `ð   +&k      'O     ('<@    0E^h    @1~ l+ îL y0/d'=ô ©a|  õb ò€§{4\ îwú/¸ ú/ ©d'>û7€©ò€§}b'?ò€§õa@©+    þ  Ÿ/p €õb «d'@7>%{+ îWò § <   d'Aöè<¯Eõ` ë7<  +  îvöO §ƒ+  îw2<'BöO §…÷A€ïxî]õ` —ö·€¿ 0   */ô § \y/#õÿå y0/Z  4'Cô<°U,p+  îd÷@ © %{öÐ<¯Iõ†€93^&Höø ¦+  îhöÈ ¦“+  îq6@y/õb Ñö·€Û <   õG § \/þ€ õb × >   ò€§‡õ` §7@y0I6@y0Jõb Ý7@y0K6@y0L+ îp+  îk7@y/#+  îhùð ¦“ø ¦‘@@&I+  îhõ†€Ù<'Dõ` Áöç §‰!< T õ` »ô ©a|  + îx!< P õ` »     p €õb õd'@7>%{+ î|ò § <   d'Aöè<¯Eõ` ë   d'Eô€óô€©az  õb õÿåö7  Gõ` 	ò€§‹õ` ŸBy/!:y/X  ûG€ d'F+  îRþ  %{ö×<¯#õ`  %{þ 6@y/+  <y/Q<y.zõO<¯ô © \y.yô §mô §+  ö¿ § q/õè¸¯#2B'Gõb #@@q/ø<¯#÷@<¯ø8¯#õ` õ†€öç §!<  G\y/ %{öÐ<¯Iõ†€9öè<¯Eõ`    l'=õ`  y/güÿÿõ†€Ùõ` ôÜÈq+ÿþ 9 %{õ†€õ` - <   +  õ¯ Iõ¯ Iõ¯ Iõ¯ Iõ¯ Iõ¯ Iõ¯ Iõ¯ Iõ¯ Iõ¯ Iõ¯ I/< ô<°U %{l'HõÃ  òÿ §‘õ†€ <  +  þ By/!" |øP¼¯=Dy/õ` )   6ð  #ð  ãð  /   Vð  cð  §ð  sð  )ð  +ð  … <  G\y/õ` ô  04  õ` Ùô<°U: h  Z  ô € &" l5D'IõÍ<®Á[P  ZP  +Z  ô ¼°Uò€§“> h  0"  õ` ÙõÈ¼®Á[  Z  ö”€Eû ! H0ah  @õ` ¥ô–Û!(   øò•õ` ¥   ø-  2'Jòê §•+PEð  •   Nô  •   N0  N@  N@  I@  Iö4€ õ` )+  Nl.  b'K.'8üƒÿÿ: h  ò §—û€ 6&I#'+  Rõ öÈ  õ` )ò€ ,z   õ` ¥öè$£Íõ` )õ` ¡   ô € ô€ ô	  	+  W, t .   f'Lò€§™[0`P  õ` í`X   õ` ÏdP  l  `N  `X  ÿ’ÇÈŸÿþ ¹aX +  "`X   (ö  -õ` Óòê÷Š )÷Š Åòéb'M+   & õÁ€§›b'NaN  ô@ `N  ô@ aN  ò §,z   0P  ,z    " @ õ` Ý`N  õ` )/0   öŒ )00  +  rdP  õ` ßõÌ®Á @  d'O,z   ô  õÍ ®Áô€ 	ZP  +  T00  õ` ÿõÌ®±+  nZ  õÍ<®Á[P  ZP  ,z   `P  ý›€ õ` )ò€§Ÿd'P,:  õŽ€ õŽ€ õŽ€    , Wõ–€ õ–€ õ–€ ,Z  ò€§Ÿõ\ ñ,z   1p  10   õ` )õ†€
+ð  KïõŽ€ 	 2   "Gàõ†€H—õ†€ø) ÿòù€§¡l$   (Hïvl$   G  õ–€ 	õ` Ýø‚ ø ô ó‚ ôŽ ð õ=2 1( @9õ   gô   aõ   c)v| 2)z5 .!t$ -õ @[Q|  õ>&(   +õ?"€[õ?"€[õ>Ž€eõ>Æ€_ú=OÏWõ @qõ   UQv0  1v@ 6( @/õ @]õ   Yõ   Wø>‡õ?&€]õ?&€])|% .)|% .)|= /)|= /õ=‚€yQv  3kMAÿþ 9( @<õ AQ|wOiQ}P  ){EM){EMõ>þ›õ>þ›){=Mõ>ú›( AN5H $öð°O,z   õ` IôJ  õ†€ƒh'Qõ` ¥õ†€ƒl(  üŠ 
+öè¯1l(   H	.yõ` ¥ 	/d(ï|ò §£,z   þ 3B%{B	/d(ï|l(   H	/3B%{@	/õ` ³XH	/,z   úB¯;õ  û¯;õ` U&" lõ` Ýþ By/òê §O(H‡õÂ¯-þ õ` Uö’ )õ†€ƒ, ;õ` ô¯%þ õ` ¥ 	/ *   þ 2D)/õ` }ör¯%,z   .* l3*-gõ` yõ` ¥õ†€¥öP€ õ` )õ` ³('Rõ` Uh'R,z   öw€ õ` õ†€ƒ!$ @ øñ¯õ†€¥õÊ ÿ(Hï{   õŽ€ õ†€
+   PõG€ , H>+    õ†€s/'8õG€ öw€ ,z   !, @ øS¯,z   õ–€  %{õ` ›6@   H	/,z   d Cô¯ô	 '`H  h  `h  h @XD	/îü€ p		/î,z   õÿÝ H	/6@  ü3€ ,z   õ` 'öä §¥ø,  ÿ5›“Ëÿþ ¹ô	°[+@A'S6@	/+  Z,z   öä §¥ø,   $	0.+  ]úB¯!õ` Ud C+   0."‡õÈ€ ."‡ø,  +@@f,z   Gh	/Bh	/õ@€ ('Hõ@€ õ` Uõ@€ h'Hõ@€ ,z   [y/(\  û<¯1,z   ûB¯1õ` Uô €©b'Uòé€§«ö€ ö1€ 1õ` ö€ +  }&'V1F  lõ` õ`b põ` )ô  õ†€­ Ty0Fh4\ at~ +  öÐ ¦õ†€¤Óõ` ó, , 	v,z   !"  øð¼°Q+    , 	võb ù$'V1D  Wõ` éö1  ­õ` õûa€ ü€?0F põ` )õ` éõ†€ò€§­+  o$'Wò€§¯d" pl" `õ` éDy/ y0Fn'X+  "$  .Dy/@@y/õ` ¥f  ,z   õ` ¥,:  ô §3\'7, PM,Z  ,z   Z  ø<°Uò€§± 6  v'Y+  Z  õÍ<®ÁõŽ€ , \õ–€ ò€§±6'Y1V  +  p ,y0Dú+ ô ò€§³b'Zò€§µ y/ûb€ S"  1V  7@y0D+  )5D )ûEËÿþ 9ô  bL'[õ` ÙõË<®Á 0  [@0`P  õ` 	aP õ` ¥[0  *  õA  aP  õ` M &]ZI'òû€§·,:'\õ` Oô	‚LëõŽ€§¹Q&(  ô
+€ õ` mõ†€á+  hô<¯'ûx  Q"(  õŽ€ ,:  õŽ€ ô)ÿÝûAˆ‹0F  õY [5d >&']1V  5F =!&  ü€ 
