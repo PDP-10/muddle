@@ -7,7 +7,7 @@
 :midas .temp.;_mdlint; mudits
 :midas .temp.;_mdlint; mappur
 :midas .temp.;_mdlint; core
-:midas .temp.;_mdlint; atomhk 144
+:midas .temp.;_mdlint; atomhk
 :midas .temp.;_mdlint; interr
 :midas .temp.;_mdlint; gchack
 :midas .temp.;_mdlint; readch
@@ -28,6 +28,6 @@
 :midas .temp.;_mdlint; create
 :midas .temp.;_mdlint; save
 :midas .temp.;_mdlint; agc
-:midas .temp.;_mdlint; amsgc 107
+:midas .temp.;_mdlint; amsgc
 :midas .temp.;_mdlint; secagc
 :midas .temp.;_mdlint; initm
