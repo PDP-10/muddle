@@ -1,0 +1,1114 @@
+
+#WORD *21064524407*
+<GFCN MOVE-STRING!-MIMOC ("VALUE" ANY LIST) L5>
+		    <TEMP FROM6 TEMP10 TO7 CNT8 NO-OVERLAP?9>
+		    <INTGO>
+		    <NTHL L5 1 = FROM6>
+		    <RESTL L5 1 = TEMP10 (TYPE LIST)>
+		    <NTHL TEMP10 1 = TO7>
+		    <DEAD TEMP10>
+		    <RESTL L5 1 = TEMP10 (TYPE LIST)>
+		    <RESTL TEMP10 1 = TEMP10 (TYPE LIST)>
+		    <NTHL TEMP10 1 = CNT8>
+		    <DEAD TEMP10>
+		    <FRAME 'EXTRAMEM>
+		    <PUSH 'NO-OVERLAP>
+		    <PUSH L5>
+		    <DEAD L5>
+		    <CALL 'EXTRAMEM 2 = NO-OVERLAP?9>
+		    <TYPE? NO-OVERLAP?9 <TYPE-CODE FALSE> + PHRASE13>
+		    <RESTL NO-OVERLAP?9 1 = TEMP10 (TYPE LIST)>
+		    <DEAD NO-OVERLAP?9>
+		    <NTHL TEMP10 1 = NO-OVERLAP?9>
+		    <DEAD TEMP10>
+PHRASE13
+		    <FRAME 'WILL-DIE?>
+		    <PUSH FROM6>
+		    <CALL 'WILL-DIE? 1 = TEMP10>
+		    <TYPE? TEMP10 <TYPE-CODE FALSE> + PHRASE15>
+		    <DEAD TEMP10>
+		    <FRAME 'DEAD!-MIMOC>
+		    <CONS FROM6 () = STACK>
+		    <PUSH 'T>
+		    <CALL 'DEAD!-MIMOC 2>
+PHRASE15
+		    <FRAME 'WILL-DIE?>
+		    <PUSH TO7>
+		    <CALL 'WILL-DIE? 1 = TEMP10>
+		    <TYPE? TEMP10 <TYPE-CODE FALSE> + PHRASE19>
+		    <DEAD TEMP10>
+		    <FRAME 'DEAD!-MIMOC>
+		    <CONS TO7 () = STACK>
+		    <PUSH 'T>
+		    <CALL 'DEAD!-MIMOC 2>
+PHRASE19
+		    <FRAME 'WILL-DIE?>
+		    <PUSH CNT8>
+		    <CALL 'WILL-DIE? 1 = TEMP10>
+		    <TYPE? TEMP10 <TYPE-CODE FALSE> + PHRASE23>
+		    <DEAD TEMP10>
+		    <FRAME 'DEAD!-MIMOC>
+		    <CONS CNT8 () = STACK>
+		    <PUSH 'T>
+		    <CALL 'DEAD!-MIMOC 2>
+PHRASE23
+		    <FRAME 'UPDATE-ACS>
+		    <CALL 'UPDATE-ACS 0>
+		    <TYPE? NO-OVERLAP?9 <TYPE-CODE FALSE> + PHRASE28>
+		    <DEAD NO-OVERLAP?9>
+		    <FRAME 'GET-INTO-ACS>
+		    <PUSH CNT8>
+		    <DEAD CNT8>
+		    <PUSH 'VALUE>
+		    <PUSH 'A1*>
+		    <PUSH FROM6>
+		    <DEAD FROM6>
+		    <PUSH 'VALUE>
+		    <PUSH 'A2*>
+		    <PUSH TO7>
+		    <DEAD TO7>
+		    <PUSH 'VALUE>
+		    <PUSH 'C1*>
+		    <CALL 'GET-INTO-ACS 9>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SETZB>
+		    <PUSH 'B1*>
+		    <PUSH 'C2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEI>
+		    <PUSH 'B2*>
+		    <PUSH (A1*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'XBLT>
+		    <PUSH 'A1*>
+		    <SET FROM6 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH 1879048192>
+		    <SCALL 'OBJ-VAL 1 = TEMP10 + TAG32 FROM6>
+		    <LOOP (TEMP10 TYPE VALUE LENGTH) (FROM6 VALUE)>
+TAG35
+		    <INTGO>
+		    <EMPTY? TEMP10 + TAG32>
+		    <NTH1 TEMP10 = STACK>
+		    <REST1 TEMP10 = TEMP10>
+		    <ADD FROM6 1 = FROM6 (TYPE FIX)>
+		    <JUMP + TAG35>
+TAG32
+		    <CALL 'OCEMIT FROM6>
+		    <DEAD FROM6>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH 'IOERR>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'FLUSH-ACS>
+		    <CALL 'FLUSH-ACS 0 = FROM6>
+		    <RETURN FROM6>
+		    <DEAD FROM6>
+PHRASE28
+		    <FRAME 'GET-INTO-ACS>
+		    <PUSH FROM6>
+		    <DEAD FROM6>
+		    <PUSH 'VALUE>
+		    <PUSH 'O1*>
+		    <PUSH TO7>
+		    <DEAD TO7>
+		    <PUSH 'VALUE>
+		    <PUSH 'O2*>
+		    <PUSH CNT8>
+		    <DEAD CNT8>
+		    <PUSH 'VALUE>
+		    <PUSH 'O*>
+		    <CALL 'GET-INTO-ACS 9>
+		    <FRAME 'FLUSH-ACS>
+		    <CALL 'FLUSH-ACS 0>
+		    <FRAME 'PUSHJ>
+		    <PUSH 'MOVSTR>
+		    <CALL 'PUSHJ 1 = FROM6>
+		    <RETURN FROM6>
+		    <DEAD FROM6>
+		    <END MOVE-STRING!-MIMOC>
+#WORD *5123055726*
+		    <GFCN MOVE-WORDS!-MIMOC ("VALUE" ANY LIST) L4>
+		    <TEMP FROM5 TEMP11 TO6 CNT7 TY8 TG9 DIRECTION10>
+		    <INTGO>
+		    <NTHL L4 1 = FROM5>
+		    <RESTL L4 1 = TEMP11 (TYPE LIST)>
+		    <NTHL TEMP11 1 = TO6>
+		    <DEAD TEMP11>
+		    <RESTL L4 1 = TEMP11 (TYPE LIST)>
+		    <RESTL TEMP11 1 = TEMP11 (TYPE LIST)>
+		    <NTHL TEMP11 1 = CNT7>
+		    <DEAD TEMP11>
+		    <FRAME 'EXTRAMEM>
+		    <PUSH 'TYPE>
+		    <PUSH L4>
+		    <CALL 'EXTRAMEM 2 = TY8>
+		    <FRAME 'GENLBL>
+		    <PUSH "BLT">
+		    <CALL 'GENLBL 1 = TG9>
+		    <FRAME 'EXTRAMEM>
+		    <PUSH 'DIRECTION>
+		    <PUSH L4>
+		    <DEAD L4>
+		    <CALL 'EXTRAMEM 2 = DIRECTION10>
+		    <TYPE? TY8 <TYPE-CODE FALSE> + PHRASE16>
+		    <RESTL TY8 1 = TEMP11 (TYPE LIST)>
+		    <DEAD TY8>
+		    <NTHL TEMP11 1 = TY8>
+		    <DEAD TEMP11>
+PHRASE16
+		    <TYPE? DIRECTION10 <TYPE-CODE FALSE> + PHRASE18>
+		    <RESTL DIRECTION10 1 = TEMP11 (TYPE LIST)>
+		    <DEAD DIRECTION10>
+		    <NTHL TEMP11 1 = DIRECTION10>
+		    <DEAD TEMP11>
+PHRASE18
+		    <TYPE? CNT7 <TYPE-CODE FIX> - PHRASE20>
+		    <EQUAL? TY8 'VECTOR - PHRASE20>
+		    <LSH CNT7 1 = CNT7 (TYPE FIX)>
+PHRASE20
+		    <FRAME 'GET-INTO-ACS>
+		    <PUSH FROM5>
+		    <DEAD FROM5>
+		    <PUSH 'VALUE>
+		    <PUSH 'O1*>
+		    <PUSH TO6>
+		    <DEAD TO6>
+		    <PUSH 'VALUE>
+		    <PUSH 'O2*>
+		    <CALL 'GET-INTO-ACS 6>
+		    <TYPE? DIRECTION10 <TYPE-CODE FALSE> - PHRASE24 (DEAD-JUMP TG9) (DEAD-FALL DIRECTION10)>
+		    <FRAME 'GET-INTO-ACS>
+		    <PUSH CNT7>
+		    <PUSH 'VALUE>
+		    <PUSH 'T*>
+		    <CALL 'GET-INTO-ACS 3>
+		    <TYPE? CNT7 <TYPE-CODE FIX> + PHRASE27 (DEAD-JUMP TY8)>
+		    <DEAD CNT7>
+		    <EQUAL? TY8 'VECTOR - PHRASE27>
+		    <DEAD TY8>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ASH>
+		    <PUSH 'T*>
+		    <PUSH 1>
+		    <CALL 'OCEMIT 3>
+PHRASE27
+		    <FRAME 'OCEMIT>
+		    <PUSH 'CAMG>
+		    <PUSH 'O2*>
+		    <PUSH 'O1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH TG9>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADD>
+		    <PUSH 'O1*>
+		    <PUSH 'T*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADD>
+		    <PUSH 'O2*>
+		    <PUSH 'T*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVNS>
+		    <PUSH 'O*>
+		    <PUSH 'T*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'LABEL>
+		    <PUSH TG9>
+		    <DEAD TG9>
+		    <CALL 'LABEL 1>
+		    <JUMP + PHRASE57>
+PHRASE24
+		    <EQUAL? DIRECTION10 'BACKWARD - PHRASE37>
+		    <DEAD DIRECTION10>
+		    <TYPE? CNT7 <TYPE-CODE FIX> - PHRASE39 (DEAD-FALL TY8)>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVNI>
+		    <PUSH 'T*>
+		    <PUSH CNT7>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADDI>
+		    <PUSH 'O1*>
+		    <PUSH CNT7>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADDI>
+		    <PUSH 'O2*>
+		    <PUSH CNT7>
+		    <DEAD CNT7>
+		    <JUMP + PEEP64>
+PHRASE39
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVN>
+		    <PUSH 'T*>
+		    <SET FROM5 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH CNT7>
+		    <DEAD CNT7>
+		    <SCALL 'OBJ-VAL 1 = TEMP11 + TAG44 FROM5 (DEAD-JUMP TEMP11)>
+		    <LOOP (TEMP11 TYPE VALUE LENGTH) (FROM5 VALUE)>
+TAG47
+		    <INTGO>
+		    <EMPTY? TEMP11 + TAG44 (DEAD-JUMP TEMP11)>
+		    <NTH1 TEMP11 = STACK>
+		    <REST1 TEMP11 = TEMP11>
+		    <ADD FROM5 1 = FROM5 (TYPE FIX)>
+		    <JUMP + TAG47>
+TAG44
+		    <CALL 'OCEMIT FROM5>
+		    <DEAD FROM5>
+		    <EQUAL? TY8 'VECTOR - PHRASE50>
+		    <DEAD TY8>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ASH>
+		    <PUSH 'T*>
+		    <PUSH 1>
+		    <CALL 'OCEMIT 3>
+PHRASE50
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUB>
+		    <PUSH 'O1*>
+		    <PUSH 'T*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUB>
+		    <PUSH 'O2*>
+		    <PUSH 'T*>
+		    <JUMP + PEEP64>
+PHRASE37
+		    <FRAME 'GET-INTO-ACS>
+		    <PUSH CNT7>
+		    <PUSH 'VALUE>
+		    <PUSH 'T*>
+		    <CALL 'GET-INTO-ACS 3>
+		    <TYPE? CNT7 <TYPE-CODE FIX> + PHRASE57 (DEAD-JUMP TY8)>
+		    <DEAD CNT7>
+		    <EQUAL? TY8 'VECTOR - PHRASE57>
+		    <DEAD TY8>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ASH>
+		    <PUSH 'T*>
+		    <PUSH 1>
+PEEP64
+		    <CALL 'OCEMIT 3>
+PHRASE57
+		    <FRAME 'OCEMIT>
+		    <PUSH 'XBLT>
+		    <PUSH 'T*>
+		    <SET TEMP11 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH 2147483648>
+		    <SCALL 'OBJ-VAL 1 = FROM5 + TAG60 TEMP11 (DEAD-JUMP FROM5)>
+		    <LOOP (FROM5 TYPE VALUE LENGTH) (TEMP11 VALUE)>
+TAG62
+		    <INTGO>
+		    <EMPTY? FROM5 + TAG60 (DEAD-JUMP FROM5)>
+		    <NTH1 FROM5 = STACK>
+		    <REST1 FROM5 = FROM5>
+		    <ADD TEMP11 1 = TEMP11 (TYPE FIX)>
+		    <JUMP + TAG62>
+TAG60
+		    <CALL 'OCEMIT TEMP11 = TEMP11>
+		    <RETURN TEMP11>
+		    <DEAD TEMP11>
+		    <END MOVE-WORDS!-MIMOC>
+
+#WORD *11704504741*
+<GFCN STRING-EQUAL?!-MIMOC ("VALUE" ANY LIST) L4>
+		    <TEMP S1-5 TEMP10 S2-6 DIR7 LBL8 LBL2-9 TEMP39>
+		    <INTGO>
+		    <NTHL L4 1 = S1-5>
+		    <RESTL L4 1 = TEMP10 (TYPE LIST)>
+		    <NTHL TEMP10 1 = S2-6>
+		    <DEAD TEMP10>
+		    <RESTL L4 1 = TEMP10 (TYPE LIST)>
+		    <RESTL TEMP10 1 = TEMP10 (TYPE LIST)>
+		    <NTHL TEMP10 1 = DIR7>
+		    <DEAD TEMP10>
+		    <RESTL L4 1 = TEMP10 (TYPE LIST)>
+		    <RESTL TEMP10 1 = TEMP10 (TYPE LIST)>
+		    <RESTL TEMP10 1 = TEMP10 (TYPE LIST)>
+		    <NTHL TEMP10 1 = LBL8>
+		    <DEAD TEMP10>
+		    <FRAME 'GENLBL>
+		    <PUSH "SE">
+		    <CALL 'GENLBL 1 = LBL2-9>
+		    <TYPE? S2-6 <TYPE-CODE STRING> + BOOL14>
+		    <FRAME 'IN-AC?>
+		    <PUSH S2-6>
+		    <PUSH 'VALUE>
+		    <CALL 'IN-AC? 2 = TEMP10>
+		    <EQUAL? TEMP10 'A2* + BOOL14>
+		    <DEAD TEMP10>
+		    <FRAME 'IN-AC?>
+		    <PUSH S2-6>
+		    <PUSH 'VALUE>
+		    <CALL 'IN-AC? 2 = TEMP10>
+		    <TYPE? TEMP10 <TYPE-CODE FALSE> + PHRASE13>
+		    <DEAD TEMP10>
+		    <FRAME 'IN-AC?>
+		    <PUSH S1-5>
+		    <PUSH 'VALUE>
+		    <CALL 'IN-AC? 2 = TEMP10>
+		    <TYPE? TEMP10 <TYPE-CODE FALSE> - PHRASE13>
+		    <DEAD TEMP10>
+BOOL14
+		    <SET S1-5 S2-6>
+		    <DEAD S2-6>
+		    <NTHL L4 1 = S2-6>
+		    <DEAD L4>
+PHRASE13
+		    <TYPE? S1-5 <TYPE-CODE ATOM> - PHRASE20>
+		    <FRAME 'WILL-DIE?>
+		    <PUSH S1-5>
+		    <CALL 'WILL-DIE? 1 = TEMP10>
+		    <TYPE? TEMP10 <TYPE-CODE FALSE> + PHRASE20>
+		    <DEAD TEMP10>
+		    <FRAME 'LAB-WILL-DIE>
+		    <FRAME 'FIND-LABEL>
+		    <PUSH LBL8>
+		    <CALL 'FIND-LABEL 1 = STACK>
+		    <PUSH S1-5>
+		    <FRAME '+>
+		    <GVAL 'VISIT-COUNT = STACK>
+		    <PUSH 1>
+		    <CALL '+ 2 = TEMP10>
+		    <SETG 'VISIT-COUNT TEMP10>
+		    <PUSH TEMP10>
+		    <DEAD TEMP10>
+		    <PUSH %<>>
+		    <CALL 'LAB-WILL-DIE 4 = TEMP10>
+		    <TYPE? TEMP10 <TYPE-CODE FALSE> + PHRASE20>
+		    <DEAD TEMP10>
+		    <FRAME 'DEAD!-MIMOC>
+		    <CONS S1-5 () = STACK>
+		    <PUSH 'T>
+		    <CALL 'DEAD!-MIMOC 2>
+PHRASE20
+		    <TYPE? S2-6 <TYPE-CODE ATOM> - PHRASE28>
+		    <FRAME 'WILL-DIE?>
+		    <PUSH S2-6>
+		    <CALL 'WILL-DIE? 1 = TEMP10>
+		    <TYPE? TEMP10 <TYPE-CODE FALSE> + PHRASE28>
+		    <DEAD TEMP10>
+		    <FRAME 'LAB-WILL-DIE>
+		    <FRAME 'FIND-LABEL>
+		    <PUSH LBL8>
+		    <CALL 'FIND-LABEL 1 = STACK>
+		    <PUSH S2-6>
+		    <FRAME '+>
+		    <GVAL 'VISIT-COUNT = STACK>
+		    <PUSH 1>
+		    <CALL '+ 2 = TEMP10>
+		    <SETG 'VISIT-COUNT TEMP10>
+		    <PUSH TEMP10>
+		    <DEAD TEMP10>
+		    <PUSH %<>>
+		    <CALL 'LAB-WILL-DIE 4 = TEMP10>
+		    <TYPE? TEMP10 <TYPE-CODE FALSE> + PHRASE28>
+		    <DEAD TEMP10>
+		    <FRAME 'DEAD!-MIMOC>
+		    <CONS S2-6 () = STACK>
+		    <PUSH 'T>
+		    <CALL 'DEAD!-MIMOC 2>
+PHRASE28
+		    <FRAME 'UPDATE-ACS>
+		    <CALL 'UPDATE-ACS 0>
+		    <TYPE? S1-5 <TYPE-CODE STRING> - PHRASE37>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZ>
+		    <PUSH 'A1*>
+		    <SET TEMP39 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH S2-6>
+		    <SCALL 'OBJ-TYP 1 = TEMP10 + TAG38 TEMP39>
+		    <LOOP (TEMP10 TYPE VALUE LENGTH) (TEMP39 VALUE)>
+TAG41
+		    <INTGO>
+		    <EMPTY? TEMP10 + TAG38>
+		    <NTH1 TEMP10 = STACK>
+		    <REST1 TEMP10 = TEMP10>
+		    <ADD TEMP39 1 = TEMP39 (TYPE FIX)>
+		    <JUMP + TAG41>
+TAG38
+		    <CALL 'OCEMIT TEMP39>
+		    <DEAD TEMP39>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'CAIE>
+		    <PUSH 'A1*>
+		    <LENUS S1-5 = STACK (TYPE FIX)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <EQUAL? DIR7 '+ - PHRASE47>
+		    <SET TEMP39 LBL2-9>
+		    <JUMP + PHRASE48>
+PHRASE47
+		    <SET TEMP39 LBL8>
+PHRASE48
+		    <PUSH TEMP39>
+		    <DEAD TEMP39>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'IN-AC?>
+		    <PUSH S2-6>
+		    <PUSH 'VALUE>
+		    <CALL 'IN-AC? 2 = TEMP39>
+		    <EQUAL? TEMP39 'A2* + PHRASE50>
+		    <DEAD TEMP39>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <SET TEMP10 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH S2-6>
+		    <DEAD S2-6>
+		    <SCALL 'OBJ-VAL 1 = TEMP39 + TAG52 TEMP10>
+		    <LOOP (TEMP39 TYPE VALUE LENGTH) (TEMP10 VALUE)>
+TAG54
+		    <INTGO>
+		    <EMPTY? TEMP39 + TAG52>
+		    <NTH1 TEMP39 = STACK>
+		    <REST1 TEMP39 = TEMP39>
+		    <ADD TEMP10 1 = TEMP10 (TYPE FIX)>
+		    <JUMP + TAG54>
+TAG52
+		    <CALL 'OCEMIT TEMP10>
+		    <DEAD TEMP10>
+PHRASE50
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'C1*>
+		    <SET TEMP39 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH S1-5>
+		    <SCALL 'OBJ-VAL 1 = TEMP10 + TAG56 TEMP39>
+		    <LOOP (TEMP10 TYPE VALUE LENGTH) (TEMP39 VALUE)>
+TAG58
+		    <INTGO>
+		    <EMPTY? TEMP10 + TAG56>
+		    <NTH1 TEMP10 = STACK>
+		    <REST1 TEMP10 = TEMP10>
+		    <ADD TEMP39 1 = TEMP39 (TYPE FIX)>
+		    <JUMP + TAG58>
+TAG56
+		    <CALL 'OCEMIT TEMP39>
+		    <DEAD TEMP39>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEI>
+		    <PUSH 'B2*>
+		    <LENUS S1-5 = STACK (TYPE FIX)>
+		    <DEAD S1-5>
+		    <CALL 'OCEMIT 3>
+		    <JUMP + PHRASE61>
+PHRASE37
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZ>
+		    <PUSH 'A1*>
+		    <SET TEMP10 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH S1-5>
+		    <SCALL 'OBJ-TYP 1 = TEMP39 + TAG62 TEMP10>
+		    <LOOP (TEMP39 TYPE VALUE LENGTH) (TEMP10 VALUE)>
+TAG64
+		    <INTGO>
+		    <EMPTY? TEMP39 + TAG62>
+		    <NTH1 TEMP39 = STACK>
+		    <REST1 TEMP39 = TEMP39>
+		    <ADD TEMP10 1 = TEMP10 (TYPE FIX)>
+		    <JUMP + TAG64>
+TAG62
+		    <CALL 'OCEMIT TEMP10>
+		    <DEAD TEMP10>
+		    <FRAME 'IN-AC?>
+		    <PUSH S1-5>
+		    <PUSH 'VALUE>
+		    <CALL 'IN-AC? 2 = TEMP10>
+		    <EQUAL? TEMP10 'A2* - PHRASE67>
+		    <DEAD TEMP10>
+		    <FRAME 'IN-AC?>
+		    <PUSH S2-6>
+		    <PUSH 'VALUE>
+		    <CALL 'IN-AC? 2 = TEMP10>
+		    <EQUAL? TEMP10 'B2* - PHRASE67>
+		    <DEAD TEMP10>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'C1*>
+		    <PUSH 'B2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZ>
+		    <PUSH 'B2*>
+		    <SET TEMP39 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH S2-6>
+		    <DEAD S2-6>
+		    <SCALL 'OBJ-TYP 1 = TEMP10 + TAG72 TEMP39>
+		    <LOOP (TEMP10 TYPE VALUE LENGTH) (TEMP39 VALUE)>
+TAG74
+		    <INTGO>
+		    <EMPTY? TEMP10 + TAG72>
+		    <NTH1 TEMP10 = STACK>
+		    <REST1 TEMP10 = TEMP10>
+		    <ADD TEMP39 1 = TEMP39 (TYPE FIX)>
+		    <JUMP + TAG74>
+TAG72
+		    <CALL 'OCEMIT TEMP39>
+		    <DEAD TEMP39>
+		    <JUMP + PHRASE101>
+PHRASE67
+		    <FRAME 'IN-AC?>
+		    <PUSH S1-5>
+		    <PUSH 'VALUE>
+		    <CALL 'IN-AC? 2 = TEMP39>
+		    <EQUAL? TEMP39 'B2* - PHRASE76>
+		    <DEAD TEMP39>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <PUSH 'B2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZ>
+		    <PUSH 'B2*>
+		    <SET TEMP10 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH S2-6>
+		    <SCALL 'OBJ-TYP 1 = TEMP39 + TAG79 TEMP10>
+		    <LOOP (TEMP39 TYPE VALUE LENGTH) (TEMP10 VALUE)>
+TAG81
+		    <INTGO>
+		    <EMPTY? TEMP39 + TAG79>
+		    <NTH1 TEMP39 = STACK>
+		    <REST1 TEMP39 = TEMP39>
+		    <ADD TEMP10 1 = TEMP10 (TYPE FIX)>
+		    <JUMP + TAG81>
+TAG79
+		    <CALL 'OCEMIT TEMP10>
+		    <DEAD TEMP10>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'C1*>
+		    <SET TEMP39 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH S2-6>
+		    <DEAD S2-6>
+		    <SCALL 'OBJ-VAL 1 = TEMP10 + TAG83 TEMP39>
+		    <LOOP (TEMP10 TYPE VALUE LENGTH) (TEMP39 VALUE)>
+TAG85
+		    <INTGO>
+		    <EMPTY? TEMP10 + TAG83>
+		    <NTH1 TEMP10 = STACK>
+		    <REST1 TEMP10 = TEMP10>
+		    <ADD TEMP39 1 = TEMP39 (TYPE FIX)>
+		    <JUMP + TAG85>
+TAG83
+		    <CALL 'OCEMIT TEMP39>
+		    <DEAD TEMP39>
+		    <JUMP + PHRASE101>
+PHRASE76
+		    <FRAME 'IN-AC?>
+		    <PUSH S2-6>
+		    <PUSH 'VALUE>
+		    <CALL 'IN-AC? 2 = TEMP39>
+		    <EQUAL? TEMP39 'B2* - PHRASE87>
+		    <DEAD TEMP39>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'C1*>
+		    <PUSH 'B2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZ>
+		    <PUSH 'B2*>
+		    <SET TEMP10 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH S2-6>
+		    <DEAD S2-6>
+		    <SCALL 'OBJ-TYP 1 = TEMP39 + TAG90 TEMP10>
+		    <LOOP (TEMP39 TYPE VALUE LENGTH) (TEMP10 VALUE)>
+TAG92
+		    <INTGO>
+		    <EMPTY? TEMP39 + TAG90>
+		    <NTH1 TEMP39 = STACK>
+		    <REST1 TEMP39 = TEMP39>
+		    <ADD TEMP10 1 = TEMP10 (TYPE FIX)>
+		    <JUMP + TAG92>
+TAG90
+		    <CALL 'OCEMIT TEMP10>
+		    <DEAD TEMP10>
+		    <FRAME 'IN-AC?>
+		    <PUSH S1-5>
+		    <PUSH 'VALUE>
+		    <CALL 'IN-AC? 2 = TEMP10>
+		    <EQUAL? TEMP10 'A2* + PHRASE101>
+		    <DEAD TEMP10>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <SET TEMP39 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH S1-5>
+		    <DEAD S1-5>
+		    <SCALL 'OBJ-VAL 1 = TEMP10 + TAG97 TEMP39>
+		    <LOOP (TEMP10 TYPE VALUE LENGTH) (TEMP39 VALUE)>
+TAG99
+		    <INTGO>
+		    <EMPTY? TEMP10 + TAG97>
+		    <NTH1 TEMP10 = STACK>
+		    <REST1 TEMP10 = TEMP10>
+		    <ADD TEMP39 1 = TEMP39 (TYPE FIX)>
+		    <JUMP + TAG99>
+TAG97
+		    <CALL 'OCEMIT TEMP39>
+		    <DEAD TEMP39>
+		    <JUMP + PHRASE101>
+PHRASE87
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZ>
+		    <PUSH 'B2*>
+		    <SET TEMP10 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH S2-6>
+		    <SCALL 'OBJ-TYP 1 = TEMP39 + TAG102 TEMP10>
+		    <LOOP (TEMP39 TYPE VALUE LENGTH) (TEMP10 VALUE)>
+TAG104
+		    <INTGO>
+		    <EMPTY? TEMP39 + TAG102>
+		    <NTH1 TEMP39 = STACK>
+		    <REST1 TEMP39 = TEMP39>
+		    <ADD TEMP10 1 = TEMP10 (TYPE FIX)>
+		    <JUMP + TAG104>
+TAG102
+		    <CALL 'OCEMIT TEMP10>
+		    <DEAD TEMP10>
+		    <FRAME 'IN-AC?>
+		    <PUSH S1-5>
+		    <PUSH 'VALUE>
+		    <CALL 'IN-AC? 2 = TEMP10>
+		    <EQUAL? TEMP10 'A2* + PHRASE107>
+		    <DEAD TEMP10>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <SET TEMP39 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH S1-5>
+		    <DEAD S1-5>
+		    <SCALL 'OBJ-VAL 1 = TEMP10 + TAG109 TEMP39>
+		    <LOOP (TEMP10 TYPE VALUE LENGTH) (TEMP39 VALUE)>
+TAG111
+		    <INTGO>
+		    <EMPTY? TEMP10 + TAG109>
+		    <NTH1 TEMP10 = STACK>
+		    <REST1 TEMP10 = TEMP10>
+		    <ADD TEMP39 1 = TEMP39 (TYPE FIX)>
+		    <JUMP + TAG111>
+TAG109
+		    <CALL 'OCEMIT TEMP39>
+		    <DEAD TEMP39>
+PHRASE107
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'C1*>
+		    <SET TEMP10 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH S2-6>
+		    <DEAD S2-6>
+		    <SCALL 'OBJ-VAL 1 = TEMP39 + TAG113 TEMP10>
+		    <LOOP (TEMP39 TYPE VALUE LENGTH) (TEMP10 VALUE)>
+TAG115
+		    <INTGO>
+		    <EMPTY? TEMP39 + TAG113>
+		    <NTH1 TEMP39 = STACK>
+		    <REST1 TEMP39 = TEMP39>
+		    <ADD TEMP10 1 = TEMP10 (TYPE FIX)>
+		    <JUMP + TAG115>
+TAG113
+		    <CALL 'OCEMIT TEMP10>
+		    <DEAD TEMP10>
+PHRASE101
+		    <FRAME 'OCEMIT>
+		    <PUSH 'CAIE>
+		    <PUSH 'A1*>
+		    <PUSH (B2*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <EQUAL? DIR7 '+ - PHRASE121>
+		    <SET TEMP10 LBL2-9>
+		    <JUMP + PHRASE122>
+PHRASE121
+		    <SET TEMP10 LBL8>
+PHRASE122
+		    <PUSH TEMP10>
+		    <DEAD TEMP10>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+PHRASE61
+		    <FRAME 'FLUSH-ACS>
+		    <CALL 'FLUSH-ACS 0>
+		    <FRAME 'LABEL-UPDATE-ACS>
+		    <PUSH LBL8>
+		    <PUSH %<>>
+		    <CALL 'LABEL-UPDATE-ACS 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SETZB>
+		    <PUSH 'B1*>
+		    <PUSH 'C2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'XBLT>
+		    <PUSH 'A1*>
+		    <SET TEMP39 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <EQUAL? DIR7 '+ - PHRASE129>
+		    <SET S1-5 805306368 (TYPE FIX)>
+		    <JUMP + PHRASE131>
+PHRASE129
+		    <SET S1-5 268435456 (TYPE FIX)>
+PHRASE131
+		    <PUSH S1-5>
+		    <DEAD S1-5>
+		    <SCALL 'OBJ-VAL 1 = TEMP10 + TAG126 TEMP39>
+		    <LOOP (TEMP10 TYPE VALUE LENGTH) (TEMP39 VALUE)>
+TAG132
+		    <INTGO>
+		    <EMPTY? TEMP10 + TAG126>
+		    <NTH1 TEMP10 = STACK>
+		    <REST1 TEMP10 = TEMP10>
+		    <ADD TEMP39 1 = TEMP39 (TYPE FIX)>
+		    <JUMP + TAG132>
+TAG126
+		    <CALL 'OCEMIT TEMP39>
+		    <DEAD TEMP39>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH LBL8>
+		    <DEAD LBL8>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <EQUAL? DIR7 '+ + TAG138>
+		    <DEAD DIR7>
+		    <RETURN %<>>
+TAG138
+		    <FRAME 'LABEL>
+		    <PUSH LBL2-9>
+		    <DEAD LBL2-9>
+		    <CALL 'LABEL 1 = TEMP39>
+		    <RETURN TEMP39>
+		    <DEAD TEMP39>
+		    <END STRING-EQUAL?!-MIMOC>
+#WORD *13433347155*
+<GFCN STRCOMP!-MIMOC ("VALUE" ANY LIST) L5>
+		    <TEMP S16 TEMP13 S27 VAL8 T19 T210 T311 TEMP29>
+		    <INTGO>
+		    <NTHL L5 1 = S16>
+		    <RESTL L5 1 = TEMP13 (TYPE LIST)>
+		    <NTHL TEMP13 1 = S27>
+		    <DEAD TEMP13>
+		    <RESTL L5 1 = TEMP13 (TYPE LIST)>
+		    <RESTL TEMP13 1 = TEMP13 (TYPE LIST)>
+		    <RESTL TEMP13 1 = TEMP13 (TYPE LIST)>
+		    <NTHL TEMP13 1 = VAL8>
+		    <DEAD TEMP13>
+		    <FRAME 'GENLBL>
+		    <PUSH "TG">
+		    <CALL 'GENLBL 1 = T19>
+		    <FRAME 'GENLBL>
+		    <PUSH "TG">
+		    <CALL 'GENLBL 1 = T210>
+		    <FRAME 'GENLBL>
+		    <PUSH "TG">
+		    <CALL 'GENLBL 1 = T311>
+		    <TYPE? S27 <TYPE-CODE STRING> - PHRASE18>
+		    <SET S16 S27>
+		    <DEAD S27>
+		    <NTHL L5 1 = S27>
+		    <DEAD L5>
+PHRASE18
+		    <FRAME 'WILL-DIE?>
+		    <PUSH S16>
+		    <CALL 'WILL-DIE? 1 = TEMP13>
+		    <TYPE? TEMP13 <TYPE-CODE FALSE> + PHRASE20>
+		    <DEAD TEMP13>
+		    <FRAME 'DEAD!-MIMOC>
+		    <CONS S16 () = STACK>
+		    <PUSH 'T>
+		    <CALL 'DEAD!-MIMOC 2>
+PHRASE20
+		    <FRAME 'WILL-DIE?>
+		    <PUSH S27>
+		    <CALL 'WILL-DIE? 1 = TEMP13>
+		    <TYPE? TEMP13 <TYPE-CODE FALSE> + PHRASE24>
+		    <DEAD TEMP13>
+		    <FRAME 'DEAD!-MIMOC>
+		    <CONS S27 () = STACK>
+		    <PUSH 'T>
+		    <CALL 'DEAD!-MIMOC 2>
+PHRASE24
+		    <FRAME 'UPDATE-ACS>
+		    <CALL 'UPDATE-ACS 0>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZ>
+		    <PUSH 'O*>
+		    <SET TEMP29 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH S16>
+		    <SCALL 'OBJ-TYP 1 = TEMP13 + TAG28 TEMP29>
+		    <LOOP (TEMP13 TYPE VALUE LENGTH) (TEMP29 VALUE)>
+TAG31
+		    <INTGO>
+		    <EMPTY? TEMP13 + TAG28>
+		    <NTH1 TEMP13 = STACK>
+		    <REST1 TEMP13 = TEMP13>
+		    <ADD TEMP29 1 = TEMP29 (TYPE FIX)>
+		    <JUMP + TAG31>
+TAG28
+		    <CALL 'OCEMIT TEMP29>
+		    <DEAD TEMP29>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZ>
+		    <PUSH 'B1*>
+		    <SET TEMP13 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH S27>
+		    <SCALL 'OBJ-TYP 1 = TEMP29 + TAG33 TEMP13>
+		    <LOOP (TEMP29 TYPE VALUE LENGTH) (TEMP13 VALUE)>
+TAG35
+		    <INTGO>
+		    <EMPTY? TEMP29 + TAG33>
+		    <NTH1 TEMP29 = STACK>
+		    <REST1 TEMP29 = TEMP29>
+		    <ADD TEMP13 1 = TEMP13 (TYPE FIX)>
+		    <JUMP + TAG35>
+TAG33
+		    <CALL 'OCEMIT TEMP13>
+		    <DEAD TEMP13>
+		    <FRAME 'GET-INTO-ACS>
+		    <PUSH S16>
+		    <DEAD S16>
+		    <PUSH 'VALUE>
+		    <PUSH 'A1*>
+		    <PUSH S27>
+		    <DEAD S27>
+		    <PUSH 'VALUE>
+		    <PUSH 'B2*>
+		    <CALL 'GET-INTO-ACS 6>
+		    <FRAME 'FLUSH-ACS>
+		    <CALL 'FLUSH-ACS 0>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEI>
+		    <PUSH 'C2*>
+		    <PUSH 1>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'CAMN>
+		    <PUSH 'O*>
+		    <PUSH 'B1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SOJA>
+		    <PUSH 'C2*>
+		    <FRAME 'XJUMP>
+		    <PUSH T210>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'CAML>
+		    <PUSH 'O*>
+		    <PUSH 'B1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH T311>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVNI>
+		    <PUSH 'C2*>
+		    <PUSH 1>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SKIPA>
+		    <PUSH 'B1*>
+		    <PUSH 'O*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'LABEL>
+		    <PUSH T311>
+		    <DEAD T311>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O*>
+		    <PUSH 'B1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'LABEL>
+		    <PUSH T210>
+		    <DEAD T210>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SETZB>
+		    <PUSH 'A2*>
+		    <PUSH 'C1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'XBLT>
+		    <PUSH 'O*>
+		    <SET TEMP29 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH 805306368>
+		    <SCALL 'OBJ-VAL 1 = TEMP13 + TAG52 TEMP29>
+		    <LOOP (TEMP13 TYPE VALUE LENGTH) (TEMP29 VALUE)>
+TAG54
+		    <INTGO>
+		    <EMPTY? TEMP13 + TAG52>
+		    <NTH1 TEMP13 = STACK>
+		    <REST1 TEMP13 = TEMP13>
+		    <ADD TEMP29 1 = TEMP29 (TYPE FIX)>
+		    <JUMP + TAG54>
+TAG52
+		    <CALL 'OCEMIT TEMP29>
+		    <DEAD TEMP29>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH T19>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'LDB>
+		    <PUSH 'O*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'LDB>
+		    <PUSH 'B1*>
+		    <PUSH 'B2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEI>
+		    <PUSH 'C2*>
+		    <PUSH 1>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'CAMG>
+		    <PUSH 'O*>
+		    <PUSH 'B1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVNI>
+		    <PUSH 'C2*>
+		    <PUSH 1>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'LABEL>
+		    <PUSH T19>
+		    <DEAD T19>
+		    <CALL 'LABEL 1>
+		    <EQUAL? VAL8 'STACK - PHRASE65>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET TEMP13 2 (TYPE FIX)>
+		    <SFRAME 'TYPE-WORD>
+		    <PUSH 'FIX>
+		    <SCALL 'TYPE-WORD 1 = TEMP29 + TAG66 TEMP13>
+		    <LOOP (TEMP29 TYPE VALUE LENGTH) (TEMP13 VALUE)>
+TAG68
+		    <INTGO>
+		    <EMPTY? TEMP29 + TAG66>
+		    <NTH1 TEMP29 = STACK>
+		    <REST1 TEMP29 = TEMP29>
+		    <ADD TEMP13 1 = TEMP13 (TYPE FIX)>
+		    <JUMP + TAG68>
+TAG66
+		    <CALL 'OCEMIT TEMP13>
+		    <DEAD TEMP13>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'C2*>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = TEMP13>
+		    <TYPE? TEMP13 <TYPE-CODE FALSE> + PHRASE74>
+		    <FRAME '+>
+		    <GVAL 'STACK-DEPTH = STACK>
+		    <PUSH 2>
+		    <CALL '+ 2 = TEMP29>
+		    <SETG 'STACK-DEPTH TEMP29>
+		    <RETURN TEMP29>
+		    <DEAD TEMP29>
+PHRASE65
+		    <SET TEMP13 VAL8>
+		    <TYPE? TEMP13 <TYPE-CODE FALSE> + PHRASE74>
+		    <FRAME 'GET-AC>
+		    <PUSH 'C1*>
+		    <CALL 'GET-AC 1 = S16>
+		    <FRAME 'AC-ITEM>
+		    <PUSH S16>
+		    <PUSH VAL8>
+		    <CALL 'AC-ITEM 2>
+		    <FRAME 'AC-CODE>
+		    <PUSH S16>
+		    <PUSH 'TYPE>
+		    <CALL 'AC-CODE 2>
+		    <FRAME 'AC-UPDATE>
+		    <PUSH S16>
+		    <PUSH 'T>
+		    <CALL 'AC-UPDATE 2>
+		    <FRAME 'AC-TIME>
+		    <PUSH S16>
+		    <FRAME '+>
+		    <GVAL 'AC-STAMP = STACK>
+		    <PUSH 1>
+		    <CALL '+ 2 = TEMP29>
+		    <SETG 'AC-STAMP TEMP29>
+		    <PUSH TEMP29>
+		    <DEAD TEMP29>
+		    <CALL 'AC-TIME 2>
+		    <FRAME 'AC-TYPE>
+		    <PUSH S16>
+		    <DEAD S16>
+		    <PUSH 'FIX>
+		    <CALL 'AC-TYPE 2>
+		    <FRAME 'GET-AC>
+		    <PUSH 'C2*>
+		    <CALL 'GET-AC 1 = S16>
+		    <FRAME 'AC-ITEM>
+		    <PUSH S16>
+		    <PUSH VAL8>
+		    <DEAD VAL8>
+		    <CALL 'AC-ITEM 2>
+		    <FRAME 'AC-CODE>
+		    <PUSH S16>
+		    <PUSH 'VALUE>
+		    <CALL 'AC-CODE 2>
+		    <FRAME 'AC-UPDATE>
+		    <PUSH S16>
+		    <PUSH 'T>
+		    <CALL 'AC-UPDATE 2>
+		    <FRAME 'AC-TIME>
+		    <PUSH S16>
+		    <DEAD S16>
+		    <GVAL 'AC-STAMP = STACK>
+		    <CALL 'AC-TIME 2 = TEMP13>
+PHRASE74
+		    <RETURN TEMP13>
+		    <DEAD TEMP13>
+		    <END STRCOMP!-MIMOC

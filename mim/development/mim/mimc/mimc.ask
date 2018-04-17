@@ -1,0 +1,461 @@
+<USE "JCL" "TTY" "COMFIL" "ITIME" "CDRIVE" "HASH">
+<SETG BUFSTR <ISTRING 100>>
+
+<DEFINE SAV ("OPT" (NAM "MIMC") "AUX" (S <SNAME>))
+	<SNAME "">
+	<COND (<=? <SAVE .NAM> "SAVED">
+	       <SNAME .S>
+	       T)
+	      (ELSE
+	       <START-MIMC>)>>
+
+<DEFINE START-MIMC ("AUX" FIL FILLEN INFIL OUTFIL NM1 NM2 SNM RSNM TCH
+			  (JCL-STR <>) REM-STR (JCL-VEC <>) REM-VEC A1 A2
+			  (PREC <>) (CT <>) CHR (CARE T) (MF <>) (MC T) (REC T)
+			  (KILL T) (AUTO-PREC <>) (STAT <>) WDATE REAL-NM2
+			  (CPU <FIX <+ <TIME> 0.5>>) (REAL <QTIME <ITIME>>))
+	#DECL ((NM1 NM2 SNM) <SPECIAL STRING>
+	       (REM-STR JCL-STR) <OR STRING FALSE>
+	       (JCL-VEC REM-VEC) <OR VECTOR FALSE>)
+	<SET REDO ()>
+	<SETG ERRORS-OCCURED <>>
+	<IFSYS ("TOPS20" <SET JCL-STR <READJCL>>)
+	       ("UNIX" <SET JCL-VEC <READARGS>>)>
+	<SET SNM <SNAME>>
+	<COND (<OR .JCL-VEC .JCL-STR>
+	       <IFSYS
+		("TOPS20"
+		 <COND
+		  (<SET REM-STR <OR <MEMQ !\/ .JCL-STR> <MEMQ !\< .JCL-STR>>>
+		   <SET FIL <LEX <SUBSTRUC .JCL-STR 0 <- <LENGTH .JCL-STR>
+							 <LENGTH .REM-STR>>>>>
+		   <SET REM-STR <LPARSE <REST .REM-STR>>>
+		   <MAPF <>
+		     <FUNCTION (TOKEN)
+		       <COND (<TYPE? .TOKEN ATOM>
+			      <COND (<MEMQ .TOKEN '[C /C]>
+				     <SET CARE T>)
+				    (<MEMQ .TOKEN '[NC /NC]>
+				     <SET CARE <>>)
+				    (<MEMQ .TOKEN '[XM /XM]>
+				     <SETG EXPAND-FLAG T>)
+				    (<MEMQ .TOKEN '[NXM /NXM]>
+				     <SETG EXPAND-FLAG <>>)
+				    (<MEMQ .TOKEN '[R /R]>
+				     <SET REC T>)
+				    (<MEMQ .TOKEN '[NR /NR]>
+				     <SET REC <>>)
+				    (<MEMQ .TOKEN '[MF /MF]>
+				     <SET MF T>)
+				    (<MEMQ .TOKEN '[MC /MC]>
+				     <SET MC T>)
+				    (<MEMQ .TOKEN '[NMF /NMF]>
+				     <SET MF <>>)
+				    (<MEMQ .TOKEN '[NMC /NMC]>
+				     <SET MC <>>)
+				    (<MEMQ .TOKEN '[P /P]>
+				     <SET PREC T>)
+				    (<MEMQ .TOKEN '[PA /PA]>
+				     <SET PREC T>
+				     <SET AUTO-PREC T>)
+				    (<MEMQ .TOKEN '[SL /SL]>
+				     <SETG STATUS-LINE T>
+				     <UPDATE-STATUS "Start" "None" <> <> .CPU
+						    .REAL>)
+				    (<MEMQ .TOKEN '[T /T]>
+				     <SET CT T>)
+				    (<MEMQ .TOKEN '[NK /NK]>
+				     <SET KILL <>>)
+				    (<==? .TOKEN />)
+				    (ELSE
+				     <ERROR BAD-TOKEN!-ERRORS .TOKEN .REM-STR>)>)
+			     (<TYPE? .TOKEN ADECL>
+			      <COND (<TYPE? <SET A2 <2 .TOKEN>> STRING>)
+				    (<TYPE? .A2 ATOM> <SET A2 <SPNAME .A2>>)>
+			      <COND (<MEMQ <SET A1 <1 .TOKEN>> '[P /P PA /PA]>
+				     <COND (<NOT <TYPE? .A2 STRING>>
+					    <ERROR PRECOMPILE-NOT-STRING!-ERRORS
+						   .TOKEN .REM-STR>)>
+				     <COND (<MEMQ .A1 '[PA /PA]>
+					    <SET AUTO-PREC T>)>
+				     <SET PREC .A2>)
+				    (<MEMQ .A1 '[T /T]>
+				     <COND (<NOT <TYPE? .A2 STRING>>
+					    <ERROR COMPILER-TYPE-NOT-STRING!-ERRORS
+						   .TOKEN .REM-STR>)>
+				     <SET CT .A2>)
+				    (<MEMQ .A1 '[PM /PM]>
+				     <COND (<NOT <TYPE? .A2 STRING>>
+					    <ERROR PACKAGE-MODE-NOT-STRING!-ERRORS
+						   .TOKEN .REM-STR>)>
+				     <SET PACKAGE-MODE .A2>)
+				    (<MEMQ .A1 '[RD /RD]>
+				     <COND (<OR <NOT <TYPE? .A2 LIST>>
+						<EMPTY? .A2>
+						<MAPF <>
+						      <FUNCTION (X)
+							   <COND
+							    (<NOT <TYPE? .X ATOM>>
+							     <MAPLEAVE T>)>>
+						      .A2>>
+					    <ERROR REDO-LIST-MALFORMED!-ERRORS
+						   .TOKEN .REM-STR>)
+					   (ELSE <SET REDO .A2>)>)
+				    (ELSE
+				     <ERROR BAD-TOKEN!-ERRORS .TOKEN .REM-STR>)>)
+			     (ELSE 
+			      <EVAL .TOKEN>)>>
+		     .REM-STR>)
+		  (<SET FIL <LEX .JCL-STR <LENGTH .JCL-STR>>>)>
+		 <SET FIL <1 .FIL>>)
+		("UNIX"
+		 <SET REM-VEC <>>
+		 <MAPR <>
+		   <FUNCTION (VV "AUX" (ST <1 .VV>))
+		     #DECL ((VV) <VECTOR [REST STRING]>)
+		     <COND (<AND <NOT <EMPTY? .ST>>
+				 <OR <==? <1 .ST> !\->
+				     <==? <1 .ST> !\<>>>
+			    <COND (<==? <LENGTH .ST> 1>
+				   <SET REM-VEC <REST .VV>>)
+				  (ELSE <SET REM-VEC .VV>)>
+			    <MAPLEAVE>)>>
+		   .JCL-VEC>
+		 <COND
+		  (.REM-VEC
+		   <SET FIL <SUBSTRUC .JCL-VEC 0
+				       <- <LENGTH .JCL-VEC>
+					  <LENGTH .REM-VEC>>>>
+		   <MAPF <>
+		     <FUNCTION (TOKEN)
+		       <COND (<MEMBER .TOKEN '["C" "-C"]>
+			      <SET CARE T>)
+			     (<MEMBER .TOKEN '["NC" "-NC"]>
+			      <SET CARE <>>)
+			     (<MEMBER .TOKEN '["R" "-R"]>
+			      <SET REC T>)
+			     (<MEMBER .TOKEN '["NR" "-NR"]>
+			      <SET REC <>>)
+			     (<MEMBER .TOKEN '["MF" "-MF"]>
+			      <SET MF T>)
+			     (<MEMBER .TOKEN '["MC" "-MC"]>
+			      <SET MC T>)
+			     (<MEMBER .TOKEN '["NMF" "-NMF"]>
+			      <SET MF <>>)
+			     (<MEMBER .TOKEN '["NMC" "-NMC"]>
+			      <SET MC <>>)
+			     (<MEMBER .TOKEN '["P" "-P"]>
+			      <SET PREC T>)
+			     (<MEMBER .TOKEN '["PA" "-PA"]>
+			      <SET PREC T>
+			      <SET AUTO-PREC T>)
+			     (<MEMBER .TOKEN '["SL" "-SL"]>
+			      <SETG STATUS-LINE T>
+			      <UPDATE-STATUS "Start" "None" <> <> .CPU
+						    .REAL>)
+			     (<MEMBER .TOKEN '["T" "-T"]>
+			      <SET CT T>)
+			     (<MEMBER .TOKEN '["NK" "-NK"]>
+			      <SET KILL <>>)
+			     (<OR <EMPTY? <SET TOKEN
+					       <CHTYPE <LPARSE .TOKEN> LIST>>>
+				  <TYPE? <1 .TOKEN> ATOM>>
+			      <ERROR BAD-TOKEN!-ERRORS <1 .TOKEN> .REM-VEC>)
+			     (<TYPE? <1 <CHTYPE .TOKEN LIST>> ADECL>
+			      <SET TOKEN <1 <CHTYPE .TOKEN LIST>>>
+			      <COND (<TYPE? <SET A2 <2 .TOKEN>> STRING>)
+				    (<TYPE? .A2 ATOM> <SET A2 <SPNAME .A2>>)>
+			      <COND (<MEMQ <SET A1 <1 .TOKEN>> '[P -P
+								 PA -PA]>
+				     <COND (<NOT <TYPE? .A2 STRING>>
+					    <ERROR PRECOMPILE-NOT-STRING!-ERRORS
+						   .TOKEN .REM-STR>)>
+				     <SET PREC .A2>
+				     <COND (<MEMQ .A1 '[PA -PA]>
+					    <SET AUTO-PREC T>)>)
+				    (<MEMQ .A1 '[T -T]>
+				     <COND (<NOT <TYPE? .A2 STRING>>
+					    <ERROR COMPILER-TYPE-NOT-STRING!-ERRORS
+						   .TOKEN .REM-STR>)>
+				     <SET CT .A2>)
+				    (<MEMQ .A1 '[PM -PM]>
+				     <COND (<NOT <TYPE? .A2 STRING>>
+					    <ERROR PACKAGE-MODE-NOT-STRING!-ERRORS
+						   .TOKEN .REM-STR>)>
+				     <SET PACKAGE-MODE .A2>)
+				    (<MEMQ .A1 '[RD -RD]>
+				     <COND (<OR <NOT <TYPE? .A2 LIST>>
+						<EMPTY? .A2>
+						<MAPF <>
+						      <FUNCTION (X)
+							   <COND
+							    (<NOT <TYPE? .X ATOM>>
+							     <MAPLEAVE T>)>>
+						      .A2>>
+					    <ERROR REDO-LIST-MALFORMED!-ERRORS
+						   .TOKEN .REM-STR>)
+					   (ELSE <SET REDO .A2>)>)
+				    (ELSE
+				     <ERROR BAD-TOKEN!-ERRORS .TOKEN .REM-STR>)>)
+			     (ELSE
+			      <EVAL .TOKEN>)>>
+		     .REM-VEC>)
+		  (<SET FIL .JCL-VEC>)>
+		 <SET FIL <1 .FIL>>)>)
+	      (ELSE
+	       <PROG QL ((Q1 <>) (Q2 <>) (Q3 <>) (Q4 <>) (Q5 <>) (Q6 <>)
+		         (READ-PROMPT <>) (READ-BREAKS <>))
+		     <SET KILL T>
+		     <COND (<NOT .Q1>
+			    <SET READ-PROMPT "File: ">
+			    <SET FILLEN <READSTRING ,BUFSTR .INCHAN "">>
+			    <SET FIL <SUBSTRUC ,BUFSTR 0 <- .FILLEN 1>>>
+			    <CRLF>
+			    <SET Q1 T>)>
+		     <SET READ-BREAKS <STRING <ASCII 2> <ASCII 27>>>
+		     <COND (<NOT .Q2>
+			    <COND (<==? <SET CHR <TYI-PROMPT "Record?: ">>
+					<ASCII 2>>
+				   <SET Q1 <>>
+				   <CRLF>
+				   <AGAIN>)>
+			    <SET Q2 T>
+			    <SET REC <MEMQ .CHR "Yy Tt">>
+			    <CRLF>)>
+		     <COND (<NOT .Q3>
+			    <COND (<==? <SET CHR <TYI-PROMPT "Precompilation?: ">>
+					<ASCII 2>>
+				   <SET Q2 <>>
+				   <CRLF>
+				   <AGAIN>)>
+			    <SET Q3 T>
+			    <SET PREC <COND (<MEMQ .CHR "Yy Tt"> T)>>
+			    <COND (<==? .CHR !\ >
+				   <SET READ-PROMPT "(file) ">
+				   <COND (<==? <SET CHR <NEXTCHR>>
+					       <ASCII 2>>
+					  <CHANNEL-OP ,OUTCHAN ERASE-CHAR>
+					  <CHANNEL-OP ,OUTCHAN ERASE-CHAR>
+					  <READCHR>
+					  <SET Q2 <SET Q3 <>>>
+					  <CRLF>
+					  <AGAIN>)>
+				   <SET FILLEN
+					<READSTRING ,BUFSTR .INCHAN "">>
+				   <SET PREC <SUBSTRUC ,BUFSTR 0 <- .FILLEN 1>>>)>
+			    <CRLF>)>
+		     <COND (<AND <N==? .CHR !\> <NOT .Q4>>
+			    <COND (<==? <SET CHR <TYI-PROMPT  "Careful?: ">>
+					<ASCII 2>>
+				   <SET Q3 <>>
+				   <CRLF>
+				   <AGAIN>)>
+			    <SET CARE <MEMQ .CHR "Yy Tt">>
+			    <SET Q4 T>
+			    <CRLF>)>
+		      <COND (<AND <N==? .CHR !\> <NOT .Q5>>
+			     <COND (<==? <SET CHR <TYI-PROMPT "Flush macros? ">>
+					 <ASCII 2>>
+				   <SET Q4 <>>
+				   <CRLF>
+				   <AGAIN>)>
+			     <SET MF <MEMQ .CHR "Yy Tt">>
+			     <CRLF>
+			     <SET Q5 T>)>
+		      <COND (<AND <N=? .CHR !\> <NOT .Q6>>
+			     <COND (<==? <SET CHR <TYI-PROMPT "Compile macros? ">>
+					 <ASCII 2>>
+				   <SET Q5 <>>
+				   <CRLF>
+				   <AGAIN>)>
+			     <SET MC <MEMQ .CHR "Yy tT">>
+			     <SET Q6 T>
+			     <CRLF>)>
+		      <SET READ-PROMPT "Things to do: ">
+		      <SET READ-BREAKS <STRING <ASCII 2> <ASCII 27>
+							       !\?>>
+		      <COND (<==? <SET CHR <NEXTCHR>>
+				  <ASCII 2>>
+			     <CHANNEL-OP ,OUTCHAN ERASE-CHAR>
+			     <CHANNEL-OP ,OUTCHAN ERASE-CHAR>
+			     <COND (.Q6 <SET Q6 <>>)
+				   (.Q5 <SET Q5 <>>)
+				   (.Q4 <SET Q4 <>>)
+				   (.Q3 <SET Q3 <>>)
+				   (.Q2 <SET Q2 <>>)>
+			     <READCHR>
+			     <CRLF>
+			     <AGAIN>)>
+		      <COND (<==? .CHR !\?>
+			     <READCHR>
+			     <CRLF>
+			     <COND (<==? <SET CHR <TYI-PROMPT "Save? ">> <ASCII 2>>
+				    <COND (.Q6 <SET Q6 <>>)
+					  (.Q5 <SET Q5 <>>)
+					  (.Q4 <SET Q4 <>>)
+					  (.Q3 <SET Q3 <>>)
+					  (.Q2 <SET Q2 <>>)>
+				    <CRLF>
+				    <AGAIN>)>
+			     <COND (<MEMQ .CHR "Tt yY">
+				    <ERROR NOT-IMPLEMENTED!-ERRORS>
+				    <READCHR>)>
+			     <CRLF>
+			     <COND (.PREC
+				    <SET READ-PROMPT "Redo list? ">
+				    <SET READ-BREAKS
+					 <STRING <ASCII 2> <ASCII 27>
+						 <ASCII 127> <ASCII 13>>>
+				    <COND (<==? <SET CHR <NEXTCHR>>
+						<ASCII 2>>
+					   <READCHR>
+					   <CHANNEL-OP ,OUTCHAN ERASE-CHAR>
+					   <CHANNEL-OP ,OUTCHAN ERASE-CHAR>
+					   <COND (.Q6 <SET Q6 <>>)
+						 (.Q5 <SET Q5 <>>)
+						 (.Q4 <SET Q4 <>>)
+						 (.Q3 <SET Q3 <>>)
+						 (.Q2 <SET Q2 <>>)>
+					   <CRLF>
+					   <AGAIN>)>
+				    <COND (<AND <N==? .CHR <ASCII 27>>
+						<N==? .CHR <ASCII 127>>
+						<N==? .CHR <ASCII 13>>>
+					   <REPEAT ()
+						   <COND (<TYPE?
+							   <SET REDO <READ>>
+							   LIST>
+							  <RETURN>)>
+						   <CRLF>
+						   <SET READ-PROMPT
+						      "Must enter a list: ">>)
+					  (ELSE <READCHR>)>
+				    <CRLF>
+				    <SET READ-PROMPT  "Package mode: ">
+				    <COND (<==? <SET CHR <NEXTCHR>> <ASCII 2>>
+					   <READCHR>
+					   <CHANNEL-OP ,OUTCHAN ERASE-CHAR>
+					   <CHANNEL-OP ,OUTCHAN ERASE-CHAR>
+					   <COND (.Q6 <SET Q6 <>>)
+						 (.Q5 <SET Q5 <>>)
+						 (.Q4 <SET Q4 <>>)
+						 (.Q3 <SET Q3 <>>)
+						 (.Q2 <SET Q2 <>>)>
+					   <CRLF>
+					   <AGAIN>)>
+				    <COND (<AND <N==? .CHR <ASCII 27>>
+						<N==? .CHR <ASCII 127>>
+						<N==? .CHR <ASCII 13>>>
+					   <SET FILLEN
+						<READSTRING ,BUFSTR .INCHAN "">>
+					   <SET PACKAGE-MODE
+						<SUBSTRUC ,BUFSTR 0
+							  <- .FILLEN 1>>>)
+					  (ELSE <READCHR>)>
+				    <CRLF>)>
+			     <SET READ-PROMPT  "Things to do: ">
+			     <COND (<==? <SET CHR <NEXTCHR>> <ASCII 2>>
+				    <READCHR>
+				    <CHANNEL-OP ,OUTCHAN ERASE-CHAR>
+				    <CHANNEL-OP ,OUTCHAN ERASE-CHAR>
+				    <COND (.Q6 <SET Q6 <>>)
+					  (.Q5 <SET Q5 <>>)
+					  (.Q4 <SET Q4 <>>)
+					  (.Q3 <SET Q3 <>>)
+					  (.Q2 <SET Q2 <>>)>
+				    <CRLF>
+				    <AGAIN>)>)>
+		      <REPEAT ()
+		       <COND (<==? <SET CHR <NEXTCHR>> <ASCII *33*>>
+			      <READCHR>
+			      <CRLF>
+			      <SET READ-PROMPT <>>
+			      <SET READ-BREAKS <>>
+			      <RETURN T>)
+			     (<==? .CHR <ASCII 2>> <READCHR> <AGAIN .QL>)>
+		       <EVAL <READ>>>>)>
+	<COND (<==? .FIL "BOOT">
+	       <SET INDIR <SET OUTDIR "<MIM.BOOT>">>)>
+	<SET NM2 "MUD">
+	; "Allow compilation of .ZIL files"
+	<PROG ((NMVEC:VECTOR '["ZIL"]) (OTCH T))
+	  <COND (<SET TCH <OPEN "READ" .FIL>>
+		 <SET NM1 <CHANNEL-OP .TCH NM1>>
+		 <SET NM2 <SET REAL-NM2 <CHANNEL-OP .TCH NM2>>>
+		 <COND (<NOT <ASSIGNED? PACKAGE-MODE>>
+			<SET PACKAGE-MODE .NM1>)>
+		 <COND (.AUTO-PREC
+			<SET WDATE <CHANNEL-OP .TCH WRITE-DATE>>)>
+		 <CLOSE .TCH>)
+		(T
+		 <COND (.OTCH <SET OTCH .TCH>)>
+		 <COND (<EMPTY? .NMVEC>
+			<ERROR FILE-NOT-FOUND!-ERRORS .TCH>)
+		       (T
+			<SET NM2 <1 .NMVEC>>
+			<SET NMVEC <REST .NMVEC>>
+			<AGAIN>)>)>>
+	<COND (<==? .PREC T>
+	       <SET PRECOMPILED <STRING .FIL ".MIMA">>
+	       <COND (<NOT <FILE-EXISTS? .PRECOMPILED>> <SET PRECOMPILED <>>)>)
+	      (.PREC <SET PRECOMPILED .PREC>)>
+	<COND (<AND .PREC .AUTO-PREC <SET TCH <OPEN "READ" .PRECOMPILED>>>
+	       <COND (<G? <CHANNEL-OP .TCH WRITE-DATE> .WDATE>
+		      <PRINC "Precompiled is more recent than source.">
+		      <CRLF>
+		      <EXIT>)>
+	       <CLOSE .TCH>)>
+	<SET CAREFUL!-COMPDEC!-PACKAGE .CARE>
+	<SET MACRO-FLUSH .MF>
+	<SET MACRO-COMPILE .MC>
+	<SET RSNM <SNAME>>
+	<SET INFIL .FIL>
+	<COND (.REC
+	       <PROG ((SNM .RSNM) (NM2 "RECORD")
+		      (OUTCHAN <OPEN "PRINT" "">))
+		     #DECL ((SNM NM2) <SPECIAL STRING>
+			    (OUTCHAN) <SPECIAL CHANNEL>)
+		     <FILE-COMPILE .INFIL "" .REAL-NM2>
+		     <CLOSE .OUTCHAN>>)
+	      (T <FILE-COMPILE .INFIL "" .REAL-NM2>)>
+	<COND (,ERRORS-OCCURED
+	       <PRINC "Warning:  Compiler errors occured!" ,DEBUG-CHANNEL>
+	       <CRLF ,DEBUG-CHANNEL>)>
+	<COND (.KILL <EXIT <COND (,ERRORS-OCCURED 1) (ELSE 0)>>) (ELSE <QUIT>)>>
+
+<DEFINE LEX (BUF "OPTIONAL" (LEN <LENGTH .BUF>))
+  #DECL ((BUF) STRING (LEN) FIX)
+  <SET BUF <SUBSTRUC .BUF 0 .LEN <REST .BUF <- <LENGTH .BUF> .LEN>>>>
+  <REPEAT ((L ("")) CHR (LS <>))
+    <COND (<EMPTY? .BUF>
+	   <COND (.LS
+		  <PUTREST <REST .L <- <LENGTH .L> 1>> (<STRING .LS>)>)>
+	   <RETURN <REST .L>>)>
+    <COND (<MEMQ <SET CHR <1 .BUF>> " 	,
+">
+	   <COND (.LS
+		  <SET LS <SUBSTRUC .LS 0 <- <LENGTH .LS><LENGTH .BUF>>>>
+		  <PUTREST <REST .L <- <LENGTH .L> 1>> (.LS)>
+		  <SET LS <>>)>)
+	  (<NOT .LS>
+	   <SET LS .BUF>)>
+    <SET BUF <REST .BUF>>>>
+
+<DEFINE TYI-PROMPT (P "AUX" (CH .INCHAN) CHR)
+	<PRINC .P>
+	<CHANNEL-OP .CH SET-ECHO-MODE <>>
+	<PROG ()
+	      <COND (<==? <SET CHR <TYI>> !\>
+		     <CHANNEL-OP .CH HOR-POS-CURSOR 0>
+		     <CHANNEL-OP .CH FRESH-LINE>
+		     <PRINC .P>
+		     <AGAIN>)
+		    (<==? .CHR !\>
+		     <CHANNEL-OP .CH CLEAR-SCREEN>
+		     <PRINC .P>
+		     <AGAIN>)
+		    (<N==? <ASCII .CHR> 2>
+		     <PRINC .CHR>)>
+	      <CHANNEL-OP .CH SET-ECHO-MODE T>>
+	.CHR>
+

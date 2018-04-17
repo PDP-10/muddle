@@ -1,0 +1,856 @@
+
+"These macros generate the codes for basic VAX addressing modes and
+ include some of the hairier cases."
+
+#WORD *2507413721*
+		    <GFCN MA-REG ("VALUE" FORM "QUOTE" ANY) AC4>
+		    <TEMP TEMP9:FORM>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-REG>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 24>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP9>
+		    <RETURN TEMP9>
+		    <DEAD TEMP9>
+		    <END MA-REG>
+<COND (<AND <GASSIGNED? MA-REG> <NOT <TYPE? ,MA-REG MACRO>>> <SETG MA-REG <CHTYPE (,MA-REG) MACRO>>)>
+
+#WORD *16055326342*
+		    <GFCN MA-LIT ("VALUE" FORM "QUOTE" ANY) VAL4>
+		    <TEMP TEMP8:FORM>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ANDB>
+		    <PUSH VAL4>
+		    <DEAD VAL4>
+		    <PUSH 63>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 24>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP8>
+		    <RETURN TEMP8>
+		    <DEAD TEMP8>
+		    <END MA-LIT>
+<COND (<AND <GASSIGNED? MA-LIT> <NOT <TYPE? ,MA-LIT MACRO>>> <SETG MA-LIT <CHTYPE (,MA-LIT) MACRO>>)>
+
+#WORD *21507523722*
+		    <GFCN MA-INDX ("VALUE" FORM "QUOTE" ANY) AC4>
+		    <TEMP TEMP9:FORM>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-INX>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 24>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP9>
+		    <RETURN TEMP9>
+		    <DEAD TEMP9>
+		    <END MA-INDX>
+<COND (<AND <GASSIGNED? MA-INDX> <NOT <TYPE? ,MA-INDX MACRO>>> <SETG MA-INDX <CHTYPE (,MA-INDX) MACRO>>)>
+
+#WORD *22504123560*
+		    <GFCN MA-REGD ("VALUE" FORM "QUOTE" ANY) AC4>
+		    <TEMP TEMP9:FORM>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-REGD>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 24>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP9>
+		    <RETURN TEMP9>
+		    <DEAD TEMP9>
+		    <END MA-REGD>
+<COND (<AND <GASSIGNED? MA-REGD> <NOT <TYPE? ,MA-REGD MACRO>>> <SETG MA-REGD <CHTYPE (,MA-REGD) MACRO>>)>
+
+#WORD *21505043560*
+		    <GFCN MA-ADEC ("VALUE" FORM "QUOTE" ANY) AC4>
+		    <TEMP TEMP9:FORM>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-ADEC>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 24>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP9>
+		    <RETURN TEMP9>
+		    <DEAD TEMP9>
+		    <END MA-ADEC>
+<COND (<AND <GASSIGNED? MA-ADEC> <NOT <TYPE? ,MA-ADEC MACRO>>> <SETG MA-ADEC <CHTYPE (,MA-ADEC) MACRO>>)>
+
+#WORD *5505173561*
+		    <GFCN MA-AINC ("VALUE" FORM "QUOTE" ANY) AC4>
+		    <TEMP TEMP9:FORM>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-AINC>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 24>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP9>
+		    <RETURN TEMP9>
+		    <DEAD TEMP9>
+		    <END MA-AINC>
+<COND (<AND <GASSIGNED? MA-AINC> <NOT <TYPE? ,MA-AINC MACRO>>> <SETG MA-AINC <CHTYPE (,MA-AINC) MACRO>>)>
+
+#WORD *13424153545*
+		    <GFCN MA-AINCD ("VALUE" FORM "QUOTE" ANY) AC4>
+		    <TEMP TEMP9:FORM>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-AINCD>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 24>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP9>
+		    <RETURN TEMP9>
+		    <DEAD TEMP9>
+		    <END MA-AINCD>
+<COND (<AND <GASSIGNED? MA-AINCD> <NOT <TYPE? ,MA-AINCD MACRO>>> <SETG MA-AINCD <CHTYPE (,MA-AINCD) MACRO>>)>
+
+#WORD *15322443154*
+		    <GFCN MA-BD ("VALUE" FORM "QUOTE" ANY "QUOTE" ANY) AC4 DISP5>
+		    <TEMP TEMP13:FORM>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-BD>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 8>
+		    <CALL 'FORM 3 = STACK>
+		    <FRAME 'FORM>
+		    <PUSH 'ANDB>
+		    <PUSH DISP5>
+		    <DEAD DISP5>
+		    <PUSH 255>
+		    <CALL 'FORM 3 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 16>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP13>
+		    <RETURN TEMP13>
+		    <DEAD TEMP13>
+		    <END MA-BD>
+<COND (<AND <GASSIGNED? MA-BD> <NOT <TYPE? ,MA-BD MACRO>>> <SETG MA-BD <CHTYPE (,MA-BD) MACRO>>)>
+
+#WORD *35603643770*
+		    <GFCN MA-BDD ("VALUE" FORM "QUOTE" ANY "QUOTE" ANY) AC4 DISP5>
+		    <TEMP TEMP13:FORM>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-BDD>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 8>
+		    <CALL 'FORM 3 = STACK>
+		    <FRAME 'FORM>
+		    <PUSH 'ANDB>
+		    <PUSH DISP5>
+		    <DEAD DISP5>
+		    <PUSH 255>
+		    <CALL 'FORM 3 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 16>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP13>
+		    <RETURN TEMP13>
+		    <DEAD TEMP13>
+		    <END MA-BDD>
+<COND (<AND <GASSIGNED? MA-BDD> <NOT <TYPE? ,MA-BDD MACRO>>> <SETG MA-BDD <CHTYPE (,MA-BDD) MACRO>>)>
+
+#WORD *31707704334*
+		    <GFCN MA-WD ("VALUE" FORM "QUOTE" ANY "QUOTE" ANY) AC4 DISP5>
+		    <TEMP TEMP15 TEMP16>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-WD>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 24>
+		    <CALL 'FORM 3 = STACK>
+		    <FRAME 'FORM>
+		    <PUSH 'ANDB>
+		    <TYPE? DISP5 <TYPE-CODE FIX> + TAG14>
+		    <TYPE? DISP5 <TYPE-CODE WORD> + TAG14>
+		    <TYPE? DISP5 <TYPE-CODE CHARACTER> - PHRASE13>
+TAG14
+		    <LSH DISP5 16 = TEMP15 (TYPE FIX)>
+		    <AND DISP5 #WORD *177400* = TEMP16>
+		    <DEAD DISP5>
+		    <OR TEMP15 TEMP16 = TEMP15>
+		    <DEAD TEMP16>
+		    <JUMP + PHRASE17>
+PHRASE13
+		    <FRAME 'FORM>
+		    <PUSH 'PROG>
+		    <CONS DISP5 () = TEMP16>
+		    <DEAD DISP5>
+		    <CONS 'V TEMP16 = TEMP16>
+		    <CONS TEMP16 () = STACK>
+		    <DEAD TEMP16>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <PUSH .V>
+		    <PUSH 16>
+		    <CALL 'FORM 3 = STACK>
+		    <FRAME 'FORM>
+		    <PUSH 'ANDB>
+		    <PUSH .V>
+		    <PUSH 65280>
+		    <CALL 'FORM 3 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <CALL 'FORM 3 = TEMP15>
+PHRASE17
+		    <PUSH TEMP15>
+		    <DEAD TEMP15>
+		    <PUSH 16776960>
+		    <CALL 'FORM 3 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP15>
+		    <RETURN TEMP15>
+		    <DEAD TEMP15>
+		    <END MA-WD>
+<COND (<AND <GASSIGNED? MA-WD> <NOT <TYPE? ,MA-WD MACRO>>> <SETG MA-WD <CHTYPE (,MA-WD) MACRO>>)>
+
+#WORD *25222357674*
+		    <GFCN MA-WDD ("VALUE" FORM "QUOTE" ANY "QUOTE" ANY) AC4 DISP5>
+		    <TEMP TEMP14:FORM>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-WDD>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 24>
+		    <CALL 'FORM 3 = STACK>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ANDB>
+		    <PUSH DISP5>
+		    <PUSH 255>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 16>
+		    <CALL 'FORM 3 = STACK>
+		    <FRAME 'FORM>
+		    <PUSH 'ANDB>
+		    <PUSH DISP5>
+		    <DEAD DISP5>
+		    <PUSH 65280>
+		    <CALL 'FORM 3 = STACK>
+		    <CALL 'FORM 4 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP14>
+		    <RETURN TEMP14>
+		    <DEAD TEMP14>
+		    <END MA-WDD>
+<COND (<AND <GASSIGNED? MA-WDD> <NOT <TYPE? ,MA-WDD MACRO>>> <SETG MA-WDD <CHTYPE (,MA-WDD) MACRO>>)>
+
+#WORD *13154210074*
+		    <GFCN MA-LD ("VALUE" FORM "QUOTE" ANY "QUOTE" ANY) AC4 DISP5>
+		    <TEMP TEMP11 TEMP14>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-LD>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 24>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP11>
+		    <CONS TEMP11 () = TEMP11>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LREV>
+		    <PUSH DISP5>
+		    <DEAD DISP5>
+		    <CALL 'FORM 2 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP14>
+		    <CONS TEMP14 () = TEMP14>
+		    <PUTREST TEMP11 TEMP14>
+		    <DEAD TEMP14>
+		    <PUSH TEMP11>
+		    <DEAD TEMP11>
+		    <PUSH 'LADDR>
+		    <CALL 'FORM 3 = TEMP11>
+		    <RETURN TEMP11>
+		    <DEAD TEMP11>
+		    <END MA-LD>
+<COND (<AND <GASSIGNED? MA-LD> <NOT <TYPE? ,MA-LD MACRO>>> <SETG MA-LD <CHTYPE (,MA-LD) MACRO>>)>
+
+#WORD *33445410664*
+		    <GFCN MA-LDD ("VALUE" FORM "QUOTE" ANY "QUOTE" ANY) AC4 DISP5>
+		    <TEMP TEMP11 TEMP14>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <PUSH ,AM-LDD>
+		    <FRAME 'FORM>
+		    <PUSH 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'FORM 2 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 24>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP11>
+		    <CONS TEMP11 () = TEMP11>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LREV>
+		    <PUSH DISP5>
+		    <DEAD DISP5>
+		    <CALL 'FORM 2 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP14>
+		    <CONS TEMP14 () = TEMP14>
+		    <PUTREST TEMP11 TEMP14>
+		    <DEAD TEMP14>
+		    <PUSH TEMP11>
+		    <DEAD TEMP11>
+		    <PUSH 'LADDR>
+		    <CALL 'FORM 3 = TEMP11>
+		    <RETURN TEMP11>
+		    <DEAD TEMP11>
+		    <END MA-LDD>
+<COND (<AND <GASSIGNED? MA-LDD> <NOT <TYPE? ,MA-LDD MACRO>>> <SETG MA-LDD <CHTYPE (,MA-LDD) MACRO>>)>
+
+#WORD *32431651010*
+		    <GFCN MA-BYTE-IMM ("VALUE" FORM "QUOTE" ANY) VAL4>
+		    <TEMP TEMP10:FORM>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <FRAME 'FORM>
+		    <PUSH 'MA-AINC>
+		    <PUSH ,AC-PC>
+		    <CALL 'FORM 2 = STACK>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ANDB>
+		    <PUSH VAL4>
+		    <DEAD VAL4>
+		    <PUSH 255>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 16>
+		    <CALL 'FORM 3 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP10>
+		    <RETURN TEMP10>
+		    <DEAD TEMP10>
+		    <END MA-BYTE-IMM>
+<COND (<AND <GASSIGNED? MA-BYTE-IMM> <NOT <TYPE? ,MA-BYTE-IMM MACRO>>> <SETG MA-BYTE-IMM <CHTYPE (,MA-BYTE-IMM) MACRO>>)>
+
+#WORD *66010106*
+		    <GFCN MA-WORD-IMM ("VALUE" FORM "QUOTE" ANY) VAL4>
+		    <TEMP TEMP12 TEMP13>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <FRAME 'FORM>
+		    <PUSH 'MA-AINC>
+		    <PUSH ,AC-PC>
+		    <CALL 'FORM 2 = STACK>
+		    <FRAME 'FORM>
+		    <PUSH 'ANDB>
+		    <TYPE? VAL4 <TYPE-CODE FIX> + TAG11>
+		    <TYPE? VAL4 <TYPE-CODE WORD> + TAG11>
+		    <TYPE? VAL4 <TYPE-CODE CHARACTER> - PHRASE10>
+TAG11
+		    <AND VAL4 #WORD *377* = TEMP12>
+		    <LSH TEMP12 16 = TEMP12 (TYPE FIX)>
+		    <AND VAL4 #WORD *177400* = TEMP13>
+		    <DEAD VAL4>
+		    <OR TEMP12 TEMP13 = TEMP12>
+		    <DEAD TEMP13>
+		    <JUMP + PHRASE14>
+PHRASE10
+		    <FRAME 'FORM>
+		    <PUSH 'PROG>
+		    <CONS VAL4 () = TEMP13>
+		    <DEAD VAL4>
+		    <CONS 'V TEMP13 = TEMP13>
+		    <CONS TEMP13 () = STACK>
+		    <DEAD TEMP13>
+		    <FRAME 'FORM>
+		    <PUSH 'ORB>
+		    <FRAME 'FORM>
+		    <PUSH 'LSH>
+		    <FRAME 'FORM>
+		    <PUSH 'ANDB>
+		    <PUSH .V>
+		    <PUSH 255>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 16>
+		    <CALL 'FORM 3 = STACK>
+		    <FRAME 'FORM>
+		    <PUSH 'ANDB>
+		    <PUSH .V>
+		    <PUSH 65280>
+		    <CALL 'FORM 3 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <CALL 'FORM 3 = TEMP12>
+PHRASE14
+		    <PUSH TEMP12>
+		    <DEAD TEMP12>
+		    <PUSH 16776960>
+		    <CALL 'FORM 3 = STACK>
+		    <CALL 'FORM 3 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP12>
+		    <RETURN TEMP12>
+		    <DEAD TEMP12>
+		    <END MA-WORD-IMM>
+<COND (<AND <GASSIGNED? MA-WORD-IMM> <NOT <TYPE? ,MA-WORD-IMM MACRO>>> <SETG MA-WORD-IMM <CHTYPE (,MA-WORD-IMM) MACRO>>)>
+
+#WORD *22260031630*
+		    <GFCN MA-LONG-IMM ("VALUE" FORM "QUOTE" ANY) VAL4>
+		    <TEMP TEMP8 TEMP11>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'MA-AINC>
+		    <PUSH ,AC-PC>
+		    <CALL 'FORM 2 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP8>
+		    <CONS TEMP8 () = TEMP8>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LREV>
+		    <PUSH VAL4>
+		    <DEAD VAL4>
+		    <CALL 'FORM 2 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP11>
+		    <CONS TEMP11 () = TEMP11>
+		    <PUTREST TEMP8 TEMP11>
+		    <DEAD TEMP11>
+		    <PUSH TEMP8>
+		    <DEAD TEMP8>
+		    <PUSH 'LADDR>
+		    <CALL 'FORM 3 = TEMP8>
+		    <RETURN TEMP8>
+		    <DEAD TEMP8>
+		    <END MA-LONG-IMM>
+<COND (<AND <GASSIGNED? MA-LONG-IMM> <NOT <TYPE? ,MA-LONG-IMM MACRO>>> <SETG MA-LONG-IMM <CHTYPE (,MA-LONG-IMM) MACRO>>)>
+
+#WORD *14600577161*
+		    <GFCN MA-IMM ("VALUE" <OR EFF-ADDR LADDR> <PRIMTYPE FIX>) VAL4>
+		    <TEMP TEMP10 TEMP17>
+		    <INTGO>
+		    <CHTYPE VAL4 <TYPE-CODE FIX> = VAL4>
+		    <LESS? VAL4 0 + PHRASE6 (TYPE FIX)>
+		    <GRTR? VAL4 63 + PHRASE6 (TYPE FIX)>
+		    <AND VAL4 #WORD *77* = TEMP10>
+		    <DEAD VAL4>
+		    <LSH TEMP10 24 = TEMP10 (TYPE FIX)>
+		    <CHTYPE TEMP10 <TYPE-CODE EFF-ADDR> = TEMP10>
+		    <RETURN TEMP10>
+		    <DEAD TEMP10>
+PHRASE6
+		    <EQUAL? VAL4 %<CHTYPE <MIN> FIX> - PHRASE13>
+		    <SET VAL4 2147483647 (TYPE FIX)>
+		    <JUMP + PHRASE14>
+PHRASE13
+		    <EQUAL? VAL4 %<CHTYPE <MAX> FIX> - PHRASE14>
+		    <SET VAL4 2147483649 (TYPE FIX)>
+PHRASE14
+		    <GVAL 'AM-AINC = TEMP10>
+		    <FRAME 'AC-NUMBER>
+		    <GVAL 'AC-PC = STACK>
+		    <CALL 'AC-NUMBER 1 = TEMP17>
+		    <OR TEMP10 TEMP17 = TEMP10>
+		    <DEAD TEMP17>
+		    <LSH TEMP10 24 = TEMP10 (TYPE FIX)>
+		    <CHTYPE TEMP10 <TYPE-CODE EFF-ADDR> = TEMP10>
+		    <CONS TEMP10 () = TEMP10>
+		    <FRAME 'LREV>
+		    <PUSH VAL4>
+		    <DEAD VAL4>
+		    <CALL 'LREV 1 = TEMP17>
+		    <CHTYPE TEMP17 <TYPE-CODE EFF-ADDR> = TEMP17>
+		    <CONS TEMP17 () = TEMP17>
+		    <PUTREST TEMP10 TEMP17>
+		    <DEAD TEMP17>
+		    <CHTYPE TEMP10 <TYPE-CODE LADDR> = TEMP10>
+		    <RETURN TEMP10>
+		    <DEAD TEMP10>
+		    <END MA-IMM>
+
+#WORD *35541362156*
+		    <GFCN LREV ("VALUE" FIX ANY) VAL4>
+		    <TEMP TEMP5:FIX TEMP6:FIX>
+		    <INTGO>
+		    <AND VAL4 #WORD *377* = TEMP5>
+		    <LSH TEMP5 24 = TEMP5 (TYPE FIX)>
+		    <AND VAL4 #WORD *177400* = TEMP6>
+		    <LSH TEMP6 8 = TEMP6 (TYPE FIX)>
+		    <OR TEMP5 TEMP6 = TEMP5>
+		    <DEAD TEMP6>
+		    <AND VAL4 #WORD *77600000* = TEMP6>
+		    <LSH TEMP6 -8 = TEMP6 (TYPE FIX)>
+		    <OR TEMP5 TEMP6 = TEMP5>
+		    <DEAD TEMP6>
+		    <AND VAL4 #WORD *37700000000* = TEMP6>
+		    <DEAD VAL4>
+		    <LSH TEMP6 -24 = TEMP6 (TYPE FIX)>
+		    <OR TEMP5 TEMP6 = TEMP5>
+		    <DEAD TEMP6>
+		    <RETURN TEMP5>
+		    <DEAD TEMP5>
+		    <END LREV>
+
+#WORD *27350162263*
+		    <GFCN MA-DISP ("VALUE" <OR EFF-ADDR LADDR> ANY FIX) AC4 VAL5>
+		    <TEMP AVAL6 TEMP12 TEMP14>
+		    <INTGO>
+		    <SET AVAL6 VAL5>
+		    <LESS? AVAL6 0 - TAG7 (TYPE FIX)>
+		    <SUB 0 AVAL6 = AVAL6 (TYPE FIX)>
+TAG7
+		    <VEQUAL? VAL5 0 - PHRASE9 (TYPE FIX)>
+		    <GVAL 'AM-REGD = TEMP12>
+		    <FRAME 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'AC-NUMBER 1 = TEMP14>
+		    <OR TEMP12 TEMP14 = TEMP12>
+		    <DEAD TEMP14>
+		    <LSH TEMP12 24 = TEMP12 (TYPE FIX)>
+		    <CHTYPE TEMP12 <TYPE-CODE EFF-ADDR> = TEMP12>
+		    <RETURN TEMP12>
+		    <DEAD TEMP12>
+PHRASE9
+		    <GRTR? AVAL6 127 + PHRASE15 (TYPE FIX)>
+		    <GVAL 'AM-BD = TEMP14>
+		    <FRAME 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'AC-NUMBER 1 = TEMP12>
+		    <OR TEMP14 TEMP12 = TEMP14>
+		    <DEAD TEMP12>
+		    <LSH TEMP14 8 = TEMP14 (TYPE FIX)>
+		    <AND VAL5 #WORD *377* = TEMP12>
+		    <DEAD VAL5>
+		    <OR TEMP14 TEMP12 = TEMP14>
+		    <DEAD TEMP12>
+		    <LSH TEMP14 16 = TEMP14 (TYPE FIX)>
+		    <CHTYPE TEMP14 <TYPE-CODE EFF-ADDR> = TEMP12>
+		    <DEAD TEMP14>
+		    <RETURN TEMP12>
+		    <DEAD TEMP12>
+PHRASE15
+		    <GRTR? AVAL6 32767 + PHRASE18 (TYPE FIX)>
+		    <DEAD AVAL6>
+		    <GVAL 'AM-WD = TEMP14>
+		    <FRAME 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'AC-NUMBER 1 = TEMP12>
+		    <OR TEMP14 TEMP12 = TEMP14>
+		    <DEAD TEMP12>
+		    <LSH TEMP14 24 = TEMP14 (TYPE FIX)>
+		    <SET AVAL6 VAL5>
+		    <DEAD VAL5>
+		    <LSH AVAL6 16 = TEMP12 (TYPE FIX)>
+		    <AND AVAL6 #WORD *177400* = AVAL6>
+		    <OR TEMP12 AVAL6 = TEMP12>
+		    <DEAD AVAL6>
+		    <AND TEMP12 #WORD *77777400* = TEMP12>
+		    <OR TEMP14 TEMP12 = TEMP14>
+		    <DEAD TEMP12>
+		    <CHTYPE TEMP14 <TYPE-CODE EFF-ADDR> = TEMP12>
+		    <DEAD TEMP14>
+		    <RETURN TEMP12>
+		    <DEAD TEMP12>
+PHRASE18
+		    <GVAL 'AM-LD = TEMP14>
+		    <FRAME 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'AC-NUMBER 1 = TEMP12>
+		    <OR TEMP14 TEMP12 = TEMP14>
+		    <DEAD TEMP12>
+		    <LSH TEMP14 24 = AVAL6 (TYPE FIX)>
+		    <DEAD TEMP14>
+		    <CHTYPE AVAL6 <TYPE-CODE EFF-ADDR> = AVAL6>
+		    <CONS AVAL6 () = AVAL6>
+		    <FRAME 'LREV>
+		    <PUSH VAL5>
+		    <DEAD VAL5>
+		    <CALL 'LREV 1 = TEMP12>
+		    <CHTYPE TEMP12 <TYPE-CODE EFF-ADDR> = TEMP12>
+		    <CONS TEMP12 () = TEMP12>
+		    <PUTREST AVAL6 TEMP12>
+		    <DEAD TEMP12>
+		    <CHTYPE AVAL6 <TYPE-CODE LADDR> = TEMP12>
+		    <DEAD AVAL6>
+		    <RETURN TEMP12>
+		    <DEAD TEMP12>
+		    <END MA-DISP>
+
+#WORD *35241535122*
+		    <GFCN MA-DEF-DISP ("VALUE" <OR EFF-ADDR LADDR> ANY FIX) AC4 VAL5>
+		    <TEMP AVAL6 TEMP12>
+		    <INTGO>
+		    <SET AVAL6 VAL5>
+		    <LESS? AVAL6 0 - TAG7 (TYPE FIX)>
+		    <SUB 0 AVAL6 = AVAL6 (TYPE FIX)>
+TAG7
+		    <GRTR? AVAL6 127 + PHRASE9 (TYPE FIX)>
+		    <GVAL 'AM-BDD = AVAL6>
+		    <FRAME 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'AC-NUMBER 1 = TEMP12>
+		    <OR AVAL6 TEMP12 = AVAL6>
+		    <DEAD TEMP12>
+		    <LSH AVAL6 8 = AVAL6 (TYPE FIX)>
+		    <AND VAL5 #WORD *377* = TEMP12>
+		    <DEAD VAL5>
+		    <OR AVAL6 TEMP12 = AVAL6>
+		    <DEAD TEMP12>
+		    <LSH AVAL6 16 = AVAL6 (TYPE FIX)>
+		    <CHTYPE AVAL6 <TYPE-CODE EFF-ADDR> = AVAL6>
+		    <RETURN AVAL6>
+		    <DEAD AVAL6>
+PHRASE9
+		    <GRTR? AVAL6 32767 + PHRASE13 (TYPE FIX)>
+		    <DEAD AVAL6>
+		    <GVAL 'AM-WDD = TEMP12>
+		    <FRAME 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'AC-NUMBER 1 = AVAL6>
+		    <OR TEMP12 AVAL6 = TEMP12>
+		    <DEAD AVAL6>
+		    <LSH TEMP12 24 = TEMP12 (TYPE FIX)>
+		    <AND VAL5 #WORD *377* = AVAL6>
+		    <LSH AVAL6 16 = AVAL6 (TYPE FIX)>
+		    <OR TEMP12 AVAL6 = TEMP12>
+		    <DEAD AVAL6>
+		    <AND VAL5 #WORD *177400* = AVAL6>
+		    <DEAD VAL5>
+		    <OR TEMP12 AVAL6 = TEMP12>
+		    <DEAD AVAL6>
+		    <CHTYPE TEMP12 <TYPE-CODE EFF-ADDR> = AVAL6>
+		    <DEAD TEMP12>
+		    <RETURN AVAL6>
+		    <DEAD AVAL6>
+PHRASE13
+		    <GVAL 'AM-LDD = TEMP12>
+		    <FRAME 'AC-NUMBER>
+		    <PUSH AC4>
+		    <DEAD AC4>
+		    <CALL 'AC-NUMBER 1 = AVAL6>
+		    <OR TEMP12 AVAL6 = TEMP12>
+		    <DEAD AVAL6>
+		    <LSH TEMP12 24 = TEMP12 (TYPE FIX)>
+		    <CHTYPE TEMP12 <TYPE-CODE EFF-ADDR> = TEMP12>
+		    <CONS TEMP12 () = TEMP12>
+		    <FRAME 'LREV>
+		    <PUSH VAL5>
+		    <DEAD VAL5>
+		    <CALL 'LREV 1 = AVAL6>
+		    <CHTYPE AVAL6 <TYPE-CODE EFF-ADDR> = AVAL6>
+		    <CONS AVAL6 () = AVAL6>
+		    <PUTREST TEMP12 AVAL6>
+		    <DEAD AVAL6>
+		    <CHTYPE TEMP12 <TYPE-CODE LADDR> = AVAL6>
+		    <DEAD TEMP12>
+		    <RETURN AVAL6>
+		    <DEAD AVAL6>
+		    <END MA-DEF-DISP>
+
+#WORD *14003562465*
+		    <GFCN MA-ABS ("VALUE" FORM "QUOTE" ANY) ABS4>
+		    <TEMP TEMP8 TEMP11>
+		    <INTGO>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'MA-AINCD>
+		    <PUSH ,AC-PC>
+		    <CALL 'FORM 2 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP8>
+		    <CONS TEMP8 () = TEMP8>
+		    <FRAME 'FORM>
+		    <PUSH 'CHTYPE>
+		    <FRAME 'FORM>
+		    <PUSH 'LREV>
+		    <PUSH ABS4>
+		    <DEAD ABS4>
+		    <CALL 'FORM 2 = STACK>
+		    <PUSH 'EFF-ADDR>
+		    <CALL 'FORM 3 = TEMP11>
+		    <CONS TEMP11 () = TEMP11>
+		    <PUTREST TEMP8 TEMP11>
+		    <DEAD TEMP11>
+		    <PUSH TEMP8>
+		    <DEAD TEMP8>
+		    <PUSH 'LADDR>
+		    <CALL 'FORM 3 = TEMP8>
+		    <RETURN TEMP8>
+		    <DEAD TEMP8>
+		    <END MA-ABS>
+<COND (<AND <GASSIGNED? MA-ABS> <NOT <TYPE? ,MA-ABS MACRO>>> <SETG MA-ABS <CHTYPE (,MA-ABS) MACRO>>)>

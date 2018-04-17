@@ -1,0 +1,85 @@
+<DEFINE DOUBLE-ADDR (FROB "AUX" AC)
+  <COND (<TYPE? .FROB VARTBL>
+	 <COND (<SET AC <VAR-VALUE-IN-AC? .FROB>>
+		<MA-REGD .AC>)
+	       (T
+		<GEN-LOC .FROB 4 T>)>)
+	(T
+	 <MA-DEF-DISP ,AC-M <+ <ADD-MVEC .FROB> 4>>)>>
+
+<DEFINE DOUBLE-GEN (OPER "TUPLE" ARGS "AUX" (RES ,HAS-RESULT)
+		    RRES TLAB (TAC <>) (VAC <>))
+  <SET OPER <SPNAME .OPER>>
+  <COND (<MEMBER .OPER '["ADD" "SUB" "MUL" "DIV"]>
+	 <SET RRES <3 .ARGS>>
+	 <EMIT <COND (<=? .OPER "ADD"> ,INST-ADDD3)
+		     (<=? .OPER "SUB"> ,INST-SUBD3)
+		     (<=? .OPER "MUL"> ,INST-MULD3)
+		     (<=? .OPER "DIV"> ,INST-DIVD3)>
+	       <DOUBLE-ADDR <1 .ARGS>>
+	       <DOUBLE-ADDR <2 .ARGS>>
+	       <DOUBLE-ADDR <3 .ARGS>>>)
+	(<MEMBER .OPER '["G?" "=?" "L?"]>
+	 <COND (<TYPE? .RES VARTBL>
+		<COND (<SET TAC <VAR-TYPE-WORD-IN-AC? .RES>>
+		       <PROTECT .TAC>)>
+		<COND (<SET VAC <VAR-VALUE-IN-AC? .RES>>
+		       <PROTECT .VAC>)>
+		<DEAD-VAR .RES>)>
+	 <SET TLAB <MAKE-LABEL>>
+	 <COND (<==? .RES STACK>
+		<EMIT-PUSH <TYPE-WORD FALSE> LONG>)
+	       (.TAC
+		<EMIT-MOVE <TYPE-WORD FALSE> <MA-REG .TAC> LONG>)
+	       (T
+		<EMIT-MOVE <TYPE-WORD FALSE> <VAR-TYPE-ADDRESS .RES> LONG>)>
+	 <EMIT ,INST-CMPD
+	       <DOUBLE-ADDR <1 .ARGS>>
+	       <DOUBLE-ADDR <2 .ARGS>>>
+	 <GEN-BRANCH <COND (<=? .OPER "G?">
+			    ,INST-BLEQ)
+			   (<=? .OPER "=?">
+			    ,INST-BNEQ)
+			   (<=? .OPER "L?">
+			    ,INST-BGEQ)>
+		     .TLAB <>>
+	 <COND (<==? .RES STACK>
+		<EMIT-MOVE <TYPE-WORD FIX> <MA-DISP ,AC-TP -4> LONG>)
+	       (.TAC
+		<EMIT-MOVE <TYPE-WORD FIX> <MA-REG .TAC> LONG>)
+	       (T
+		<EMIT-MOVE <TYPE-WORD FIX> <VAR-TYPE-ADDRESS .RES> LONG>)>
+	 <EMIT-LABEL .TLAB <>>
+	 <COND (<==? .RES STACK>
+		<EMIT-PUSH <MA-IMM 0> LONG>)
+	       (.VAC
+		<EMIT-MOVE <MA-IMM 0> <MA-REG .VAC> LONG>)
+	       (T
+		<EMIT-MOVE <MA-IMM 0> <VAR-VALUE-ADDRESS .RES> LONG>)>
+	 <COND (.TAC
+		<LINK-VAR-TO-AC .RES .TAC TYPE-WORD>)>
+	 <COND (.VAC
+		<LINK-VAR-TO-AC .RES .VAC VALUE>)>)
+	(<=? .OPER "DOUBLE-TO-SINGLE">
+	 <COND (<TYPE? .RES VARTBL>
+		<COND (<SET VAC <VAR-VALUE-IN-AC? .RES>>
+		       <PROTET .VAC>)
+		      (T
+		       <SET VAC <GET-AC PREF-VAL T>>)>
+		<DEAD-VAR .RES>)
+	       (T
+		<EMIT-PUSH <TYPE-WORD FLOAT> LONG>)>
+	 <EMIT ,INST-CVTDF <DOUBLE-ADDR <1 .ARGS>>
+	       <COND (.VAC <MA-REG .VAC>)
+		     (T
+		      <MA-AINC ,AC-TP>)>>
+	 <COND (.VAC
+		<DEST-DECL .VAC .RES FLOAT>)>)
+	(<=? .OPER "SINGLE-TO-DOUBLE">
+	 <SET VAC <LOAD-VAR <2 .ARGS> VALUE T PREF-VAL>>
+	 <SET TAC <LOAD-VAR <2 .ARGS> TYPE <> <PREV-AC .VAC>>>
+	 <EMIT ,INST-CVTFD
+	       <VAR-VALUE-ADDRESS <1 .ARGS>>
+	       <MA-REGD .VAC>>
+	 <COND (.RES <DEST-PAIR .VAC .TAC .RES>)>)>
+  NORMAL>

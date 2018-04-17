@@ -1,0 +1,23 @@
+<PACKAGE "FLAGS">
+
+<RENTRY FLAGS BIT>
+
+<USE "NEWSTRUC">
+
+<DEFINE FLAGS ("TUPLE" F)
+	<REPEAT ()
+		<COND (<LENGTH? .F 1> <RETURN>)>
+		<MSETG <1 .F> <BIT <2 .F>>>
+		<SET F <REST .F 2>>>>
+
+<DEFINE BIT (N)
+	#DECL ((N) FIX)
+	<COND (<0? .N> 1)
+	      (ELSE
+	       <COND (<G? .N 35>
+		      <ERROR BIT-NOT-20-COMPATIBLE!-ERRORS .N>)
+		     (<G? .N 31>
+		      <ERROR BIT-NOT-VAX-COMPATIBLE!-ERRORS .N>)>
+	       <CHTYPE <LSH 1 .N> FIX>)>>
+
+<ENDPACKAGE>

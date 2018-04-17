@@ -1,0 +1,2404 @@
+
+<COND (<NOT <GASSIGNED? WIDTH-MUNG>> <FLOAD "MIMOC20DEFS.MUD">)>
+
+<SETG NUM-TEMPS 4>
+
+<SETG NUM-L-TEMPS 2>
+
+<SETG MARK-BIT 65536>
+
+<SETG FLEN 7>
+
+<SETG LIST-LEN 3>
+
+<SETG ATOM-LEN 5>
+
+<SETG GBIND-LEN 5>
+
+<SETG LBIND-LEN 8>
+
+<MANIFEST NUM-TEMPS NUM-L-TEMPS MARK-BIT FLEN LIST-LEN ATOM-LEN GBIND-LEN LBIND-LEN>
+
+#WORD *31350360336*
+		    <GFCN CGC-RECORD!-MIMOC ("VALUE" ANY LIST) L5>
+		    <TEMP VAR6 TEMP24 ALLOC-ATOM7:FORM END-ATOM8:FORM NEXT-ATOM9:FORM BOUNDS-ATOM10 RES11 BOUNDS-LAB16 IB-LAB17 F-LAB18 EXIT-LAB19 M-LAB20 F121 B122 HINT23 ENDADDR15 ALLOCADDR14 RLEN12:FIX STK?13 TEMP48>
+		    <INTGO>
+		    <NTHL L5 1 = VAR6>
+		    <RESTL L5 1 = TEMP24 (TYPE LIST)>
+		    <NTHL TEMP24 1 = ALLOC-ATOM7 (TYPE FORM)>
+		    <DEAD TEMP24>
+		    <RESTL L5 1 = TEMP24 (TYPE LIST)>
+		    <RESTL TEMP24 1 = TEMP24 (TYPE LIST)>
+		    <NTHL TEMP24 1 = END-ATOM8 (TYPE FORM)>
+		    <DEAD TEMP24>
+		    <RESTL L5 1 = TEMP24 (TYPE LIST)>
+		    <RESTL TEMP24 1 = TEMP24 (TYPE LIST)>
+		    <RESTL TEMP24 1 = TEMP24 (TYPE LIST)>
+		    <NTHL TEMP24 1 = NEXT-ATOM9 (TYPE FORM)>
+		    <DEAD TEMP24>
+		    <NTHL L5 5 = BOUNDS-ATOM10>
+		    <NTHL L5 7 = RES11>
+		    <FRAME 'GENLBL>
+		    <PUSH "B">
+		    <CALL 'GENLBL 1 = BOUNDS-LAB16>
+		    <FRAME 'GENLBL>
+		    <PUSH "I">
+		    <CALL 'GENLBL 1 = IB-LAB17>
+		    <FRAME 'GENLBL>
+		    <PUSH "F">
+		    <CALL 'GENLBL 1 = F-LAB18>
+		    <FRAME 'GENLBL>
+		    <PUSH "E">
+		    <CALL 'GENLBL 1 = EXIT-LAB19>
+		    <FRAME 'GENLBL>
+		    <PUSH "M">
+		    <CALL 'GENLBL 1 = M-LAB20>
+		    <FRAME 'GENLBL>
+		    <PUSH "?FRM">
+		    <CALL 'GENLBL 1 = F121>
+		    <FRAME 'GENLBL>
+		    <PUSH "?FRM">
+		    <CALL 'GENLBL 1 = B122>
+		    <FRAME 'EXTRAMEM>
+		    <PUSH 'RECORD-TYPE>
+		    <PUSH L5>
+		    <DEAD L5>
+		    <CALL 'EXTRAMEM 2 = HINT23>
+		    <FRAME 'FLUSH-ACS>
+		    <CALL 'FLUSH-ACS 0>
+		    <FRAME 'OBJ-VAL>
+		    <RESTL END-ATOM8 1 = TEMP24 (TYPE LIST)>
+		    <DEAD END-ATOM8>
+		    <NTHL TEMP24 1 = TEMP24 (TYPE ATOM)>
+		    <CHTYPE TEMP24 <TYPE-CODE XGLOC> = STACK>
+		    <DEAD TEMP24>
+		    <CALL 'OBJ-VAL 1 = ENDADDR15>
+		    <FRAME 'OBJ-VAL>
+		    <RESTL ALLOC-ATOM7 1 = TEMP24 (TYPE LIST)>
+		    <DEAD ALLOC-ATOM7>
+		    <NTHL TEMP24 1 = TEMP24 (TYPE ATOM)>
+		    <CHTYPE TEMP24 <TYPE-CODE XGLOC> = STACK>
+		    <DEAD TEMP24>
+		    <CALL 'OBJ-VAL 1 = ALLOCADDR14>
+		    <TYPE? HINT23 <TYPE-CODE FALSE> + PHRASE37>
+		    <NTHL HINT23 1 = TEMP24>
+		    <EQUAL? TEMP24 'RECORD-TYPE - PHRASE37>
+		    <DEAD TEMP24>
+		    <RESTL HINT23 1 = HINT23 (TYPE LIST)>
+		    <NTHL HINT23 1 = HINT23>
+PHRASE37
+		    <EQUAL? HINT23 'ATOM - PHRASE40>
+		    <SET RLEN12 5 (TYPE FIX)>
+		    <SET STK?13 %<> (TYPE FALSE)>
+		    <JUMP + PHRASE43>
+PHRASE40
+		    <EQUAL? HINT23 'GBIND - PHRASE41>
+		    <SET RLEN12 5 (TYPE FIX)>
+		    <SET STK?13 %<> (TYPE FALSE)>
+		    <JUMP + PHRASE43>
+PHRASE41
+		    <EQUAL? HINT23 'LBIND - PHRASE42>
+		    <SET RLEN12 8 (TYPE FIX)>
+		    <SET STK?13 'T (TYPE ATOM)>
+		    <JUMP + PHRASE43>
+PHRASE42
+		    <FRAME 'ERROR>
+		    <PUSH 'BAD-HINT-FOR-CGC-RECORD!-ERRORS>
+		    <PUSH HINT23>
+		    <DEAD HINT23>
+		    <PUSH 'CGC-RECORD-GEN>
+		    <CALL 'ERROR 3>
+PHRASE43
+		    <VEQUAL? STK?13 0 + PHRASE46>
+		    <DEAD STK?13>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'CAMG>
+		    <PUSH 'TP*>
+		    <SET TEMP48 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH VAR6>
+		    <SCALL 'OBJ-VAL 1 = TEMP24 + TAG47 TEMP48>
+		    <LOOP (TEMP24 TYPE VALUE LENGTH) (TEMP48 VALUE)>
+TAG50
+		    <INTGO>
+		    <EMPTY? TEMP24 + TAG47>
+		    <NTH1 TEMP24 = STACK>
+		    <REST1 TEMP24 = TEMP24>
+		    <ADD TEMP48 1 = TEMP48 (TYPE FIX)>
+		    <JUMP + TAG50>
+TAG47
+		    <DEAD TEMP24>
+		    <CALL 'OCEMIT TEMP48>
+		    <DEAD TEMP48>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH BOUNDS-LAB16>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVSI>
+		    <PUSH 'A1*>
+		    <FRAME 'TYPE-CODE>
+		    <PUSH 'FALSE>
+		    <CALL 'TYPE-CODE 1 = STACK>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEI>
+		    <PUSH 'A2*>
+		    <PUSH 0>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH EXIT-LAB19>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'LABEL>
+		    <PUSH BOUNDS-LAB16>
+		    <DEAD BOUNDS-LAB16>
+		    <CALL 'LABEL 1>
+		    <FRAME 'FRAME!-MIMOC>
+		    <FRAME 'NTH>
+		    <PUSH BOUNDS-ATOM10>
+		    <PUSH 2>
+		    <CALL 'NTH 2 = TEMP48>
+		    <CONS TEMP48 () = TEMP48>
+		    <CONS B122 TEMP48 = STACK>
+		    <DEAD TEMP48>
+		    <CALL 'FRAME!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET TEMP24 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH VAR6>
+		    <SCALL 'OBJ-TYP 1 = TEMP48 + TAG62 TEMP24>
+		    <LOOP (TEMP48 TYPE VALUE LENGTH) (TEMP24 VALUE)>
+TAG64
+		    <INTGO>
+		    <EMPTY? TEMP48 + TAG62>
+		    <NTH1 TEMP48 = STACK>
+		    <REST1 TEMP48 = TEMP48>
+		    <ADD TEMP24 1 = TEMP24 (TYPE FIX)>
+		    <JUMP + TAG64>
+TAG62
+		    <DEAD TEMP48>
+		    <CALL 'OCEMIT TEMP24>
+		    <DEAD TEMP24>
+		    <GVAL 'WINNING-VICTIM = TEMP24>
+		    <TYPE? TEMP24 <TYPE-CODE FALSE> + PHRASE67>
+		    <DEAD TEMP24>
+		    <GVAL 'STACK-DEPTH = TEMP24>
+		    <ADD TEMP24 1 = TEMP24 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP24>
+		    <DEAD TEMP24>
+PHRASE67
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET TEMP48 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH VAR6>
+		    <SCALL 'OBJ-VAL 1 = TEMP24 + TAG68 TEMP48>
+		    <LOOP (TEMP24 TYPE VALUE LENGTH) (TEMP48 VALUE)>
+TAG70
+		    <INTGO>
+		    <EMPTY? TEMP24 + TAG68>
+		    <NTH1 TEMP24 = STACK>
+		    <REST1 TEMP24 = TEMP24>
+		    <ADD TEMP48 1 = TEMP48 (TYPE FIX)>
+		    <JUMP + TAG70>
+TAG68
+		    <DEAD TEMP24>
+		    <CALL 'OCEMIT TEMP48>
+		    <DEAD TEMP48>
+		    <GVAL 'WINNING-VICTIM = TEMP48>
+		    <TYPE? TEMP48 <TYPE-CODE FALSE> + PHRASE73>
+		    <DEAD TEMP48>
+		    <GVAL 'STACK-DEPTH = TEMP48>
+		    <ADD TEMP48 1 = TEMP48 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP48>
+		    <DEAD TEMP48>
+PHRASE73
+		    <FRAME 'CALL!-MIMOC>
+		    <CONS B122 () = B122>
+		    <CONS 1 B122 = B122>
+		    <CONS BOUNDS-ATOM10 B122 = STACK>
+		    <DEAD B122 BOUNDS-ATOM10>
+		    <CALL 'CALL!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JUMPN>
+		    <PUSH 'A2*>
+		    <FRAME 'XJUMP>
+		    <PUSH IB-LAB17>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVSI>
+		    <PUSH 'A1*>
+		    <FRAME 'TYPE-CODE>
+		    <PUSH 'FIX>
+		    <CALL 'TYPE-CODE 1 = STACK>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <SET TEMP24 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH VAR6>
+		    <SCALL 'OBJ-VAL 1 = TEMP48 + TAG79 TEMP24>
+		    <LOOP (TEMP48 TYPE VALUE LENGTH) (TEMP24 VALUE)>
+TAG81
+		    <INTGO>
+		    <EMPTY? TEMP48 + TAG79>
+		    <NTH1 TEMP48 = STACK>
+		    <REST1 TEMP48 = TEMP48>
+		    <ADD TEMP24 1 = TEMP24 (TYPE FIX)>
+		    <JUMP + TAG81>
+TAG79
+		    <DEAD TEMP48>
+		    <CALL 'OCEMIT TEMP24>
+		    <DEAD TEMP24>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH EXIT-LAB19>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'LABEL>
+		    <PUSH IB-LAB17>
+		    <DEAD IB-LAB17>
+		    <CALL 'LABEL 1>
+PHRASE46
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O1*>
+		    <SET TEMP48 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH VAR6>
+		    <SCALL 'OBJ-VAL 1 = TEMP24 + TAG86 TEMP48>
+		    <LOOP (TEMP24 TYPE VALUE LENGTH) (TEMP48 VALUE)>
+TAG88
+		    <INTGO>
+		    <EMPTY? TEMP24 + TAG86>
+		    <NTH1 TEMP24 = STACK>
+		    <REST1 TEMP24 = TEMP24>
+		    <ADD TEMP48 1 = TEMP48 (TYPE FIX)>
+		    <JUMP + TAG88>
+TAG86
+		    <DEAD TEMP24>
+		    <CALL 'OCEMIT TEMP48>
+		    <DEAD TEMP48>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O*>
+		    <PUSH RLEN12>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'TLON>
+		    <PUSH 'O*>
+		    <PUSH 65536>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH M-LAB20>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A1*>
+		    <SET TEMP24 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH VAR6>
+		    <SCALL 'OBJ-TYP 1 = TEMP48 + TAG94 TEMP24>
+		    <LOOP (TEMP48 TYPE VALUE LENGTH) (TEMP24 VALUE)>
+TAG96
+		    <INTGO>
+		    <EMPTY? TEMP48 + TAG94>
+		    <NTH1 TEMP48 = STACK>
+		    <REST1 TEMP48 = TEMP48>
+		    <ADD TEMP24 1 = TEMP24 (TYPE FIX)>
+		    <JUMP + TAG96>
+TAG94
+		    <DEAD TEMP48>
+		    <CALL 'OCEMIT TEMP24>
+		    <DEAD TEMP24>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <ADD RLEN12 1 = STACK (TYPE FIX)>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH EXIT-LAB19>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'LABEL>
+		    <PUSH M-LAB20>
+		    <DEAD M-LAB20>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O*>
+		    <PUSH RLEN12>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'B1*>
+		    <PUSH '@>
+		    <SET TEMP48 3 (TYPE FIX)>
+		    <SET TEMP24 ALLOCADDR14>
+		    <LOOP (TEMP24 TYPE VALUE LENGTH) (TEMP48 VALUE)>
+TAG104
+		    <INTGO>
+		    <EMPTY? TEMP24 + TAG103>
+		    <NTH1 TEMP24 = STACK>
+		    <REST1 TEMP24 = TEMP24>
+		    <ADD TEMP48 1 = TEMP48 (TYPE FIX)>
+		    <JUMP + TAG104>
+TAG103
+		    <DEAD TEMP24>
+		    <CALL 'OCEMIT TEMP48>
+		    <DEAD TEMP48>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O2*>
+		    <PUSH 'B2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADDI>
+		    <PUSH 'O2*>
+		    <ADD RLEN12 2 = STACK (TYPE FIX)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'C1*>
+		    <PUSH '@>
+		    <SET TEMP24 3 (TYPE FIX)>
+		    <LOOP (ENDADDR15 TYPE VALUE LENGTH) (TEMP24 VALUE)>
+TAG109
+		    <INTGO>
+		    <EMPTY? ENDADDR15 + TAG108>
+		    <NTH1 ENDADDR15 = STACK>
+		    <REST1 ENDADDR15 = ENDADDR15>
+		    <ADD TEMP24 1 = TEMP24 (TYPE FIX)>
+		    <JUMP + TAG109>
+TAG108
+		    <DEAD ENDADDR15>
+		    <CALL 'OCEMIT TEMP24>
+		    <DEAD TEMP24>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'CAMG>
+		    <PUSH 'O2*>
+		    <PUSH 'C2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH F-LAB18>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'FRAME!-MIMOC>
+		    <RESTL NEXT-ATOM9 1 = TEMP24 (TYPE LIST)>
+		    <NTHL TEMP24 1 = TEMP24 (TYPE ATOM)>
+		    <CONS TEMP24 () = TEMP24>
+		    <CONS F121 TEMP24 = STACK>
+		    <DEAD TEMP24>
+		    <CALL 'FRAME!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET ENDADDR15 2 (TYPE FIX)>
+		    <SFRAME 'TYPE-WORD>
+		    <PUSH 'FIX>
+		    <SCALL 'TYPE-WORD 1 = TEMP24 + TAG115 TEMP48>
+		    <LOOP (TEMP24 TYPE VALUE LENGTH) (ENDADDR15 VALUE)>
+TAG117
+		    <INTGO>
+		    <EMPTY? TEMP24 + TAG115>
+		    <NTH1 TEMP24 = STACK>
+		    <REST1 TEMP24 = TEMP24>
+		    <ADD ENDADDR15 1 = ENDADDR15 (TYPE FIX)>
+		    <JUMP + TAG117>
+TAG115
+		    <DEAD TEMP24>
+		    <CALL 'OCEMIT ENDADDR15>
+		    <DEAD ENDADDR15>
+		    <GVAL 'WINNING-VICTIM = ENDADDR15>
+		    <TYPE? ENDADDR15 <TYPE-CODE FALSE> + PHRASE120>
+		    <DEAD ENDADDR15>
+		    <GVAL 'STACK-DEPTH = ENDADDR15>
+		    <ADD ENDADDR15 1 = ENDADDR15 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH ENDADDR15>
+		    <DEAD ENDADDR15>
+PHRASE120
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET TEMP24 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <ADD RLEN12 2 = STACK (TYPE FIX)>
+		    <SCALL 'OBJ-VAL 1 = ENDADDR15 + TAG121 TEMP24>
+		    <LOOP (ENDADDR15 TYPE VALUE LENGTH) (TEMP24 VALUE)>
+TAG123
+		    <INTGO>
+		    <EMPTY? ENDADDR15 + TAG121>
+		    <NTH1 ENDADDR15 = STACK>
+		    <REST1 ENDADDR15 = ENDADDR15>
+		    <ADD TEMP24 1 = TEMP24 (TYPE FIX)>
+		    <JUMP + TAG123>
+TAG121
+		    <DEAD ENDADDR15>
+		    <CALL 'OCEMIT TEMP24>
+		    <DEAD TEMP24>
+		    <GVAL 'WINNING-VICTIM = TEMP24>
+		    <TYPE? TEMP24 <TYPE-CODE FALSE> + PHRASE126>
+		    <DEAD TEMP24>
+		    <GVAL 'STACK-DEPTH = TEMP24>
+		    <ADD TEMP24 1 = TEMP24 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP24>
+		    <DEAD TEMP24>
+PHRASE126
+		    <FRAME 'CALL!-MIMOC>
+		    <CONS F121 () = F121>
+		    <CONS 1 F121 = F121>
+		    <CONS NEXT-ATOM9 F121 = STACK>
+		    <DEAD F121 NEXT-ATOM9>
+		    <CALL 'CALL!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O1*>
+		    <SET ENDADDR15 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH VAR6>
+		    <DEAD VAR6>
+		    <SCALL 'OBJ-VAL 1 = TEMP24 + TAG128 TEMP48>
+		    <LOOP (TEMP24 TYPE VALUE LENGTH) (ENDADDR15 VALUE)>
+TAG130
+		    <INTGO>
+		    <EMPTY? TEMP24 + TAG128>
+		    <NTH1 TEMP24 = STACK>
+		    <REST1 TEMP24 = TEMP24>
+		    <ADD ENDADDR15 1 = ENDADDR15 (TYPE FIX)>
+		    <JUMP + TAG130>
+TAG128
+		    <DEAD TEMP24>
+		    <CALL 'OCEMIT ENDADDR15>
+		    <DEAD ENDADDR15>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'B1*>
+		    <PUSH '@>
+		    <SET TEMP24 3 (TYPE FIX)>
+		    <SET ENDADDR15 ALLOCADDR14>
+		    <LOOP (ENDADDR15 TYPE VALUE LENGTH) (TEMP24 VALUE)>
+TAG133
+		    <INTGO>
+		    <EMPTY? ENDADDR15 + TAG132>
+		    <NTH1 ENDADDR15 = STACK>
+		    <REST1 ENDADDR15 = ENDADDR15>
+		    <ADD TEMP24 1 = TEMP24 (TYPE FIX)>
+		    <JUMP + TAG133>
+TAG132
+		    <DEAD ENDADDR15>
+		    <CALL 'OCEMIT TEMP24>
+		    <DEAD TEMP24>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O2*>
+		    <PUSH 'B2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADDI>
+		    <PUSH 'O2*>
+		    <ADD RLEN12 2 = STACK (TYPE FIX)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'LABEL>
+		    <PUSH F-LAB18>
+		    <DEAD F-LAB18>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'B2*>
+		    <ADD RLEN12 1 = STACK (TYPE FIX)>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'T*>
+		    <SET ENDADDR15 2 (TYPE FIX)>
+		    <LOOP (ALLOCADDR14 TYPE VALUE LENGTH) (ENDADDR15 VALUE)>
+TAG140
+		    <INTGO>
+		    <EMPTY? ALLOCADDR14 + TAG139>
+		    <NTH1 ALLOCADDR14 = STACK>
+		    <REST1 ALLOCADDR14 = ALLOCADDR14>
+		    <ADD ENDADDR15 1 = ENDADDR15 (TYPE FIX)>
+		    <JUMP + TAG140>
+TAG139
+		    <DEAD ALLOCADDR14>
+		    <CALL 'OCEMIT ENDADDR15>
+		    <DEAD ENDADDR15>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O2*>
+		    <PUSH 1>
+		    <PUSH (T*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'C1*>
+		    <PUSH RLEN12>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'TLZ>
+		    <PUSH 'C1*>
+		    <PUSH 65536>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVEM>
+		    <PUSH 'C1*>
+		    <PUSH RLEN12>
+		    <DEAD RLEN12>
+		    <PUSH (B2*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <PUSH 'B2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVSI>
+		    <PUSH 'A1*>
+		    <FRAME 'TYPE-CODE>
+		    <PUSH 'FIX>
+		    <CALL 'TYPE-CODE 1 = STACK>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'LABEL>
+		    <PUSH EXIT-LAB19>
+		    <DEAD EXIT-LAB19>
+		    <CALL 'LABEL 1>
+		    <EQUAL? RES11 'STACK - PHRASE151>
+		    <GVAL 'WINNING-VICTIM = ENDADDR15>
+		    <TYPE? ENDADDR15 <TYPE-CODE FALSE> + PHRASE153>
+		    <DEAD ENDADDR15>
+		    <GVAL 'STACK-DEPTH = ENDADDR15>
+		    <ADD ENDADDR15 2 = ENDADDR15 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH ENDADDR15>
+		    <DEAD ENDADDR15>
+PHRASE153
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A2*>
+		    <CALL 'OCEMIT 3 = ENDADDR15>
+		    <RETURN ENDADDR15>
+		    <DEAD ENDADDR15>
+PHRASE151
+		    <FRAME 'LOAD-AC>
+		    <PUSH RES11>
+		    <DEAD RES11>
+		    <PUSH 'BOTH>
+		    <PUSH 'T>
+		    <PUSH 'T>
+		    <FRAME 'GET-AC>
+		    <PUSH 'A1*>
+		    <CALL 'GET-AC 1 = STACK>
+		    <CALL 'LOAD-AC 5 = ENDADDR15>
+		    <RETURN ENDADDR15>
+		    <DEAD ENDADDR15>
+		    <END CGC-RECORD!-MIMOC>
+
+#WORD *6557655705*
+		    <GFCN CGC-BYTES!-MIMOC ("VALUE" ANY LIST) L5>
+		    <TEMP VAR6 TEMP11 ALLOC-ATOM7 END-ATOM8 NEXT-ATOM9 RES10 TEMP14>
+		    <INTGO>
+		    <NTHL L5 1 = VAR6>
+		    <RESTL L5 1 = TEMP11 (TYPE LIST)>
+		    <NTHL TEMP11 1 = ALLOC-ATOM7>
+		    <DEAD TEMP11>
+		    <RESTL L5 1 = TEMP11 (TYPE LIST)>
+		    <RESTL TEMP11 1 = TEMP11 (TYPE LIST)>
+		    <NTHL TEMP11 1 = END-ATOM8>
+		    <DEAD TEMP11>
+		    <RESTL L5 1 = TEMP11 (TYPE LIST)>
+		    <RESTL TEMP11 1 = TEMP11 (TYPE LIST)>
+		    <RESTL TEMP11 1 = TEMP11 (TYPE LIST)>
+		    <NTHL TEMP11 1 = NEXT-ATOM9>
+		    <DEAD TEMP11>
+		    <NTHL L5 6 = RES10>
+		    <DEAD L5>
+		    <FRAME 'FLUSH-ACS>
+		    <CALL 'FLUSH-ACS 0>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'A1*>
+		    <SET TEMP14 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH VAR6>
+		    <SCALL 'OBJ-TYP 1 = TEMP11 + TAG13 TEMP14>
+		    <LOOP (TEMP11 TYPE VALUE LENGTH) (TEMP14 VALUE)>
+TAG16
+		    <INTGO>
+		    <EMPTY? TEMP11 + TAG13>
+		    <NTH1 TEMP11 = STACK>
+		    <REST1 TEMP11 = TEMP11>
+		    <ADD TEMP14 1 = TEMP14 (TYPE FIX)>
+		    <JUMP + TAG16>
+TAG13
+		    <DEAD TEMP11>
+		    <CALL 'OCEMIT TEMP14>
+		    <DEAD TEMP14>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ANDI>
+		    <PUSH 'A1*>
+		    <PUSH 262143>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'IBP>
+		    <PUSH 'A1*>
+		    <PUSH 'A2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'TLZ>
+		    <PUSH 'A1*>
+		    <PUSH 258048>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUB>
+		    <PUSH 'A2*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'CGC-UV-ST>
+		    <PUSH VAR6>
+		    <DEAD VAR6>
+		    <PUSH ALLOC-ATOM7>
+		    <DEAD ALLOC-ATOM7>
+		    <PUSH END-ATOM8>
+		    <DEAD END-ATOM8>
+		    <PUSH NEXT-ATOM9>
+		    <DEAD NEXT-ATOM9>
+		    <PUSH RES10>
+		    <DEAD RES10>
+		    <CALL 'CGC-UV-ST 5 = TEMP14>
+		    <RETURN TEMP14>
+		    <DEAD TEMP14>
+		    <END CGC-BYTES!-MIMOC>
+
+<SETG CGC-STRING!-MIMOC ,CGC-BYTES!-MIMOC>
+
+#WORD *35707575043*
+		    <GFCN CGC-UVECTOR!-MIMOC ("VALUE" ANY LIST) L5>
+		    <TEMP VAR6 TEMP11 ALLOC-ATOM7 END-ATOM8 NEXT-ATOM9 RES10 TEMP13>
+		    <INTGO>
+		    <NTHL L5 1 = VAR6>
+		    <RESTL L5 1 = TEMP11 (TYPE LIST)>
+		    <NTHL TEMP11 1 = ALLOC-ATOM7>
+		    <DEAD TEMP11>
+		    <RESTL L5 1 = TEMP11 (TYPE LIST)>
+		    <RESTL TEMP11 1 = TEMP11 (TYPE LIST)>
+		    <NTHL TEMP11 1 = END-ATOM8>
+		    <DEAD TEMP11>
+		    <RESTL L5 1 = TEMP11 (TYPE LIST)>
+		    <RESTL TEMP11 1 = TEMP11 (TYPE LIST)>
+		    <RESTL TEMP11 1 = TEMP11 (TYPE LIST)>
+		    <NTHL TEMP11 1 = NEXT-ATOM9>
+		    <DEAD TEMP11>
+		    <NTHL L5 6 = RES10>
+		    <DEAD L5>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'A1*>
+		    <SET TEMP13 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH VAR6>
+		    <SCALL 'OBJ-TYP 1 = TEMP11 + TAG12 TEMP13>
+		    <LOOP (TEMP11 TYPE VALUE LENGTH) (TEMP13 VALUE)>
+TAG15
+		    <INTGO>
+		    <EMPTY? TEMP11 + TAG12>
+		    <NTH1 TEMP11 = STACK>
+		    <REST1 TEMP11 = TEMP11>
+		    <ADD TEMP13 1 = TEMP13 (TYPE FIX)>
+		    <JUMP + TAG15>
+TAG12
+		    <DEAD TEMP11>
+		    <CALL 'OCEMIT TEMP13>
+		    <DEAD TEMP13>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRREI>
+		    <PUSH 'A1*>
+		    <PUSH -1>
+		    <PUSH (A1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADD>
+		    <PUSH 'A1*>
+		    <PUSH 'A2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUB>
+		    <PUSH 'A2*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'CGC-UV-ST>
+		    <PUSH VAR6>
+		    <DEAD VAR6>
+		    <PUSH ALLOC-ATOM7>
+		    <DEAD ALLOC-ATOM7>
+		    <PUSH END-ATOM8>
+		    <DEAD END-ATOM8>
+		    <PUSH NEXT-ATOM9>
+		    <DEAD NEXT-ATOM9>
+		    <PUSH RES10>
+		    <DEAD RES10>
+		    <CALL 'CGC-UV-ST 5 = TEMP13>
+		    <RETURN TEMP13>
+		    <DEAD TEMP13>
+		    <END CGC-UVECTOR!-MIMOC>
+
+#WORD *25644437100*
+		    <GFCN CGC-UV-ST ("VALUE" ANY ATOM !<FORM ATOM ATOM> !<FORM ATOM ATOM> !<FORM ATOM ATOM> ATOM) VAR5 ALLOC-ATOM6 END-ATOM7 NEXT-ATOM8 RES9>
+		    <TEMP M-LAB12 F-LAB13 F114 TEMP19 ENDADDR10 ALLOCADDR11 TEMP28 TEMP92:FIX>
+		    <INTGO>
+		    <FRAME 'GENLBL>
+		    <PUSH "M">
+		    <CALL 'GENLBL 1 = M-LAB12>
+		    <FRAME 'GENLBL>
+		    <PUSH "F">
+		    <CALL 'GENLBL 1 = F-LAB13>
+		    <FRAME 'GENLBL>
+		    <PUSH "?FRM">
+		    <CALL 'GENLBL 1 = F114>
+		    <FRAME 'OBJ-VAL>
+		    <RESTL END-ATOM7 1 = TEMP19 (TYPE LIST)>
+		    <DEAD END-ATOM7>
+		    <NTHL TEMP19 1 = TEMP19 (TYPE ATOM)>
+		    <CHTYPE TEMP19 <TYPE-CODE XGLOC> = STACK>
+		    <DEAD TEMP19>
+		    <CALL 'OBJ-VAL 1 = ENDADDR10>
+		    <FRAME 'OBJ-VAL>
+		    <RESTL ALLOC-ATOM6 1 = TEMP19 (TYPE LIST)>
+		    <DEAD ALLOC-ATOM6>
+		    <NTHL TEMP19 1 = TEMP19 (TYPE ATOM)>
+		    <CHTYPE TEMP19 <TYPE-CODE XGLOC> = STACK>
+		    <DEAD TEMP19>
+		    <CALL 'OBJ-VAL 1 = ALLOCADDR11>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O1*>
+		    <PUSH 1>
+		    <PUSH (A1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'TLOE>
+		    <PUSH 'O1*>
+		    <PUSH 65536>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH M-LAB12>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O1*>
+		    <PUSH 1>
+		    <PUSH (A1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEI>
+		    <PUSH 'O*>
+		    <PUSH 2>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O2*>
+		    <SET TEMP28 2 (TYPE FIX)>
+		    <SET TEMP19 ALLOCADDR11>
+		    <LOOP (TEMP19 TYPE VALUE LENGTH) (TEMP28 VALUE)>
+TAG29
+		    <INTGO>
+		    <EMPTY? TEMP19 + TAG27>
+		    <NTH1 TEMP19 = STACK>
+		    <REST1 TEMP19 = TEMP19>
+		    <ADD TEMP28 1 = TEMP28 (TYPE FIX)>
+		    <JUMP + TAG29>
+TAG27
+		    <DEAD TEMP19>
+		    <CALL 'OCEMIT TEMP28>
+		    <DEAD TEMP28>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADD>
+		    <PUSH 'O*>
+		    <PUSH 1>
+		    <PUSH (O2*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'T*>
+		    <SET TEMP19 2 (TYPE FIX)>
+		    <LOOP (ENDADDR10 TYPE VALUE LENGTH) (TEMP19 VALUE)>
+TAG33
+		    <INTGO>
+		    <EMPTY? ENDADDR10 + TAG32>
+		    <NTH1 ENDADDR10 = STACK>
+		    <REST1 ENDADDR10 = ENDADDR10>
+		    <ADD TEMP19 1 = TEMP19 (TYPE FIX)>
+		    <JUMP + TAG33>
+TAG32
+		    <DEAD ENDADDR10>
+		    <CALL 'OCEMIT TEMP19>
+		    <DEAD TEMP19>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'CAMG>
+		    <PUSH 'O*>
+		    <PUSH 1>
+		    <PUSH (T*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH F-LAB13>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUB>
+		    <PUSH 'O*>
+		    <PUSH 1>
+		    <PUSH (O2*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'O*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A2*>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = TEMP19>
+		    <TYPE? TEMP19 <TYPE-CODE FALSE> + PHRASE43>
+		    <DEAD TEMP19>
+		    <GVAL 'STACK-DEPTH = TEMP19>
+		    <ADD TEMP19 3 = TEMP19 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP19>
+		    <DEAD TEMP19>
+PHRASE43
+		    <FRAME 'FRAME!-MIMOC>
+		    <RESTL NEXT-ATOM8 1 = TEMP19 (TYPE LIST)>
+		    <NTHL TEMP19 1 = TEMP19 (TYPE ATOM)>
+		    <CONS TEMP19 () = TEMP19>
+		    <CONS F114 TEMP19 = STACK>
+		    <DEAD TEMP19>
+		    <CALL 'FRAME!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET ENDADDR10 2 (TYPE FIX)>
+		    <SFRAME 'TYPE-WORD>
+		    <PUSH 'FIX>
+		    <SCALL 'TYPE-WORD 1 = TEMP19 + TAG45 TEMP28>
+		    <LOOP (TEMP19 TYPE VALUE LENGTH) (ENDADDR10 VALUE)>
+TAG47
+		    <INTGO>
+		    <EMPTY? TEMP19 + TAG45>
+		    <NTH1 TEMP19 = STACK>
+		    <REST1 TEMP19 = TEMP19>
+		    <ADD ENDADDR10 1 = ENDADDR10 (TYPE FIX)>
+		    <JUMP + TAG47>
+TAG45
+		    <DEAD TEMP19>
+		    <CALL 'OCEMIT ENDADDR10>
+		    <DEAD ENDADDR10>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'O*>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = ENDADDR10>
+		    <TYPE? ENDADDR10 <TYPE-CODE FALSE> + PHRASE51>
+		    <DEAD ENDADDR10>
+		    <GVAL 'STACK-DEPTH = ENDADDR10>
+		    <ADD ENDADDR10 2 = ENDADDR10 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH ENDADDR10>
+		    <DEAD ENDADDR10>
+PHRASE51
+		    <FRAME 'CALL!-MIMOC>
+		    <CONS F114 () = F114>
+		    <CONS 1 F114 = F114>
+		    <CONS NEXT-ATOM8 F114 = STACK>
+		    <DEAD F114 NEXT-ATOM8>
+		    <CALL 'CALL!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O2*>
+		    <SET TEMP19 2 (TYPE FIX)>
+		    <LOOP (ALLOCADDR11 TYPE VALUE LENGTH) (TEMP19 VALUE)>
+TAG54
+		    <INTGO>
+		    <EMPTY? ALLOCADDR11 + TAG53>
+		    <NTH1 ALLOCADDR11 = STACK>
+		    <REST1 ALLOCADDR11 = ALLOCADDR11>
+		    <ADD TEMP19 1 = TEMP19 (TYPE FIX)>
+		    <JUMP + TAG54>
+TAG53
+		    <DEAD ALLOCADDR11>
+		    <CALL 'OCEMIT TEMP19>
+		    <DEAD TEMP19>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O*>
+		    <PUSH -2>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A1*>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADD>
+		    <PUSH 'O*>
+		    <PUSH 1>
+		    <PUSH (O2*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUBI>
+		    <PUSH 'TP*>
+		    <PUSH 3>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = TEMP19>
+		    <TYPE? TEMP19 <TYPE-CODE FALSE> + PHRASE62>
+		    <DEAD TEMP19>
+		    <GVAL 'STACK-DEPTH = TEMP19>
+		    <SUB TEMP19 3 = TEMP19 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP19>
+		    <DEAD TEMP19>
+PHRASE62
+		    <FRAME 'LABEL>
+		    <PUSH F-LAB13>
+		    <DEAD F-LAB13>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O*>
+		    <PUSH 1>
+		    <PUSH (O2*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUBI>
+		    <PUSH 'O*>
+		    <PUSH 2>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O*>
+		    <PUSH 2>
+		    <PUSH (A1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'C1*>
+		    <PUSH 'O*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZ>
+		    <PUSH 'B1*>
+		    <PUSH 1>
+		    <PUSH (A1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'XMOVEI>
+		    <PUSH 'B2*>
+		    <PUSH 1>
+		    <PUSH (A1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O*>
+		    <PUSH 1>
+		    <PUSH (A1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'TLZ>
+		    <PUSH 'O*>
+		    <PUSH 65536>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O*>
+		    <PUSH (C1*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVNS>
+		    <PUSH 'O*>
+		    <PUSH 'B1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'XBLT>
+		    <PUSH 'B1*>
+		    <SET ALLOCADDR11 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH 2147483648>
+		    <SCALL 'OBJ-VAL 1 = TEMP19 + TAG74 TEMP28>
+		    <LOOP (TEMP19 TYPE VALUE LENGTH) (ALLOCADDR11 VALUE)>
+TAG76
+		    <INTGO>
+		    <EMPTY? TEMP19 + TAG74>
+		    <NTH1 TEMP19 = STACK>
+		    <REST1 TEMP19 = TEMP19>
+		    <ADD ALLOCADDR11 1 = ALLOCADDR11 (TYPE FIX)>
+		    <JUMP + TAG76>
+TAG74
+		    <DEAD TEMP19>
+		    <CALL 'OCEMIT ALLOCADDR11>
+		    <DEAD ALLOCADDR11>
+		    <FRAME 'LABEL>
+		    <PUSH M-LAB12>
+		    <DEAD M-LAB12>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADD>
+		    <PUSH 'A2*>
+		    <PUSH 2>
+		    <PUSH (A1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUBI>
+		    <PUSH 'A2*>
+		    <PUSH 1>
+		    <CALL 'OCEMIT 3>
+		    <VEQUAL? RES9 'STACK - PHRASE82>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET TEMP19 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH VAR5>
+		    <DEAD VAR5>
+		    <SCALL 'OBJ-TYP 1 = ALLOCADDR11 + TAG83 TEMP19>
+		    <LOOP (ALLOCADDR11 TYPE VALUE LENGTH) (TEMP19 VALUE)>
+TAG85
+		    <INTGO>
+		    <EMPTY? ALLOCADDR11 + TAG83>
+		    <NTH1 ALLOCADDR11 = STACK>
+		    <REST1 ALLOCADDR11 = ALLOCADDR11>
+		    <ADD TEMP19 1 = TEMP19 (TYPE FIX)>
+		    <JUMP + TAG85>
+TAG83
+		    <DEAD ALLOCADDR11>
+		    <CALL 'OCEMIT TEMP19>
+		    <DEAD TEMP19>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A2*>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = TEMP19>
+		    <TYPE? TEMP19 <TYPE-CODE FALSE> + PHRASE90>
+		    <GVAL 'STACK-DEPTH = ALLOCADDR11>
+		    <ADD ALLOCADDR11 2 = ALLOCADDR11 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH ALLOCADDR11>
+		    <RETURN ALLOCADDR11>
+		    <DEAD ALLOCADDR11>
+PHRASE82
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A1*>
+		    <SET TEMP92 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH VAR5>
+		    <DEAD VAR5>
+		    <SCALL 'OBJ-TYP 1 = ALLOCADDR11 + TAG91 TEMP92>
+		    <LOOP (ALLOCADDR11 TYPE VALUE LENGTH) (TEMP92 VALUE)>
+TAG94
+		    <INTGO>
+		    <EMPTY? ALLOCADDR11 + TAG91>
+		    <NTH1 ALLOCADDR11 = STACK>
+		    <REST1 ALLOCADDR11 = ALLOCADDR11>
+		    <ADD TEMP92 1 = TEMP92 (TYPE FIX)>
+		    <JUMP + TAG94>
+TAG91
+		    <DEAD ALLOCADDR11>
+		    <CALL 'OCEMIT TEMP92>
+		    <DEAD TEMP92>
+		    <FRAME 'LOAD-AC>
+		    <PUSH RES9>
+		    <DEAD RES9>
+		    <PUSH 'BOTH>
+		    <PUSH 'T>
+		    <PUSH 'T>
+		    <FRAME 'GET-AC>
+		    <PUSH 'A1*>
+		    <CALL 'GET-AC 1 = STACK>
+		    <CALL 'LOAD-AC 5 = TEMP19>
+PHRASE90
+		    <RETURN TEMP19>
+		    <DEAD TEMP19>
+		    <END CGC-UV-ST>
+
+#WORD *32222030502*
+		    <GFCN CGC-VECTOR!-MIMOC ("VALUE" ANY LIST) L5>
+		    <TEMP VAR6 TEMP22 ALLOC-ATOM7:FORM END-ATOM8:FORM NEXT-ATOM9:FORM MARK-ATOM10:FORM RES11 NF-LAB14 F-LAB15 F116 LOOP-LAB17 NM-LAB18 F219 DONE-LAB20 M-LAB21 ENDADDR12 ALLOCADDR13 TEMP35 TEMP143:FIX>
+		    <INTGO>
+		    <NTHL L5 1 = VAR6>
+		    <RESTL L5 1 = TEMP22 (TYPE LIST)>
+		    <NTHL TEMP22 1 = ALLOC-ATOM7 (TYPE FORM)>
+		    <DEAD TEMP22>
+		    <RESTL L5 1 = TEMP22 (TYPE LIST)>
+		    <RESTL TEMP22 1 = TEMP22 (TYPE LIST)>
+		    <NTHL TEMP22 1 = END-ATOM8 (TYPE FORM)>
+		    <DEAD TEMP22>
+		    <RESTL L5 1 = TEMP22 (TYPE LIST)>
+		    <RESTL TEMP22 1 = TEMP22 (TYPE LIST)>
+		    <RESTL TEMP22 1 = TEMP22 (TYPE LIST)>
+		    <NTHL TEMP22 1 = NEXT-ATOM9 (TYPE FORM)>
+		    <DEAD TEMP22>
+		    <NTHL L5 5 = MARK-ATOM10 (TYPE FORM)>
+		    <NTHL L5 7 = RES11>
+		    <DEAD L5>
+		    <FRAME 'GENLBL>
+		    <PUSH "NF">
+		    <CALL 'GENLBL 1 = NF-LAB14>
+		    <FRAME 'GENLBL>
+		    <PUSH "F">
+		    <CALL 'GENLBL 1 = F-LAB15>
+		    <FRAME 'GENLBL>
+		    <PUSH "?FRM">
+		    <CALL 'GENLBL 1 = F116>
+		    <FRAME 'GENLBL>
+		    <PUSH "LOOP">
+		    <CALL 'GENLBL 1 = LOOP-LAB17>
+		    <FRAME 'GENLBL>
+		    <PUSH "NM">
+		    <CALL 'GENLBL 1 = NM-LAB18>
+		    <FRAME 'GENLBL>
+		    <PUSH "?FRM">
+		    <CALL 'GENLBL 1 = F219>
+		    <FRAME 'GENLBL>
+		    <PUSH "DONE">
+		    <CALL 'GENLBL 1 = DONE-LAB20>
+		    <FRAME 'GENLBL>
+		    <PUSH "M">
+		    <CALL 'GENLBL 1 = M-LAB21>
+		    <FRAME 'OBJ-VAL>
+		    <RESTL END-ATOM8 1 = TEMP22 (TYPE LIST)>
+		    <DEAD END-ATOM8>
+		    <NTHL TEMP22 1 = TEMP22 (TYPE ATOM)>
+		    <CHTYPE TEMP22 <TYPE-CODE XGLOC> = STACK>
+		    <DEAD TEMP22>
+		    <CALL 'OBJ-VAL 1 = ENDADDR12>
+		    <FRAME 'OBJ-VAL>
+		    <RESTL ALLOC-ATOM7 1 = TEMP22 (TYPE LIST)>
+		    <DEAD ALLOC-ATOM7>
+		    <NTHL TEMP22 1 = TEMP22 (TYPE ATOM)>
+		    <CHTYPE TEMP22 <TYPE-CODE XGLOC> = STACK>
+		    <DEAD TEMP22>
+		    <CALL 'OBJ-VAL 1 = ALLOCADDR13>
+		    <FRAME 'FLUSH-ACS>
+		    <CALL 'FLUSH-ACS 0>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZ>
+		    <PUSH 'A1*>
+		    <SET TEMP35 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH VAR6>
+		    <SCALL 'OBJ-TYP 1 = TEMP22 + TAG34 TEMP35>
+		    <LOOP (TEMP22 TYPE VALUE LENGTH) (TEMP35 VALUE)>
+TAG37
+		    <INTGO>
+		    <EMPTY? TEMP22 + TAG34>
+		    <NTH1 TEMP22 = STACK>
+		    <REST1 TEMP22 = TEMP22>
+		    <ADD TEMP35 1 = TEMP35 (TYPE FIX)>
+		    <JUMP + TAG37>
+TAG34
+		    <DEAD TEMP22>
+		    <CALL 'OCEMIT TEMP35>
+		    <DEAD TEMP35>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ASH>
+		    <PUSH 'A1*>
+		    <PUSH 1>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADD>
+		    <PUSH 'A2*>
+		    <SET TEMP22 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH VAR6>
+		    <SCALL 'OBJ-VAL 1 = TEMP35 + TAG41 TEMP22>
+		    <LOOP (TEMP35 TYPE VALUE LENGTH) (TEMP22 VALUE)>
+TAG43
+		    <INTGO>
+		    <EMPTY? TEMP35 + TAG41>
+		    <NTH1 TEMP35 = STACK>
+		    <REST1 TEMP35 = TEMP35>
+		    <ADD TEMP22 1 = TEMP22 (TYPE FIX)>
+		    <JUMP + TAG43>
+TAG41
+		    <DEAD TEMP35>
+		    <CALL 'OCEMIT TEMP22>
+		    <DEAD TEMP22>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O1*>
+		    <PUSH (A2*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUBI>
+		    <PUSH 'A1*>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'TLOE>
+		    <PUSH 'O1*>
+		    <PUSH 65536>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH M-LAB21>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADDI>
+		    <PUSH 'TP*>
+		    <PUSH 4>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = TEMP22>
+		    <TYPE? TEMP22 <TYPE-CODE FALSE> + PHRASE52>
+		    <DEAD TEMP22>
+		    <GVAL 'STACK-DEPTH = TEMP22>
+		    <ADD TEMP22 4 = TEMP22 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP22>
+		    <DEAD TEMP22>
+PHRASE52
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O1*>
+		    <PUSH (A2*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEI>
+		    <PUSH 'O2*>
+		    <PUSH 2>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'T*>
+		    <SET TEMP35 2 (TYPE FIX)>
+		    <SET TEMP22 ALLOCADDR13>
+		    <LOOP (TEMP22 TYPE VALUE LENGTH) (TEMP35 VALUE)>
+TAG56
+		    <INTGO>
+		    <EMPTY? TEMP22 + TAG55>
+		    <NTH1 TEMP22 = STACK>
+		    <REST1 TEMP22 = TEMP22>
+		    <ADD TEMP35 1 = TEMP35 (TYPE FIX)>
+		    <JUMP + TAG56>
+TAG55
+		    <DEAD TEMP22>
+		    <CALL 'OCEMIT TEMP35>
+		    <DEAD TEMP35>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADD>
+		    <PUSH 'O2*>
+		    <PUSH 1>
+		    <PUSH (T*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'B1*>
+		    <SET TEMP22 2 (TYPE FIX)>
+		    <LOOP (ENDADDR12 TYPE VALUE LENGTH) (TEMP22 VALUE)>
+TAG60
+		    <INTGO>
+		    <EMPTY? ENDADDR12 + TAG59>
+		    <NTH1 ENDADDR12 = STACK>
+		    <REST1 ENDADDR12 = ENDADDR12>
+		    <ADD TEMP22 1 = TEMP22 (TYPE FIX)>
+		    <JUMP + TAG60>
+TAG59
+		    <DEAD ENDADDR12>
+		    <CALL 'OCEMIT TEMP22>
+		    <DEAD TEMP22>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZM>
+		    <PUSH 'O1*>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'A2*>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'A1*>
+		    <PUSH -2>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'CAMG>
+		    <PUSH 'O2*>
+		    <PUSH 1>
+		    <PUSH (B1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH F-LAB15>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'FRAME!-MIMOC>
+		    <RESTL NEXT-ATOM9 1 = TEMP22 (TYPE LIST)>
+		    <NTHL TEMP22 1 = TEMP22 (TYPE ATOM)>
+		    <CONS TEMP22 () = TEMP22>
+		    <CONS F116 TEMP22 = STACK>
+		    <DEAD TEMP22>
+		    <CALL 'FRAME!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET ENDADDR12 2 (TYPE FIX)>
+		    <SFRAME 'TYPE-WORD>
+		    <PUSH 'FIX>
+		    <SCALL 'TYPE-WORD 1 = TEMP22 + TAG69 TEMP35>
+		    <LOOP (TEMP22 TYPE VALUE LENGTH) (ENDADDR12 VALUE)>
+TAG71
+		    <INTGO>
+		    <EMPTY? TEMP22 + TAG69>
+		    <NTH1 TEMP22 = STACK>
+		    <REST1 TEMP22 = TEMP22>
+		    <ADD ENDADDR12 1 = ENDADDR12 (TYPE FIX)>
+		    <JUMP + TAG71>
+TAG69
+		    <DEAD TEMP22>
+		    <CALL 'OCEMIT ENDADDR12>
+		    <DEAD ENDADDR12>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEI>
+		    <PUSH 'O1*>
+		    <PUSH 2>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'O1*>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = ENDADDR12>
+		    <TYPE? ENDADDR12 <TYPE-CODE FALSE> + PHRASE76>
+		    <DEAD ENDADDR12>
+		    <GVAL 'STACK-DEPTH = ENDADDR12>
+		    <ADD ENDADDR12 2 = ENDADDR12 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH ENDADDR12>
+		    <DEAD ENDADDR12>
+PHRASE76
+		    <FRAME 'CALL!-MIMOC>
+		    <CONS F116 () = F116>
+		    <CONS 1 F116 = F116>
+		    <CONS NEXT-ATOM9 F116 = STACK>
+		    <DEAD F116 NEXT-ATOM9>
+		    <CALL 'CALL!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'T*>
+		    <SET TEMP22 2 (TYPE FIX)>
+		    <LOOP (ALLOCADDR13 TYPE VALUE LENGTH) (TEMP22 VALUE)>
+TAG79
+		    <INTGO>
+		    <EMPTY? ALLOCADDR13 + TAG78>
+		    <NTH1 ALLOCADDR13 = STACK>
+		    <REST1 ALLOCADDR13 = ALLOCADDR13>
+		    <ADD TEMP22 1 = TEMP22 (TYPE FIX)>
+		    <JUMP + TAG79>
+TAG78
+		    <DEAD ALLOCADDR13>
+		    <CALL 'OCEMIT TEMP22>
+		    <DEAD TEMP22>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O2*>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADDI>
+		    <PUSH 'O2*>
+		    <PUSH 2>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADD>
+		    <PUSH 'O2*>
+		    <PUSH 1>
+		    <PUSH (T*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'LABEL>
+		    <PUSH F-LAB15>
+		    <DEAD F-LAB15>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O2*>
+		    <PUSH 1>
+		    <PUSH (T*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'XMOVEI>
+		    <PUSH 'O1*>
+		    <PUSH -2>
+		    <PUSH (O2*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O1*>
+		    <PUSH 1>
+		    <PUSH (A2*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O*>
+		    <PUSH (A2*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'TLZ>
+		    <PUSH 'O*>
+		    <PUSH 65536>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O*>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O2*>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUB>
+		    <PUSH 'A2*>
+		    <PUSH 'O2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'A2*>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUB>
+		    <PUSH 'O1*>
+		    <PUSH 'O2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O1*>
+		    <PUSH -3>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ASH>
+		    <PUSH 'O2*>
+		    <PUSH -1>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O2*>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'LABEL>
+		    <PUSH LOOP-LAB17>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SOSGE>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH DONE-LAB20>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'A1*>
+		    <PUSH '@>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 5>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HLRZ>
+		    <PUSH 'O*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ANDI>
+		    <PUSH 'O*>
+		    <PUSH 7>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JUMPE>
+		    <PUSH 'O*>
+		    <FRAME 'XJUMP>
+		    <PUSH NM-LAB18>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'FRAME!-MIMOC>
+		    <RESTL MARK-ATOM10 1 = TEMP22 (TYPE LIST)>
+		    <NTHL TEMP22 1 = TEMP22 (TYPE ATOM)>
+		    <CONS TEMP22 () = TEMP22>
+		    <CONS F219 TEMP22 = STACK>
+		    <DEAD TEMP22>
+		    <CALL 'FRAME!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A2*>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = TEMP22>
+		    <TYPE? TEMP22 <TYPE-CODE FALSE> + PHRASE112>
+		    <DEAD TEMP22>
+		    <GVAL 'STACK-DEPTH = TEMP22>
+		    <ADD TEMP22 2 = TEMP22 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP22>
+		    <DEAD TEMP22>
+PHRASE112
+		    <FRAME 'CALL!-MIMOC>
+		    <CONS F219 () = F219>
+		    <CONS 1 F219 = F219>
+		    <CONS MARK-ATOM10 F219 = STACK>
+		    <DEAD F219 MARK-ATOM10>
+		    <CALL 'CALL!-MIMOC 1>
+		    <FRAME 'LABEL>
+		    <PUSH NM-LAB18>
+		    <DEAD NM-LAB18>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVEM>
+		    <PUSH 'A1*>
+		    <PUSH '@>
+		    <PUSH -3>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 5>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEI>
+		    <PUSH 'O*>
+		    <PUSH 2>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADDM>
+		    <PUSH 'O*>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADDM>
+		    <PUSH 'O*>
+		    <PUSH -3>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH LOOP-LAB17>
+		    <DEAD LOOP-LAB17>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'LABEL>
+		    <PUSH DONE-LAB20>
+		    <DEAD DONE-LAB20>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A1*>
+		    <PUSH -2>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUBI>
+		    <PUSH 'TP*>
+		    <PUSH 4>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = TEMP22>
+		    <TYPE? TEMP22 <TYPE-CODE FALSE> + PHRASE126>
+		    <DEAD TEMP22>
+		    <GVAL 'STACK-DEPTH = TEMP22>
+		    <SUB TEMP22 4 = TEMP22 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP22>
+		    <DEAD TEMP22>
+PHRASE126
+		    <FRAME 'LABEL>
+		    <PUSH M-LAB21>
+		    <DEAD M-LAB21>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <PUSH 1>
+		    <PUSH (A2*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HRRZ>
+		    <PUSH 'O1*>
+		    <PUSH (A2*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADD>
+		    <PUSH 'O1*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUB>
+		    <PUSH 'A2*>
+		    <PUSH 'O1*>
+		    <CALL 'OCEMIT 3>
+		    <EQUAL? RES11 'STACK - PHRASE133>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET ALLOCADDR13 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH VAR6>
+		    <DEAD VAR6>
+		    <SCALL 'OBJ-TYP 1 = TEMP22 + TAG134 TEMP35>
+		    <LOOP (TEMP22 TYPE VALUE LENGTH) (ALLOCADDR13 VALUE)>
+TAG136
+		    <INTGO>
+		    <EMPTY? TEMP22 + TAG134>
+		    <NTH1 TEMP22 = STACK>
+		    <REST1 TEMP22 = TEMP22>
+		    <ADD ALLOCADDR13 1 = ALLOCADDR13 (TYPE FIX)>
+		    <JUMP + TAG136>
+TAG134
+		    <DEAD TEMP22>
+		    <CALL 'OCEMIT ALLOCADDR13>
+		    <DEAD ALLOCADDR13>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A2*>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = ALLOCADDR13>
+		    <TYPE? ALLOCADDR13 <TYPE-CODE FALSE> + PHRASE141>
+		    <GVAL 'STACK-DEPTH = TEMP22>
+		    <ADD TEMP22 2 = TEMP22 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP22>
+		    <RETURN TEMP22>
+		    <DEAD TEMP22>
+PHRASE133
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A1*>
+		    <SET TEMP143 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH VAR6>
+		    <DEAD VAR6>
+		    <SCALL 'OBJ-TYP 1 = TEMP22 + TAG142 TEMP143>
+		    <LOOP (TEMP22 TYPE VALUE LENGTH) (TEMP143 VALUE)>
+TAG145
+		    <INTGO>
+		    <EMPTY? TEMP22 + TAG142>
+		    <NTH1 TEMP22 = STACK>
+		    <REST1 TEMP22 = TEMP22>
+		    <ADD TEMP143 1 = TEMP143 (TYPE FIX)>
+		    <JUMP + TAG145>
+TAG142
+		    <DEAD TEMP22>
+		    <CALL 'OCEMIT TEMP143>
+		    <DEAD TEMP143>
+		    <FRAME 'LOAD-AC>
+		    <PUSH RES11>
+		    <DEAD RES11>
+		    <PUSH 'BOTH>
+		    <PUSH 'T>
+		    <PUSH 'T>
+		    <FRAME 'GET-AC>
+		    <PUSH 'A1*>
+		    <CALL 'GET-AC 1 = STACK>
+		    <CALL 'LOAD-AC 5 = ALLOCADDR13>
+PHRASE141
+		    <RETURN ALLOCADDR13>
+		    <DEAD ALLOCADDR13>
+		    <END CGC-VECTOR!-MIMOC>
+
+#WORD *15302243332*
+		    <GFCN CGC-LIST!-MIMOC ("VALUE" ANY LIST) L5>
+		    <TEMP VAR6 TEMP26 ALLOC-ATOM7:FORM END-ATOM8:FORM NEXT-ATOM9:FORM BOUNDS-ATOM10:FORM MARK-ATOM11:FORM LN12:FIX TEMP28 RES13 M-LAB16 DONE-LAB17 LOOP-LAB18 F-LAB19 NB-LAB20 MC-LAB21 F122 F223 F324 (UNDO-ABLE25 %<>) ENDADDR14 ALLOCADDR15>
+		    <INTGO>
+		    <NTHL L5 1 = VAR6>
+		    <RESTL L5 1 = TEMP26 (TYPE LIST)>
+		    <NTHL TEMP26 1 = ALLOC-ATOM7 (TYPE FORM)>
+		    <DEAD TEMP26>
+		    <RESTL L5 1 = TEMP26 (TYPE LIST)>
+		    <RESTL TEMP26 1 = TEMP26 (TYPE LIST)>
+		    <NTHL TEMP26 1 = END-ATOM8 (TYPE FORM)>
+		    <DEAD TEMP26>
+		    <RESTL L5 1 = TEMP26 (TYPE LIST)>
+		    <RESTL TEMP26 1 = TEMP26 (TYPE LIST)>
+		    <RESTL TEMP26 1 = TEMP26 (TYPE LIST)>
+		    <NTHL TEMP26 1 = NEXT-ATOM9 (TYPE FORM)>
+		    <DEAD TEMP26>
+		    <NTHL L5 5 = BOUNDS-ATOM10 (TYPE FORM)>
+		    <NTHL L5 6 = MARK-ATOM11 (TYPE FORM)>
+		    <LENL L5 = LN12 (TYPE FIX)>
+		    <SET TEMP26 LN12>
+		    <SET TEMP28 L5>
+		    <SUB TEMP26 1 = TEMP26 (TYPE FIX)>
+		    <GRTR? TEMP26 0 - RESTL29 (TYPE FIX)>
+		    <LOOP (TEMP28 VALUE) (TEMP26 VALUE)>
+RESTL27
+		    <INTGO>
+		    <RESTL TEMP28 1 = TEMP28 (TYPE LIST)>
+		    <SUB TEMP26 1 = TEMP26 (TYPE FIX)>
+		    <GRTR? TEMP26 0 + RESTL27 (TYPE FIX)>
+RESTL29
+		    <DEAD TEMP26>
+		    <NTHL TEMP28 1 = RES13>
+		    <DEAD TEMP28>
+		    <FRAME 'GENLBL>
+		    <PUSH "M">
+		    <CALL 'GENLBL 1 = M-LAB16>
+		    <FRAME 'GENLBL>
+		    <PUSH "D">
+		    <CALL 'GENLBL 1 = DONE-LAB17>
+		    <FRAME 'GENLBL>
+		    <PUSH "LOOP">
+		    <CALL 'GENLBL 1 = LOOP-LAB18>
+		    <FRAME 'GENLBL>
+		    <PUSH "F">
+		    <CALL 'GENLBL 1 = F-LAB19>
+		    <FRAME 'GENLBL>
+		    <PUSH "NB">
+		    <CALL 'GENLBL 1 = NB-LAB20>
+		    <FRAME 'GENLBL>
+		    <PUSH "MC">
+		    <CALL 'GENLBL 1 = MC-LAB21>
+		    <FRAME 'GENLBL>
+		    <PUSH "?FRM">
+		    <CALL 'GENLBL 1 = F122>
+		    <FRAME 'GENLBL>
+		    <PUSH "?FRM">
+		    <CALL 'GENLBL 1 = F223>
+		    <FRAME 'GENLBL>
+		    <PUSH "?FRM">
+		    <CALL 'GENLBL 1 = F324>
+		    <VEQUAL? LN12 9 - PHRASE40 (TYPE FIX)>
+		    <DEAD LN12>
+		    <NTHL L5 7 = TEMP28>
+		    <DEAD L5>
+		    <TYPE? TEMP28 <TYPE-CODE FALSE> + PHRASE40>
+		    <DEAD TEMP28>
+		    <SET UNDO-ABLE25 'T (TYPE ATOM)>
+PHRASE40
+		    <FRAME 'OBJ-VAL>
+		    <RESTL END-ATOM8 1 = TEMP28 (TYPE LIST)>
+		    <DEAD END-ATOM8>
+		    <NTHL TEMP28 1 = TEMP28 (TYPE ATOM)>
+		    <CHTYPE TEMP28 <TYPE-CODE XGLOC> = STACK>
+		    <DEAD TEMP28>
+		    <CALL 'OBJ-VAL 1 = ENDADDR14>
+		    <FRAME 'OBJ-VAL>
+		    <RESTL ALLOC-ATOM7 1 = TEMP28 (TYPE LIST)>
+		    <DEAD ALLOC-ATOM7>
+		    <NTHL TEMP28 1 = TEMP28 (TYPE ATOM)>
+		    <CHTYPE TEMP28 <TYPE-CODE XGLOC> = STACK>
+		    <DEAD TEMP28>
+		    <CALL 'OBJ-VAL 1 = ALLOCADDR15>
+		    <FRAME 'FLUSH-ACS>
+		    <CALL 'FLUSH-ACS 0>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADDI>
+		    <PUSH 'TP*>
+		    <PUSH 2>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = TEMP28>
+		    <TYPE? TEMP28 <TYPE-CODE FALSE> + PHRASE47>
+		    <DEAD TEMP28>
+		    <GVAL 'STACK-DEPTH = TEMP28>
+		    <ADD TEMP28 2 = TEMP28 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP28>
+		    <DEAD TEMP28>
+PHRASE47
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'B1*>
+		    <SET TEMP26 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH VAR6>
+		    <SCALL 'OBJ-VAL 1 = TEMP28 + TAG48 TEMP26>
+		    <LOOP (TEMP28 TYPE VALUE LENGTH) (TEMP26 VALUE)>
+TAG50
+		    <INTGO>
+		    <EMPTY? TEMP28 + TAG48>
+		    <NTH1 TEMP28 = STACK>
+		    <REST1 TEMP28 = TEMP28>
+		    <ADD TEMP26 1 = TEMP26 (TYPE FIX)>
+		    <JUMP + TAG50>
+TAG48
+		    <DEAD TEMP28>
+		    <CALL 'OCEMIT TEMP26>
+		    <DEAD TEMP26>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SETZM>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'LABEL>
+		    <PUSH LOOP-LAB18>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'A1*>
+		    <PUSH 1>
+		    <PUSH (B1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'TLOE>
+		    <PUSH 'A1*>
+		    <PUSH 65536>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH M-LAB16>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'A1*>
+		    <PUSH 1>
+		    <PUSH (B1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'O1*>
+		    <PUSH '@>
+		    <SET TEMP28 3 (TYPE FIX)>
+		    <SET TEMP26 ALLOCADDR15>
+		    <LOOP (TEMP26 TYPE VALUE LENGTH) (TEMP28 VALUE)>
+TAG60
+		    <INTGO>
+		    <EMPTY? TEMP26 + TAG59>
+		    <NTH1 TEMP26 = STACK>
+		    <REST1 TEMP26 = TEMP26>
+		    <ADD TEMP28 1 = TEMP28 (TYPE FIX)>
+		    <JUMP + TAG60>
+TAG59
+		    <DEAD TEMP26>
+		    <CALL 'OCEMIT TEMP28>
+		    <DEAD TEMP28>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'C2*>
+		    <PUSH 'O2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADDI>
+		    <PUSH 'O2*>
+		    <PUSH 3>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'T*>
+		    <SET TEMP26 2 (TYPE FIX)>
+		    <LOOP (ENDADDR14 TYPE VALUE LENGTH) (TEMP26 VALUE)>
+TAG65
+		    <INTGO>
+		    <EMPTY? ENDADDR14 + TAG64>
+		    <NTH1 ENDADDR14 = STACK>
+		    <REST1 ENDADDR14 = ENDADDR14>
+		    <ADD TEMP26 1 = TEMP26 (TYPE FIX)>
+		    <JUMP + TAG65>
+TAG64
+		    <DEAD ENDADDR14>
+		    <CALL 'OCEMIT TEMP26>
+		    <DEAD TEMP26>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'CAMG>
+		    <PUSH 'O2*>
+		    <PUSH 1>
+		    <PUSH (T*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH F-LAB19>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'B1*>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'FRAME!-MIMOC>
+		    <RESTL NEXT-ATOM9 1 = TEMP26 (TYPE LIST)>
+		    <NTHL TEMP26 1 = TEMP26 (TYPE ATOM)>
+		    <CONS TEMP26 () = TEMP26>
+		    <CONS F122 TEMP26 = STACK>
+		    <DEAD TEMP26>
+		    <CALL 'FRAME!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET ENDADDR14 2 (TYPE FIX)>
+		    <SFRAME 'TYPE-WORD>
+		    <PUSH 'FIX>
+		    <SCALL 'TYPE-WORD 1 = TEMP26 + TAG72 TEMP28>
+		    <LOOP (TEMP26 TYPE VALUE LENGTH) (ENDADDR14 VALUE)>
+TAG74
+		    <INTGO>
+		    <EMPTY? TEMP26 + TAG72>
+		    <NTH1 TEMP26 = STACK>
+		    <REST1 TEMP26 = TEMP26>
+		    <ADD ENDADDR14 1 = ENDADDR14 (TYPE FIX)>
+		    <JUMP + TAG74>
+TAG72
+		    <DEAD TEMP26>
+		    <CALL 'OCEMIT ENDADDR14>
+		    <DEAD ENDADDR14>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET TEMP26 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-VAL>
+		    <PUSH 3>
+		    <SCALL 'OBJ-VAL 1 = ENDADDR14 + TAG76 TEMP26>
+		    <LOOP (ENDADDR14 TYPE VALUE LENGTH) (TEMP26 VALUE)>
+TAG78
+		    <INTGO>
+		    <EMPTY? ENDADDR14 + TAG76>
+		    <NTH1 ENDADDR14 = STACK>
+		    <REST1 ENDADDR14 = ENDADDR14>
+		    <ADD TEMP26 1 = TEMP26 (TYPE FIX)>
+		    <JUMP + TAG78>
+TAG76
+		    <DEAD ENDADDR14>
+		    <CALL 'OCEMIT TEMP26>
+		    <DEAD TEMP26>
+		    <GVAL 'WINNING-VICTIM = TEMP26>
+		    <TYPE? TEMP26 <TYPE-CODE FALSE> + PHRASE81>
+		    <DEAD TEMP26>
+		    <GVAL 'STACK-DEPTH = TEMP26>
+		    <ADD TEMP26 2 = TEMP26 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP26>
+		    <DEAD TEMP26>
+PHRASE81
+		    <FRAME 'CALL!-MIMOC>
+		    <CONS F122 () = F122>
+		    <CONS 1 F122 = F122>
+		    <CONS NEXT-ATOM9 F122 = STACK>
+		    <DEAD F122 NEXT-ATOM9>
+		    <CALL 'CALL!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'O1*>
+		    <PUSH '@>
+		    <SET ENDADDR14 3 (TYPE FIX)>
+		    <SET TEMP26 ALLOCADDR15>
+		    <LOOP (TEMP26 TYPE VALUE LENGTH) (ENDADDR14 VALUE)>
+TAG84
+		    <INTGO>
+		    <EMPTY? TEMP26 + TAG83>
+		    <NTH1 TEMP26 = STACK>
+		    <REST1 TEMP26 = TEMP26>
+		    <ADD ENDADDR14 1 = ENDADDR14 (TYPE FIX)>
+		    <JUMP + TAG84>
+TAG83
+		    <DEAD TEMP26>
+		    <CALL 'OCEMIT ENDADDR14>
+		    <DEAD ENDADDR14>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'C2*>
+		    <PUSH 'O2*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ADDI>
+		    <PUSH 'O2*>
+		    <PUSH 3>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'B1*>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'A1*>
+		    <PUSH 1>
+		    <PUSH (B1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'LABEL>
+		    <PUSH F-LAB19>
+		    <DEAD F-LAB19>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVEM>
+		    <PUSH 'O1*>
+		    <PUSH '@>
+		    <SET TEMP26 3 (TYPE FIX)>
+		    <LOOP (ALLOCADDR15 TYPE VALUE LENGTH) (TEMP26 VALUE)>
+TAG92
+		    <INTGO>
+		    <EMPTY? ALLOCADDR15 + TAG91>
+		    <NTH1 ALLOCADDR15 = STACK>
+		    <REST1 ALLOCADDR15 = ALLOCADDR15>
+		    <ADD TEMP26 1 = TEMP26 (TYPE FIX)>
+		    <JUMP + TAG92>
+TAG91
+		    <DEAD ALLOCADDR15>
+		    <CALL 'OCEMIT TEMP26>
+		    <DEAD TEMP26>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SKIPE>
+		    <PUSH 'O1*>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'C2*>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'C2*>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'C1*>
+		    <PUSH (B1*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'C2*>
+		    <PUSH (B1*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'C1*>
+		    <PUSH (C2*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'TLZ>
+		    <PUSH 'A1*>
+		    <PUSH 65536>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'HLRZ>
+		    <PUSH 'O*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'ANDI>
+		    <PUSH 'O*>
+		    <PUSH 7>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'C1*>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JUMPE>
+		    <PUSH 'O*>
+		    <FRAME 'XJUMP>
+		    <PUSH MC-LAB21>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'FRAME!-MIMOC>
+		    <RESTL MARK-ATOM11 1 = TEMP26 (TYPE LIST)>
+		    <NTHL TEMP26 1 = TEMP26 (TYPE ATOM)>
+		    <CONS TEMP26 () = TEMP26>
+		    <CONS F223 TEMP26 = STACK>
+		    <DEAD TEMP26>
+		    <CALL 'FRAME!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A2*>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = TEMP26>
+		    <TYPE? TEMP26 <TYPE-CODE FALSE> + PHRASE110>
+		    <DEAD TEMP26>
+		    <GVAL 'STACK-DEPTH = TEMP26>
+		    <ADD TEMP26 2 = TEMP26 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH TEMP26>
+		    <DEAD TEMP26>
+PHRASE110
+		    <FRAME 'CALL!-MIMOC>
+		    <CONS F223 () = F223>
+		    <CONS 1 F223 = F223>
+		    <CONS MARK-ATOM11 F223 = STACK>
+		    <DEAD F223 MARK-ATOM11>
+		    <CALL 'CALL!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'C1*>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'LABEL>
+		    <PUSH MC-LAB21>
+		    <DEAD MC-LAB21>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O1*>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 3>
+		    <VEQUAL? UNDO-ABLE25 0 + PHRASE116>
+		    <DEAD UNDO-ABLE25>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'C1*>
+		    <PUSH 1>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'A2*>
+		    <PUSH 2>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 4>
+		    <JUMP + PHRASE119>
+PHRASE116
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVEM>
+		    <PUSH 'A1*>
+		    <PUSH 1>
+		    <PUSH (O1*)>
+		    <CALL 'OCEMIT 4>
+PHRASE119
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JUMPE>
+		    <PUSH 'C1*>
+		    <FRAME 'XJUMP>
+		    <PUSH DONE-LAB17>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'FRAME!-MIMOC>
+		    <RESTL BOUNDS-ATOM10 1 = TEMP26 (TYPE LIST)>
+		    <NTHL TEMP26 1 = TEMP26 (TYPE ATOM)>
+		    <CONS TEMP26 () = TEMP26>
+		    <CONS F324 TEMP26 = STACK>
+		    <DEAD TEMP26>
+		    <CALL 'FRAME!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <SET ALLOCADDR15 2 (TYPE FIX)>
+		    <SFRAME 'TYPE-WORD>
+		    <PUSH 'LIST>
+		    <SCALL 'TYPE-WORD 1 = TEMP26 + TAG124 TEMP28>
+		    <LOOP (TEMP26 TYPE VALUE LENGTH) (ALLOCADDR15 VALUE)>
+TAG126
+		    <INTGO>
+		    <EMPTY? TEMP26 + TAG124>
+		    <NTH1 TEMP26 = STACK>
+		    <REST1 TEMP26 = TEMP26>
+		    <ADD ALLOCADDR15 1 = ALLOCADDR15 (TYPE FIX)>
+		    <JUMP + TAG126>
+TAG124
+		    <DEAD TEMP26>
+		    <CALL 'OCEMIT ALLOCADDR15>
+		    <DEAD ALLOCADDR15>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'C1*>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = ALLOCADDR15>
+		    <TYPE? ALLOCADDR15 <TYPE-CODE FALSE> + PHRASE130>
+		    <DEAD ALLOCADDR15>
+		    <GVAL 'STACK-DEPTH = ALLOCADDR15>
+		    <ADD ALLOCADDR15 2 = ALLOCADDR15 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH ALLOCADDR15>
+		    <DEAD ALLOCADDR15>
+PHRASE130
+		    <FRAME 'CALL!-MIMOC>
+		    <CONS F324 () = F324>
+		    <CONS 1 F324 = F324>
+		    <CONS BOUNDS-ATOM10 F324 = STACK>
+		    <DEAD F324 BOUNDS-ATOM10>
+		    <CALL 'CALL!-MIMOC 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'B1*>
+		    <PUSH -1>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 4>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JUMPN>
+		    <PUSH 'A2*>
+		    <FRAME 'XJUMP>
+		    <PUSH LOOP-LAB18>
+		    <DEAD LOOP-LAB18>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH DONE-LAB17>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'LABEL>
+		    <PUSH M-LAB16>
+		    <DEAD M-LAB16>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SKIPN>
+		    <PUSH 'C1*>
+		    <PUSH (TP*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'JRST>
+		    <FRAME 'XJUMP>
+		    <PUSH DONE-LAB17>
+		    <CALL 'XJUMP 1 = STACK>
+		    <CALL 'OCEMIT 2>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'O*>
+		    <PUSH (B1*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVEM>
+		    <PUSH 'O*>
+		    <PUSH (C1*)>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'LABEL>
+		    <PUSH DONE-LAB17>
+		    <DEAD DONE-LAB17>
+		    <CALL 'LABEL 1>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'SUBI>
+		    <PUSH 'TP*>
+		    <PUSH 2>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = ALLOCADDR15>
+		    <TYPE? ALLOCADDR15 <TYPE-CODE FALSE> + PHRASE146>
+		    <DEAD ALLOCADDR15>
+		    <GVAL 'STACK-DEPTH = ALLOCADDR15>
+		    <SUB ALLOCADDR15 2 = ALLOCADDR15 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH ALLOCADDR15>
+		    <DEAD ALLOCADDR15>
+PHRASE146
+		    <FRAME 'OCEMIT>
+		    <PUSH 'DMOVE>
+		    <PUSH 'A1*>
+		    <SET TEMP26 2 (TYPE FIX)>
+		    <SFRAME 'OBJ-TYP>
+		    <PUSH VAR6>
+		    <DEAD VAR6>
+		    <SCALL 'OBJ-TYP 1 = ALLOCADDR15 + TAG147 TEMP26>
+		    <LOOP (ALLOCADDR15 TYPE VALUE LENGTH) (TEMP26 VALUE)>
+TAG149
+		    <INTGO>
+		    <EMPTY? ALLOCADDR15 + TAG147>
+		    <NTH1 ALLOCADDR15 = STACK>
+		    <REST1 ALLOCADDR15 = ALLOCADDR15>
+		    <ADD TEMP26 1 = TEMP26 (TYPE FIX)>
+		    <JUMP + TAG149>
+TAG147
+		    <DEAD ALLOCADDR15>
+		    <CALL 'OCEMIT TEMP26>
+		    <DEAD TEMP26>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'MOVE>
+		    <PUSH 'A2*>
+		    <PUSH (A2*)>
+		    <CALL 'OCEMIT 3>
+		    <EQUAL? RES13 'STACK - PHRASE153>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A1*>
+		    <CALL 'OCEMIT 3>
+		    <FRAME 'OCEMIT>
+		    <PUSH 'PUSH>
+		    <PUSH 'TP*>
+		    <PUSH 'A2*>
+		    <CALL 'OCEMIT 3>
+		    <GVAL 'WINNING-VICTIM = TEMP26>
+		    <TYPE? TEMP26 <TYPE-CODE FALSE> + PHRASE158>
+		    <GVAL 'STACK-DEPTH = ALLOCADDR15>
+		    <ADD ALLOCADDR15 2 = ALLOCADDR15 (TYPE FIX)>
+		    <SETG 'STACK-DEPTH ALLOCADDR15>
+		    <RETURN ALLOCADDR15>
+		    <DEAD ALLOCADDR15>
+PHRASE153
+		    <FRAME 'LOAD-AC>
+		    <PUSH RES13>
+		    <DEAD RES13>
+		    <PUSH 'BOTH>
+		    <PUSH 'T>
+		    <PUSH 'T>
+		    <FRAME 'GET-AC>
+		    <PUSH 'A1*>
+		    <CALL 'GET-AC 1 = STACK>
+		    <CALL 'LOAD-AC 5 = TEMP26>
+PHRASE158
+		    <RETURN TEMP26>
+		    <DEAD TEMP26>
+		    <END CGC-LIST!-MIMOC>

@@ -1,0 +1,70 @@
+; "VERSION FOR USER CODE"
+
+; "Definitions of macros to access slots in mudchans, for use by READ
+   and PRINT.  Assume that third arg is literally either true or false--
+   EVALed at compile time.  Similarly, if second arg is T, it is assumed
+   to not be there."
+
+<BLOCK (<ROOT>)>
+
+<L-FLOAD "CHANNEL-DEFS.MUD">
+
+<DEFMAC CHANNEL-SLOT ('STR 'CHR CHK? OFFS)
+  <COND (<NOT .CHK?>
+	 <FORM BIND ((SU <FORM CHANNEL-USER .STR>))
+	   #DECL ((SU) MUD-CHAN)
+	   <COND (<==? .CHR T>
+		  <FORM .OFFS '.SU>)
+		 (<FORM .OFFS '.SU .CHR>)>>)
+	(T
+	 <FORM COND (<FORM CHANNEL-BLESS .STR>
+		     <EXPAND <FORM CHANNEL-SLOT .STR .CHR <> .OFFS>>)>)>>
+
+<DEFMAC M-HLEN ('STR "OPTIONAL" ('CHR T) (CHK? <>))
+  <EXPAND <FORM CHANNEL-SLOT .STR .CHR .CHK? ,MC-HLEN>>>
+
+<DEFMAC M-HPOS ('STR "OPTIONAL" ('CHR T) (CHK? <>))
+  <EXPAND <FORM CHANNEL-SLOT .STR .CHR .CHK? ,MC-HPOS>>>
+
+<DEFMAC M-VLEN ('STR "OPTIONAL" ('CHR T) (CHK? <>))
+  <EXPAND <FORM CHANNEL-SLOT .STR .CHR .CHK? ,MC-VLEN>>>
+
+<DEFMAC M-VPOS ('STR "OPTIONAL" ('CHR T) (CHK? <>))
+  <EXPAND <FORM CHANNEL-SLOT .STR .CHR .CHK? ,MC-VPOS>>>
+
+<DEFMAC M-ORAD ('STR "OPTIONAL" ('CHR T) (CHK? <>))
+  <EXPAND <FORM CHANNEL-SLOT .STR .CHR .CHK? ,MC-ORAD>>>
+
+<DEFMAC M-IRAD ('STR "OPTIONAL" ('CHR T) (CHK? <>))
+  <EXPAND <FORM CHANNEL-SLOT .STR .CHR .CHK? ,MC-IRAD>>>
+
+<DEFMAC M-INTR ('STR "OPTIONAL" ('CHR T) (CHK? <>))
+  <EXPAND <FORM CHANNEL-SLOT .STR .CHR .CHK? ,MC-INTR>>>
+
+<DEFMAC M-FFRM ('STR "OPTIONAL" ('CHR T) (CHK? <>))
+  <EXPAND <FORM CHANNEL-SLOT .STR .CHR .CHK? ,MC-FFRM>>>
+
+<DEFMAC M-NCHR ('STR "OPTIONAL" ('CHR T) (CHK? <>))
+  <EXPAND <FORM CHANNEL-SLOT .STR .CHR .CHK? ,MC-NCHR>>>
+
+<DEFMAC M-BIT ('STR 'WHICH "OPTIONAL" ('NEW 0) (CHK? <>))
+  <COND (<NOT .CHK?>
+	 <FORM BIND ((SU <FORM CHANNEL-USER .STR>))
+	   #DECL ((SU) MUD-CHAN)
+	   <COND (<TYPE? .NEW FIX>
+		  <FORM NOT <FORM 0? <FORM ANDB .WHICH <FORM MC-BITS
+							     '.SU>>>>)
+		 (.NEW
+		  <FORM MC-BITS '.SU
+			<FORM ORB <FORM MC-BITS '.SU> .WHICH>>)
+		 (T
+		  <FORM MC-BITS '.SU <FORM ANDB <FORM MC-BITS '.SU>
+					  <FORM XORB .WHICH <ANDB>>>>)>>)
+	(T
+	 <FORM COND (<FORM CHANNEL-BLESS .STR>
+		     <EXPAND <FORM M-BIT .STR .WHICH .NEW <>>>)>)>>
+
+<DEFMAC ON-TTY? ('STR)
+  <EXPAND <FORM M-BIT .STR ,BIT-INTELLIGENT 0 <>>>>
+
+<ENDBLOCK>

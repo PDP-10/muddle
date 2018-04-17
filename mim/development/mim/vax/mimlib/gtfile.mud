@@ -1,0 +1,249 @@
+
+<PACKAGE "GTFILE">
+
+<ENTRY FILE-MENU
+       GET-FILE
+       GET-ALL-FILES
+       COMPLETE
+       COMPLETE-TERMINATE
+       TERMINATE
+       COMPLETE-FIELD>
+
+<USE "SORTX" "GNJFN">
+
+<EXPORT "GNJFN">
+
+<DEFINE GET-DEFAULT (ATM) 
+	<COND (<BOUND? .ATM> <COND (<ASSIGNED? .ATM> ..ATM) (T <>)>)
+	      (<GASSIGNED? .ATM> ,.ATM)>>
+
+<DEFINE DO-TERMINATE (STR:STRING NEW?:<OR ATOM FALSE> "AUX" NS) 
+   	<SET STR <PARSE-FILE-NAME .STR T>>
+	<COND (.NEW? .STR)
+	      (T
+	       <COND (<SET NS <FILE-EXISTS? .STR>> .STR)
+		     (T <CHTYPE (.STR !.NS) FALSE>)>)>>
+
+<DEFINE GET-FILE (STR:STRING FLEN:<OR
+				   FIX FALSE> OPER:ATOM
+		  "OPT" (NEW?:<OR ATOM FALSE> <>)
+			(NM1:<SPECIAL
+			      <OR STRING FALSE
+				  FIX>> <GET-DEFAULT NM1>)
+			(NM2:<SPECIAL
+			      <OR STRING FALSE
+				  FIX>> <GET-DEFAULT NM2>)
+			(DEV:<SPECIAL
+			      <OR STRING FALSE
+				  FIX>> <GET-DEFAULT DEV>)
+			(SNM:<SPECIAL
+			      <OR STRING FALSE
+				  FIX>> <GET-DEFAULT SNM>)
+		  "AUX" (LEN:FIX <COND (.FLEN .FLEN) (T <LENGTH .STR>)>)
+			(RS <STACK <ISTRING .LEN>>) NS
+			(TS <STACK <ISTRING <+ .LEN 1>>>))
+   <SUBSTRUC .STR 0 .LEN .RS>
+   <COND
+    (<==? .OPER TERMINATE> <DO-TERMINATE .RS .NEW?>)
+    (T
+     <COND (<OR <==? .OPER COMPLETE> <==? .OPER COMPLETE-TERMINATE>>
+	    <COND (<DO-TERMINATE .RS .NEW?>)
+		  (T
+		   <SUBSTRUC .STR 0 .LEN .TS>
+		   <PUT .TS <LENGTH .TS> !\*>
+		   <COND (<SET NS <DO-COMPLETE .TS .NEW?>>
+			  <COND (<==? .OPER COMPLETE-TERMINATE>
+				 <DO-TERMINATE .NS .NEW?>)
+				(.NS)>)>)>)
+	   (<==? .OPER FILE-MENU>
+	    <SUBSTRUC .STR 0 .LEN .TS>
+	    <PUT .TS <LENGTH .TS> !\*>
+	    <FILE-MENU .TS ,RETURN-ALL>)>)>>
+
+<DEFINE DO-COMPLETE (STR:STRING NEW?:<OR
+				      ATOM FALSE>
+		     "AUX" CH:<OR
+			       FALSE <CHANNEL
+				      'GNJFN>>)
+   <COND
+    (<SET CH <CHANNEL-OPEN GNJFN .STR ,RETURN-ALL>>
+     <REPEAT (NCH:<CHANNEL 'PARSE> (OS <>) (CT 0) NAMSTR TS (DIR? <>)
+	      (N2 <AND <ASSIGNED? NM2> .NM2>) (N2S <>) (NC 0))
+       <SET NAMSTR <CHANNEL-OP .CH NAME>>
+       <COND (<AND .N2 <=? <CHANNEL-OP .CH NM2> .N2>>
+	      <SET NC <+ .NC 1>>
+	      <COND (<NOT .N2S> <SET N2S <STRING .NAMSTR>>)
+		    (T
+		     <SET N2S <GET-COMMON .N2S <STRING .NAMSTR>>>)>)>
+       <SET CT <+ .CT 1>>
+       <SET DIR? <CHANNEL-OP .CH DIR?>>
+       <COND (<NOT .OS> <SET OS .NAMSTR>)
+	     (T <SET OS <GET-COMMON .OS .NAMSTR>>)>
+       <COND
+	(<NOT <CHANNEL-OP .CH NEXT-FILE>>
+	 <CLOSE .CH>
+	 <COND
+	  (<1? .CT>
+	   <COND (.DIR?
+		  <RETURN <GET-FILE <STRING .OS !\/> <> COMPLETE .NEW?>>)>
+	   <RETURN .OS>)
+	  (<0? .CT> <RETURN <CHTYPE (<STRING .STR> "no matches") FALSE>>)
+	  (T
+	   <COND (.N2S
+		  <COND (<1? .NC> <RETURN .N2S>)>
+		  <RETURN <CHTYPE (.N2S "ambiguous") FALSE>>)
+		 (<AND <MEMQ !\. .OS:STRING> .N2>
+		  <SET NCH <CHANNEL-OPEN PARSE .OS>>
+		  <COND (<OR <NOT <SET TS <CHANNEL-OP .NCH NM2>>>
+			     <AND <SET TS <MEMBER .TS .N2>> <==? .TS .N2>>>
+			 <SET TS <CHANNEL-OP .NCH NAME 28>>
+			 <COND (<SET TS <DO-TERMINATE .TS .NEW?>>
+				<CLOSE .NCH>
+				<RETURN .TS>)>)>
+		  <CLOSE .NCH>)>
+	   <RETURN <CHTYPE (.OS "ambiguous") FALSE>>)>)>>)
+    (<CHTYPE (<STRING .STR> !.CH) FALSE>)>>
+
+<DEFINE GET-COMMON (STR1:STRING STR2:STRING "AUX" TEMP) 
+   <COND (<G? <LENGTH .STR1> <LENGTH .STR2>>
+	  <SET TEMP .STR2>
+	  <SET STR2 .STR1>
+	  <SET STR1 .TEMP>)>
+   <MAPR <>
+    <FUNCTION (S1 S2) 
+	    <COND (<N==? <1 .S1> <1 .S2>>
+		   <MAPLEAVE <SUBSTRUC .STR2
+				       0
+				       <- <LENGTH .STR2> <LENGTH .S2>>
+				       <REST .STR2 <LENGTH .S2>>>>)
+		  (<1? <LENGTH .S1>>
+		   <COND (<1? <LENGTH .S2>> <MAPLEAVE .STR2>)>
+		   <MAPLEAVE <SUBSTRUC .STR1
+				       0
+				       <LENGTH .STR1>
+				       <REST .STR2
+					     <- <LENGTH .STR2>
+						<LENGTH .STR1>>>>>)>>
+    .STR1
+    .STR2>>
+
+<DEFINE CP (ST:<PRIMTYPE VECTOR> SNM DEV)
+  <1 .ST .DEV>
+  <2 .ST .SNM>>
+
+<DEFINE FILE-MENU (ISTR:STRING
+		   "OPTIONAL" (F-OR-D:FIX ,RETURN-FILES)
+		   "AUX" CH:<OR
+			     <CHANNEL 'GNJFN> FALSE> FILES:VECTOR
+			 FILE:<OR STRING FALSE> NAME1:<OR
+						       STRING FALSE>
+			 NAME2:<OR STRING FALSE> (DIR? <>) 
+			 FULL?:<OR ATOM FALSE>
+			 (STR:STRING .ISTR) 
+			 (ST:<PRIMTYPE VECTOR> <STACK <IVECTOR 2>>))
+   <COND (<OR <EMPTY? .STR>
+	      <=? .STR "*">>
+	  <SET NAME1
+	       <COND (<BOUND? NM1> <AND <ASSIGNED? NM1> .NM1>)
+		     (<GASSIGNED? NM1> ,NM1)>>
+	  <SET NAME2
+	       <COND (<BOUND? NM2> <AND <ASSIGNED? NM2> .NM2>)
+		     (<GASSIGNED? NM2> ,NM2)>>
+	  <COND (.NAME1
+		 <COND (.NAME2 <SET STR <STRING .NAME1 !\. .NAME2>>)
+		       (T <SET STR <STRING .NAME1 !\. !\*>>)>)
+		(.NAME2 <SET STR <STRING !\* !\. .NAME2>>)
+		(T <SET STR "*">)>)>
+   <CP .ST !<GET-CONNECTED-DIR>>
+   <COND
+    (<SET CH <CHANNEL-OPEN GNJFN .STR .F-OR-D>>
+     <COND (<OR <N=? <CHANNEL-OP .CH DEV> <1 .ST>>
+		<N=? <CHANNEL-OP .CH SNM> <2 .ST>>>
+	    <SET FULL? T>)
+	   (T
+	    <SET FULL? <>>)>
+     <SET FILES
+	  <MAPF ,VECTOR
+		<FUNCTION () 
+		   <COND (<COND (.FULL?
+				 <SET FILE <CHANNEL-OP .CH NAME>>)
+				(T
+				 <SET FILE <CHANNEL-OP .CH SHORT-NAME>>)>
+			  <COND (<N==? .F-OR-D ,RETURN-FILES>
+				 <SET DIR? <CHANNEL-OP .CH DIR?>>)>
+			  <COND (<NOT <CHANNEL-OP .CH NEXT-FILE>>
+				 <MAPSTOP .FILE>)>
+			  .FILE)
+			 (T <MAPSTOP>)>>>>
+     <CHANNEL-CLOSE .CH>
+     <COND (<AND <1? <LENGTH .FILES>> .DIR?>
+	    <PUT .ISTR <LENGTH .ISTR> !\/>
+	    <GET-FILE .ISTR <> FILE-MENU>)
+	   (T
+	    <COND (<EMPTY? .FILES>)
+		  (T <SET FILES <SORT <> .FILES>>)>
+	    .FILES)>)
+    (T .CH)>>
+
+<GDECL (FLIST DIRS) LIST>
+
+<DEFINE GET-ALL-FILES (STR "OPTIONAL" (F-OR-D ,RETURN-FILES)) 
+	#DECL ((STR) STRING (F-OR-D) FIX)
+	<COND (<==? .F-OR-D ,RETURN-ALL>
+	       <SETG FLIST (T)>
+	       <SETG DIRS (T)>
+	       <GET-ALL-FILES-R .STR ,RETURN-ALL>
+	       <VECTOR <REST ,FLIST> <REST ,DIRS>>)
+	      (<==? .F-OR-D ,RETURN-DIRS>
+	       <SETG DIRS (T)>
+	       <GET-ALL-FILES-R .STR ,RETURN-DIRS>
+	       <REST ,DIRS>)
+	      (T
+	       <SETG FLIST (T)>
+	       <GET-ALL-FILES-R .STR ,RETURN-FILES>
+	       <REST ,FLIST>)>>
+
+<DEFINE GET-ALL-FILES-R (STR F-OR-D "AUX" CH DIR (DLIST ()) FILES FILE) 
+   #DECL ((STR DIR) STRING (F-OR-D) FIX (CH) <OR FALSE CHANNEL>
+	  (DLIST FILES) LIST (FILE) <OR FALSE STRING>)
+   <COND
+    (<COND (<==? .F-OR-D ,RETURN-DIRS>
+	    <SET CH <CHANNEL-OPEN GNJFN .STR ,RETURN-DIRS>>)
+	   (T <SET CH <CHANNEL-OPEN GNJFN .STR ,RETURN-ALL>>)>
+     <SET DIR <CHANNEL-OP .CH DIR>>
+     <COND
+      (<==? .F-OR-D ,RETURN-DIRS>
+       <SET DLIST
+	    <MAPF ,LIST
+		  <FUNCTION () 
+			  <COND (<SET FILE <CHANNEL-OP .CH SHORT-NAME>>
+				 <CHANNEL-OP .CH NEXT-FILE>
+				 <SET FILE <STRING .DIR .FILE>>)
+				(T <MAPSTOP>)>>>>)
+      (T
+       <SET FILES
+	    <MAPF ,LIST
+	     <FUNCTION () 
+		     <COND (<SET FILE <CHANNEL-OP .CH SHORT-NAME>>
+			    <SET FILE <STRING .DIR .FILE>>
+			    <COND (<CHANNEL-OP .CH DIR?>
+				   <SET DLIST (.FILE !.DLIST)>
+				   <CHANNEL-OP .CH NEXT-FILE>
+				   <MAPRET>)
+				  (T <CHANNEL-OP .CH NEXT-FILE> .FILE)>)
+			   (T <MAPSTOP>)>>>>)>
+     <CHANNEL-CLOSE .CH>
+     <COND (<==? .F-OR-D ,RETURN-FILES>
+	    <PUTREST <REST ,FLIST <- <LENGTH ,FLIST> 1>> .FILES>)
+	   (<==? .F-OR-D ,RETURN-DIRS>
+	    <PUTREST <REST ,DIRS <- <LENGTH ,DIRS> 1>> .DLIST>)
+	   (T
+	    <PUTREST <REST ,FLIST <- <LENGTH ,FLIST> 1>> .FILES>
+	    <PUTREST <REST ,DIRS <- <LENGTH ,DIRS> 1>> .DLIST>)>
+     <MAPF <>
+	   <FUNCTION (DIRECT) 
+		   <GET-ALL-FILES-R <STRING .DIRECT !\/ !\*> .F-OR-D>>
+	   .DLIST>)
+    (T .CH)>>
+
+<ENDPACKAGE>

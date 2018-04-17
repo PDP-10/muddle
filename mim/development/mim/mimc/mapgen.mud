@@ -1,0 +1,981 @@
+
+<PACKAGE "MAPGEN">
+
+<ENTRY MAPFR-GEN
+       MAPRET-STOP-GEN
+       MAPLEAVE-GEN
+       MTUPLE-GEN
+       MBINDERS
+       MPARGS-GEN
+       MOPTG
+       MOPTG2>
+
+<USE "COMPDEC" "CODGEN" "CHKDCL" "CARGEN" "NEWREP" "STRGEN" "MIMGEN" "ADVMESS">
+
+" Definitions of offsets into MAPINFO vector used by MAP hackers inferiors."
+
+<SETG MAP-STRS 1>
+
+<SETG MAP-FR 2>
+
+<SETG MAP-TAG 3>
+
+<SETG MAP-TEMPS 4>
+
+<SETG MAP-F? 5>
+
+<SETG MAP-FTMP 6>
+
+<SETG MAP-EXTMP 7>
+
+<SETG MAP-SEG? 8>
+
+<MANIFEST MAP-FR
+	  MAP-TAG
+	  MAP-TGL
+	  MAP-SRC
+	  MAP-TEMPS
+	  MAP-F?
+	  MAP-FTMP
+	  MAP-EXTMP
+	  MAP-SEG?
+	  MAP-STRS>
+
+<PUT-DECL MPINFO
+	  '<VECTOR <LIST [REST NODE]>
+		   <OR FALSE ATOM>
+		   ATOM
+		   <LIST [REST TEMP]>
+		   <OR FALSE ATOM>
+		   TEMP
+		   TEMP
+		   <LIST [REST <OR ATOM FALSE>]>>>
+
+""
+
+<DEFINE MAPFR-GEN (NOD WHERE "OPT" (NF <>) (BR <>) (DIR <>)
+			     "AUX" (K <KIDS .NOD>) (COD <NODE-TYPE <2 .K>>)) 
+   #DECL ((NOD) NODE (COD) FIX (K) <LIST [REST NODE]>)
+   <COND
+    (<==? .COD ,MFCN-CODE> <HMAPFR .NOD .WHERE .K .NF .BR .DIR>)
+    (ELSE
+     <PROG ((FAP <1 .K>) MPINFO (INRAP <2 .K>) W (STACKED 0) F? FF?
+	    (MAYBE-FALSE <>) (NARG <LENGTH <SET K <REST .K 2>>>)
+	    (R? <==? <NODE-SUBR .NOD> ,MAPR>) (MAPEND <MAKE-TAG "MAP">)
+	    (MAPLP <MAKE-TAG "MAP">) (SUBRC <AP? .FAP>) (FOONARG .NARG)
+	    (STMPS <MAPF ,LIST
+			 <FUNCTION () <COND (<L? <SET FOONARG <- .FOONARG 1>>
+						 0> <MAPSTOP>)
+					    (ELSE <GEN-TEMP <>>)>>>)
+	    (FTMP <GEN-TEMP <>>)
+	    (EXTMP <GEN-TEMP <>>) (APTMP <>) (FLS <==? .WHERE FLUSHED>) TMP
+	    (SEG? <MAPF ,LIST <FUNCTION (X) #FALSE ()> .STMPS>) (SEGCNT <>))
+       #DECL ((FAP INRAP) NODE (NARG POFF) FIX (MAPLP MAPEND) ATOM
+	      (MPINFO) <SPECIAL MPINFO> (STACKED) <SPECIAL FIX>
+	      (SEG?) <LIST [REST <OR ATOM FALSE>]> (SEGCNT) <OR FALSE TEMP>)
+       <SET WHERE
+	    <COND (<==? .WHERE FLUSHED> FLUSHED)
+		  (<==? .WHERE DONT-CARE> .FTMP)
+		  (ELSE .WHERE)>>
+       <SET F? <DO-FIRST-SETUP .FAP .WHERE .FTMP .EXTMP .FLS>>
+       <OR .F? <SET FF? <==? <NODE-TYPE .FAP> ,MFIRST-CODE>>>
+       <PUSH-STRUCS .K .STMPS .SEG?>
+       <COND (.F? <SET MAYBE-FALSE <DO-FINAL-SETUP .FAP .SUBRC .FTMP .EXTMP>>)>
+       <COND (<N==? .COD ,MPSBR-CODE> <SET APTMP <GEN .INRAP>>)>
+       <COND (<AND .F?
+		   <OR <NOT .SUBRC>
+		       <NOT <MEMQ .SUBRC
+				  '[VECTOR UVECTOR TUPLE STRING BYTES]>>>>
+	      <START-FRAME <COND (.SUBRC) (ELSE APPLY)>>
+	      <COND (<NOT .SUBRC> <PUSH .EXTMP>)>)>
+       <IEMIT `LOOP>
+       <LABEL-TAG .MAPLP>
+       <IEMIT `INTGO>
+       <EMPTY-MAPF-CHECK .K .STMPS .MAPEND .SEG?>
+       <SET MPINFO [.K .R? .MAPEND .STMPS .F? .FTMP .EXTMP .SEG?]>
+       <COND (<AND <==? .COD ,MPSBR-CODE> <NOT <OR? !.SEG?>>>
+	      <COND (.F?
+		     <GEN <1 <KIDS .INRAP>> ,POP-STACK>
+		     <IEMIT `ADD .FTMP 1 = .FTMP '(`TYPE FIX)>)
+		    (.FF?
+		     <DO-FUNNY-HACK <GEN <1 <KIDS .INRAP>> DONT-CARE>
+				    .NOD
+				    .FAP
+				    <1 <KIDS .INRAP>>
+				    .FTMP
+				    .EXTMP>)
+		    (<NOT .FLS> <GEN <1 <KIDS .INRAP>> .FTMP>)
+		    (ELSE <GEN <1 <KIDS .INRAP>> FLUSHED>)>)
+	     (ELSE
+	      <COND (<OR? !.SEG?>
+		     <SET SEGCNT <GEN-TEMP>>
+		     <IEMIT `SET
+			    .SEGCNT
+			    <+ <MAPF ,+
+				     <FUNCTION (SG) <COND (.SG 0) (ELSE 1)>>
+				     .SEG?>
+			       <COND (.APTMP 1) (ELSE 0)>>>)>
+	      <START-FRAME <COND (.APTMP APPLY)
+				 (ELSE <NODE-NAME <1 <KIDS .INRAP>>>)>>
+	      <COND (.APTMP <PUSH .APTMP>)>
+	      <REPEAT ((I .NARG))
+		      #DECL ((I) FIX)
+		      <MPARGS-GEN .NOD ,POP-STACK .SEGCNT>
+		      <AND <0? <SET I <- .I 1>>> <RETURN>>>
+	      <MSUBR-CALL <COND (.APTMP APPLY)
+				(ELSE <NODE-NAME <1 <KIDS .INRAP>>>)>
+			  <COND (.SEGCNT) (ELSE <+ .NARG 1>)>
+			  <COND (<OR .F? .FF?> <SET TMP <GEN-TEMP>>)
+				(ELSE .WHERE)>>
+	      <COND (.F? <DO-STACK-ARGS .MAYBE-FALSE .TMP .EXTMP .FTMP>)
+		    (.FF?
+		     <DO-FUNNY-HACK .TMP .NOD .FAP .INRAP .FTMP .EXTMP>)>)>
+       <REST-STRUCS .STMPS .K .SEG?>
+       <BRANCH-TAG .MAPLP>
+       <LABEL-TAG .MAPEND>
+       <MAPF <> ,FREE-TEMP .STMPS>
+       <COND (<ASSIGNED? APTMP> <FREE-TEMP .APTMP>)>
+       <COND (.F?
+	      <SET WHERE <DO-LAST .SUBRC .MAYBE-FALSE .WHERE .EXTMP .FTMP>>
+	      <FREE-TEMP .FTMP>
+	      <FREE-TEMP .EXTMP>)
+	     (.FF? <FREE-TEMP .EXTMP> <SET WHERE <MOVE-ARG .FTMP .WHERE>>)
+	     (<NOT .FLS>
+	      <SET WHERE <MOVE-ARG .FTMP .WHERE>>
+	      <FREE-TEMP .EXTMP>)
+	     (ELSE <FREE-TEMP .FTMP> <FREE-TEMP .EXTMP>)>
+       <FLUSH-TUPLES .STMPS .SEG?>
+       .WHERE>)>>
+
+\ 
+
+<DEFINE PUSH-STRUCS (K STMPS SEG?
+		     "AUX" COUNTMP (SEGLABEL <MAKE-TAG>) (SEGCALLED <>))
+   #DECL ((K) <LIST [REST NODE]> (STMPS) <LIST [REST TEMP]>
+	  (SEG?) <LIST [REST <OR ATOM FALSE>]>
+	  (SEGCALLED COUNTMP SEGLABEL) <SPECIAL ANY>)
+   <MAPR <>
+    <FUNCTION (NP TMPP SEG "AUX" (N <1 .NP>) (TMP <1 .TMPP>) TT CT TTT TY STY) 
+	    #DECL ((N) NODE (SEG) LIST)
+	    <COND
+	     (<OR <==? <NODE-TYPE .N> ,SEGMENT-CODE>
+		  <==? <NODE-TYPE .N> ,SEG-CODE>>
+	      <SET N <1 <KIDS .N>>>
+	      <IEMIT `SET <SET CT <SET COUNTMP <GEN-TEMP>>> 0>
+	      <SET TT <GEN .N DONT-CARE>>
+	      <COND (<NOT <OR <==? .TT ,NO-DATUM>
+			      <AND <TYPE? .TT TEMP> <L=? <TEMP-REFS .TT> 1>>>>
+		     <IEMIT `SET <SET TTT <GEN-TEMP>> .TT>
+		     <FREE-TEMP .TT>
+		     <SET TT .TTT>)>
+	      <PUT .SEG 1 T>
+	      <COND (<N==? .TT ,NO-DATUM>
+		     <SEGMENT-STACK .TT
+				    .CT
+				    <STRUCTYP <RESULT-TYPE .N>>
+				    <ISTYPE? <RESULT-TYPE .N>>
+				    .SEGLABEL>)
+		    (.SEGCALLED <LABEL-TAG .SEGLABEL>)>
+	      <SET SEGLABEL <MAKE-TAG>>
+	      <FREE-TEMP .TT>
+	      <USE-TEMP .TMP>
+	      <IEMIT `TUPLE .CT = .TMP '(`TYPE TUPLE)>
+	      <FREE-TEMP .CT>)
+	     (ELSE
+	      <SET TT <GEN .N DONT-CARE>>
+	      <SET STY <STRUCTYP <SET TY <RESULT-TYPE .N>>>>
+	      <SET TY <ISTYPE? .TY>>
+	      <COND (<AND <TYPE? .TT TEMP> <L=? <TEMP-REFS .TT> 1>>
+		     <PUT .TMPP 1 <SET TMP .TT>>
+		     <COND (<AND .STY <N==? .TY .STY>>
+			    <IEMIT `CHTYPE
+				   .TMP
+				   <FORM `TYPE-CODE .STY>
+				   =
+				   .TMP>)>)
+		    (<AND .STY <N==? .STY .TY>>
+		     <USE-TEMP .TMP .STY>
+		     <IEMIT `CHTYPE .TT <FORM `TYPE-CODE .STY> = .TMP>)
+		    (.STY <MOVE-ARG .TT .TMP (`TYPE .TY)>)
+		    (ELSE <MOVE-ARG .TT .TMP>)>)>>
+    .K
+    .STMPS
+    .SEG?>
+   T>
+
+<DEFINE REST-STRUCS (STMPS K SEG?) 
+   #DECL ((K) <LIST [REST NODE]> (STMPS) <LIST [REST TEMP]>
+	  (SEG?) <LIST [REST <OR ATOM FALSE>]>)
+   <MAPF <>
+    <FUNCTION (TMP NOD SEG
+	       "AUX" (ST <STRUCTYP <RESULT-TYPE .NOD>>) ETYP STMP LBL1 LBL2
+		     ETMP)
+       #DECL ((NOD) NODE (TMP) TEMP)
+       <COND
+	(.SEG
+	 <IEMIT `SET <SET STMP <GEN-TEMP>> .TMP>
+	 <SET ETYP <STRUCTYP <GET-ELE-TYPE <RESULT-TYPE <1 <KIDS .NOD>>> ALL>>>
+	 <COND (.ETYP <IEMIT `LOOP (<TEMP-NAME .STMP> LENGTH VALUE)>)
+	       (ELSE <IEMIT `LOOP>)>
+	 <LABEL-TAG <SET LBL1 <MAKE-TAG>>>
+	 <IEMIT `INTGO>
+	 <EMPTY-CHECK TUPLE .STMP TUPLE T <SET LBL2 <MAKE-TAG>>>
+	 <NTH-DO TUPLE .STMP <SET ETMP <GEN-TEMP>> 1>
+	 <COND (.ETYP <REST-DO .ETYP .ETMP .ETMP 1>)
+	       (ELSE <IEMIT `REST1 .ETMP = .ETMP>)>
+	 <PUT-VECTOR .STMP 1 .ETMP>
+	 <REST-DO TUPLE .STMP .STMP 1>
+	 <BRANCH-TAG .LBL1>
+	 <LABEL-TAG .LBL2>
+	 <FREE-TEMP .STMP>
+	 <FREE-TEMP .ETMP>)
+	(.ST <REST-DO .ST .TMP .TMP 1>)
+	(ELSE <IEMIT `REST1 .TMP = .TMP>)>>
+    .STMPS
+    .K
+    .SEG?>>
+
+<DEFINE DO-FINAL-SETUP (FAP SUBRC FTMP EXTMP 
+			"AUX" (MBYF <AND <NOT .SUBRC>
+					 <OR <NOT .REASONABLE>
+					     <N==? <NODE-TYPE .FAP>
+						   ,GVAL-CODE>>
+					 <TYPE-OK? <RESULT-TYPE .FAP>
+						   FALSE>>)
+			      TG1 TG2) 
+	#DECL ((FAP) NODE)
+	<COND (<NOT .SUBRC>
+	       <GEN .FAP .EXTMP>)>
+	<COND (.MBYF
+	       <GEN-TYPE? .EXTMP FALSE <SET TG1 <MAKE-TAG>> T>)>
+	<SET-TEMP .FTMP <COND (.SUBRC 0) (ELSE 1)> '(`TYPE FIX)>
+	<COND (.MBYF
+	       <BRANCH-TAG <SET TG2 <MAKE-TAG>>>
+	       <LABEL-TAG .TG1>
+	       <SET-TEMP .FTMP <> '(`TYPE FALSE)>
+	       <LABEL-TAG .TG2>)>
+	.MBYF>
+
+<DEFINE DO-STACK-ARGS (MAYBE-FALSE ARG SW COUNT "AUX" TG1 TG2) 
+	<COND (.MAYBE-FALSE
+	       <GEN-TYPE? .SW FALSE <SET TG1 <MAKE-TAG>> T>
+	       <PUSH .ARG>
+	       <IEMIT `ADD .COUNT 1 = .COUNT '(`TYPE FIX)>
+	       <BRANCH-TAG <SET TG2 <MAKE-TAG>>>
+	       <LABEL-TAG .TG1>
+	       <MOVE-ARG .ARG .COUNT>
+	       <LABEL-TAG .TG2>)
+	      (ELSE <PUSH .ARG> <IEMIT `ADD .COUNT 1 = .COUNT '(`TYPE FIX)>)>>
+
+<DEFINE DO-STACK-TUPLE (MAYBE-FALSE NEW-COUNT SW COUNT "AUX" TG1 TG2) 
+	<COND (.MAYBE-FALSE
+	       <LENGTH-VECTOR .NEW-COUNT .NEW-COUNT>
+	       <GEN-TYPE? .SW FALSE <SET TG1 <MAKE-TAG>> T>
+	       <IEMIT `ADD .COUNT .NEW-COUNT = .COUNT '(`TYPE FIX)>
+	       <BRANCH-TAG <SET TG2 <MAKE-TAG>>>
+	       <LABEL-TAG .TG1>
+	       <POP .COUNT>
+	       <IEMIT `SUB 1 .NEW-COUNT = .NEW-COUNT '(`TYPE FIX)>
+	       <IEMIT `MUL .NEW-COUNT 2 = .NEW-COUNT '(`TYPE FIX)>
+	       <IEMIT `ADJ .NEW-COUNT>
+	       <LABEL-TAG .TG2>)
+	      (ELSE
+	       <LENGTH-VECTOR .NEW-COUNT .NEW-COUNT>
+	       <IEMIT `ADD .COUNT .NEW-COUNT = .COUNT '(`TYPE FIX)>)>>
+
+\ 
+
+<SETG MINS '[[`LESS? `GRTR? `MUL `ADD] [`LESS? `GRTR? `MULF `ADDF]]>
+
+<GDECL (MINS) !<VECTOR [2 !<VECTOR [4 ATOM]>]>>
+
+<DEFINE DO-FUNNY-HACK (DAT N FAP NN FTMP EXTMP
+		       "AUX" (COD <NODE-SUBR .FAP>)
+			     (LMOD <ISTYPE? <RESULT-TYPE .NN>>)
+			     (MOD <ISTYPE? <RESULT-TYPE .N>>) T1 T2 TMP INS)
+	#DECL ((COD) FIX (N FAP NN) NODE)
+	<COND (<==? .COD 5>
+	       <FREE-TEMP .DAT <>>
+	       <SET TMP <GEN-TEMP>>
+	       <IEMIT `CONS .DAT () = .TMP '(`TYPE LIST)>
+	       <EMPTY-LIST .FTMP <SET T1 <MAKE-TAG>> <>>
+	       <SET-TEMP .FTMP .TMP '(`TYPE LIST)>
+	       <BRANCH-TAG <SET T2 <MAKE-TAG>>>
+	       <LABEL-TAG .T1>
+	       <IEMIT `PUTREST .EXTMP .TMP>
+	       <LABEL-TAG .T2>
+	       <FREE-TEMP .TMP <>>
+	       <SET-TEMP .EXTMP .TMP '(`TYPE LIST)>)
+	      (ELSE
+	       <SET MOD <OR <AND <==? .MOD FIX> 1> 2>>
+	       <COND (<AND <==? .MOD 2> <==? .LMOD FIX>>
+		      <SET TMP <GEN-FLOAT .DAT <GEN-TEMP>>>
+		      <FREE-TEMP .DAT>
+		      <SET DAT .TMP>)>
+	       <SET INS <NTH <NTH ,MINS .MOD> .COD>>
+	       <COND (<L? .COD 3>
+		      <IEMIT .INS .DAT .FTMP - <SET T1 <MAKE-TAG>>
+			     (`TYPE <COND (<==? .MOD 1> FIX)
+					  (ELSE FLOAT)>)>
+		      <MOVE-ARG .DAT .FTMP>
+		      <LABEL-TAG .T1>)
+		     (ELSE
+		      <FREE-TEMP .DAT <>>
+		      <IEMIT .INS .FTMP .DAT = .FTMP>)>)>
+	T>
+
+<DEFINE DO-LAST (SUBRC MAYBE-FALSE WHERE EXTMP COUNT "AUX" TG TG2) 
+	<COND (.MAYBE-FALSE
+	       <GEN-TYPE? .EXTMP FALSE <SET TG <MAKE-TAG>> T>
+	       <COND (<==? .WHERE DONT-CARE> <SET WHERE <GEN-TEMP>>)
+		     (<TYPE? .WHERE TEMP> <USE-TEMP .WHERE>)>
+	       <COND (.SUBRC <XMSUBR-CALL .SUBRC .COUNT .WHERE>)
+		     (ELSE <MSUBR-CALL APPLY .COUNT .WHERE>)>
+	       <BRANCH-TAG <SET TG2 <MAKE-TAG>>>
+	       <LABEL-TAG .TG>
+	       <MOVE-ARG .COUNT .WHERE>
+	       <LABEL-TAG .TG2>)
+	      (ELSE
+	       <COND (<==? .WHERE DONT-CARE> <SET WHERE <GEN-TEMP>>)
+		     (<TYPE? .WHERE TEMP> <USE-TEMP .WHERE>)>
+	       <COND (.SUBRC <XMSUBR-CALL .SUBRC .COUNT .WHERE>)
+		     (ELSE <MSUBR-CALL APPLY .COUNT .WHERE>)>)>
+	.WHERE>
+
+<DEFINE XMSUBR-CALL (SUBRC NARGS WHERE) 
+	<COND (<MEMQ .SUBRC '[VECTOR UVECTOR STRING BYTES]>
+	       <IEMIT `UBLOCK <FORM `TYPE-CODE .SUBRC> .NARGS = .WHERE
+		      (`TYPE .SUBRC)>)
+	      (<==? .SUBRC LIST>
+	       <IEMIT `LIST .NARGS = .WHERE '(`TYPE LIST)>)
+	      (<==? .SUBRC TUPLE>
+	       <IEMIT `TUPLE .NARGS = .WHERE>
+	       <COND (<ASSIGNED? LIST-TUPLE>
+		      <SET LIST-TUPLE (.WHERE !.LIST-TUPLE)>)>)
+	      (ELSE <MSUBR-CALL .SUBRC .NARGS .WHERE>)>>
+
+<SETG SLOT-FIRST [<CHTYPE <MIN> FIX> <CHTYPE <MAX> FIX> 1 0]>
+
+<COND (<GASSIGNED? MINFL> <SETG FSLOT-FIRST [,MINFL ,MAXFL 1.0 0.0]>)>
+
+<GDECL (SLOT-FIRST) <VECTOR [REST FIX]> (FSLOT-FIRST) <VECTOR [REST FLOAT]>>
+
+\ 
+
+<DEFINE DO-FIRST-SETUP (FAP W FTMP EXTMP FLS
+			"AUX" (COD 0)
+			      (TYP <ISTYPE? <RESULT-TYPE <PARENT .FAP>>>))
+   #DECL ((FAP) NODE (COD) FIX)
+   <COND
+    (<==? <NODE-TYPE .FAP> ,MFIRST-CODE>
+     <SET COD <NODE-SUBR .FAP>>
+     <COND (<==? .COD 5>
+	    <MOVE-ARG <REFERENCE <COND (.TYP <CHTYPE () .TYP>) (ELSE ())>>
+		      .FTMP>
+	    <MOVE-ARG <REFERENCE ()> .EXTMP>
+	    <>)
+	   (ELSE
+	    <MOVE-ARG <REFERENCE <COND (<==? .TYP FLOAT>
+					<NTH ,FSLOT-FIRST .COD>)
+				       (ELSE <NTH ,SLOT-FIRST .COD>)>>
+		      .FTMP>
+	    <>)>)
+    (<NODE-NAME .FAP> T)
+    (<NOT .FLS> <DEALLOCATE-TEMP <MOVE-ARG <REFERENCE <>> .FTMP>> <>)>>
+
+\ 
+
+<DEFINE MPARGS-GEN (N W "OPT" (CNT <>) "AUX" (MP .MPINFO)) 
+	#DECL ((MP) MPINFO (ETAG) ATOM)
+	<SET W
+	     <STACKM <1 <MAP-STRS .MP>>
+		     <1 <MAP-TEMPS .MP>>
+		     <MAP-FR .MP>
+		     <MAP-TAG .MP>
+		     .W
+		     <1 <MAP-SEG? .MP>>
+		     .CNT>>
+	<PUT .MP ,MAP-STRS <REST <MAP-STRS .MP>>>
+	<PUT .MP ,MAP-TEMPS <REST <MAP-TEMPS .MP>>>
+	<PUT .MP ,MAP-SEG? <REST <MAP-SEG? .MP>>>
+	.W>
+
+\ 
+
+<DEFINE STACKM (N SRC R? LBL W SEG CNT
+		"AUX" (STY <STRUCTYP <RESULT-TYPE .N>>) STMP ETMP LBL1 LBL2
+		      (ETY
+		       <GET-ELE-TYPE <RESULT-TYPE .N>
+				     ALL
+				     <AND .R? <NOT .SEG>>>))
+	#DECL ((N) NODE)
+	<COND (<==? .W DONT-CARE>
+	       <SET W <GEN-TEMP <COND (<ISTYPE? .ETY>)(T)>>>)
+	      (<TYPE? .W TEMP> <USE-TEMP .W <ISTYPE? .ETY>>)>
+	<COND (.SEG			        ;"Note this implies W is STACK"
+	       <IEMIT `SET <SET STMP <GEN-TEMP>> .SRC>
+	       <IEMIT `LOOP (<TEMP-NAME .STMP> LENGTH VALUE)>
+	       <LABEL-TAG <SET LBL1 <MAKE-TAG>>>
+	       <IEMIT `INTGO>
+	       <EMPTY-CHECK TUPLE .STMP TUPLE T <SET LBL2 <MAKE-TAG>>>
+	       <NTH-DO TUPLE .STMP <SET ETMP <GEN-TEMP>> 1>
+	       <SET ETY <GET-ELE-TYPE <RESULT-TYPE <1 <KIDS .N>>> ALL>>
+	       <COND (.R? <PUSH .ETMP>)
+		     (<SET ETY <STRUCTYP .ETY>>
+		      <NTH-DO .ETY .ETMP ,POP-STACK 1>)
+		     (ELSE <IEMIT `NTH1 .ETMP = ,POP-STACK>)>
+	       <IEMIT `ADD .CNT 1 = .CNT '(`TYPE FIX)>
+	       <REST-DO TUPLE .STMP .STMP 1>
+	       <BRANCH-TAG .LBL1>
+	       <LABEL-TAG .LBL2>
+	       <FREE-TEMP .ETMP>
+	       <FREE-TEMP .STMP>)
+	      (ELSE
+	       <SET ETY <ISTYPE? .ETY>>
+	       <COND (.R? <IEMIT `SET .W .SRC>)
+		     (.STY <NTH-DO .STY .SRC .W 1> .W)
+		     (ELSE <IEMIT `NTH1 .SRC = .W>)>)>
+	.W>
+
+<DEFINE EMPTY-MAPF-CHECK (K STMPS LBL SEG? "AUX" STMP ETMP LBL1 LBL2 ETYP) 
+   #DECL ((K) <LIST [REST NODE]> (STMPS) <LIST [REST TEMP]>
+	  (SEG?) <LIST [REST <OR ATOM FALSE>]>)
+   <MAPF <>
+    <FUNCTION (N TMP SEG "AUX" (STYP <STRUCTYP <RESULT-TYPE .N>>)) 
+       #DECL ((N) NODE)
+       <COND
+	(.SEG
+	 <IEMIT `SET <SET STMP <GEN-TEMP>> .TMP>
+	 <IEMIT `LOOP (<TEMP-NAME .STMP> VALUE LENGTH)>
+	 <LABEL-TAG <SET LBL1 <MAKE-TAG>>>
+	 <IEMIT `INTGO>
+	 <EMPTY-CHECK TUPLE .STMP TUPLE T <SET LBL2 <MAKE-TAG>>>
+	 <SET ETYP <STRUCTYP <GET-ELE-TYPE <RESULT-TYPE <1 <KIDS .N>>> ALL>>>
+	 <NTH-DO TUPLE .STMP <SET ETMP <GEN-TEMP>> 1>
+	 <COND (.ETYP <EMPTY-CHECK .ETYP .ETMP .ETYP T .LBL>)
+	       (ELSE
+		<IEMIT `EMPTY? .ETMP + .LBL>)>
+	 <REST-DO TUPLE .STMP .STMP 1>
+	 <BRANCH-TAG .LBL1>
+	 <LABEL-TAG .LBL2>
+	 <FREE-TEMP .STMP>
+	 <FREE-TEMP .ETMP>)
+	(.STYP <EMPTY-CHECK .STYP .TMP .STYP T .LBL>)
+	(ELSE
+	 <IEMIT `EMPTY? .TMP + .LBL>)>>
+    .K
+    .STMPS
+    .SEG?>>
+
+<DEFINE REM-TUPS ()
+	#DECL ((STK-CHARS8 STK-CHARS7 STK) FIX)
+	<COND (<N==? .STK-CHARS8 0>
+	       <SET STK-CHARS8 <+ .STK-CHARS8 .STK>>
+	       <SET STK-CHARS7 <+ .STK-CHARS7 .STK>>
+	       <SET STK 0>)>
+	<COND (<ASSIGNED? STKTMP>
+	       <COND (<N==? .STK 0>
+		      <IEMIT `SUB .STKTMP .STK = .STKTMP (`TYPE FIX)>)
+		     (<N==? .STK-CHARS7 0>
+		      <IEMIT `IFSYS "TOPS20">
+		      <IEMIT `SUB .STKTMP .STK-CHARS7 = .STKTMP>
+		      <IEMIT `ENDIF "TOPS20">
+		      <IEMIT `IFSYS "UNIX">
+		      <IEMIT `SUB .STKTMP .STK-CHARS8 = .STKTMP>
+		      <IEMIT `ENDIF "UNIX">)>
+	       <IEMIT `ADJ .STKTMP>
+	       <FREE-TEMP .STKTMP>)
+	      (<N==? .STK 0>
+	       <IEMIT `ADJ <- .STK>>)
+	      (<N==? .STK-CHARS8 0>
+	       <IEMIT `IFSYS "TOPS20">
+	       <IEMIT `ADJ <- .STK-CHARS7>>
+	       <IEMIT `ENDIF "TOPS20">
+	       <IEMIT `IFSYS "UNIX">
+	       <IEMIT `ADJ <- .STK-CHARS8>>
+	       <IEMIT `ENDIF "UNIX">)>>
+
+<DEFINE FLUSH-TUPLES (STMPS SEG?) 
+	#DECL ((SEG? STMPS) LIST)
+	<MAPF <>
+	      <FUNCTION (TMP SEGF) 
+		      #DECL ((TMP) TEMP (SEGF) <OR ATOM FALSE>)
+		      <COND (.SEGF
+			     <LENGTH-VECTOR .TMP .TMP>
+			     <IEMIT `SUB 0 .TMP = .TMP '(`TYPE FIX)>
+			     <IEMIT `MUL .TMP 2 = .TMP '(`TYPE FIX)>
+			     <IEMIT `ADJ .TMP>)>
+		      <FREE-TEMP .TMP>>
+	      .STMPS
+	      .SEG?>>
+
+\ 
+
+<DEFINE HMAPFR (MNOD MWHERE K NF BR DIR
+		"AUX" (SPECD <>) (FAP <1 .K>) (INRAP <2 .K>) F?
+		      (NARG <LENGTH <SET K <REST .K 2>>>)
+		      (R? <==? <NODE-SUBR .MNOD> ,MAPR>) (FF? <>)
+		      (MAPEND <MAKE-TAG "MAP">) (MAPLP <MAKE-TAG "MAP">)
+		      (REST-TAG <MAKE-TAG "MAP">) (SUBRC <AP? .FAP>)
+		      (BASEF .BASEF) (MAYBE-FALSE <>) (EXIT <MAKE-TAG "MAPEX">)
+		      (APPLTAG <MAKE-TAG "MAPAP">) (FLS <==? .MWHERE FLUSHED>)
+		      (RTAG <MAKE-TAG "MAP">) TEM (FOONARG .NARG)
+		      (STMPS
+		       <MAPF ,LIST
+			     <FUNCTION () 
+				     <COND (<L? <SET FOONARG <- .FOONARG 1>> 0>
+					    <MAPSTOP>)
+					   (ELSE <GEN-TEMP <>>)>>>) FTMP FEXIT
+		      (EXTMP <GEN-TEMP <>>) (BNDTMP <GEN-TEMP <>>)
+		      (SEG? <MAPF ,LIST <FUNCTION (X) %<>> .STMPS>) SEGCNT
+		      MYFRAME (INRTYP <ISTYPE? <RESULT-TYPE .INRAP>>)
+		      (FWHERE <>) LEAVE? (OFT .FREE-TEMPS) (ANY-EMPTY <>)
+		      STKTMP (STK 0) (STK-CHARS7 0) (STK-CHARS8 0))
+   #DECL ((STK-CHARS7 STK-CHARS8 STK) <SPECIAL FIX> (STKTMP) <SPECIAL ANY>
+	  (SPECD) <SPECIAL <OR FALSE ATOM>> (NARG) <SPECIAL FIX> (FAP) NODE
+	  (BASEF MNOD INRAP) <SPECIAL NODE> (K) <LIST [REST NODE]>
+	  (MAPEND EXIT MAPLP RTAG APPLTAG REST-TAG) <SPECIAL ATOM>
+	  (FTMP EXTMP MWHERE MAYBE-FALSE FLS) <SPECIAL ANY> (FSYM) SYMTAB
+	  (F?) <SPECIAL ANY> (BNDTMP LEAVE?) <SPECIAL TEMP>
+	  (DIR BR) <SPECIAL ANY> (SEG?) <LIST [REST <OR ATOM FALSE>]>
+	  (TMPS) <PRIMTYPE LIST>)
+   <MAPF <>
+	 <FUNCTION (X) 
+		 #DECL ((X) NODE)
+		 <COND (<L? <MINL <RESULT-TYPE .X>> 1>
+			<SET ANY-EMPTY T>
+			<MAPLEAVE>)>>
+	 .K>
+   <COND (.NF <SET DIR <NOT .DIR>>)>
+   <PROG ((TMPS .TMPS) (TMPS-NEXT .TMPS-NEXT) (FREE-TEMPS .FREE-TEMPS)
+	  (ALL-TEMPS-LIST .ALL-TEMPS-LIST))
+     #DECL ((TMPS-NEXT FREE-TEMPS ALL-TEMPS-LIST) <SPECIAL LIST>
+	    (TMPS) <SPECIAL FORM>)
+     <COND (<==? .MWHERE DONT-CARE> <SET FTMP <SET MWHERE <GEN-TEMP <>>>>)
+	   (ELSE <SET FTMP <GEN-TEMP <>>>)>
+     <SET F? <DO-FIRST-SETUP .FAP .MWHERE .FTMP .EXTMP .FLS>>
+     <OR .F? <SET FF? <==? <NODE-TYPE .FAP> ,MFIRST-CODE>>>
+     <PUSH-STRUCS .K .STMPS .SEG?>
+     <COND (.F? <SET MAYBE-FALSE <DO-FINAL-SETUP .FAP .SUBRC .FTMP .EXTMP>>)>
+     <COND (<AND .F?
+		 <OR <NOT .SUBRC>
+		     <NOT <MEMQ .SUBRC '[VECTOR
+					 UVECTOR
+					 TUPLE
+					 STRING
+					 BYTES]>>>>
+	    <START-FRAME <COND (.SUBRC) (ELSE APPLY)>>
+	    <COND (<NOT .SUBRC> <PUSH .EXTMP>)>)>
+     <COND (<AND .ANY-EMPTY .BR <N==? .INRTYP FALSE> <NOT .DIR>>
+	    <EMPTY-MAPF-CHECK .K .STMPS .BR .SEG?>)>
+     <IEMIT `LOOP>
+     <LABEL-TAG .MAPLP>
+     <IEMIT `INTGO>
+     <EMPTY-MAPF-CHECK .K
+		       .STMPS
+		       <COND (<AND .BR
+				   <COND (.DIR <N==? .INRTYP FALSE>)
+					 (ELSE <==? .INRTYP FALSE>)>>
+			      .BR)
+			     (ELSE .APPLTAG)>
+		       .SEG?>
+     <COND (<AND <OR <SPCS-X .INRAP> <OR? !.SEG?>>
+		 <ACTIVATED .INRAP>
+		 .F?
+		 <NOT .FF?>>
+	    <SET LEAVE? <GEN-TEMP>>
+	    <IEMIT `SET .LEAVE? 0>
+	    <IEMIT `ICALL <SET FEXIT <MAKE-TAG>> = <SET FWHERE <GEN-TEMP>>>
+	    <SET ALL-TEMPS-LIST
+		 ((.TMPS .TMPS-NEXT .FREE-TEMPS <>) !.ALL-TEMPS-LIST)>
+	    <MIM-TEMPS-HOLD>
+	    <MIM-TEMPS-EMIT>
+	    <SET FREE-TEMPS ()>
+	    <SET MYFRAME <GEN-TEMP>>
+	    <PREV-FRAME .MYFRAME>
+	    <PUT <1 .ALL-TEMPS-LIST> 4 .MYFRAME>)>
+     <REPEAT ((BST <BINDING-STRUCTURE .INRAP>) (K .K) TMP SYM (STMPS .STMPS)
+	      VAL (SEG? .SEG?) T-NAME TY PT)
+       #DECL ((BS) <LIST [REST SYMTAB]> (K) <LIST [REST NODE]>
+	      (STMPS) <LIST [REST TEMP]> (TNAME) <SPECIAL ANY>
+	      (SEG?) <LIST [REST <OR ATOM FALSE>]>)
+       <COND
+	(<EMPTY? .STMPS>
+	 <MAPF <>
+	       <FUNCTION (SYM) 
+		       #DECL ((SYM) SYMTAB)
+		       <COND (<AND <NOT .SPECD> <SPEC-SYM .SYM>>
+			      <SAVE-BINDING .BNDTMP>
+			      <SET SPECD T>)>
+		       <COND (<NOT <SPEC-SYM .SYM>>
+			      <SET TMP
+				   <GEN-TEMP <>
+					     <NAME-SYM .SYM>
+					     T
+					     <DECL-SYM .SYM>>>
+			      <PUT .SYM ,TEMP-NAME-SYM .TMP>
+			      <SET T-NAME <TEMP-NAME .TMP>>)>
+		       <COND (<AND <MBIND-GENERATE .SYM> <NOT <SPEC-SYM .SYM>>>
+			      <PUTREST .TMPS-NEXT <SET TMPS-NEXT (.T-NAME)>>
+			      <USE-TEMP .TMP>
+			      <PUT .TMP ,TEMP-REFS 1>)>>
+	       .BST>
+	 <RETURN>)
+	(ELSE
+	 <COND (<AND <SPEC-SYM <SET SYM <1 .BST>>> <NOT .SPECD>>
+		<SAVE-BINDING .BNDTMP>
+		<SET SPECD T>)>
+	 <COND
+	  (<NOT <SPEC-SYM .SYM>>
+	   <SET TMP <GEN-TEMP <> <NAME-SYM .SYM> T T>>
+	   <PUT .SYM ,TEMP-NAME-SYM .TMP>
+	   <PUTREST
+	    .TMPS-NEXT
+	    <SET TMPS-NEXT
+		 (<COND (<AND <NOT <ASS? .SYM>>
+			      <SET TY <ISTYPE? <COMPOSIT-TYPE .SYM>>>
+			      <OR <==? <SET PT <TYPEPRIM .TY>> FIX>
+				  <==? .PT WORD>
+				  <==? .PT LIST>>>
+			 <CHTYPE [<TEMP-NAME .TMP> .TY] ADECL>)
+			(ELSE <TEMP-NAME .TMP>)>)>>
+	   <PUT .TMP ,TEMP-REFS 1>)>
+	 <COND (<AND <1 .SEG?> <==? <CODE-SYM .SYM> ,ARGL-TUPLE>>
+		<IEMIT `SET <SET SEGCNT <GEN-TEMP>> 0>
+		<STACKM <1 .K> <1 .STMPS> .R? .MAPEND ,POP-STACK T .SEGCNT>
+		<IEMIT `TUPLE
+		       .SEGCNT
+		       =
+		       <COND (<SPEC-SYM .SYM> <SET VAL <GEN-TEMP>>)
+			     (ELSE .TMP)>>)
+	       (<1 .SEG?>
+		<COMPILE-LOSSAGE "Not quite implemented SEGMENTS in MAPFS">)
+	       (ELSE
+		<SET VAL
+		     <STACKM <1 .K>
+			     <1 .STMPS>
+			     .R?
+			     .MAPEND
+			     <COND (<SPEC-SYM .SYM> DONT-CARE) (ELSE .TMP)>
+			     <>
+			     <>>>)>
+	 <COND (<SPEC-SYM .SYM>
+		<SPECIAL-BINDING .SYM T .VAL>
+		<SET STK <+ .STK ,BINDING-LENGTH>>)>
+	 <SET STMPS <REST .STMPS>>
+	 <SET BST <REST .BST>>
+	 <SET K <REST .K>>
+	 <SET SEG? <REST .SEG?>>)>>
+     <COND (.F?
+	    <SET TEM <SEQ-GEN <KIDS .INRAP> DONT-CARE>>
+	    <COND (<N==? .TEM ,NO-DATUM>
+		   <COND (.FWHERE
+			  <FREE-TEMP .TEM <>>
+			  <PUSH .TEM>
+			  <IEMIT `RTUPLE 1 <FREE-TEMP <CURRENT-FRAME> <>>>)
+			 (ELSE
+			  <COND (.SPECD <IEMIT `UNBIND .BNDTMP>)>
+			  <COND (<AND <ASSIGNED? SEGCNT> .SEGCNT>
+				 <IEMIT `SUB 0 .SEGCNT = .SEGCNT '(`TYPE FIX)>
+				 <IEMIT `MUL .SEGCNT 2 = .SEGCNT '(`TYPE FIX)>
+				 <IEMIT `ADJ .SEGCNT>
+				 <FREE-TEMP .SEGCNT>)>
+			  <REM-TUPS>
+			  <DO-STACK-ARGS .MAYBE-FALSE .TEM .EXTMP .FTMP>
+			  <FREE-TEMP .TEM>)>)>)
+	   (.FF?
+	    <SET TEM <SEQ-GEN <KIDS .INRAP> DONT-CARE>>
+	    <COND (<N==? .TEM ,NO-DATUM>
+		   <COND (.SPECD <IEMIT `UNBIND .BNDTMP>)>
+		   <COND (<AND <ASSIGNED? SEGCNT> .SEGCNT>
+			  <IEMIT `SUB 0 .SEGCNT = .SEGCNT '(`TYPE FIX)>
+			  <IEMIT `MUL .SEGCNT 2 = .SEGCNT '(`TYPE FIX)>
+			  <IEMIT `ADJ .SEGCNT>
+			  <FREE-TEMP .SEGCNT>)>
+		   <REM-TUPS>
+		   <DO-FUNNY-HACK .TEM .MNOD .FAP .INRAP .FTMP .EXTMP>)>)
+	   (.FLS
+	    <SEQ-GEN <KIDS .INRAP> FLUSHED>
+	    <COND (.SPECD <IEMIT `UNBIND .BNDTMP>)>
+	    <COND (<AND <ASSIGNED? SEGCNT> .SEGCNT>
+		   <IEMIT `SUB 0 .SEGCNT = .SEGCNT '(`TYPE FIX)>
+		   <IEMIT `MUL .SEGCNT 2 = .SEGCNT '(`TYPE FIX)>
+		   <IEMIT `ADJ .SEGCNT>
+		   <FREE-TEMP .SEGCNT>)>
+	    <REM-TUPS>)
+	   (ELSE
+	    <SEQ-GEN <KIDS .INRAP> .FTMP>
+	    <COND (.SPECD <IEMIT `UNBIND .BNDTMP>)>
+	    <COND (<AND <ASSIGNED? SEGCNT> .SEGCNT>
+		   <IEMIT `SUB 0 .SEGCNT = .SEGCNT '(`TYPE FIX)>
+		   <IEMIT `MUL .SEGCNT 2 = .SEGCNT '(`TYPE FIX)>
+		   <IEMIT `ADJ .SEGCNT>
+		   <FREE-TEMP .SEGCNT>)>
+	    <REM-TUPS>)>
+     <COND (<NOT <ASSIGNED? LEAVE?>> <SET OFT .FREE-TEMPS>)>>
+   <SET FREE-TEMPS .OFT>
+   <SET TMPS-NEXT <REST .TMPS <- <LENGTH .TMPS> 1>>>
+   <COND (<AND .FWHERE .F?>
+	  <LABEL-TAG .FEXIT>
+	  <IEMIT `VEQUAL? .LEAVE? 2 + .EXIT>
+	  <DO-STACK-TUPLE .MAYBE-FALSE .FWHERE .EXTMP .FTMP>
+	  <IEMIT `VEQUAL? .LEAVE? 1 + .APPLTAG>
+	  <FREE-TEMP .LEAVE?>)>
+   <COND (<AND <NOT .F?> <ASSIGNED? SEGCNT> .SEGCNT>
+	  <IEMIT `SUB 0 .SEGCNT = .SEGCNT '(`TYPE FIX)>
+	  <IEMIT `MUL .SEGCNT 2 = .SEGCNT '(`TYPE FIX)>
+	  <IEMIT `ADJ .SEGCNT>
+	  <FREE-TEMP .SEGCNT>)>
+   <LABEL-TAG .REST-TAG>
+   <REST-STRUCS .STMPS .K .SEG?>
+   <BRANCH-TAG .MAPLP>
+   <LABEL-TAG .APPLTAG>
+   <COND (.F?
+	  <SET MWHERE <DO-LAST .SUBRC .MAYBE-FALSE .MWHERE .EXTMP .FTMP>>
+	  <FREE-TEMP .EXTMP>
+	  <FREE-TEMP .FTMP>)
+	 (.FF? <FREE-TEMP .EXTMP> <SET MWHERE <MOVE-ARG .FTMP .MWHERE>>)
+	 (<N==? .MWHERE FLUSHED>
+	  <FREE-TEMP .EXTMP>
+	  <COND (<N==? .FTMP .MWHERE> <MOVE-ARG .FTMP .MWHERE>)>)
+	 (ELSE <FREE-TEMP .EXTMP> <FREE-TEMP .FTMP>)>
+   <LABEL-TAG .EXIT>
+   <FLUSH-TUPLES .STMPS .SEG?>
+   .MWHERE>
+
+<DEFINE SAVE-BINDING (BNDTMP) <USE-TEMP .BNDTMP> <GET-BINDING .BNDTMP>>
+
+<DEFINE NO-INTERFERE (N B) 
+	#DECL ((N) NODE (B) <LIST [REST SYMTAB]>)
+	<COND (<AND <==? <NODE-TYPE .N> ,LVAL-CODE> <MEMQ <NODE-NAME .N> .B>>
+	       <>)
+	      (<MEMQ <NODE-TYPE .N> ,SNODES> T)
+	      (<AND <==? <NODE-TYPE .N> ,COND-CODE>
+		    <NOT <NO-INTERFERE <PREDIC .N> .B>>>
+	       <>)
+	      (ELSE
+	       <MAPF <>
+		     <FUNCTION (N) 
+			     #DECL ((N) NODE)
+			     <COND (<NO-INTERFERE .N .B> T)
+				   (ELSE <MAPLEAVE <>>)>>
+		     <KIDS .N>>)>>
+
+\ 
+
+<DEFINE NOTIMP (ARG) <COMPILE-ERROR "NOT IMPLEMENTED MAPF/R TUPLES">>
+
+<DEFINE MENTROPY (SYM) T>
+
+<DEFINE MBIND-GENERATE (SYM "AUX" (COD <CODE-SYM .SYM>)) 
+	#DECL ((SYM) SYMTAB (COD) FIX)
+	<CASE ,==?
+	      .COD
+	      (,ARGL-ACT <ACT-B .SYM>)
+	      (,ARGL-IAUX <AUX1-B .SYM T>)
+	      (,ARGL-AUX <AUX2-B .SYM T>)
+	      (,ARGL-TUPLE <NOTIMP .SYM>)
+	      (,ARGL-ARGS <MENTROPY .SYM>)
+	      (,ARGL-QIOPT <AUX1-B .SYM T>)
+	      (,ARGL-IOPT <AUX1-B .SYM T>)
+	      (,ARGL-QOPT <AUX2-B .SYM T>)
+	      (,ARGL-OPT <AUX2-B .SYM T>)
+	      (,ARGL-CALL <MENTROPY .SYM>)
+	      (,ARGL-BIND <BIND-B .SYM>)
+	      (,ARGL-QUOTE <MENTROPY .SYM>)
+	      (,ARGL-ARG <MENTROPY .SYM>)>>
+
+<DEFINE MAPLEAVE-GEN (N W
+		      "AUX" (FAP <1 <KIDS .MNOD>>) (TMP <GEN-TEMP <>>)
+			    (BR .BR) (DIR .DIR) RT (FRAME? <ASSIGNED? LEAVE?>)
+			    FOK TRUE-OK)
+	#DECL ((MNOD FAP N) NODE (TMP) TEMP)
+	<SET FOK <TYPE-AND <SET RT <RESULT-TYPE <SET N <1 <KIDS .N>>>>> FALSE>>
+	<SET TRUE-OK <N==? <ISTYPE? .RT> FALSE>>
+	<COND (<==? .MWHERE FLUSHED>
+	       <COND (.BR
+		      <COND (<AND .FOK .TRUE-OK>
+			     <PRED-BRANCH-GEN .BR .N .DIR>)
+			    (ELSE
+			     <GEN .N FLUSHED>
+			     <COND (<COND (.FOK <NOT .DIR>) (ELSE .DIR)>
+				    <BRANCH-TAG .BR>)>)>)
+		     (ELSE
+		      <GEN .N FLUSHED>)>)
+	      (ELSE
+	       <COND (<AND .F? <==? .MWHERE .FTMP> <NOT .FRAME?>>
+		      <SET-TEMP .TMP .FTMP>)
+		     (ELSE <SET TMP .FTMP>)>
+	       <SET MWHERE <GEN .N .MWHERE>>
+	       <DEALLOCATE-TEMP .MWHERE>)>
+	<COND (.FRAME? <SET-TEMP .LEAVE? 2>)
+	      (ELSE
+	       <REM-TUPS>
+	       <MAP-UNBIND .TMP .F? .BNDTMP .SPECD>
+	       <COND (<N==? .TMP .FTMP> <FREE-TEMP .TMP>)>
+	       <BRANCH-TAG .EXIT>)>
+	,NO-DATUM>
+
+<DEFINE MAP-UNBIND (EXTMP F? BNDTMP SPECD) 
+	<COND (.F?
+	       <IEMIT `SUB 0 .EXTMP = .EXTMP '(`TYPE FIX)>
+	       <IEMIT `MUL .EXTMP 2 = .EXTMP '(`TYPE FIX)>
+	       <IEMIT `ADJ .EXTMP>)>
+	<COND (.SPECD <IEMIT `UNBIND .BNDTMP>)>
+	T>
+
+\ 
+
+<DEFINE MAPRET-STOP-GEN (N W
+			 "AUX" (SG <SEGS .N>) (K <KIDS .N>) (LN <LENGTH .K>)
+			       (FAP <1 <KIDS .MNOD>>) DAT FTG
+			       (FF? <==? <NODE-TYPE .FAP> ,MFIRST-CODE>)
+			       (LEAVE <==? <NODE-SUBR .N> ,MAPSTOP>)
+			       (EXTMP .EXTMP) (FTMP .FTMP) (F? .F?)
+			       (MAYBE-FALSE .MAYBE-FALSE) SEGTMP
+			       (FRAME? <ASSIGNED? LEAVE?>)
+			       (SEGLABEL <MAKE-TAG>) (COUNTMP .FTMP)
+			       (SEGCALLED <>))
+   #DECL ((N MNOD) NODE (K) <LIST [REST NODE]> (LN) FIX
+	  (SEGCALLED SEGLABEL COUNTMP) <SPECIAL ANY>)
+   <COND
+    (<AND <NOT .SG> <L? .LN 2>>
+     <COND (<NOT <0? .LN>>
+	    <SET DAT <GEN <1 .K>>>
+	    <COND (.FF?
+		   <REM-TUPS>
+		   <DO-FUNNY-HACK .DAT <1 .K> .FAP .INRAP .FTMP .EXTMP>)
+		  (.F?
+		   <COND (.FRAME?
+			  <PUSH .DAT>
+			  <IEMIT `RTUPLE 1 <FREE-TEMP <CURRENT-FRAME> <>>>)
+			 (ELSE
+			  <REM-TUPS>
+			  <PUSH .DAT>
+			  <IEMIT `ADD .FTMP 1 = .FTMP '(`TYPE FIX)>)>
+		   <FREE-TEMP .DAT>)>)
+	   (ELSE <REM-TUPS>)>)
+    (.FF? <DO-FUNNY-MAPRET .N .K .FAP> <REM-TUPS>)
+    (ELSE
+     <COND (.FRAME? <SET FTMP <GEN-TEMP>> <IEMIT `SET .FTMP 0>)>
+     <MAPF <>
+      <FUNCTION (NOD "AUX" TG STYP N TT RES) 
+	 #DECL ((NOD) NODE)
+	 <COND
+	  (<==? <NODE-TYPE .NOD> ,SEGMENT-CODE>
+	   <COND (<NOT <ASSIGNED? SEGTMP>> <SET SEGTMP <GEN-TEMP <>>>)>
+	   <SET RES <GEN <SET N <1 <KIDS .NOD>>> .SEGTMP>>
+	   <COND (.MAYBE-FALSE <GEN-TYPE? .EXTMP FALSE <SET TG <MAKE-TAG>> T>)>
+	   <COND (<N==? .RES ,NO-DATUM>
+		  <SEGMENT-STACK
+		   .SEGTMP
+		   .FTMP
+		   <SET STYP <STRUCTYP <RESULT-TYPE .N>>>
+		   <ISTYPE? <RESULT-TYPE .N>>
+		   .SEGLABEL>)
+		 (.SEGCALLED <LABEL-TAG .SEGLABEL>)>
+	   <SET SEGLABEL <MAKE-TAG>>
+	   <COND (.MAYBE-FALSE
+		  <BRANCH-TAG <SET FTG <MAKE-TAG>>>
+		  <LABEL-TAG .TG>
+		  <COND (.STYP <EMPTY-CHECK .STYP .SEGTMP .STYP T .FTG>)
+			(ELSE <IEMIT `EMPTY? .SEGTMP + .FTG>)>
+		  <STACKM .N .SEGTMP <> <> .FTMP <> <>>
+		  <LABEL-TAG .FTG>)>)
+	  (ELSE
+	   <COND (.MAYBE-FALSE
+		  <SET TT <GEN .NOD>>
+		  <GEN-TYPE? .EXTMP FALSE <SET TG <MAKE-TAG>> T>
+		  <PUSH .TT>
+		  <IEMIT `ADD .FTMP 1 = .FTMP '(`TYPE FIX)>
+		  <BRANCH-TAG <SET FTG <MAKE-TAG>>>
+		  <LABEL-TAG .TG>
+		  <SET-TEMP .FTMP .TT>
+		  <LABEL-TAG .FTG>
+		  <FREE-TEMP .TT>)
+		 (ELSE
+		  <GEN .NOD ,POP-STACK>
+		  <IEMIT `ADD .FTMP 1 = .FTMP '(`TYPE FIX)>)>)>>
+      .K>
+     <COND (.FRAME?
+	    <COND (.LEAVE <SET-TEMP .LEAVE? 1>)>
+	    <IEMIT `RTUPLE .FTMP <FREE-TEMP <CURRENT-FRAME> <>>>)>)>
+   <COND (<NOT .FRAME?>
+	  <BRANCH-TAG <COND (.LEAVE .APPLTAG) (ELSE .REST-TAG)>>)>
+   ,NO-DATUM>
+
+\ 
+
+<DEFINE DO-FUNNY-MAPRET (N K FAP "AUX" SEGTMP SEGLABEL COUNTMP TGX (SEGCALLED <>)) 
+   #DECL ((N FAP) NODE (K) <LIST [REST NODE]>
+	  (SEGLABEL COUNTMP SEGCALLED) <SPECIAL ANY>)
+   <MAPF <>
+    <FUNCTION (NN "AUX" TG1 TG2 DAT STYP TMPX TEM) 
+	    #DECL ((NN) NODE (TG1 TG2) ATOM)
+	    <COND (<OR <==? <NODE-TYPE .NN> ,SEG-CODE>
+		       <==? <NODE-TYPE .NN> ,SEGMENT-CODE>>
+		   <SET COUNTMP <GEN-TEMP>>
+		   <SET SEGLABEL <MAKE-TAG>>
+		   <SET TEM <GEN <SET NN <1 <KIDS .NN>>>>>
+		   <COND (<AND <TYPE? .TEM TEMP> <L=? <TEMP-REFS .TEM> 1>>
+			  <SET SEGTMP .TEM>)
+			 (<N==? .TEM ,NO-DATUM>
+			  <COND (<NOT <ASSIGNED? SEGTMP>>
+				 <SET SEGTMP <GEN-TEMP <>>>)>
+			  <SET-TEMP .SEGTMP .TEM>
+			  <FREE-TEMP .TEM>)>
+		   <SET TG2 <MAKE-TAG>>
+		   <COND (<N==? .TEM ,NO-DATUM>
+			  <SET STYP <STRUCTYP <RESULT-TYPE .NN>>>
+			  <COND (<==? .STYP LIST>
+				 <IEMIT `LOOP (<TEMP-NAME .SEGTMP> VALUE)>)
+				(ELSE
+				 <IEMIT `LOOP (<TEMP-NAME .SEGTMP>
+					       VALUE LENGTH)>)>
+			  <LABEL-TAG <SET TG1 <MAKE-TAG>>>
+			  <IEMIT `INTGO>
+			  <SET TMPX <GEN-TEMP>>
+			  <COND (.STYP
+				 <EMPTY-CHECK .STYP .SEGTMP .STYP T .TG2>
+				 <NTH-DO .STYP .SEGTMP .TMPX 1>)
+				(ELSE
+				 <IEMIT `EMPTY? .SEGTMP + .TG2>
+				 <IEMIT `NTH1 .SEGTMP = .TMPX>)>
+			  <DO-FUNNY-HACK .TMPX .MNOD .FAP .NN .FTMP .EXTMP>
+			  <COND (.STYP <REST-DO .STYP .SEGTMP .SEGTMP 1>)
+				(ELSE <IEMIT `REST1 .SEGTMP = .SEGTMP>)> 
+			  <BRANCH-TAG .TG1>)>
+		   <COND (.SEGCALLED
+			  <SET TMPX <GEN-TEMP>>
+			  <LABEL-TAG .SEGLABEL>
+			  <IEMIT `LOOP>
+			  <LABEL-TAG <SET TGX <MAKE-TAG>>>
+			  <IEMIT `VEQUAL? .COUNTMP 0 + .TG2>
+			  <POP .TMPX>
+			  <DO-FUNNY-HACK .TMPX .MNOD .FAP .NN .FTMP .EXTMP>
+			  <IEMIT `SUB .COUNTMP 1 = .COUNTMP>
+			  <BRANCH-TAG .TGX>
+			  <LABEL-TAG .TG2>
+			  <FREE-TEMP .COUNTMP>
+			  <FREE-TEMP .TMPX>)
+			 (<N==? .TEM ,NO-DATUM>
+			  <LABEL-TAG .TG2>)>)
+		  (ELSE
+		   <SET DAT <GEN .NN DONT-CARE>>
+		   <DO-FUNNY-HACK .DAT .MNOD .FAP .NN .FTMP .EXTMP>)>>
+    .K>>
+
+<DEFINE AP? (N "AUX" AT) 
+	#DECL ((N) NODE)
+	<AND <==? <NODE-TYPE .N> ,GVAL-CODE>
+	     <==? <NODE-TYPE <SET N <1 <KIDS .N>>>> ,QUOTE-CODE>
+	     <SET AT <NODE-NAME .N>>
+	     <OR .REASONABLE
+		 <AND <GASSIGNED? .AT> <TYPE? ,.AT MSUBR>>
+		 <AND <GASSIGNED? .AT>
+		      <TYPE? ,.AT FUNCTION>
+		      <OR <==? .AT .FCNS>
+			  <AND <TYPE? .FCNS LIST> <MEMQ .AT .FCNS>>>>>
+	     .AT>>
+
+<ENDPACKAGE>

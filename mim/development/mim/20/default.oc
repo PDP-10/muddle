@@ -1,0 +1,724 @@
+
+Open coding: X$DEF-GET-MODE
+<GFCN X$DEF-GET-MODE ("VALUE" <OR FALSE STRING> CHANNEL ANY) CHANNEL4 OPER5> 
+<TEMP DATA6 TEMP11> 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+
+<INTGO> 
+<NTHUV CHANNEL4 5 = DATA6> 		     DMOVE A1* 0 CHANNEL4 (F*) 
+					     DMOVE B1* 8 (A2*) 
+
+<DEAD CHANNEL4> 
+<NTHUV DATA6 1 = DATA6 (TYPE FIX)> 	     DMOVE B1* 0 (B2*) 
+
+<AND DATA6 #WORD *000000777777* = TEMP11>    ANDI B2* 262143 
+
+<DEAD DATA6> 
+<SYSOP 'GTSTS TEMP11 (RETURN 2) = DATA6>     MOVE A1* B2* 
+					     GTSTS O* O* 
+					     JUMP TP* #REF [JS9] 
+					     MOVSI A1* 64 
+					     JRST #REF [JS10] 
+			      JS9 :	     MOVEI A1* 131072 
+					     GETER O* O* 
+					     HRRZ B2* A2* 
+					     MOVSI B1* 64 
+					     MOVEI C1* 0 
+					     JSP T* @ 170 
+					     HRLI A1* 321 
+			      JS10 :
+<DEAD TEMP11> 
+<LESS? DATA6 0 + PHRASE16!-LB (TYPE FIX)>    JUMPL A2* #REF [PHRASE16] 
+
+<RETURN "CLOSED"> 			     DMOVE A1* 4 (M*) 
+					     JRST @ 148 
+			      PHRASE16 :
+<AND DATA6 #WORD *100000000000* = TEMP11>    TLNN A2* 32768 
+					     JRST #REF [PHRASE19] 
+
+<VEQUAL? TEMP11 0 + PHRASE19!-LB (TYPE FIX)> 
+<DEAD TEMP11> 
+<AND DATA6 #WORD *020000000000* = TEMP11>    AND A2* #REF [2147483648] 
+
+<DEAD DATA6> 
+<VEQUAL? TEMP11 0 - PHRASE24!-LB (TYPE FIX)> JUMPN A2* #REF [PHRASE24] 
+
+<DEAD TEMP11> 
+<RETURN "APPEND"> 			     DMOVE A1* 6 (M*) 
+					     JRST @ 148 
+			      PHRASE24 :
+<RETURN "MODIFY"> 			     DMOVE A1* 8 (M*) 
+					     JRST @ 148 
+			      PHRASE19 :
+<AND DATA6 #WORD *200000000000* = TEMP11>    AND A2* #REF [17179869184] 
+
+<DEAD DATA6> 
+<VEQUAL? TEMP11 0 - TAG29!-LB (TYPE FIX)>    JUMPN A2* #REF [TAG29] 
+
+<DEAD TEMP11> 
+<RETURN %<>> 				     MOVSI A1* 321 
+					     MOVEI A2* 0 
+					     JRST @ 148 
+			      TAG29 :
+<RETURN "READ"> 			     DMOVE A1* 10 (M*) 
+					     JRST @ 148 
+
+2 flushed temporaries.
+
+Open coding: X$DEF-GET-BYTE-SIZE
+<GFCN X$DEF-GET-BYTE-SIZE ("VALUE" ANY CHANNEL ANY) CHANNEL4 OPER5> 
+<TEMP DATA6 TEMP11> 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+
+<INTGO> 
+<NTHUV CHANNEL4 5 = DATA6> 		     DMOVE A1* 0 CHANNEL4 (F*) 
+					     DMOVE B1* 8 (A2*) 
+
+<DEAD CHANNEL4> 
+<NTHUV DATA6 1 = DATA6 (TYPE FIX)> 	     DMOVE B1* 0 (B2*) 
+
+<SYSOP 'RFBSZ DATA6 (RETURN 2) = DATA6>      MOVE A1* B2* 
+					     RFBSZ O* O* 
+					     JUMP TP* #REF [JS15] 
+					     MOVSI A1* 64 
+					     JRST #REF [JS16] 
+			      JS15 :	     MOVEI A1* 131072 
+					     GETER O* O* 
+					     HRRZ B2* A2* 
+					     MOVSI B1* 64 
+					     MOVEI C1* 0 
+					     JSP T* @ 170 
+					     HRLI A1* 321 
+			      JS16 :
+<SET TEMP11 DATA6> 			     DMOVE B1* A1* 
+
+<TYPE? TEMP11 321 + PHRASE16!-LB> 	     LDB O* #REF [19595788291] 
+					     DMOVEM A1* 0 DATA6 (F*) 
+					     DMOVEM B1* 0 TEMP11 (F*) 
+					     CAIN O* 321 
+					     JRST #REF [PHRASE16] 
+
+<EQUAL? DATA6 7 - PHRASE13!-LB> 	     CAMN A1* #REF [16777216] 
+					     CAME A2* #REF [7] 
+					     JRST #REF [PHRASE13] 
+
+<RETURN "ASCII"> 			     DMOVE A1* 12 (M*) 
+					     JRST @ 148 
+			      PHRASE13 :
+<EQUAL? DATA6 8 - PHRASE14!-LB> 	     CAMN A1* #REF [16777216] 
+					     CAME A2* #REF [8] 
+					     JRST #REF [PHRASE14] 
+
+<RETURN "8BIT"> 			     DMOVE A1* 14 (M*) 
+					     JRST @ 148 
+			      PHRASE14 :
+<EQUAL? DATA6 36 - PHRASE15!-LB> 	     CAMN A1* #REF [16777216] 
+					     CAME A2* #REF [36] 
+					     JRST #REF [PHRASE15] 
+
+<RETURN "BINARY"> 			     DMOVE A1* 16 (M*) 
+					     JRST @ 148 
+			      PHRASE15 :
+<SET TEMP11 DATA6> 
+<DEAD DATA6> 				     DMOVEM A1* 0 TEMP11 (F*) 
+			      PHRASE16 :
+<RETURN TEMP11> 			     DMOVE A1* 0 TEMP11 (F*) 
+					     JRST @ 148 
+
+<DEAD TEMP11> 
+Open coding: X$DEF-SHORT-NAME
+<GFCN X$DEF-SHORT-NAME ("VALUE" <OR FALSE STRING> CHANNEL ANY) CHANNEL4 OPER5> 
+<TEMP DATA6> 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+
+<INTGO> 
+<NTHUV CHANNEL4 5 = DATA6> 		     DMOVE A1* 0 CHANNEL4 (F*) 
+					     DMOVE B1* 8 (A2*) 
+
+<DEAD CHANNEL4> 
+<FRAME ?FRM17!-LB I$DO-JFNS> 		     PUSH TP* #REF [16777216] 
+					     #GFRM ?FRM17!-LB T 
+
+<NTHUV DATA6 1 = STACK (TYPE FIX)> 	     PUSH TP* 0 (B2*) 
+					     PUSH TP* 1 (B2*) 
+
+<DEAD DATA6> 
+<PUSH 153092097> 			     PUSH TP* #REF [16777216] 
+					     PUSH TP* #REF [153092097] 
+
+<CALL 'I$DO-JFNS 2 = DATA6 ?FRM17!-LB> 	     #GCAL I$DO-JFNS T %<> 
+			      ?FRM17 :
+<RETURN DATA6> 				     JRST @ 148 
+
+<DEAD DATA6> 
+1 flushed temporaries.
+
+Open coding: X$DEF-NM1
+<GFCN X$DEF-NM1 ("VALUE" <OR FALSE STRING> CHANNEL ANY) CHANNEL4 OPER5> 
+<TEMP DATA6> 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+
+<INTGO> 
+<NTHUV CHANNEL4 5 = DATA6> 		     DMOVE A1* 0 CHANNEL4 (F*) 
+					     DMOVE B1* 8 (A2*) 
+
+<DEAD CHANNEL4> 
+<FRAME ?FRM22!-LB I$DO-JFNS> 		     PUSH TP* #REF [16777216] 
+					     #GFRM ?FRM22!-LB T 
+
+<NTHUV DATA6 1 = STACK (TYPE FIX)> 	     PUSH TP* 0 (B2*) 
+					     PUSH TP* 1 (B2*) 
+
+<DEAD DATA6> 
+<PUSH 134217728> 			     PUSH TP* #REF [16777216] 
+					     PUSH TP* #REF [134217728] 
+
+<CALL 'I$DO-JFNS 2 = DATA6 ?FRM22!-LB> 	     #GCAL I$DO-JFNS T %<> 
+			      ?FRM22 :
+<RETURN DATA6> 				     JRST @ 148 
+
+<DEAD DATA6> 
+1 flushed temporaries.
+
+Open coding: X$DEF-NM2
+<GFCN X$DEF-NM2 ("VALUE" <OR FALSE STRING> CHANNEL ANY) CHANNEL4 OPER5> 
+<TEMP DATA6> 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+
+<INTGO> 
+<NTHUV CHANNEL4 5 = DATA6> 		     DMOVE A1* 0 CHANNEL4 (F*) 
+					     DMOVE B1* 8 (A2*) 
+
+<DEAD CHANNEL4> 
+<FRAME ?FRM27!-LB I$DO-JFNS> 		     PUSH TP* #REF [16777216] 
+					     #GFRM ?FRM27!-LB T 
+
+<NTHUV DATA6 1 = STACK (TYPE FIX)> 	     PUSH TP* 0 (B2*) 
+					     PUSH TP* 1 (B2*) 
+
+<DEAD DATA6> 
+<PUSH 16777216> 			     PUSH TP* #REF [16777216] 
+					     PUSH TP* #REF [16777216] 
+
+<CALL 'I$DO-JFNS 2 = DATA6 ?FRM27!-LB> 	     #GCAL I$DO-JFNS T %<> 
+			      ?FRM27 :
+<RETURN DATA6> 				     JRST @ 148 
+
+<DEAD DATA6> 
+1 flushed temporaries.
+
+Open coding: X$DEF-DEV
+<GFCN X$DEF-DEV ("VALUE" <OR FALSE STRING> CHANNEL ANY) CHANNEL4 OPER5> 
+<TEMP DATA6> 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+
+<INTGO> 
+<NTHUV CHANNEL4 5 = DATA6> 		     DMOVE A1* 0 CHANNEL4 (F*) 
+					     DMOVE B1* 8 (A2*) 
+
+<DEAD CHANNEL4> 
+<FRAME ?FRM32!-LB I$DO-JFNS> 		     PUSH TP* #REF [16777216] 
+					     #GFRM ?FRM32!-LB T 
+
+<NTHUV DATA6 1 = STACK (TYPE FIX)> 	     PUSH TP* 0 (B2*) 
+					     PUSH TP* 1 (B2*) 
+
+<DEAD DATA6> 
+<PUSH 8589934592> 			     PUSH TP* #REF [16777216] 
+					     PUSH TP* #REF [8589934592] 
+
+<CALL 'I$DO-JFNS 2 = DATA6 ?FRM32!-LB> 	     #GCAL I$DO-JFNS T %<> 
+			      ?FRM32 :
+<RETURN DATA6> 				     JRST @ 148 
+
+<DEAD DATA6> 
+1 flushed temporaries.
+
+Open coding: X$DEF-SNM
+<GFCN X$DEF-SNM ("VALUE" ANY CHANNEL ANY) CHANNEL4 OPER5> 
+<TEMP DATA7 STR6 TEMP13> 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+
+<INTGO> 
+<NTHUV CHANNEL4 5 = DATA7> 		     DMOVE A1* 0 CHANNEL4 (F*) 
+					     DMOVE B1* 8 (A2*) 
+
+<DEAD CHANNEL4> 
+<FRAME ?FRM37!-LB I$DO-JFNS> 		     PUSH TP* #REF [16777216] 
+					     #GFRM ?FRM37!-LB T 
+
+<NTHUV DATA7 1 = STACK (TYPE FIX)> 	     PUSH TP* 0 (B2*) 
+					     PUSH TP* 1 (B2*) 
+
+<PUSH 1073741824> 			     PUSH TP* #REF [16777216] 
+					     PUSH TP* #REF [1073741824] 
+
+<CALL 'I$DO-JFNS 2 = STR6 ?FRM37!-LB> 	     DMOVEM B1* 0 DATA7 (F*) 
+					     #GCAL I$DO-JFNS T %<> 
+			      ?FRM37 :
+<NTHUV DATA7 1 = TEMP13 (TYPE FIX)> 	     DMOVE B1* @ 1 DATA7 (F*) 
+
+<GETBITS TEMP13 18 18 = TEMP13> 	     LDB B2* #REF [19629342724] 
+
+<VEQUAL? TEMP13 0 - BOOL12!-LB (TYPE FIX)>   DMOVEM A1* 0 STR6 (F*) 
+					     JUMPN B2* #REF [BOOL12] 
+
+<DEAD TEMP13> 
+<FRAME 'T$GET-DEVICE-TYPE> 		     JSP T* @ 144 
+
+<NTHUV DATA7 1 = STACK (TYPE FIX)> 	     DMOVE A1* 0 DATA7 (F*) 
+					     PUSH TP* 0 (A2*) 
+					     PUSH TP* 1 (A2*) 
+
+<DEAD DATA7> 
+<CALL 'T$GET-DEVICE-TYPE 1 = TEMP13> 	     MOVE O1* 19 (M*) 
+					     MOVEI O2* 1 
+					     JSP T* @ 145 
+
+<EQUAL? TEMP13 0 - PHRASE10!-LB> 	     CAMN A1* #REF [16777216] 
+					     CAME A2* #REF [0] 
+					     JRST #REF [PHRASE10] 
+
+<DEAD TEMP13> 		      BOOL12 :
+<TYPE? STR6 321 + BOOL17!-LB> 		     LDB O* #REF [(STR6 19599196160)] 
+					     CAIN O* 321 
+					     JRST #REF [BOOL17] 
+
+<EMPUS? STR6 - PHRASE10!-LB (TYPE STRING)>   HRRZ O* 0 STR6 (F*) 
+					     JUMPN O* #REF [PHRASE10] 
+			      BOOL17 :
+<FRAME 'T$GET-CONNECTED-DIR> 		     JSP T* @ 144 
+
+<CALL 'T$GET-CONNECTED-DIR 0 = TEMP13> 	     MOVE O1* 21 (M*) 
+					     MOVEI O2* 0 
+					     JSP T* @ 145 
+
+<RETURN TEMP13> 			     JRST @ 148 
+
+<DEAD TEMP13> 		      PHRASE10 :
+<RETURN STR6> 				     DMOVE A1* 0 STR6 (F*) 
+					     JRST @ 148 
+
+<DEAD STR6> 
+1 flushed temporaries.
+
+Open coding: X$DEF-NAME
+<GFCN X$DEF-NAME ("VALUE" <OR FALSE STRING> CHANNEL ANY "OPTIONAL" ANY)
+CHANNEL6 OPER7 BITS8> 			     ADDI O2* 157 (R*) 
+					     JRST @ (O2*) 
+					     DISPATCH OPT4 
+					     DISPATCH OPT5 
+			      OPT4 :
+<PUSH 31> 				     PUSH TP* #REF [16777216] 
+					     PUSH TP* #REF [31] 
+			      OPT5 :
+<TEMP DATA9 (ARGBITS10:FIX 1) TEMP13> 
+					     PUSH TP* #REF [16777216] 
+					     PUSH TP* #REF [1] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+
+<INTGO> 
+<NTHUV CHANNEL6 5 = DATA9> 		     DMOVE A1* 0 CHANNEL6 (F*) 
+					     DMOVE B1* 8 (A2*) 
+
+<DEAD CHANNEL6> 
+<AND BITS8 #WORD *000000000020* = TEMP13>    DMOVE A1* 0 BITS8 (F*) 
+					     TRNN A2* 16 
+					     JRST #REF [PHRASE12] 
+
+<VEQUAL? TEMP13 0 + PHRASE12!-LB (TYPE FIX)> 
+<DEAD TEMP13> 
+<OR ARGBITS10 #WORD *100000000000* = ARGBITS10> 
+					     DMOVE C1* 0 ARGBITS10 (F*) 
+					     TLO C2* 32768 
+					     MOVEM C2* 1 ARGBITS10 (F*) 
+			      PHRASE12 :
+<AND BITS8 #WORD *000000000010* = TEMP13>    TRNN A2* 8 
+					     JRST #REF [PHRASE17] 
+
+<VEQUAL? TEMP13 0 + PHRASE17!-LB (TYPE FIX)> 
+<DEAD TEMP13> 
+<OR ARGBITS10 #WORD *010000000000* = ARGBITS10> 
+					     DMOVE C1* 0 ARGBITS10 (F*) 
+					     TLO C2* 4096 
+					     MOVEM C2* 1 ARGBITS10 (F*) 
+			      PHRASE17 :
+<AND BITS8 #WORD *000000000004* = TEMP13>    TRNN A2* 4 
+					     JRST #REF [PHRASE21] 
+
+<VEQUAL? TEMP13 0 + PHRASE21!-LB (TYPE FIX)> 
+<DEAD TEMP13> 
+<OR ARGBITS10 #WORD *001000000000* = ARGBITS10> 
+					     DMOVE C1* 0 ARGBITS10 (F*) 
+					     TLO C2* 512 
+					     MOVEM C2* 1 ARGBITS10 (F*) 
+			      PHRASE21 :
+<AND BITS8 #WORD *000000000002* = TEMP13>    TRNN A2* 2 
+					     JRST #REF [PHRASE25] 
+
+<VEQUAL? TEMP13 0 + PHRASE25!-LB (TYPE FIX)> 
+<DEAD TEMP13> 
+<OR ARGBITS10 #WORD *000100000000* = ARGBITS10> 
+					     DMOVE C1* 0 ARGBITS10 (F*) 
+					     TLO C2* 64 
+					     MOVEM C2* 1 ARGBITS10 (F*) 
+			      PHRASE25 :
+<AND BITS8 #WORD *000000000001* = TEMP13>    ANDI A2* 1 
+
+<DEAD BITS8> 
+<VEQUAL? TEMP13 0 + PHRASE29!-LB (TYPE FIX)> JUMPE A2* #REF [PHRASE29] 
+
+<DEAD TEMP13> 
+<OR ARGBITS10 #WORD *000010000000* = ARGBITS10> 
+					     DMOVE A1* 0 ARGBITS10 (F*) 
+					     TLO A2* 8 
+					     MOVEM A2* 1 ARGBITS10 (F*) 
+			      PHRASE29 :
+<FRAME ?FRM46!-LB I$DO-JFNS> 		     PUSH TP* #REF [16777216] 
+					     #GFRM ?FRM46!-LB T 
+
+<NTHUV DATA9 1 = STACK (TYPE FIX)> 	     PUSH TP* 0 (B2*) 
+					     PUSH TP* 1 (B2*) 
+
+<DEAD DATA9> 
+<PUSH ARGBITS10> 			     PUSH TP* 0 ARGBITS10 (F*) 
+					     PUSH TP* 1 ARGBITS10 (F*) 
+
+<DEAD ARGBITS10> 
+<CALL 'I$DO-JFNS 2 = TEMP13 ?FRM46!-LB>      #GCAL I$DO-JFNS T %<> 
+			      ?FRM46 :
+<RETURN TEMP13> 			     JRST @ 148 
+
+<DEAD TEMP13> 
+2 flushed temporaries.
+
+Open coding: I$DO-JFNS
+<GFCN I$DO-JFNS ("VALUE" <OR FALSE STRING> FIX FIX) JFN4 BITS5> 
+<TEMP STR7:STRING TEMP14 CT6 OLD34 NEW35:STRING> 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+
+<INTGO> 
+<GVAL 'I$NAMSTR = STR7> 		     DMOVE A1* @ 23 (M*) 
+
+<AND JFN4 #WORD *000000777777* = JFN4> 	     HRRZS B2* 1 JFN4 (TP*) 
+
+<VEQUAL? JFN4 65 + BOOL11!-LB (TYPE FIX)>    CAIN B2* 65 
+					     JRST #REF [BOOL11] 
+
+<VEQUAL? JFN4 64 - PHRASE10!-LB (TYPE FIX)>  CAIE B2* 64 
+					     JRST #REF [PHRASE10] 
+			      BOOL11 :
+<AND BITS5 #WORD *100000000000* = TEMP14>    DMOVE C1* 0 BITS5 (TP*) 
+					     TLNE C2* 32768 
+					     JRST #REF [PHRASE13] 
+
+<VEQUAL? TEMP14 0 - PHRASE13!-LB (TYPE FIX)> 
+<DEAD TEMP14> 
+<RETURN ""> 				     DMOVE A1* 24 (M*) 
+					     MOVE O* (TP*) <- 2 ,WINNING-VICTIM
+> 
+					     SUBI TP* ,WINNING-VICTIM 
+					     JRST @ O* 
+			      PHRASE13 :
+<AND BITS5 #WORD *000000000001* = TEMP14>    ANDI C2* 1 
+
+<DEAD BITS5> 
+<VEQUAL? TEMP14 0 - PHRASE17!-LB (TYPE FIX)> JUMPN C2* #REF [PHRASE17] 
+
+<DEAD TEMP14> 
+<RETURN "TTY"> 				     DMOVE A1* 26 (M*) 
+					     MOVE O* (TP*) <- 2 ,WINNING-VICTIM
+> 
+					     SUBI TP* ,WINNING-VICTIM 
+					     JRST @ O* 
+			      PHRASE17 :
+<RETURN "TTY:"> 			     DMOVE A1* 28 (M*) 
+					     MOVE O* (TP*) <- 2 ,WINNING-VICTIM
+> 
+					     SUBI TP* ,WINNING-VICTIM 
+					     JRST @ O* 
+			      PHRASE10 :
+<SYSOP 'JFNS STR7 JFN4 BITS5 0 = CT6> 	     DMOVEM A1* 0 STR7 (TP*) 
+					     MOVE A1* A2* 
+					     MOVE A2* B2* 
+					     MOVE B1* 1 BITS5 (TP*) 
+					     MOVEI B2* 0 
+					     HRRZ C1* A1* 
+					     PUSHJ P* @ 202 
+
+<DEAD JFN4 BITS5> 
+<SET TEMP14 CT6> 			     DMOVE B1* A1* 
+
+<TYPE? TEMP14 321 + PHRASE22!-LB> 	     LDB O* #REF [19595788291] 
+					     DMOVEM A1* 0 CT6 (TP*) 
+					     DMOVEM B1* 0 TEMP14 (TP*) 
+					     CAIN O* 321 
+					     JRST #REF [PHRASE22] 
+
+<UUBLOCK 453 CT6 = CT6 (TYPE STRING)> 	     MOVEI O1* 453 
+					     MOVE O2* A2* 
+					     PUSHJ P* @ 214 
+
+<SET TEMP14 STR7 (TYPE STRING)> 	     DMOVE B1* 0 STR7 (TP*) 
+
+<DEAD STR7> 
+<SET STR7 CT6 (TYPE STRING)> 		     DMOVE C1* A1* 
+
+<LOOP> 					     DMOVEM A1* 0 CT6 (TP*) 
+					     DMOVEM B1* 0 TEMP14 (TP*) 
+			      MAP24 :
+<INTGO> 
+<EMPUS? TEMP14 + MAPAP27!-LB> 		     HRRZ O* 0 TEMP14 (TP*) 
+					     JUMPE O* #REF [MAPAP27] 
+
+<EMPUS? STR7 + MAPAP27!-LB> 		     TRNN C1* 262143 
+					     JRST #REF [MAPAP27] 
+
+<SET OLD34 TEMP14> 			     DMOVE B1* 0 TEMP14 (TP*) 
+
+<SET NEW35 STR7> 			     DMOVE A1* C1* 
+
+<NTHUS OLD34 1 = OLD34 (TYPE CHARACTER)>     ILDB B2* B2* 
+
+<PUTUS NEW35 1 OLD34> 			     DMOVEM A1* 0 NEW35 (TP*) 
+					     IDPB B2* A2* 
+
+<DEAD NEW35 OLD34> 
+<RESTUS TEMP14 1 = TEMP14 (TYPE STRING)>     SOS O* 0 TEMP14 (TP*) 
+					     IBP O* 1 TEMP14 (TP*) 
+
+<RESTUS STR7 1 = STR7 (TYPE STRING)> 	     SUBI C1* 1 
+					     IBP O* C2* 
+
+<JUMP + MAP24!-LB> 			     JRST #REF [MAP24] 
+			      MAPAP27 :
+<SET TEMP14 CT6> 			     DMOVE A1* 0 CT6 (TP*) 
+
+<DEAD CT6> 				     DMOVEM A1* 0 TEMP14 (TP*) 
+			      PHRASE22 :
+<RETURN TEMP14> 			     DMOVE A1* 0 TEMP14 (TP*) 
+					     MOVE O* (TP*) <- 2 ,WINNING-VICTIM
+> 
+					     SUBI TP* ,WINNING-VICTIM 
+					     JRST @ O* 
+
+<DEAD TEMP14> 
+Open coding: X$DEF-FLUSH
+<GFCN X$DEF-FLUSH ("VALUE" ANY CHANNEL ANY) CHANNEL4 OPER5> 
+<TEMP DATA6> 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+
+<INTGO> 
+<NTHUV CHANNEL4 5 = DATA6> 		     DMOVE A1* 0 CHANNEL4 (F*) 
+					     DMOVE B1* 8 (A2*) 
+
+<DEAD CHANNEL4> 
+<NTHUV DATA6 1 = DATA6 (TYPE FIX)> 	     DMOVE B1* 0 (B2*) 
+
+<AND DATA6 #WORD *000000777777* = DATA6>     ANDI B2* 262143 
+
+<OR DATA6 #WORD *004000000000* = DATA6>      TLO B2* 2048 
+
+<SYSOP 'CLOSF DATA6 = DATA6> 		     MOVE A1* B2* 
+					     CLOSF O* O* 
+					     JUMP TP* #REF [JS64] 
+					     MOVE A2* 1 
+					     MOVSI A1* 64 
+					     JRST #REF [JS65] 
+			      JS64 :	     MOVEI A1* 131072 
+					     GETER O* O* 
+					     HRRZ B2* A2* 
+					     MOVSI B1* 64 
+					     MOVEI C1* 0 
+					     JSP T* @ 170 
+					     HRLI A1* 321 
+			      JS65 :
+<TYPE? DATA6 321 + PHRASE9!-LB> 	     LDB O* #REF [19595788289] 
+					     CAIN O* 321 
+					     JRST #REF [PHRASE9] 
+
+<RETURN DATA6> 				     JRST @ 148 
+
+<DEAD DATA6> 		      PHRASE9 :
+<RETURN DATA6> 				     JRST @ 148 
+
+<DEAD DATA6> 
+1 flushed temporaries.
+
+Open coding: X$DEF-HACK-DATE
+<GFCN X$DEF-HACK-DATE ("VALUE" <OR FALSE FIX> CHANNEL ATOM "OPTIONAL" FIX)
+CHANNEL6 OPR7 NEW8> 			     ADDI O2* 292 (R*) 
+					     JRST @ (O2*) 
+					     DISPATCH OPT4 
+					     DISPATCH OPT5 
+			      OPT4 :
+<PUSH #UNBOUND 0 > 			     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+			      OPT5 :
+<TEMP DATA9 JFN11:FIX TEMP16> 
+					     PUSH TP* #REF [16777216] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+					     PUSH TP* #REF [0] 
+
+<INTGO> 
+<NTHUV CHANNEL6 5 = DATA9> 		     DMOVE A1* 0 CHANNEL6 (F*) 
+					     DMOVE B1* 8 (A2*) 
+
+<DEAD CHANNEL6> 
+<NTHUV DATA9 1 = DATA9 (TYPE FIX)> 	     DMOVE B1* 0 (B2*) 
+
+<AND DATA9 #WORD *000000777777* = JFN11>     ANDI B2* 262143 
+
+<DEAD DATA9> 
+<NTHR 'DATEU 1 = DATA9 (RECORD-TYPE ATOM) (BRANCH-FALSE + TAG15!-LB)> 
+					     MOVE T* 1 30 (M*) 
+					     MOVEM B2* 1 JFN11 (F*) 
+					     SKIPN A2* 0 (T*) 
+					     JRST #REF [TAG15] 
+
+<TYPE? DATA9 <TYPE-CODE FALSE> + TAG15!-LB> 
+<NTHR DATA9 1 = DATA9 (RECORD-TYPE GBIND)>   DMOVE A1* (A2*) 
+
+<TYPE? DATA9 0 - PHRASE14!-LB> 		     LDB O* #REF [19595788289] 
+					     JUMPN O* #REF [PHRASE14] 
+
+<DEAD DATA9> 		      TAG15 :
+<UUBLOCK 1990 3 = DATA9> 		     MOVEI O1* 1990 
+					     MOVEI O2* 3 
+					     PUSHJ P* @ 214 
+
+<SET TEMP16 DATA9> 			     DMOVE B1* A1* 
+
+<LOOP (TEMP16 VALUE LENGTH)>  ISTR17 :
+<EMPUU? TEMP16 + ISTRE18!-LB> 		     TRNN B1* 262143 
+					     JRST #REF [ISTRE18] 
+
+<PUTUU TEMP16 1 0> 			     SETZM 0 (B2*) 
+
+<RESTUU TEMP16 1 = TEMP16> 		     ADDI B2* 1 
+					     SUBI B1* 1 
+
+<JUMP + ISTR17!-LB> 			     JRST #REF [ISTR17] 
+			      ISTRE18 :
+<SETG 'DATEU DATA9> 			     DMOVEM A1* @ 33 (M*) 
+
+<DEAD DATA9> 		      PHRASE14 :
+<GVAL 'DATEU = TEMP16> 			     DMOVE A1* @ 33 (M*) 
+
+<TYPE? NEW8 0 - PHRASE20!-LB> 		     LDB O* #REF [(NEW8 19599196160)] 
+					     DMOVEM A1* 0 TEMP16 (F*) 
+					     JUMPN O* #REF [PHRASE20] 
+
+<SYSOP 'RFTAD JFN11 TEMP16 3 = DATA9> 	     MOVE A1* 1 JFN11 (F*) 
+					     MOVE A2* 1 TEMP16 (F*) 
+					     MOVEI B1* 3 
+					     PUSHJ P* @ 224 
+
+<DEAD JFN11> 
+<TYPE? DATA9 321 + PHRASE29!-LB> 	     LDB O* #REF [19595788289] 
+					     DMOVEM A1* 0 DATA9 (F*) 
+					     CAIN O* 321 
+					     JRST #REF [PHRASE29] 
+
+<VEQUAL? OPR7 'T$READ-DATE - PHRASE24!-LB>   DMOVE B1* 0 OPR7 (F*) 
+					     CAME B2* 35 (M*) 
+					     JRST #REF [PHRASE24] 
+
+<DEAD OPR7> 
+<NTHUU TEMP16 3 = DATA9 (TYPE FIX)> 	     DMOVE B1* 0 TEMP16 (F*) 
+					     MOVE A2* 2 (B2*) 
+
+<DEAD TEMP16> 
+<RETURN DATA9> 				*TRQ*MOVSI A1* 64 
+					     JRST @ 148 
+
+<DEAD DATA9> 		      PHRASE24 :
+<NTHUU TEMP16 1 = DATA9 (TYPE FIX)> 	     MOVE A2* @ 1 TEMP16 (F*) 
+
+<DEAD TEMP16> 
+<RETURN DATA9> 				*TRQ*MOVSI A1* 64 
+					     JRST @ 148 
+
+<DEAD DATA9> 		      PHRASE20 :
+<PUTUU TEMP16 1 -1> 			     SETOM 0 (A2*) 
+
+<PUTUU TEMP16 2 -1> 			     SETOM 1 (A2*) 
+
+<PUTUU TEMP16 3 -1> 			     SETOM 2 (A2*) 
+
+<VEQUAL? OPR7 'T$READ-DATE - PHRASE27!-LB>   DMOVE B1* 0 OPR7 (F*) 
+					     CAME B2* 35 (M*) 
+					     JRST #REF [PHRASE27] 
+
+<DEAD OPR7> 
+<PUTUU TEMP16 3 NEW8> 			     DMOVE B1* 0 NEW8 (F*) 
+					     MOVEM B2* 2 (A2*) 
+
+<JUMP + COND26!-LB> 			     JRST #REF [COND26] 
+			      PHRASE27 :
+<PUTUU TEMP16 1 NEW8> 			     DMOVE B1* 0 NEW8 (F*) 
+					     MOVEM B2* 0 (A2*) 
+			      COND26 :
+<SYSOP 'SFTAD JFN11 TEMP16 3 = DATA9> 	     MOVE A1* 1 JFN11 (F*) 
+					     MOVEI B1* 3 
+					     SFTAD O* O* 
+					     JUMP TP* #REF [JS72] 
+					     MOVE A2* 1 
+					     MOVSI A1* 64 
+					     JRST #REF [JS73] 
+			      JS72 :	     MOVEI A1* 131072 
+					     GETER O* O* 
+					     HRRZ B2* A2* 
+					     MOVSI B1* 64 
+					     MOVEI C1* 0 
+					     JSP T* @ 170 
+					     HRLI A1* 321 
+			      JS73 :
+<DEAD JFN11 TEMP16> 
+<TYPE? DATA9 321 + PHRASE29!-LB> 	     LDB O* #REF [19595788289] 
+					     DMOVEM A1* 0 DATA9 (F*) 
+					     CAIN O* 321 
+					     JRST #REF [PHRASE29] 
+
+<SET DATA9 NEW8> 			     DMOVE B1* 0 NEW8 (F*) 
+
+<DEAD NEW8> 				     DMOVEM B1* 0 DATA9 (F*) 
+			      PHRASE29 :
+<RETURN DATA9> 				     DMOVE A1* 0 DATA9 (F*) 
+					     JRST @ 148 
+
+<DEAD DATA9> 
+Fixing Up CALLs
+Writing MSUBR
+ [Code: 414 / Vector: 36]

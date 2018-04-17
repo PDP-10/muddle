@@ -1,0 +1,104 @@
+
+<PACKAGE "BITSANA">
+
+<ENTRY FGETBITS-ANA FPUTBITS-ANA BITLOG>
+
+<USE "SYMANA" "CHKDCL" "COMPDEC">
+
+"MUDDLE BITS,GETBITS,PUTBITS,ANDB,XORB,EQVB AND ORB COMPILER ROUTINES."
+
+<DEFINE FGETBITS-ANA (N R) #DECL ((N) NODE) <PGBITS .N .R 3 ,FGETBITS-CODE>>
+
+<COND (<AND <GASSIGNED? FGETBITS>
+	    <GASSIGNED? FGETBITS-ANA>>
+       <PUTPROP ,FGETBITS ANALYSIS ,FGETBITS-ANA>)>
+
+<DEFINE FPUTBITS-ANA (N R) <PGBITS .N .R 4 ,FPUTBITS-CODE>>
+
+<COND (<AND <GASSIGNED? FPUTBITS>
+	    <GASSIGNED? FPUTBITS-ANA>>
+       <PUTPROP ,FPUTBITS ANALYSIS ,FPUTBITS-ANA>)>
+
+<DEFINE PGBITS (NOD RTYP NARG COD "AUX" (K <KIDS .NOD>)
+					(NAM <NODE-NAME .NOD>)) 
+	#DECL ((NOD) NODE (COD) FIX (K) <LIST [REST NODE]>)
+	<COND (<SEGFLUSH .NOD .RTYP>)
+	      (ELSE
+	       <ARGCHK <LENGTH .K> .NARG .NAM .NOD>
+	       <PUT .NOD ,NODE-TYPE .COD>
+	       <EANA <1 .K> '<PRIMTYPE FIX> .NAM>
+	       <EANA <2 .K> FIX .NAM>
+	       <EANA <3 .K> FIX .NAM>
+	       <COND (<==? <LENGTH .K> 4>
+		      <EANA <4 .K> '<PRIMTYPE FIX> .NAM>)>)>
+	<TYPE-OK? FIX .RTYP>>
+
+<DEFINE BITLOG (NOD RTYP "AUX" (K <KIDS .NOD>) (LN <LENGTH .K>) (NL (0))
+			       (IC <CHTYPE <APPLY <NODE-SUBR .NOD>> FIX>)
+			       (NP .NL) CN) 
+	#DECL ((NOD) NODE (K) <LIST [REST NODE]> (LN) FIX
+	       (CN) <SPECIAL NODE>)
+	<COND (<SEGFLUSH .NOD .RTYP>)
+	      (<0? .LN>
+	       <PUT .NOD ,NODE-TYPE ,QUOTE-CODE>
+	       <PUT .NOD ,KIDS ()>
+	       <PUT .NOD ,NODE-NAME <APPLY <NODE-SUBR .NOD>>>)
+	      (ELSE
+	       <PUT .NOD ,NODE-TYPE ,BITL-CODE>
+	       <MAPF <>
+		     <FUNCTION (K1) 
+			     #DECL ((K1) NODE)
+			     <EANA .K1 '<PRIMTYPE WORD> <NODE-NAME .NOD>>
+			     <COND (<==? <NODE-TYPE .K1> ,QUOTE-CODE>
+				    <SET CN .K1>
+				    <SET IC <CHTYPE <APPLY <NODE-SUBR .NOD>
+							   .IC
+							   <NODE-NAME .K1>>
+						    FIX>>)
+				   (<AND <==? <NODE-TYPE .K1> ,BITL-CODE>
+					 <==? <NODE-SUBR .K1>
+					      <NODE-SUBR .NOD>>>
+				    <SET IC
+					 <COMBINE-LOGICAL-OPS
+					  .NOD .K1 .NP .IC>>
+				    <SET NP <REST .NP <- <LENGTH .NP> 1>>>)
+				   (ELSE
+				    <PUTREST .NP <SET NP (.K1)>>)>>
+		     .K>
+	       <COND (<EMPTY? <SET NL <REST .NL>>>
+		      <PUT .NOD ,NODE-TYPE ,QUOTE-CODE>
+		      <PUT .NOD ,NODE-NAME .IC>
+		      <PUT .NOD ,KIDS ()>)
+		     (ELSE
+		      <COND (<ASSIGNED? CN>
+			     <PUT .CN ,NODE-NAME <CHTYPE .IC WORD>>
+			     <PUTREST .NP (.CN)>)>
+		      <PUT .NOD ,KIDS .NL>)>)>
+	<TYPE-OK? FIX .RTYP>>
+
+<DEFINE COMBINE-LOGICAL-OPS (P:NODE N:NODE NP:LIST IC)
+	<MAPF <>
+	      <FUNCTION (NN:NODE)
+		   <COND (<==? <NODE-TYPE .NN> ,QUOTE-CODE>
+			  <SET IC <CHTYPE <APPLY <NODE-SUBR .P>
+						 .IC
+						 <NODE-NAME .NN>>
+					  FIX>>
+			  <SET CN .NN>)
+			 (<AND <==? <NODE-TYPE .NN> ,BITL-CODE>
+			       <==? <NODE-SUBR .NN> <NODE-SUBR .P>>>
+			  <SET IC <COMBINE-LOGICAL-OPS .P .NN .NP .IC>>
+			  <SET NP <REST .NP <- <LENGTH .NP> 1>>>)
+			 (ELSE
+			  <PUT .NN ,PARENT .P>
+			  <PUTREST .NP <SET NP (.NN)>>)>>
+	      <KIDS .N>>
+	.IC>
+
+<COND (<GASSIGNED? BITLOG>
+       <PUTPROP ,ANDB ANALYSIS ,BITLOG>
+       <PUTPROP ,ORB ANALYSIS ,BITLOG>
+       <PUTPROP ,XORB ANALYSIS ,BITLOG>
+       <PUTPROP ,EQVB ANALYSIS ,BITLOG>)>
+
+<ENDPACKAGE>

@@ -1,0 +1,283 @@
+MIM-Muddle differences
+
+Beware:  ^A is now the `control-S' character--it halts whatever you're
+doing, and returns to the previous listen loop.  ^S is normally just
+used for flow control, as is standard on tops-20 and unix.  ^G is the
+interrupt character, as before.
+
+Changes in types
+
+UVECTORs must be of UTYPE FIX.  In consequence, UTYPE and CHUTYPE no
+longer exist.
+
+BYTES always have byte size 8, so the BYTES and IBYTES routines no
+longer take a byte size argument.
+
+RSUBRs, RSUBR-ENTRYs, SUBRs, and FSUBRs are all represented by MSUBRs. 
+The structure of compiled routines is now:
+#MSUBR [name-of-IMSUBR:ATOM
+	name-of-routine:ATOM
+	decl:LIST
+	offset-in-code-vector:FIX]
+This corresponds to the RSUBR-ENTRY in muddle.  An IMSUBR corresponds to
+the RSUBR:  the first element is code, and the remainder of the elements
+are external references.  Since the interpreter is written in muddle and
+compiled, there's no need for special types for interpreter routines.
+
+There are two new types of primtype ATOM:
+GVAL evaluates to the global value of the atom, and prints as ,atom.
+LVAL evaluates to the local value of the atom (in the current
+environment), and prints as .atom.  The routines GVAL and LVAL still
+exist as well, and are used for constructs where you're getting the
+value of something that's not an atom.
+
+Locatives no longer exist, except (in some sense) to globals and locals.
+GBIND returns the global binding of an atom:
+<GBIND FOO> will error if the atom is not GBOUND?; <GBIND FOO T> will
+create the binding if necessary.
+LBIND returns the local binding, and errors if the atom is not bound:
+<LBIND FOO> returns the current binding; <LBIND FOO frame> returns the
+binding relative to the specified frame.
+GET-VALUE and PUT-VALUE will return/set the value slot of the binding.
+
+All activation-like objects are now of type FRAME.  Something you used
+to decl as <SPECIAL ACTIVATION> is now <SPECIAL FRAME>.
+
+The structure of CHANNELs has changed completely.  See below for
+details. 
+
+The PRIMTYPE of FIXes, FLOATs, and friends is now FIX.  There is still a
+type WORD.  There is no type LOSE; type UNBOUND is the nearest
+equivalent, but not quite the same--an atom whose LVAL is of type
+UNBOUND will give an error when you LVAL it, since it has no value.
+
+OBLISTs are now primtype ATOM rather than UVECTOR.  All atoms are stored
+in ,ATOM-TABLE, which is a hashed vector of lists.  To get all the atoms
+in an OBLIST, you can call GET-OBLIST with the oblist name.
+
+TUPLEs are now PRIMTYPE VECTOR, rather than TUPLE.
+
+
+Type declarations
+
+DECLs may be used as before (objects of type DECL scattered around), but
+are defaultly not checked by the interpreter (the compiler still uses
+them).  To check old-style decls, invoke <CHECK-OLD-DECLS T>.  This
+gives DECL an EVALTYPE, which does more or less the right thing.
+
+Objects of type ADECL are recognized and checked by the interpreter
+unless DECL-CHECK is false.  There are two uses, which have basically
+the same syntax.
+In argument lists (and binding lists for PROG/REPEAT/BIND), you may
+follow the atom by its decl, thus:
+<DEFINE F (X:FIX) ...>
+The value of a function may be declared in the argument list, thus:
+<DEFINE F (X:FIX "VALUE" FIX) ...>
+The syntax is atom, followed by :, followed by the declaration.
+
+ADECLs may also be used anywhere in your code.  Thus
+<+ .X:FIX 1> declares that .X will return a FIX, regardless of what it's
+decled to be elsewhere (of course, we assume that the other decl allows
+FIX as a possibility).  In general, anything may be followed by : and a
+decl; this builds an ADECL, which is a pair consisting of the object and
+its decl.  When the ADECL is evaluated, the object inside is evaluated,
+then the result is compared to the decl.  The compiler will cheerfully
+use these.
+
+GDECLs are as before.
+
+Interpreter changes
+
+CASE is now built-in.  The syntax is
+<CASE predicate expression (value stuff) ... DEFAULT (stuff)>, thus:
+<CASE ,==? .A
+      (1 <FOO>)
+      (2 <BAR>)
+      DEFAULT
+      (<BLETCH>)>
+Only ==? compiles efficiently.  More than one value may be associated
+with a branch by using the following bizarre syntax:
+<CASE ,==? .A
+      (!'(1 2 3) <FOO>)
+      (4 <BAR>)>
+
+Functions may return more than one value (or no value).  The syntax in
+the function is:
+
+<MULTI-RETURN frame-or-false tuple-of-things-to-return>
+If the frame argument is false, LPROG!-INTERRUPTS must be bound to a
+FRAME somewhere; the easiest way to do that is by being inside a PROG or
+REPEAT.
+
+If the calling function does nothing special, it will see only the first
+thing returned (an error results in this case if the MULTI-RETURN tuple
+is empty.  In order to see all of the values, the function must be
+called from a segment, which means you have to be doing something where
+a segment is reasonable:  either another function call, or a structure
+builder.  (MULTI-SET sort of exists, but isn't fully supported yet.)
+Thus:
+<+ !<FOO>>, where FOO does a MULTI-RETURN, will sum all the things it
+returned.  This is of course indistinguishable from FOO returning a
+structure, except that no structure is created.
+
+EXIT is like QUIT, except that it takes a status code.  On UNIX, this
+literally exits, with whatever status you supply (thus non-zero is bad);
+on tops-20, it halts, but leaves the status code in AC2, with -1,,3 in
+AC1.
+
+OFFSETs now have three slots, rather than two.  The first two are the
+same:  the index, and the type of object the offset may be applied to;
+the third is the type of object allowed in the slot referenced.  The
+third slot need not be supplied when an offset is created.  Thus:
+<SETG MSUBR-DECL <OFFSET 3 MSUBR LIST>> returns something that must be
+applied to an MSUBR.  If it's being used for PUT, the new object must
+be a list; if it's being used for NTH, the object returned will be a
+list.  This is useful because PUT doesn't check the type of the new
+object.
+
+Decls may still be associated with atoms, but the syntax is different. 
+Before, one used <PUTPROP atom DECL 'decl>.  Now, one uses
+<PUT-DECL atom 'decl>.  <GET-DECL atom> returns the decl, if it's there.
+The same mechanism may be used to manipulate the decl associated with a
+newtype.  PUT-DECL/GET-DECL may also be applied to GBINDs, LBINDs, and
+OFFSETs.
+
+Stack objects
+
+It is possible to build VECTORs, UVECTORs, STRINGs, and BYTES on the
+stack (which is why TUPLEs are PRIMTYPE VECTOR).  This must be done at
+toplevel in an argument list, except that a CHTYPE may be wrapped around
+the stack build, and it may be the result of a macro expansion.  Thus:
+
+<DEFMAC KEYWORD-STACK ('FOO)
+  <FORM CHTYPE <FORM STACK <FORM STRING .FOO>> KEYWORD>>
+
+<DEFINE F (X "AUX" (KEY <KEYWORD-STACK .X>)) ...>
+is legal.  The syntax is
+<STACK structure-builder>, as:
+<STACK <VECTOR .A .B .C>>
+<STACK <IVECTOR 12>>
+<STACK [.A .B .C]>
+etc.  These objects are on the stack, and vanish when the function that
+built them returns.  Aside from that, they are first-class objects.
+
+
+I/O
+
+I/O is still done through objects called channels, and most of the
+high-level routines (READ, PRINT, etc.) are roughly the same, but aside
+from that everything's different.
+
+There are three ways to get a channel:
+
+OPEN takes a direction (a string), a file name (a string, possibly
+empty), and optional defaults for NM1, NM2, DEV, SNM, and radix.  This
+differs from muddle, which didn't take a radix argument, and didn't take
+a name and all four defaults at the same time.  The direction may be one
+of:
+"READ":  read-only, ascii
+"READB":  read-only, binary (36-bit on 20x, 32-bit on unix)
+"PRINT":  create a new file, read/write, ascii
+"PRINTB":  create a new file, read/write, binary
+"PRINTO":  modify an existing file (therefore, read/write), ascii
+"PRINTBO":  modify an existing file, binary
+This returns a channel or a false, containing various error codes and
+error messages.  The channel is ready to be used by READ, PRINT, and
+friends, and can be found on <CHANLIST>.
+<OPEN channel> makes the channel ready for READ/PRINT, and adds it to
+CHANLIST if it's not already there.  (There are ways of making channels
+that don't leave them ready for READ/PRINT, and don't put them on
+CHANLIST.)
+
+GEN-OPEN is more general than OPEN.  It takes a file name, a STRING, and
+optionally:  the MODE, a string, default "READ"; the byte size, default
+"ASCII"; and the device type, which is defaulted depending on what the
+name points to.  The values of DEV, NM1, NM2, and SNM are used to
+default the file name, just as they are for OPEN.
+The MODE argument:
+"READ":  open for read only
+"CREATE":  make a new file (data may be read, once it's written)
+"MODIFY":  modify an existing file
+"APPEND":  append data to an existing file (write-only)
+The BYTE-SIZE argument:
+"ASCII":  7-bit on the 20, 8-bit on unix
+"8BIT":  8-bit (uses BYTES rather than STRING)
+"BINARY":  full-word transfers--36-bit on the 20, 32-bit on unix
+
+I'll explain in a bit about the device type.  The two most commonly used
+are DISK and TTY; GEN-OPEN defaults depending on what the system thinks
+the file name refers to.  <GEN-OPEN "TTY:"> will generate a TTY-type
+channel; <GEN-OPEN "<TAA>FOO.BAR"> will generate a DISK channel.
+
+GEN-OPEN returns a channel or false, just like OPEN.
+
+
+CHANNEL-OPEN is the most general (and least friendly) way of opening a
+channel.  It takes:
+Device type, an atom
+File name, a string or false
+Any other arguments required for the type of channel being opened.
+
+Thus:
+<CHANNEL-OPEN DISK "<TAA>FOO.BAR" "READ" "ASCII" <> T>
+opens a DISK channel to <taa>foo.bar, read-only, 7-bit, unbuffered,
+without modifying the read date.
+
+<CHANNEL-OPEN TTY <>>
+is how muddle creates INCHAN and OUTCHAN (which are the same object).
+
+More on this later, when I explain channel types in their full glory.
+
+
+High-level I/O
+
+READ:  all arguments are optional.
+A channel, default .INCHAN
+Something to eval at end-of-file, default '<ERROR END-OF-FILE!-ERRORS>
+A list of oblists, default .OBLIST
+A vector, the read table.  Default .READ-TABLE or ,READ-TABLE.  (More on
+this in a bit.)
+[Modulo the difference in read tables, this is as before...]
+READ from the TTY is more intelligent about unmatched parens...
+
+TYI, NEXTCHR, READCHR, and READB all exist, unchanged.
+
+READSTRING:
+A string, the buffer to read into
+"OPTIONAL"
+A channel to read from, default .INCHAN
+A fix, the number of characters to read, or a string, containing
+characters to break on, default the length of the buffer
+An object to evaluate at EOF, default <ERROR END-OF-FILE!-ERRORS>
+A fix, magic.
+READSTRING differs in three ways from old muddle's version:
+1) The terminal character, when the third argument is a string, is
+returned in the buffer.
+2) When reading from the TTY, READSTRING falls into an equivalent of the
+tops-20 TEXTI call; thus, if you specify a string as the third argument,
+READSTRING will return immediately on reading one of the characters. 
+There's no need for a muddle `wakeup' character.
+3) The magic fifth argument specifies how many characters in the buffer
+are good.  This is most useful when you're reading from the TTY, and the
+buffer fills before the desired terminal character--you can make a
+bigger buffer, and call READSTRING again with a fifth argument of the
+old buffer length.  This is transparent to the user--it looks like one
+call to READSTRING to him.
+
+Two other magical things have been added.
+If READ-PROMPT!- has a local value, and that's a STRING, the string will
+become the prompt for keyboard input.
+If READ-BREAKS!- has a local value that's a STRING, the characters in
+that string will act like ESCAPE in READ and READSTRING, REPLACING
+ESCAPE.  Because READ is fairly intelligent about handling unbalanced
+parens, it is possible to make CRLF take the place of ESCAPE--typing a
+multi-line form works because READ silently tries again until it has
+something that's balanced.  [This does have efficiency problems; the
+first lines of the form will be parsed many times in the process,
+possibly building a lot of garbage in the process...]
+
+Input from the TTY all goes through TEXTI, so ^R, ^W, ^U, ^L are all
+standard.  ^D is like old muddle.  There is no particularly convenient
+way to clear your input buffer, short of multiple ^U's or a ^A (which
+loses if you aren't in a listen loop, of course...).
+

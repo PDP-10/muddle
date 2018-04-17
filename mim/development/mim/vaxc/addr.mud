@@ -1,0 +1,152 @@
+
+"These macros generate the codes for basic VAX addressing modes and
+ include some of the hairier cases."
+
+<DEFMAC MA-REG ('AC)
+	<FORM CHTYPE <FORM LSH <FORM ORB ',AM-REG <FORM AC-NUMBER .AC>> 24>
+	      EFF-ADDR>>
+
+<DEFMAC MA-LIT ('VAL)
+	<FORM CHTYPE <FORM LSH <FORM ANDB .VAL *77*> 24> EFF-ADDR>>
+
+<DEFMAC MA-INDX ('AC) 
+	<FORM CHTYPE
+	      <FORM LSH <FORM ORB ',AM-INX <FORM AC-NUMBER .AC>> 24>
+	      EFF-ADDR>>
+
+<DEFMAC MA-REGD ('AC)
+	<FORM CHTYPE <FORM LSH <FORM ORB ',AM-REGD <FORM AC-NUMBER .AC>> 24>
+	      EFF-ADDR>>
+
+<DEFMAC MA-ADEC ('AC)
+	<FORM CHTYPE <FORM LSH <FORM ORB ',AM-ADEC <FORM AC-NUMBER .AC>> 24>
+	      EFF-ADDR>>
+
+<DEFMAC MA-AINC ('AC)
+	<FORM CHTYPE <FORM LSH <FORM ORB ',AM-AINC <FORM AC-NUMBER .AC>> 24>
+	      EFF-ADDR>>
+
+<DEFMAC MA-AINCD ('AC)
+	<FORM CHTYPE <FORM LSH <FORM ORB ',AM-AINCD <FORM AC-NUMBER .AC>> 24>
+	      EFF-ADDR>>
+
+<DEFMAC MA-BD ('AC 'DISP)
+	<FORM CHTYPE <FORM LSH
+			   <FORM ORB <FORM LSH <FORM ORB ',AM-BD
+						     <FORM AC-NUMBER .AC>> 8>
+				 <FORM ANDB .DISP *377*>>
+			   16>
+	      EFF-ADDR>>
+
+<DEFMAC MA-BDD ('AC 'DISP)
+	<FORM CHTYPE <FORM LSH <FORM ORB <FORM LSH <FORM ORB ',AM-BDD
+					       <FORM AC-NUMBER .AC>> 8>
+			   <FORM ANDB .DISP *377*>> 16> EFF-ADDR>>
+
+<DEFMAC MA-WD ('AC 'DISP) 
+	<FORM CHTYPE
+	      <FORM ORB
+		    <FORM LSH <FORM ORB ',AM-WD <FORM AC-NUMBER .AC>> 24>
+		    <FORM ANDB
+			  <COND (<TYPE? .DISP FIX WORD CHARACTER>
+				 <ORB <LSH .DISP 16>
+				      <ANDB .DISP *177400*>>)
+				(ELSE
+				 <FORM PROG
+				       ((V .DISP))
+				       <FORM ORB
+					     <FORM LSH '.V 16>
+					     <FORM ANDB
+						   '.V
+						   *177400*>>>)>
+			  *77777400*>>
+	      EFF-ADDR>>
+
+<DEFMAC MA-WDD ('AC 'DISP)
+	<FORM CHTYPE <FORM ORB <FORM LSH <FORM ORB ',AM-WDD
+					       <FORM AC-NUMBER .AC>> 24>
+			   <FORM LSH <FORM ANDB .DISP *377*> 16>
+			   <FORM ANDB .DISP
+				 *177400*>> EFF-ADDR>>
+
+<DEFMAC MA-LD ('AC 'DISP)
+	<FORM CHTYPE (<FORM CHTYPE
+			    <FORM LSH
+				  <FORM ORB ',AM-LD <FORM AC-NUMBER .AC>> 24>
+			    EFF-ADDR>
+		      <FORM CHTYPE <FORM LREV .DISP> EFF-ADDR>) LADDR>>
+
+<DEFMAC MA-LDD ('AC 'DISP)
+	<FORM CHTYPE (<FORM CHTYPE
+			    <FORM LSH
+				  <FORM ORB ',AM-LDD <FORM AC-NUMBER .AC>> 24>
+			    EFF-ADDR>
+		      <FORM CHTYPE <FORM LREV .DISP> EFF-ADDR>) LADDR>>
+
+<DEFMAC MA-BYTE-IMM ('VAL) 
+	<FORM CHTYPE
+	      <FORM ORB
+		    <FORM MA-AINC ',AC-PC>
+		    <FORM LSH <FORM ANDB .VAL 255> 16>>
+	      EFF-ADDR>>
+
+<DEFMAC MA-WORD-IMM ('VAL) 
+	<FORM CHTYPE
+	      <FORM ORB
+		    <FORM MA-AINC ',AC-PC>
+		    <FORM ANDB
+			  <COND (<TYPE? .VAL FIX WORD CHARACTER>
+				 <ORB <LSH <ANDB .VAL 255> 16>
+				      <ANDB .VAL 65280>>)
+				(ELSE
+				 <FORM PROG
+				       ((V .VAL))
+				       <FORM ORB
+					     <FORM LSH <FORM ANDB '.V 255> 16>
+					     <FORM ANDB '.V 65280>>>)>
+			  *77777400*>>
+	      EFF-ADDR>>
+
+<DEFMAC MA-LONG-IMM ('VAL) 
+	<FORM CHTYPE
+	      (<FORM CHTYPE <FORM MA-AINC ',AC-PC> EFF-ADDR>
+	       <FORM CHTYPE <FORM LREV .VAL> EFF-ADDR>)
+	      LADDR>>
+
+<DEFINE MA-IMM (VAL)
+	#DECL ((VAL) <PRIMTYPE FIX>)
+	<SET VAL <CHTYPE .VAL FIX>>
+	<COND (<AND <G=? .VAL 0><L=? .VAL *77*>>
+	       <MA-LIT .VAL>)
+	      (ELSE
+	       <COND (<==? .VAL <CHTYPE <MIN> FIX>>
+		      <SET VAL *17777777777*>)
+		     (<==? .VAL <CHTYPE <MAX> FIX>>
+		      <SET VAL *20000000001*>)>
+	       <MA-LONG-IMM .VAL>)>>
+
+<DEFINE LREV (VAL) 
+	<CHTYPE <ORB <LSH <ANDB .VAL 255> 24>
+		     <LSH <ANDB .VAL 65280> 8>
+		     <LSH <ANDB .VAL 16711680> -8>
+		     <LSH <ANDB .VAL *37700000000*> -24>>
+		FIX>>
+
+<DEFINE MA-DISP (AC VAL "AUX" (AVAL <ABS .VAL>))
+	#DECL ((VAL AVAL) FIX)
+	<COND (<0? .VAL> <MA-REGD .AC>)
+	      (<L=? .AVAL *177*> <MA-BD .AC .VAL>)
+	      (<L=? .AVAL *77777*> <MA-WD .AC .VAL>)
+	      (ELSE <MA-LD .AC .VAL>)>> 
+
+<DEFINE MA-DEF-DISP (AC VAL "AUX" (AVAL <ABS .VAL>))
+	#DECL ((VAL AVAL) FIX)
+	<COND (<L=? .AVAL *177*> <MA-BDD .AC .VAL>)
+	      (<L=? .AVAL *77777*> <MA-WDD .AC .VAL>)
+	      (ELSE <MA-LDD .AC .VAL>)>> 
+
+<DEFMAC MA-ABS ('ABS)
+	<FORM CHTYPE
+	      (<FORM CHTYPE <FORM MA-AINCD ',AC-PC> EFF-ADDR>
+	       <FORM CHTYPE <FORM LREV .ABS> EFF-ADDR>)
+	      LADDR>>

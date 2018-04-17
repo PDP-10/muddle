@@ -1,0 +1,159 @@
+<PACKAGE "HASH">
+
+<ENTRY HASH EXPAND-FLAG>
+
+<SETG EXPAND-FLAG <>>
+
+<SETG PFIX 0>
+<SETG PLIST 1>
+<SETG PRECORD 2>
+<SETG PBYTES 4>
+<SETG PSTRING 5>
+<SETG PUVECTOR 6>
+<SETG PVECTOR 7>
+<SETG ONE-IN-LH <LSH 1 16>>
+<MANIFEST PFIX PLIST PRECORD PBYTES PSTRING PUVECTOR PVECTOR ONE-IN-LH>
+
+<DEFINE HASH (OBJ:ANY "OPT" (POS:FIX 0)
+	              "AUX" HASH:FIX (FTYP:FIX <ANDB <CALL TYPE .OBJ> 7>)
+			    PREHASH:FIX ATM (EXP-MACROS ,EXPAND-FLAG))
+	<COND (<AND <TYPE? .OBJ FORM>
+		    .EXP-MACROS
+		    <NOT <EMPTY? .OBJ>>
+		    <TYPE? <SET ATM <1 .OBJ>> ATOM>
+		    <GASSIGNED? .ATM>>
+	       <COND (<AND <OR <==? .ATM GVAL> <==? .ATM LVAL>>
+			   <NOT <EMPTY? <REST .OBJ>>>
+			   <TYPE? <2 .OBJ> ATOM>>
+		      <SET OBJ <CHTYPE <2 .OBJ> .ATM>>
+		      <SET FTYP ,PRECORD>)
+		     (<==? <GET-DECL <GBIND .ATM>> MANIFEST>
+		      <SET PREHASH <HASH ,.ATM <+ .POS ,ONE-IN-LH>>>)
+		     (<TYPE? ,.ATM MACRO>
+		      <SET PREHASH <HASH <EXPAND .OBJ>
+					 <+ .POS ,ONE-IN-LH>>>)>)>
+	<CASE ,==? .FTYP
+	      (,PFIX
+	       <SET HASH <CHTYPE .OBJ FIX>>)
+	      (,PSTRING
+	       <SET HASH <HASH-STRING <CHTYPE .OBJ STRING>
+				      <+ .POS ,ONE-IN-LH>>>)
+	      (,PLIST
+	       <SET HASH <HASH-LIST <CHTYPE .OBJ LIST> <+ .POS ,ONE-IN-LH>>>)
+	      (,PRECORD
+	       <COND (<AND .EXP-MACROS
+			   <TYPE? .OBJ GVAL>
+			   <GASSIGNED? <SET ATM <CHTYPE .OBJ ATOM>>>
+			   <==? <GET-DECL <GBIND .ATM>> MANIFEST>>
+		      <SET HASH <HASH ,.ATM <+ .POS ,ONE-IN-LH>>>)
+		     (<OR <TYPE? .OBJ ATOM LVAL GVAL>
+			  <==? <PRIMTYPE .OBJ> ATOM>>
+		      <SET HASH <HASH-ATOM <CHTYPE .OBJ ATOM>
+					   <+ .POS ,ONE-IN-LH>>>)>)
+	      (,PBYTES
+	       <SET HASH <HASH-BYTES <CHTYPE .OBJ BYTES> <+ .POS ,ONE-IN-LH>>>)
+	      (,PVECTOR
+	       <SET HASH <HASH-VECTOR <CHTYPE .OBJ VECTOR>
+				      <+ .POS ,ONE-IN-LH>>>)
+	      (,PUVECTOR
+	       <SET HASH <HASH-UVECTOR <CHTYPE .OBJ UVECTOR>
+				       <+ .POS ,ONE-IN-LH>>>)
+	      DEFAULT
+	      (<ERROR UNKNOWN-PRIMTYPE!-ERRORS <PRIMTYPE .OBJ> HASH>)>
+   <COND (<NEWTYPE? .OBJ>
+	  <SET HASH
+	       <XORB <ROT32 <CHTYPE <TYPE-C <PRIMTYPE .OBJ>> FIX> 13>
+		     <HASH-ATOM <TYPE .OBJ> <+ .POS ,ONE-IN-LH>>
+		     <ROT32 .HASH 17>>>)
+	 (ELSE  
+	  <SET HASH <XORB <ROT32 .HASH 17> <CALL TYPE .OBJ>>>)>
+   <COND (<ASSIGNED? PREHASH> <SET HASH <XORB <ROT32 .HASH 17> .PREHASH>>)>
+   <XORB .HASH .POS>>
+
+<DEFINE HASH-ATOM (ATM:ATOM POS:FIX)
+   <COND (<==? .ATM ROOT>
+	  <XORB 82 .POS>)
+	 (ELSE
+	  <XORB <ROT32 <HASH-STRING <SPNAME .ATM> <+ .POS ,ONE-IN-LH>>
+		     17>
+		<HASH <OBLIST? .ATM> <+ .POS ,ONE-IN-LH>>>)>>
+
+<DEFINE HASH-STRING (STR:STRING POS:FIX "AUX" (HASH 0))
+   #DECL ((HASH) FIX)
+   <MAPF <>
+	 <FUNCTION (CH:CHARACTER)
+	    <SET HASH
+		 <XORB
+		  <ROT32 .HASH
+		       17>
+		  .POS
+		  .CH>>
+	    <SET POS <+ .POS 1>>>
+	 .STR>
+   .HASH>
+
+;<DEFINE CALL (A B)
+   <CHTYPE
+    <TYPE-C <TYPE .B>>
+    FIX>>
+
+<DEFINE HASH-LIST (LIST:LIST POS:FIX "AUX" (HASH 0))
+   #DECL ((HASH) FIX)
+   <MAPF <>	
+	 <FUNCTION (ELEM:ANY)
+	    <SET HASH 
+		 <XORB
+		  <ROT32 .HASH
+		       17>
+		  <HASH .ELEM <+ .POS ,ONE-IN-LH>>
+		  .POS>>
+	    <SET POS <+ .POS 1>>>
+	 .LIST>
+   .HASH>
+
+<DEFINE HASH-VECTOR (VEC:VECTOR POS:FIX "AUX" (HASH 0))
+   #DECL ((HASH) FIX)
+   <MAPF <>	
+	 <FUNCTION (ELEM:ANY)
+	    <SET HASH 
+		 <XORB
+		  <ROT32 .HASH
+		       17>
+		  <HASH .ELEM <+ .POS ,ONE-IN-LH>>
+		  .POS>>
+	    <SET POS <+ .POS 1>>>
+	 .VEC>
+   .HASH>
+
+<DEFINE HASH-UVECTOR (UVEC:UVECTOR POS:FIX "AUX" (HASH 0))
+   #DECL ((HASH) FIX)
+   <MAPF <>	
+	 <FUNCTION (ELEM:ANY)
+	    <SET HASH 
+		 <XORB
+		  <ROT32 .HASH
+		       17>
+		  .ELEM
+		  .POS>>
+	    <SET POS <+ .POS 1>>>
+	 .UVEC>
+   .HASH>
+
+<DEFINE HASH-BYTES (BYT:BYTES POS:FIX "AUX" (HASH 0))
+   #DECL ((HASH) FIX)
+   <MAPF <>	
+	 <FUNCTION (ELEM:FIX)
+	    <SET HASH 
+		 <XORB
+		  <ROT32 .HASH
+		       17>
+		  .ELEM
+		  .POS>>
+	    <SET POS <+ .POS 1>>>
+	 .BYT>
+   .HASH>
+ 
+ <DEFINE NEWTYPE? (OBJ:ANY)
+    <G? <LSH <CALL TYPE .OBJ> -6> ,OLD-TYPES>>
+
+<ENDPACKAGE>

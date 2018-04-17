@@ -1,0 +1,10 @@
+
+<CALL SYSOP jsys arg1 arg2 ....>
+
+arg1...argn become acs 1...n.  Unless it is a list of the form
+(RETURN x) where x is  register number to return or ALL to BLT
+them into a UVECTOR called AC-VECTOR.
+
+SIN,SOUT,GTJFN are hacked specially.
+
+All JSYSs have ERJMP hack that return #FALSE (error-code) on failure.

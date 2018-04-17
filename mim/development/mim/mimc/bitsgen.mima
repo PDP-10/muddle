@@ -1,0 +1,337 @@
+
+<PACKAGE "BITSGEN">
+
+<ENTRY BITLOG-GEN FGETBITS-GEN FPUTBITS-GEN>
+
+<USE "COMPDEC" "CODGEN" "CHKDCL" "MIMGEN">
+
+#WORD *36346502155*
+		    <GFCN FGETBITS-GEN ("VALUE" ANY NODE ANY) N4 W5>
+		    <TEMP K6 REG7 TEMP12 S8>
+		    <INTGO>
+		    <NTHUV N4 5 = K6 (TYPE LIST)>
+		    <DEAD N4>
+		    <FRAME 'GEN>
+		    <NTHL K6 1 = STACK (TYPE NODE)>
+		    <CALL 'GEN 1 = REG7>
+		    <FRAME 'GEN>
+		    <RESTL K6 1 = TEMP12 (TYPE LIST)>
+		    <NTHL TEMP12 1 = STACK (TYPE NODE)>
+		    <DEAD TEMP12>
+		    <CALL 'GEN 1 = S8>
+		    <FRAME 'FREE-TEMP>
+		    <FRAME 'GEN>
+		    <RESTL K6 1 = TEMP12 (TYPE LIST)>
+		    <DEAD K6>
+		    <RESTL TEMP12 1 = TEMP12 (TYPE LIST)>
+		    <NTHL TEMP12 1 = STACK (TYPE NODE)>
+		    <DEAD TEMP12>
+		    <CALL 'GEN 1 = TEMP12>
+		    <PUSH TEMP12>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH S8>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <FRAME 'IEMIT>
+		    <PUSH '`GETBITS>
+		    <PUSH REG7>
+		    <PUSH S8>
+		    <DEAD S8>
+		    <PUSH TEMP12>
+		    <DEAD TEMP12>
+		    <PUSH '=>
+		    <EQUAL? W5 'DONT-CARE + PHRASE18>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH REG7>
+		    <DEAD REG7>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <TYPE? W5 <TYPE-CODE TEMP> - PHRASE21>
+		    <FRAME 'USE-TEMP>
+		    <PUSH W5>
+		    <PUSH 'FIX>
+		    <CALL 'USE-TEMP 2>
+PHRASE21
+		    <SET TEMP12 W5>
+		    <JUMP + PHRASE28>
+PHRASE18
+		    <TYPE? REG7 <TYPE-CODE TEMP> - PHRASE23>
+		    <NTHUV REG7 2 = K6 (TYPE FIX)>
+		    <GRTR? K6 1 + PHRASE23 (TYPE FIX)>
+		    <DEAD K6>
+		    <SET W5 REG7>
+		    <DEAD REG7>
+		    <SET TEMP12 W5>
+		    <JUMP + PHRASE28>
+PHRASE23
+		    <FRAME 'FREE-TEMP>
+		    <PUSH REG7>
+		    <DEAD REG7>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <FRAME 'GEN-TEMP>
+		    <CALL 'GEN-TEMP 0 = W5>
+		    <SET TEMP12 W5>
+PHRASE28
+		    <PUSH TEMP12>
+		    <DEAD TEMP12>
+		    <CALL 'IEMIT 6>
+		    <RETURN W5>
+		    <DEAD W5>
+		    <END FGETBITS-GEN>
+
+#WORD *13550250565*
+		    <GFCN FPUTBITS-GEN ("VALUE" ANY NODE ANY) N4 W5>
+		    <TEMP K6:LIST TY11 REG7 TEMP15 S8 WI9>
+		    <INTGO>
+		    <NTHUV N4 5 = K6 (TYPE LIST)>
+		    <FRAME 'ISTYPE?>
+		    <NTHUV N4 3 = STACK>
+		    <DEAD N4>
+		    <CALL 'ISTYPE? 1 = TY11>
+		    <FRAME 'GEN>
+		    <NTHL K6 1 = STACK (TYPE NODE)>
+		    <CALL 'GEN 1 = REG7>
+		    <FRAME 'GEN>
+		    <RESTL K6 1 = TEMP15 (TYPE LIST)>
+		    <NTHL TEMP15 1 = STACK (TYPE NODE)>
+		    <DEAD TEMP15>
+		    <CALL 'GEN 1 = S8>
+		    <FRAME 'GEN>
+		    <RESTL K6 1 = TEMP15 (TYPE LIST)>
+		    <RESTL TEMP15 1 = TEMP15 (TYPE LIST)>
+		    <NTHL TEMP15 1 = STACK (TYPE NODE)>
+		    <DEAD TEMP15>
+		    <CALL 'GEN 1 = WI9>
+		    <FRAME 'FREE-TEMP>
+		    <FRAME 'GEN>
+		    <RESTL K6 1 = TEMP15 (TYPE LIST)>
+		    <DEAD K6>
+		    <RESTL TEMP15 1 = TEMP15 (TYPE LIST)>
+		    <RESTL TEMP15 1 = TEMP15 (TYPE LIST)>
+		    <NTHL TEMP15 1 = STACK (TYPE NODE)>
+		    <DEAD TEMP15>
+		    <CALL 'GEN 1 = TEMP15>
+		    <PUSH TEMP15>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH S8>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH WI9>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <FRAME 'IEMIT>
+		    <PUSH '`PUTBITS>
+		    <PUSH REG7>
+		    <PUSH S8>
+		    <DEAD S8>
+		    <PUSH WI9>
+		    <DEAD WI9>
+		    <PUSH TEMP15>
+		    <DEAD TEMP15>
+		    <PUSH '=>
+		    <EQUAL? W5 'DONT-CARE + PHRASE23>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH REG7>
+		    <DEAD REG7>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <TYPE? W5 <TYPE-CODE TEMP> - PHRASE26>
+		    <FRAME 'USE-TEMP>
+		    <PUSH W5>
+		    <PUSH TY11>
+		    <DEAD TY11>
+		    <CALL 'USE-TEMP 2>
+PHRASE26
+		    <SET TEMP15 W5>
+		    <JUMP + PHRASE33>
+PHRASE23
+		    <TYPE? REG7 <TYPE-CODE TEMP> - PHRASE28>
+		    <NTHUV REG7 2 = TEMP15 (TYPE FIX)>
+		    <GRTR? TEMP15 1 + PHRASE28 (TYPE FIX)>
+		    <DEAD TEMP15>
+		    <SET W5 REG7>
+		    <DEAD REG7>
+		    <SET TEMP15 W5>
+		    <JUMP + PHRASE33>
+PHRASE28
+		    <FRAME 'FREE-TEMP>
+		    <PUSH REG7>
+		    <DEAD REG7>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <FRAME 'GEN-TEMP>
+		    <SET TEMP15 TY11>
+		    <DEAD TY11>
+		    <TYPE? TEMP15 <TYPE-CODE FALSE> - COND36>
+		    <SET TEMP15 'T (TYPE ATOM)>
+COND36
+		    <PUSH TEMP15>
+		    <DEAD TEMP15>
+		    <CALL 'GEN-TEMP 1 = W5>
+		    <SET TEMP15 W5>
+PHRASE33
+		    <PUSH TEMP15>
+		    <DEAD TEMP15>
+		    <CALL 'IEMIT 7>
+		    <RETURN W5>
+		    <DEAD W5>
+		    <END FPUTBITS-GEN>
+
+#WORD *27121211715*
+		    <GFCN BITLOG-GEN ("VALUE" ANY NODE ANY) N4 W5>
+		    <TEMP K6 FST7 INS8:ATOM TEMP13 NN27 LAST31>
+		    <INTGO>
+		    <NTHUV N4 5 = K6 (TYPE LIST)>
+		    <NTHL K6 1 = FST7 (TYPE NODE)>
+		    <FRAME 'LGINS>
+		    <NTHUV N4 9 = STACK>
+		    <DEAD N4>
+		    <CALL 'LGINS 1 = INS8>
+		    <NTHUV FST7 1 = TEMP13 (TYPE FIX)>
+		    <VEQUAL? TEMP13 2 - PHRASE12 (TYPE FIX)>
+		    <DEAD TEMP13>
+		    <RESTL K6 1 = TEMP13 (TYPE LIST)>
+		    <NTHL TEMP13 1 = TEMP13 (TYPE NODE)>
+		    <PUTL K6 1 TEMP13>
+		    <DEAD TEMP13>
+		    <RESTL K6 1 = TEMP13 (TYPE LIST)>
+		    <PUTL TEMP13 1 FST7>
+		    <DEAD TEMP13 FST7>
+PHRASE12
+		    <FRAME 'GEN>
+		    <NTHL K6 1 = STACK (TYPE NODE)>
+		    <CALL 'GEN 1 = TEMP13>
+		    <RESTL K6 1 = FST7 (TYPE LIST)>
+		    <DEAD K6>
+		    <LOOP>
+MAP16
+		    <INTGO>
+		    <EMPL? FST7 + MAPAP19>
+		    <SET K6 FST7>
+		    <NTHL K6 1 = NN27 (TYPE NODE)>
+		    <FRAME 'GEN>
+		    <PUSH NN27>
+		    <DEAD NN27>
+		    <PUSH 'DONT-CARE>
+		    <CALL 'GEN 2 = NN27>
+		    <RESTL K6 1 = K6 (TYPE LIST)>
+		    <EMPL? K6 - TAG32 (TYPE LIST)>
+		    <DEAD K6>
+		    <SET LAST31 'T (TYPE ATOM)>
+		    <JUMP + TAG34>
+TAG32
+		    <SET LAST31 %<> (TYPE FALSE)>
+TAG34
+		    <FRAME 'IEMIT>
+		    <PUSH INS8>
+		    <PUSH TEMP13>
+		    <PUSH NN27>
+		    <PUSH '=>
+		    <VEQUAL? LAST31 0 + PHRASE37>
+		    <TYPE? W5 <TYPE-CODE TEMP> + BOOL39>
+		    <GVAL 'POP-STACK = K6>
+		    <EQUAL? K6 W5 - PHRASE37>
+		    <DEAD K6>
+BOOL39
+		    <EQUAL? W5 TEMP13 + PHRASE44>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH TEMP13>
+		    <DEAD TEMP13>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <TYPE? W5 <TYPE-CODE TEMP> - PHRASE44>
+		    <FRAME 'USE-TEMP>
+		    <PUSH W5>
+		    <PUSH 'FIX>
+		    <CALL 'USE-TEMP 2>
+PHRASE44
+		    <SET TEMP13 W5>
+		    <SET K6 TEMP13>
+		    <JUMP + PHRASE59>
+PHRASE37
+		    <VEQUAL? LAST31 0 + PHRASE46>
+		    <DEAD LAST31>
+		    <EQUAL? W5 'DONT-CARE - PHRASE46>
+		    <TYPE? TEMP13 <TYPE-CODE TEMP> - PHRASE46>
+		    <NTHUV TEMP13 2 = K6 (TYPE FIX)>
+		    <GRTR? K6 1 + PHRASE46 (TYPE FIX)>
+		    <DEAD K6>
+		    <SET K6 TEMP13>
+		    <JUMP + PHRASE59>
+PHRASE46
+		    <TYPE? TEMP13 <TYPE-CODE TEMP> - BOOL52>
+		    <NTHUV TEMP13 2 = K6 (TYPE FIX)>
+		    <GRTR? K6 1 - PHRASE51 (TYPE FIX)>
+		    <DEAD K6>
+BOOL52
+		    <TYPE? TEMP13 <TYPE-CODE TEMP> - PHRASE56>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH TEMP13>
+		    <DEAD TEMP13>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+PHRASE56
+		    <FRAME 'GEN-TEMP>
+		    <PUSH 'FIX>
+		    <CALL 'GEN-TEMP 1 = TEMP13>
+		    <SET K6 TEMP13>
+		    <JUMP + PHRASE59>
+PHRASE51
+		    <SET K6 TEMP13>
+PHRASE59
+		    <PUSH K6>
+		    <DEAD K6>
+		    <CALL 'IEMIT 5>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH NN27>
+		    <DEAD NN27>
+		    <CALL 'FREE-TEMP 1>
+		    <RESTL FST7 1 = FST7 (TYPE LIST)>
+		    <JUMP + MAP16>
+MAPAP19
+		    <FRAME 'MOVE-ARG>
+		    <PUSH TEMP13>
+		    <DEAD TEMP13>
+		    <PUSH W5>
+		    <DEAD W5>
+		    <CALL 'MOVE-ARG 2 = FST7>
+		    <RETURN FST7>
+		    <DEAD FST7>
+		    <END BITLOG-GEN>
+
+#WORD *34042711057*
+		    <GFCN LGINS ("VALUE" ATOM ANY) SUBR4>
+		    <TEMP TEMP9 TEMP10 TEMP11>
+		    <INTGO>
+		    <GVAL 'LSUBRS = TEMP9>
+		    <TYPE SUBR4 = TEMP10>
+		    <EMPUV? TEMP9 + TAG5>
+		    <LOOP (SUBR4 VALUE) (TEMP10 VALUE) (TEMP9 LENGTH VALUE)>
+TAG7
+		    <NTHUV TEMP9 1 = TEMP11>
+		    <TYPE? TEMP11 TEMP10 - TAG8>
+		    <VEQUAL? TEMP11 SUBR4 + TAG6>
+		    <DEAD TEMP11>
+TAG8
+		    <RESTUV TEMP9 1 = TEMP9 (TYPE VECTOR)>
+		    <EMPUV? TEMP9 - TAG7>
+TAG5
+		    <SET TEMP9 %<> (TYPE FALSE)>
+TAG6
+		    <LENR TEMP9 = TEMP9 (RECORD-TYPE %<>) (TYPE FIX)>
+		    <NTHUV [`AND `OR `XOR `EQV] TEMP9 = TEMP9 (TYPE ATOM)>
+		    <RETURN TEMP9>
+		    <DEAD TEMP9>
+		    <END LGINS>
+
+<SETG LSUBRS [,EQVB ,XORB ,ORB ,ANDB]>
+
+<GDECL (LSUBRS) VECTOR>
+
+<ENDPACKAGE>

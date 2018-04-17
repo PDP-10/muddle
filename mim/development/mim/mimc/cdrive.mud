@@ -1,0 +1,109 @@
+
+<PACKAGE "CDRIVE">
+
+<ENTRY COMPILE COMP2 PEEP-ENABLED FIXUP-DEATH-ENABLED UPDATE-STATUS STATUS-LINE>
+
+<USE "COMPDEC" "PASS1" "SYMANA" "ADVMESS" "CODGEN" "PEEP" "DEATH">
+
+<SETG STATUS-LINE <>>
+
+<SETG PEEP-ENABLED T>
+
+<SETG FIXUP-DEATH-ENABLED T>
+
+"****** TOP LEVEL COMILER CALLS ******"
+
+"COMPILE -- compile one function.
+
+	The arguments to compile are:
+
+	FCN -- an atom whose GVAL is a function
+
+	CAREFUL -- If true compile bounds checking else don't.
+
+	REASONABLE -- Assume reasonable calling sequence?
+
+	ANALY-OK -- If true, do hairy analysis.
+
+	VERBOSE -- Print debugginh messages.
+"
+
+<DEFINE COMPILE (FCN
+		 "OPTIONAL" (CAREFUL T) (REASONABLE T) (ANALY-OK T)
+			    (VERBOSE <>)
+		 "AUX" (IND (1)) (VP (())) FCNP FCNN (GLOSP <>) (TAG-COUNT 0)
+		       (EXTRA-CODE-START
+			<COND (<ASSIGNED? EXTRA-CODE-START> .EXTRA-CODE-START)
+			      (ELSE (0))>)
+		       (EXTRA-CODE
+			<COND (<ASSIGNED? EXTRA-CODE> .EXTRA-CODE)
+			      (ELSE .EXTRA-CODE-START)>) CL
+		 "NAME" COMPILE-ACTIVATION)
+	#DECL ((FCN) <SPECIAL ATOM> (FCNN) <SPECIAL NODE>
+	       (SRC-FLG BIN-FLG CAREFUL GLOSP REASONABLE IND TAG-COUNT
+	        COMPILE-ACTIVATION ANALY-OK VERBOSE) <SPECIAL ANY>
+	       (EXTRA-CODE-START EXTRA-CODE) <SPECIAL LIST>)
+	<COND (.VERBOSE <SET VERBOSE .VP>)>
+	<COND (<NOT <AND <GASSIGNED? .FCN>
+			 <OR <TYPE? <SET FCNP ,.FCN> FUNCTION>
+			     <AND <TYPE? .FCNP MACRO>
+				  <NOT <EMPTY? .FCNP>>
+				  <TYPE? <SET FCNP <1 .FCNP>> FUNCTION>>>>>
+	       <COMPILE-ERROR "Not a function: " .FCN>)>
+	<COND (,STATUS-LINE <UPDATE-STATUS "Comp" <SPNAME .FCN> "PS1" <>>)>
+	<PRINC "Compiling: ">
+	<PRIN1 .FCN>
+	<CRLF>
+	<SET FCNN <PASS1 .FCN .FCNP>>
+	<COND (,STATUS-LINE <UPDATE-STATUS "Comp" <> "ANA" <>>)>
+	<ANA .FCNN ANY>
+	<COND (,STATUS-LINE <UPDATE-STATUS "Comp" <> "GEN" <>>)>
+	<COND (.VERBOSE <ANA-MESS .VP>)>
+	<SET CL <CODE-GEN .FCNN .EXTRA-CODE>>
+	<PROG ()
+	      <COND (<AND <GASSIGNED? FIXUP-DEATH-ENABLED> ,FIXUP-DEATH-ENABLED>
+		     <REMOVE-DEADS .CL>)>
+	      <COND (<AND <GASSIGNED? PEEP-ENABLED> ,PEEP-ENABLED>
+		     <COND (,STATUS-LINE <UPDATE-STATUS "Comp" <> "PEEP" <>>)>
+		     <PEEP <REST .CL>>)>
+	      <COND (<AND <GASSIGNED? FIXUP-DEATH-ENABLED> ,FIXUP-DEATH-ENABLED>
+		     <COND (,STATUS-LINE <UPDATE-STATUS "Comp" <> "DEAD" <>>)>
+		     <COND (<FIXUP-DEATH <REST .CL>> <AGAIN>)>)>>
+	<REST .EXTRA-CODE-START>>
+
+<DEFINE TIME-STR1 (NSEC "AUX" (NMIN </ <FIX .NSEC> 60>) (NHRS </ .NMIN 60>)) 
+	#DECL ((NSEC) <OR FIX FLOAT> (NMIN NHRS) FIX (VALUE) STRING)
+	<TIMEST1 .NHRS <- .NMIN <* .NHRS 60>> <- .NSEC <* .NMIN 60>>>>
+
+<DEFINE TIME-DIF1 (D1 D2 T1 T2
+		   "AUX" (DY
+			  <- <DAYS <1 .D2> <2 .D2> <3 .D2>>
+			     <DAYS <1 .D1> <2 .D1> <3 .D1>>>))
+	#DECL ((D1 D2 T1 T2) <LIST FIX FIX FIX> (VALUE) STRING)
+	<TIME-STR1 <- <+ <* .DY 3600 24>
+			 <* <1 .T2> 3600>
+			 <* <2 .T2> 60>
+			 <3 .T2>>
+		      <+ <* <1 .T1> 3600> <* <2 .T1> 60> <3 .T1>>>>>
+
+<DEFINE TIMEST1 (HR MI SE) 
+   #DECL ((HR MI SE) FIX)
+   <STRING
+    <COND (<NOT <0? .HR>> <STRING <UNPARSE .HR> ":">) (ELSE "")>
+    <COND (<OR <NOT <0? .MI>> <NOT <0? .HR>>>
+	   <STRING <COND (<L=? .MI 9>
+			  <STRING <COND (<0? .HR> "") (ELSE "0")>
+				  <CHTYPE <+ .MI 48> CHARACTER>>)
+			 (ELSE
+			  <STRING <CHTYPE <+ </ .MI 10> 48> CHARACTER>
+				  <CHTYPE <+ <MOD .MI 10> 48> CHARACTER>>)>
+		   ":">)
+	  (ELSE "")>
+    <COND (<L=? .SE 9>
+	   <STRING <COND (<OR <NOT <0? .MI>> <NOT <0? .HR>>> "0") (ELSE "")>
+		   <CHTYPE <+ .SE 48> CHARACTER>>)
+	  (ELSE
+	   <STRING <CHTYPE <+ </ .SE 10> 48> CHARACTER>
+		   <CHTYPE <+ <MOD .SE 10> 48> CHARACTER>>)>>>
+
+<ENDPACKAGE>

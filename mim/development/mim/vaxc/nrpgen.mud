@@ -1,0 +1,1360 @@
+
+<DEFINE NTH-LIST-GEN (SVAR NUM RES "OPTIONAL" (HINT <>) "AUX" VAC) 
+	#DECL ((SVAR) <OR VARTBL <PRIMTYPE LIST>> (NUM) <OR FIX VARTBL>
+	       (RES) <OR ATOM VARTBL> (HINT) <OR FALSE HINT>)
+  <COND (<NTH-LOOK-AHEAD NTHL!-MIMOP .SVAR .NUM .RES .HINT>)
+	(T
+	 <COND (<==? .NUM 1> <NTH-FIXOFFSET-GEN .SVAR 1 .RES .HINT>)
+	       (<TYPE? .NUM FIX>
+		<SET VAC <LIST-REST-CONSTANT-GEN .SVAR <- .NUM 1>>>
+		<FINISH-NTH-FIXOFFSET-GEN .VAC 1 .RES .HINT>)
+	       (<TYPE? .NUM VARTBL>
+		<SET VAC <LIST-REST-VAR-GEN .SVAR .NUM NTH>>
+		<FINISH-NTH-FIXOFFSET-GEN .VAC 1 .RES .HINT>)>
+	 <CLEAR-STATUS>
+	 NORMAL)>>
+
+<DEFINE REST-LIST-GEN (SVAR NUM RES "OPTIONAL" HINT "AUX" VAC) 
+	#DECL ((SVAR) <OR VARTBL <PRIMTYPE LIST>> (NUM) <OR FIX VARTBL>
+	       (RES) <OR VARTBL ATOM>)
+	<COND (<==? .RES STACK> <EMIT-PUSH <TYPE-WORD LIST> LONG>)>
+	<COND (<TYPE? .NUM FIX>
+	       <SET VAC <LIST-REST-CONSTANT-GEN .SVAR .NUM .RES>>)
+	      (ELSE <SET VAC <LIST-REST-VAR-GEN .SVAR .NUM REST .RES>>)>
+	<COND (<N=? .RES STACK> <DEST-DECL .VAC .RES LIST>)>
+	<CLEAR-STATUS>
+	NORMAL>
+
+<DEFINE LIST-REST-CONSTANT-GEN (SVAR NUM
+				"OPTIONAL" (RES <>)
+				"AUX" VAC LDISP CAC LABEL VAC1)
+	#DECL ((SVAR) VARTBL (NUM) FIX (RES) <OR FALSE VARTBL ATOM>)
+	<COND (<SET VAC <OR <VAR-VALUE-IN-AC? .SVAR>
+			    <LOAD-VAR .SVAR VALUE <> PREF-VAL>>>
+	       <PROTECT .VAC>
+	       <COND (<AND <TYPE? .RES VARTBL>
+			   <SET VAC1 <VAR-VALUE-IN-AC? .RES>>>
+		      ; "If the loser's already in an ac, use that"
+		      <DEAD-VAR .RES>
+		      <STORE-AC .VAC1 T>
+		      <EMIT-MOVE <MA-DISP .VAC ,LIST-NEXT-OFFSET>
+				 <MA-REG .VAC1> LONG>
+		      <UNPROTECT .VAC>
+		      <SET VAC .VAC1>
+		      <SET NUM <- .NUM 1>>)
+		     (<OR <AND <==? .RES STACK> <1? .NUM>>
+			  <WILL-DIE? .SVAR>>)
+		     (T
+		      <SET VAC1 <GET-AC PREF-VAL T>>
+		      <EMIT-MOVE <MA-DISP .VAC ,LIST-NEXT-OFFSET>
+				 <MA-REG .VAC1> LONG>
+		      <UNPROTECT .VAC>
+		      <SET VAC .VAC1>
+		      <SET NUM <- .NUM 1>>)>)>
+	<PROTECT .VAC>
+	<SET LDISP <MA-DISP .VAC ,LIST-NEXT-OFFSET>>
+	<COND (<0? .NUM>)
+	      (<==? .NUM 1>
+	       <COND (<==? .RES STACK> <EMIT-PUSH .LDISP LONG>)
+		     (<EMIT-MOVE .LDISP <MA-REG .VAC> LONG>)>)
+	      (ELSE
+	       <PROTECT <SET CAC <GET-AC PREF-VAL T>>>
+	       <COND (<==? .RES STACK> <LOAD-CONSTANT .CAC <- .NUM 2>>)
+		     (ELSE <LOAD-CONSTANT .CAC <- .NUM 1>>)>
+	       <SET LABEL <MAKE-LABEL>>
+	       <EMIT-LABEL .LABEL T>
+	       <EMIT-MOVE .LDISP <MA-REG .VAC> LONG>
+	       <GEN-BRANCH ,INST-SOBGEQ .LABEL <> <MA-REG .CAC>>
+	       <COND (<==? .RES STACK> <EMIT-PUSH .LDISP LONG>)>)>
+	.VAC>
+
+<DEFINE LIST-REST-VAR-GEN (SVAR NVAR OP
+			   "OPTIONAL" (RES <>)
+			   "AUX" (STATUS? <>) VAC CAC SLABEL ELABEL LADDR)
+	#DECL ((SVAR) <OR VARTBL <PRIMTYPE LIST>> (NVAR) VARTBL (OP) ATOM
+	       (RES) <OR FALSE ATOM VARTBL>)
+	<PROTECT-VAL .NVAR>
+	<COND (<TYPE? .SVAR LIST>
+	       <SET VAC <GEN-CONSTANT .SVAR PREF-VAL NONE NONE>>)
+	      (ELSE <SET VAC <LOAD-VAR .SVAR VALUE T PREF-VAL>>)>
+	<PROTECT-USE .VAC>
+	<COND (<AND <SET CAC <VAR-VALUE-IN-AC? .NVAR>> <AVAILABLE? .CAC>>
+	       <PROTECT-USE .CAC>
+	       <COND (<OR <==? .OP NTH> <==? .RES STACK>>
+		      <EMIT ,INST-DECL <MA-REG .CAC>>
+		      <SET STATUS? T>)>)
+	      (ELSE
+	       <PROTECT-USE <SET CAC <GET-AC PREF-VAL T>>>
+	       <COND (<OR <==? .OP NTH> <==? .RES STACK>>
+		      <EMIT ,INST-SUBL3 <MA-IMM 1> <VAR-VALUE-ADDRESS .NVAR>
+			    <MA-REG .CAC>>
+		      <SET STATUS? T>)
+		     (ELSE
+		      <EMIT ,INST-MOVL <VAR-VALUE-ADDRESS .NVAR>
+			    <MA-REG .CAC>>
+		      <SET STATUS? T>)>)>
+	<COND (<==? .CAC ,STATUS-AC> <SET STATUS? T>)>
+	<COND (<NOT .STATUS?>
+	       <EMIT ,INST-TSTL <MA-REG .CAC>>)>
+	<SET ELABEL <MAKE-LABEL>>
+	<GEN-BRANCH ,INST-BLEQ .ELABEL <>>
+	<SET SLABEL <MAKE-LABEL>>
+	<EMIT-LABEL .SLABEL T>
+	<SET LADDR <MA-DISP .VAC ,LIST-NEXT-OFFSET>>
+	<EMIT-MOVE .LADDR <MA-REG .VAC> LONG>
+	<GEN-BRANCH ,INST-SOBGTR .SLABEL <> <MA-REG .CAC>>
+	<EMIT-LABEL .ELABEL <>>
+	<COND (<AND <==? .OP REST> <==? .RES STACK>> <EMIT-PUSH .LADDR LONG>)>
+	.VAC>
+
+<DEFINE FINISH-NTH-FIXOFFSET-GEN (SVAC OFF RES HINT "OPT" (INDXAC <>)
+				  "AUX" (TYP <>) RVAC TYPADDR CNTADDR VALADDR
+					DAC)
+	#DECL ((SVAC) AC (OFF) FIX (RES) <OR VARTBL ATOM>
+	       (HINT) <OR FALSE HINT> (INDXAC) <OR FALSE AC>)
+	<SET OFF <* <- .OFF 1> 8>>
+	<SET TYPADDR <MA-DISP .SVAC .OFF>>
+	<SET CNTADDR <MA-DISP .SVAC <+ .OFF 2>>>
+	<SET VALADDR <MA-DISP .SVAC <+ .OFF 4>>>
+	<AND .HINT <SET TYP <PARSE-HINT .HINT TYPE>>>
+	<COND (<AND <==? .RES STACK> <NOT ,GC-MODE>>
+	       <COND (.INDXAC
+		      <EMIT ,INST-MOVQ <MA-INDX .INDXAC> .TYPADDR
+			    <MA-AINC ,AC-TP>>)
+		     (ELSE
+		      <EMIT ,INST-MOVQ .TYPADDR <MA-AINC ,AC-TP>>)>)
+	      (ELSE
+	       <SET RVAC <GET-AC DOUBLE T>>
+	       <COND (.INDXAC
+		      <EMIT ,INST-MOVQ <MA-INDX .INDXAC> .TYPADDR
+			    <MA-REG .RVAC>>)
+		     (ELSE
+		      <EMIT ,INST-MOVQ .TYPADDR <MA-REG .RVAC>>)>
+	       <DEST-PAIR <NEXT-AC .RVAC> .RVAC .RES VALUE>)>>
+
+<DEFINE FNTH-DET-VALUE-AC (SVAC TYP) 
+	#DECL ((SVAC) AC (TYP) <OR FALSE ATOM>)
+	<COND (<AND .TYP <NOT <STRUCTURED-TYPE? .TYP>> <FREE-VALUE-AC? STORED>>
+	       <PROTECT <GET-AC VALUE T>>)
+	      (<ALL-DEAD? .SVAC> .SVAC)
+	      (ELSE
+	       <PROTECT <GET-AC PREF-VAL T>>)>>
+
+<DEFINE NTH-FIXOFFSET-GEN (SVAR OFF RES HINT "AUX" VAC) 
+	#DECL ((SVAR) VARTBL (OFF) FIX (REST) <OR ATOM VARTBL>
+	       (HINT) <OR FALSE HINT>)
+	<PROTECT <SET VAC <LOAD-VAR .SVAR VALUE <> PREF-VAL>>>
+	<FINISH-NTH-FIXOFFSET-GEN .VAC .OFF .RES .HINT>>
+
+<DEFINE NTH-VECTOR-GEN (SVAR OFF RES "OPTIONAL" (HINT <>)) 
+  #DECL ((SVAR) <OR VARTBL <PRIMTYPE VECTOR>> (OFF) <OR FIX VARTBL>
+	 (RES) <OR ATOM VARTBL> (HINT) <OR FALSE HINT>)
+  <COND (<NTH-LOOK-AHEAD NTHUV!-MIMOP .SVAR .OFF .RES .HINT>)
+	(T
+	 <COND (<TYPE? .OFF FIX> <NTH-FIXOFFSET-GEN .SVAR .OFF .RES .HINT>)
+	       (ELSE <NTH-VECTOR-VAR-GEN .SVAR .OFF .RES .HINT>)>
+	 <CLEAR-STATUS>
+	 NORMAL)>>
+
+<DEFINE NTH-VECTOR-VAR-GEN (SVAR OFF RES HINT "AUX" VAC  DAC) 
+	#DECL ((SVAR) <OR VARTBL <PRIMTYPE VECTOR>> (OFF) VARTBL
+	       (RES) <OR ATOM VARTBL> (HINT) <OR FALSE HINT>)
+	<SET DAC <LOAD-VAR .OFF VALUE <> PREF-VAL>>
+	<PROTECT-USE .DAC>
+	<COND (<NOT <TYPE? .SVAR VARTBL>>
+	       <PROTECT-USE <SET VAC <GET-AC PREF-VAL T>>>
+	       <EMIT ,INST-MOVL <ADDR-VALUE-MQUOTE .SVAR> <MA-REG .VAC>>)
+	      (ELSE
+	       <PROTECT-USE <SET VAC <LOAD-VAR .SVAR VALUE <> PREF-VAL>>>)>
+	<FINISH-NTH-FIXOFFSET-GEN .VAC 0 .RES .HINT .DAC>>
+
+<DEFINE REST-VECTOR-GEN (SVAR NUM RES "OPTIONAL" (HINT <>) "AUX" (TYP <>)) 
+	#DECL ((SVAR) <OR VARTBL <PRIMTYPE VECTOR>> (NUM) <OR FIX VARTBL>
+	       (RES) <OR VARTBL ATOM>)
+	<AND .HINT <SET TYP <PARSE-HINT .HINT TYPE>>>
+	<REST-BLOCK-GEN .SVAR .NUM .RES 3 .TYP>>
+
+<DEFINE REST-BYTE-GEN (SVAR NUM RES "OPTIONAL" HINT)
+	#DECL ((SVAR) <OR VARTBL <PRIMTYPE BYTES>> (NUM) <OR FIX VARTBL>
+	       (RES) <OR VARTBL ATOM>)
+	<REST-BLOCK-GEN .SVAR .NUM .RES 0 BYTES>>
+
+<DEFINE REST-STRING-GEN (SVAR NUM RES "OPTIONAL" HINT) 
+	#DECL ((SVAR) <OR VARTBL <PRIMTYPE STRING>> (NUM) <OR FIX VARTBL>
+	       (RES) <OR VARTBL ATOM>)
+	<REST-BLOCK-GEN .SVAR .NUM .RES 0 STRING>>
+
+<DEFINE REST-UVECTOR-GEN (SVAR NUM RES "OPTIONAL" HINT) 
+	#DECL ((SVAR) <OR VARTBL <PRIMTYPE UVECTOR>> (NUM) <OR FIX VARTBL>
+	       (RES) <OR VARTBL ATOM>)
+	<REST-BLOCK-GEN .SVAR .NUM .RES 2 UVECTOR>>
+
+<MSETG TYP-MASK <PUTBITS -1 <BITS 6 16> 0>>
+
+<MSETG PTYP-MASK <PUTBITS 0 <BITS 3 16> -1>>
+
+<DEFINE REST-BLOCK-GEN (SVAR NUM RES SHFT TYP "OPTIONAL" (INS <>) (ELAC <>)
+			(PUT? <>) (TYPE-ADDR <>)) 
+	#DECL ((SVAR) ANY (SHFT) FIX (NUM) <OR FIX VARTBL>
+	       (RES) <OR VARTBL ATOM> (TYP) <OR ATOM FALSE>)
+	<COND (<==? .SVAR .RES>
+	       <COND (<TYPE? .NUM FIX> <FIX-R-B-G-SELF .SVAR .NUM .SHFT .TYP
+						       .INS .ELAC .PUT?
+						       .TYPE-ADDR>)
+		     (ELSE <R-B-G-SELF .SVAR .NUM .SHFT .TYP>)>)
+	      (<NOT <TYPE? .SVAR VARTBL>>
+	       <R-B-G-Q .SVAR .NUM .RES .SHFT <PRIMTYPE .SVAR>>)
+	      (<TYPE? .NUM FIX> <FIX-R-B-G-OTHER .SVAR .NUM .RES .SHFT .TYP
+						 .INS .ELAC .PUT? .TYPE-ADDR>)
+	      (ELSE <R-B-G .SVAR .NUM .RES .SHFT .TYP>)>
+	<CLEAR-STATUS>
+	NORMAL>
+
+<DEFINE FIX-R-B-G-SELF (SVAR NUM SHFT TYP INS ELAC PUT? TYPE-ADDR
+			"AUX" (VAC <>) (TAC <>) (CAC <>) LV) 
+	#DECL ((NUM SHFT) FIX (SVAR) VARTBL (TYP) <OR ATOM FALSE>)
+	<COND (<SET LV <FIND-CACHE-VAR .SVAR>>
+	       <COND (<SET VAC <LINKVAR-VALUE-AC .LV>>
+		      <PROTECT .VAC>)>
+	       <COND (<NOT <SET TAC <LINKVAR-TYPE-WORD-AC .LV>>>
+		      <COND (<AND <NOT <LINKVAR-COUNT-STORED .LV>>
+				  <SET CAC <LINKVAR-COUNT-AC .LV>>>
+			     <PROTECT .CAC>)>)
+		     (T
+		      <PROTECT .TAC>)>)>
+	<DEAD-VAR .SVAR>
+	<COND (.VAC <MUNG-AC .VAC>)>
+	<COND (.TAC <MUNG-AC .TAC>)
+	      (.CAC <MUNG-AC .CAC>)>
+	<COND (.INS
+	       <COND (<NOT .VAC>
+		      <SET VAC <LOAD-VAR .SVAR VALUE T PREF-VAL>>)>)>
+	<COND (.TAC
+	       <EMIT ,INST-ADDL2
+		     <MA-IMM <CHTYPE <LSH <- .NUM> 16> FIX>>
+		     <MA-REG .TAC>>)
+	      (.CAC
+	       <COND (<==? .NUM 1> <EMIT ,INST-DECL <MA-REG .CAC>>)
+		     (ELSE <EMIT ,INST-SUBL2 <MA-IMM .NUM> <MA-REG .CAC>>)>)
+	      (ELSE
+	       <COND (<==? .NUM 1> <EMIT ,INST-DECW <VAR-COUNT-ADDRESS .SVAR>>)
+		     (ELSE
+		      <EMIT ,INST-SUBW2
+			    <MA-IMM .NUM>
+			    <VAR-COUNT-ADDRESS .SVAR>>)>)>
+	<SET NUM <SHIFT-NUM .NUM .SHFT>>
+	<COND (.INS
+	       <COND (<TYPE? .INS ATOM>)
+		     (.PUT?
+		      <COND
+		       (.TYPE-ADDR
+			; "Can happen putting into a vector"
+			<EMIT ,INST-MOVL .TYPE-ADDR <MA-AINC .VAC>>
+			<EMIT ,INST-MOVL <COND (<TYPE? .ELAC AC> <MA-REG .ELAC>)
+					       (.ELAC)>
+			      <MA-AINC .VAC>>)
+		       (T
+			<EMIT .INS <COND (<TYPE? .ELAC AC> <MA-REG .ELAC>)
+					 (.ELAC)>
+			      <MA-AINC .VAC>>)>)
+		     (<EMIT .INS <MA-AINC .VAC> <COND (<TYPE? .ELAC AC>
+						       <MA-REG .ELAC>)
+						      (.ELAC)>>)>)
+	      (<==? .NUM 1>
+	       <EMIT ,INST-INCL
+		     <COND (.VAC <MA-REG .VAC>)
+			   (ELSE <VAR-VALUE-ADDRESS .SVAR>)>>)
+	      (ELSE
+	       <EMIT ,INST-ADDL2
+		     <MA-IMM .NUM>
+		     <COND (.VAC <MA-REG .VAC>)
+			   (ELSE <VAR-VALUE-ADDRESS .SVAR>)>>)>
+	<COND (.VAC
+	       <DEST-DECL .VAC .SVAR .TYP>)>
+	<COND (.TAC
+	       <COND (.VAC <DEST-PAIR .VAC .TAC .SVAR>)
+		     (T <LINK-VAR-TO-AC .SVAR .TAC TYPE-WORD>)>)
+	      (.CAC
+	       <COND (.VAC <DEST-COUNT-DECL .VAC .CAC .SVAR .TYP>)
+		     (T
+		      <LINK-VAR-TO-AC .SVAR .CAC COUNT>
+		      <INDICATE-CACHED-VARIABLE-DECL .SVAR .TYP>)>)>
+	T>
+
+<DEFINE FIX-R-B-G-OTHER (SVAR NUM RES SHFT TYP INS ELAC PUT? TYPE-ADDR
+			 "AUX" (VAC <>) (CAC <>) LV (CN <>))
+	#DECL ((NUM SHFT) FIX (SVAR) VARTBL (TYP) <OR ATOM FALSE>)
+	<COND (.INS
+	       <COND (<NOT <SET VAC <VAR-VALUE-IN-AC? .SVAR>>>
+		      <SET VAC <LOAD-VAR .SVAR VALUE T PREF-VAL>>)>)>
+	<SET LV <FIND-CACHE-VAR .SVAR>>
+	<COND (<AND .LV <SET CAC <LINKVAR-TYPE-WORD-AC .LV>>>
+	       <COND (<TYPE? .RES VARTBL>
+		      <MUNG-AC .CAC>
+		      <PROTECT .CAC>
+		      <EMIT ,INST-ADDL2
+			    <MA-IMM <CHTYPE <LSH <- .NUM> 16> FIX>>
+			    <MA-REG .CAC>>)
+		     (ELSE
+		      <EMIT ,INST-ADDL3
+			    <MA-IMM <CHTYPE <LSH <- .NUM> 16> FIX>>
+			    <MA-REG .CAC>
+			    <MA-AINC ,AC-TP>>)>)
+	      (<AND .LV <SET CAC <LINKVAR-COUNT-AC .LV>> 
+		    <NOT <LINKVAR-COUNT-STORED .LV>> .TYP>
+	       <SET CN T>
+	       <COND (<TYPE? .RES VARTBL>
+		      <MUNG-AC .CAC>
+		      <PROTECT .CAC>
+		      <COND (<==? .NUM 1> <EMIT ,INST-DECL <MA-REG .CAC>>)
+			    (ELSE
+			     <EMIT ,INST-SUBL2 <MA-IMM .NUM> <MA-REG .CAC>>)>)
+		     (ELSE
+		      <EMIT-PUSH <TYPE-CODE .TYP> WORD>
+		      <EMIT ,INST-SUBW3
+			    <MA-IMM .NUM>
+			    <MA-REG .CAC>
+			    <MA-AINC ,AC-TP>>)>)
+	      (ELSE
+	       <COND (.CAC <MUNG-AC .CAC> <SET LV <FIND-CACHE-VAR .SVAR>>)>
+	       <COND (<==? .RES STACK>)
+		     (<AND .LV <LINKVAR-VALUE-AC .LV>>
+		      <SET CAC <GET-AC PREF-TYPE T>>)
+		     (ELSE
+		      <SET CAC <GET-AC DOUBLE T>>
+		      <SET VAC <NEXT-AC .CAC>>)>
+	       <EMIT ,INST-ADDL3
+		     <MA-IMM <CHTYPE <LSH <- .NUM> 16> FIX>>
+		     <VAR-TYPE-ADDRESS .SVAR TYPE-WORD>
+		     <COND (<==? .RES STACK> <MA-AINC ,AC-TP>)
+			   (ELSE <MA-REG .CAC>)>>)>
+	<SET NUM <SHIFT-NUM .NUM .SHFT>>
+	<COND (.INS
+	       <COND (<NOT <TYPE? .INS ATOM>>
+		      <COND (.PUT?
+			     <COND (.TYPE-ADDR
+				    <EMIT ,INST-MOVL .TYPE-ADDR <MA-AINC .VAC>>
+				    <EMIT ,INST-MOVL <COND (<TYPE? .ELAC AC>
+							    <MA-REG .ELAC>)
+							   (.ELAC)>
+					  <MA-AINC .VAC>>)
+				   (T
+				    <EMIT .INS <COND (<TYPE? .ELAC AC>
+						      <MA-REG .ELAC>)
+						     (.ELAC)>
+					  <MA-AINC .VAC>>)>)
+			    (T
+			     <EMIT .INS <MA-AINC .VAC> <COND (<TYPE? .ELAC AC>
+							      <MA-REG .ELAC>)
+							     (.ELAC)>>)>)>)
+	      (<==? .RES STACK>
+	       <COND (<SET VAC <VAR-VALUE-IN-AC? .SVAR>>
+		      <EMIT ,INST-MOVAL <MA-DISP .VAC .NUM> <MA-AINC ,AC-TP>>)
+		     (T
+		      <EMIT ,INST-ADDL3
+			    <MA-IMM .NUM>
+			    <VAR-VALUE-ADDRESS .SVAR>
+			    <MA-AINC ,AC-TP>>)>)
+	      (<AND .LV <SET VAC <LINKVAR-VALUE-AC .LV>>>
+	       <MUNG-AC .VAC>
+	       <COND (<==? .NUM 1> <EMIT ,INST-INCL <MA-REG .VAC>>)
+		     (ELSE <EMIT ,INST-ADDL2 <MA-IMM .NUM> <MA-REG .VAC>>)>)
+	      (ELSE
+	       <COND (<VAR-VALUE-IN-AC? .SVAR>
+		      <EMIT ,INST-MOVAL <MA-DISP <VAR-VALUE-IN-AC? .SVAR> .NUM>
+			    <MA-REG <COND (.VAC)
+					  (T <SET VAC <GET-AC PREF-VAL T>>)>>>)
+		     (T
+		      <EMIT ,INST-ADDL3
+			    <MA-IMM .NUM>
+			    <VAR-VALUE-ADDRESS .SVAR>
+			    <MA-REG <COND (.VAC)
+					  (ELSE <SET VAC
+						     <GET-AC PREF-VAL T>>)>>>)>)>
+	<COND (<N==? .RES STACK>
+	       <COND (<NOT .CN> <DEST-PAIR .VAC .CAC .RES>)
+		     (ELSE <DEST-COUNT-DECL .VAC .CAC .RES .TYP>)>)>>
+
+<DEFINE R-B-G-SELF (SVAR NUM SHFT TYP "AUX" (VAC <>) (TAC <>) (CAC <>)
+		    LV (NAC <>) (COUNT-STORED? <>)) 
+	#DECL ((SHFT) FIX (NUM SVAR) VARTBL (TYP) <OR ATOM FALSE>)
+	<COND (<SET LV <FIND-CACHE-VAR .SVAR>>
+	       <COND (<SET VAC <LINKVAR-VALUE-AC .LV>>
+		      <PROTECT .VAC>)>
+	       <COND (<NOT <SET TAC <LINKVAR-TYPE-WORD-AC .LV>>>
+		      <COND (<AND <NOT <LINKVAR-COUNT-STORED .LV>>
+				  <SET CAC <LINKVAR-COUNT-AC .LV>>>
+			     <PROTECT .CAC>)>)
+		     (T
+		      <MUNG-AC .TAC>)>)>
+	<DEAD-VAR .SVAR>
+	<COND (.VAC <MUNG-AC .VAC>)>
+	<COND (.TAC)
+	      (.CAC <MUNG-AC .CAC>)>
+	<COND (<NOT <0? .SHFT>> <SET NAC <LOAD-VAR .NUM VALUE <> PREF-VAL>>)>
+	<COND (.TAC
+	       <SET TAC <>>
+	       <EMIT ,INST-SUBW2
+		     <VAR-VALUE-ADDRESS .NUM>
+		     <VAR-COUNT-ADDRESS .SVAR>>
+	       <SET COUNT-STORED? T>)
+	      (.CAC
+	       <EMIT ,INST-SUBL2 <VAR-VALUE-ADDRESS .NUM> <MA-REG .CAC>>)
+	      (ELSE
+	       <SET COUNT-STORED? T>
+	       <EMIT ,INST-SUBW2
+		     <VAR-VALUE-ADDRESS .NUM>
+		     <VAR-COUNT-ADDRESS .SVAR>>)>
+	<COND (<AND <NOT .VAC> <NOT <0? .SHFT>>>
+	       <SET VAC <LOAD-VAR .SVAR JUST-VALUE <> PREF-VAL>>)>
+	<COND (<0? .SHFT>
+	       <EMIT ,INST-ADDL2
+		     <VAR-VALUE-ADDRESS .NUM>
+		     <COND (.VAC <MA-REG .VAC>)
+			   (ELSE <VAR-VALUE-ADDRESS .SVAR>)>>)
+	      (<==? .SHFT 2>
+	       <EMIT ,INST-MOVAL <MA-INDX .NAC> <MA-REGD .VAC> <MA-REG .VAC>>)
+	      (ELSE
+	       <EMIT ,INST-MOVAQ
+		     <MA-INDX .NAC>
+		     <MA-REGD .VAC>
+		     <MA-REG .VAC>>)>
+	<COND (.VAC
+	       <DEST-DECL .VAC .SVAR .TYP>)>
+	<COND (.CAC
+	       <COND (.VAC <DEST-COUNT-DECL .VAC .CAC .SVAR .TYP>)
+		     (T
+		      <LINK-VAR-TO-AC .SVAR .CAC COUNT <>>
+		      <INDICATE-CACHED-VARIABLE-DECL .SVAR .TYP>)>)>
+	<SET LV <FIND-CACHE-VAR .SVAR>>
+	<LINKVAR-TYPE-STORED .LV T>
+	<LINKVAR-COUNT-STORED .LV .COUNT-STORED?>>
+
+<DEFINE R-B-G (SVAR NUM RES SHFT TYP
+	       "AUX" (VAC <>) (CAC <>) LV (CN <>) (NAC <>)
+		     (FORCE-CHTYPE? <>))
+	#DECL ((SHFT) FIX (NUM SVAR) VARTBL (TYP) <OR ATOM FALSE>)
+	<SET LV <FIND-CACHE-VAR .SVAR>>
+	<COND (<NOT <0? .SHFT>>
+	       <PROTECT <SET NAC <LOAD-VAR .NUM VALUE <> PREF-VAL>>>)>
+	<COND (<AND .LV <SET CAC <LINKVAR-TYPE-WORD-AC .LV>>>
+	       ; "Structure has type word in AC"
+	       <COND (<TYPE? .RES VARTBL>
+		      <COND (<AND .TYP <N==? <VARTBL-DECL .RES> .TYP>>
+			     <SET FORCE-CHTYPE? T>)>
+		      <MUNG-AC .CAC>
+		      ; "Clobber type word, so COUNT-ADDRESS returns winnage"
+		      <SET CAC <>>
+		      <EMIT ,INST-SUBW3
+			    <VAR-VALUE-ADDRESS .NUM>
+			    <VAR-COUNT-ADDRESS .SVAR>
+			    <VAR-COUNT-ADDRESS .RES T>>)
+		     (ELSE
+		      <EMIT-PUSH <MA-REG .CAC> LONG>
+		      ; "Recycle type word AC onto stack"
+		      <EMIT ,INST-SUBW2
+			    <VAR-VALUE-ADDRESS .NUM>
+			    <MA-DISP ,AC-TP -2>>)>)
+	      (<AND .LV <SET CAC <LINKVAR-COUNT-AC .LV>> .TYP>
+	       ; "Structure has count in AC, so winnage is possible"
+	       <SET CN T>
+	       <COND (<TYPE? .RES VARTBL>
+		      <MUNG-AC .CAC>
+		      <PROTECT .CAC>
+		      <EMIT ,INST-SUBL2
+			    <VAR-VALUE-ADDRESS .NUM>
+			    <MA-REG .CAC>>)
+		     (ELSE
+		      <EMIT-PUSH <TYPE-CODE .TYP> WORD>
+		      <EMIT ,INST-SUBW3
+			    <VARTBL-VALUE-ADDRESS .NUM>
+			    <MA-REG .CAC>
+			    <MA-AINC ,AC-TP>>)>)
+	      (ELSE
+	       <COND (.CAC
+		      ; "Will hit this if type is unknown"
+		      <MUNG-AC .CAC>
+		      <SET LV <FIND-CACHE-VAR .SVAR>>)>
+	       <COND (<==? .RES STACK>)
+		     (ELSE
+		      ; "Get an AC for the result"
+		      <SET CAC <GET-AC PREF-TYPE T>>
+		      <PROTECT .CAC>
+		      <EMIT ,INST-CLRL <MA-REG .CAC>>)>
+	       <COND (<==? .RES STACK>
+		      <COND (.TYP <EMIT-PUSH <TYPE-CODE .TYP> WORD>)
+			    (ELSE <EMIT ,INST-CLRW <MA-AINC ,AC-TP>>)>
+		      <EMIT ,INST-SUBW3
+			    <VAR-VALUE-ADDRESS .NUM>
+			    <VAR-COUNT-ADDRESS .SVAR>
+			    <MA-AINC ,AC-TP>>)
+		     (ELSE
+		      <EMIT ,INST-SUBW3
+			    <VAR-VALUE-ADDRESS .NUM>
+			    <VAR-COUNT-ADDRESS .SVAR>
+			    <MA-REG .CAC>>
+		      <COND (<NOT .TYP>
+			     <EMIT ,INST-ASHL
+				   <MA-IMM 16>
+				   <MA-REG .CAC>
+				   <MA-REG .CAC>>)
+			    (ELSE <SET CN T>)>)>)>
+	<COND (<0? .SHFT>
+	       <COND (<AND <N==? .RES STACK>
+			   .LV
+			   <SET VAC <LINKVAR-VALUE-AC .LV>>>
+		      <MUNG-AC .VAC>
+		      <EMIT ,INST-ADDL2
+			    <VAR-VALUE-ADDRESS .NUM>
+			    <MA-REG .VAC>>)
+		     (<N==? .RES STACK>
+		      <EMIT ,INST-ADDL3
+			    <VAR-VALUE-ADDRESS .NUM>
+			    <VAR-VALUE-ADDRESS .SVAR>
+			    <MA-REG <SET VAC <GET-AC PREF-VAL T>>>>)
+		     (ELSE
+		      <EMIT ,INST-ADDL3
+			    <VAR-VALUE-ADDRESS .NUM>
+			    <VAR-VALUE-ADDRESS .SVAR>
+			    <MA-AINC ,AC-TP>>)>)
+	      (ELSE
+	       <SET VAC <LOAD-VAR .SVAR JUST-VALUE <N==? .RES STACK> PREF-VAL>>
+	       <COND (<==? .SHFT 2>
+		      <EMIT ,INST-MOVAL
+			    <MA-INDX .NAC>
+			    <MA-REGD .VAC>
+			    <COND (<==? .RES STACK> <MA-AINC ,AC-TP>)
+				  (ELSE <MA-REG .VAC>)>>)
+		     (ELSE
+		      <EMIT ,INST-MOVAQ
+			    <MA-INDX .NAC>
+			    <MA-REGD .VAC>
+			    <COND (<==? .RES STACK> <MA-AINC ,AC-TP>)
+				  (ELSE <MA-REG .VAC>)>>)>)>
+	<COND (<OR <NOT .TYP> .FORCE-CHTYPE?
+		   <AND <N==? .TYP <VARTBL-DECL .SVAR>> <NOT .CN>>>
+	       <DO-TYPE-CHANGE
+		<COND (<==? .RES STACK> <MA-DISP ,AC-TP -8>)
+		      (.CAC <MA-REG .CAC>)
+		      (ELSE <VAR-TYPE-ADDRESS .RES>)>
+		<COND (<==? .RES STACK> <MA-DISP ,AC-TP -4>)
+		      (ELSE <MA-REG .VAC>)>
+		.TYP
+		.SHFT>
+	       <COND (<N==? .RES STACK>
+		      <COND (.CAC <DEST-PAIR .VAC .CAC .RES>)
+			    (ELSE
+			     <DEAD-VAR .RES>
+			     <LINK-VAR-TO-AC .RES .VAC VALUE <>>
+			     <SET LV <FIND-CACHE-VAR .RES>>
+			     <PUT .LV ,LINKVAR-COUNT-STORED T>
+			     <PUT .LV ,LINKVAR-TYPE-STORED T>
+			     <PUT .LV ,LINKVAR-TYPE-AC <>>
+			     <PUT .LV ,LINKVAR-COUNT-AC <>>
+			     <PUT .LV ,LINKVAR-TYPE-WORD-AC <>>)>)>)
+	      (<N==? .RES STACK>
+	       <COND (<NOT .CN>
+		      <COND (.CAC <DEST-PAIR .VAC .CAC .RES>)
+			    (ELSE
+			     <DEAD-VAR .RES>
+			     <LINK-VAR-TO-AC .RES .VAC VALUE <>>
+			     <SET LV <FIND-CACHE-VAR .RES>>
+			     <PUT .LV ,LINKVAR-COUNT-STORED T>
+			     <PUT .LV ,LINKVAR-TYPE-STORED T>
+			     <PUT .LV ,LINKVAR-TYPE-AC <>>
+			     <PUT .LV ,LINKVAR-COUNT-AC <>>
+			     <PUT .LV ,LINKVAR-TYPE-WORD-AC <>>)>)
+		     (ELSE <DEST-COUNT-DECL .VAC .CAC .RES .TYP>)>)>>
+
+<DEFINE R-B-G-Q (SVAR NUM RES SHFT TYP "AUX" NAC VAC CAC)
+	#DECL ((NUM) VARTBL (SHFT) FIX (TYP) ATOM)
+	<COND (<==? .RES STACK>
+	       <EMIT-PUSH <TYPE-CODE <PRIMTYPE .SVAR>> WORD>
+	       <EMIT ,INST-SUBW3 
+		     <VAR-VALUE-ADDRESS .NUM>
+		     <MA-IMM <LENGTH .SVAR>>
+		     <MA-AINC ,AC-TP>>)
+	      (ELSE
+	       <EMIT ,INST-SUBL3 <VAR-VALUE-ADDRESS .NUM>
+		     <MA-IMM <LENGTH .SVAR>>
+		     <MA-REG <SET CAC <GET-AC DOUBLE T>>>>)>
+	<COND (.CAC <SET VAC <NEXT-AC .CAC>>)>
+	<COND (<0? .SHFT>
+	       <EMIT ,INST-ADDL3 <VAR-VALUE-ADDRESS .NUM>
+		     <ADDR-VALUE-M <ADD-MVEC .SVAR>>
+		     <COND (<==? .RES STACK> <MA-AINC ,AC-TP>)
+			   (ELSE .VAC)>>)
+	      (ELSE
+	       <EMIT ,INST-MOVL <ADDR-VALUE-M <ADD-MVEC .SVAR>>
+		     <COND (.VAC) (ELSE <SET VAC <GET-AC PREF-VAL T>>)>>
+	       <SET NAC <LOAD-VAR .NUM VALUE <> PREF-VAL>>
+	       <EMIT <COND (<==? .SHFT 2> ,INST-MOVAL)
+			   (ELSE ,INST-MOVAQ)>
+		     <MA-INDX .NAC>
+		     <MA-REGD .VAC>
+		     <COND (<==? .RES STACK> <MA-AINC ,AC-TP>)
+			   (ELSE <MA-REG .VAC>)>>)>
+	<COND (<N==? .RES STACK>
+	       <DEST-COUNT-DECL .VAC .CAC .RES <PRIMTYPE .SVAR>>)>>
+		
+
+<DEFINE DO-TYPE-CHANGE (TADDR VADDR TYP SHFT "AUX" T1) 
+	<COND (.TYP <EMIT ,INST-MOVW <TYPE-CODE .TYP> .TADDR>)
+	      (ELSE
+	       <EMIT-MOVE <TYPE-CODE VECTOR> .TADDR WORD>
+	       <GEN-COMP-INST .VADDR <MA-REG ,AC-TP> LONG>
+	       <SET T1 <MAKE-LABEL>>
+	       <GEN-BRANCH ,INST-BGTR .T1 <>>
+	       <EMIT-MOVE <TYPE-CODE TUPLE> .TADDR WORD>
+	       <EMIT-LABEL .T1 <>>)>>
+
+<DEFINE SHIFT-NUM (NUM SHFT)
+	#DECL ((NUM SHFT) FIX)
+	<COND (<0? .SHFT> .NUM)
+	      (<==? .SHFT 2> <* .NUM 4>)
+	      (ELSE <* .NUM 8>)>>
+
+<DEFINE LIST-LENGTH-GEN (SVAR RES "OPTIONAL" HINT "AUX" VAC CAC SLABEL ELABEL) 
+	#DECL ((SVAR) VARTBL (RES) <OR ATOM VARTBL>)
+	<AND <SET VAC <VAR-VALUE-IN-AC? .SVAR>> <PROTECT .VAC>>
+	<SET CAC <GET-AC PREF-VAL T>>
+	<EMIT ,INST-CLRL <MA-REG .CAC>>
+	<PROTECT .CAC>
+	<SET VAC <LOAD-VAR .SVAR VALUE T PREF-VAL>>
+	<PROTECT-USE .VAC>
+	<SET SLABEL <MAKE-LABEL>>
+	<SET ELABEL <MAKE-LABEL>>
+	<COND (<N==? .VAC ,STATUS-AC> <EMIT ,INST-TSTL <MA-REG .VAC>>)>
+	<GEN-BRANCH ,INST-BEQL .ELABEL <>>
+	<EMIT-LABEL .SLABEL T>
+	<EMIT ,INST-INCL <MA-REG .CAC>>
+	<EMIT-MOVE <MA-DISP .VAC ,LIST-NEXT-OFFSET> <MA-REG .VAC> LONG>
+	<GEN-BRANCH ,INST-BNEQ .SLABEL <>>
+	<EMIT-LABEL .ELABEL <>>
+	<DEST-DECL .CAC .RES FIX>
+	<CLEAR-STATUS>
+	NORMAL>
+
+<DEFINE BLOCK-LENGTH-GEN (SVAR RES "OPTIONAL" HINT HINT2 "AUX" VAC AC LV) 
+	#DECL ((SVAR) ANY (RES) <OR ATOM VARTBL>)
+	<COND (<NOT <TYPE? .SVAR VARTBL>>
+	       <COND (<==? .RES STACK>
+		      <PUSH-CONSTANT <LENGTH .SVAR>>)
+		     (T
+		      <SET VAC <GET-AC PREF-VAL T>>
+		      <COND (<EMPTY? .SVAR>
+			     <EMIT ,INST-CLRL <MA-REG .VAC>>)
+			    (T
+			     <EMIT ,INST-MOVL <MA-IMM <LENGTH .SVAR>>
+				   <MA-REG .VAC>>)>
+		      <DEST-DECL .VAC .RES FIX>)>)
+	      (<==? .RES STACK>
+	       <EMIT-PUSH <TYPE-CODE FIX> LONG>
+	       <COND (<AND <SET LV <FIND-CACHE-VAR .SVAR>>
+			   <NOT <LINKVAR-COUNT-STORED .LV>>>
+		      <SET VAC <LOAD-VAR .SVAR COUNT T PREF-VAL>>
+		      <EMIT-PUSH <MA-REG .VAC> LONG>)
+		     (T
+		      <EMIT ,INST-MOVZWL
+			    <ADDR-VAR-COUNT .SVAR> <MA-AINC ,AC-TP>>)>)
+	      	(T
+	       <COND (<AND <SET LV <FIND-CACHE-VAR .SVAR>>
+			   <NOT <LINKVAR-COUNT-STORED .LV>>>
+		      <PROTECT <SET VAC <LOAD-VAR .SVAR COUNT T PREF-VAL>>>)
+		     (ELSE
+		      <SET VAC <GET-AC PREF-VAL T>>
+		      <EMIT ,INST-MOVZWL <ADDR-VAR-COUNT .SVAR>
+			    <MA-REG .VAC>>)>
+	       <DEST-DECL .VAC .RES FIX>)>
+	       NORMAL>
+
+<DEFINE LIST-EMP-GEN (SVAR DIR LABEL "OPTIONAL" HINT "AUX" CC STATUS? VAC LAC) 
+	#DECL ((SVAR) VARTBL (DIR LABEL) ATOM)
+	<COND (<NOT <AND <SET VAC <VAR-VALUE-IN-AC? .SVAR>>
+			 <==? .VAC ,STATUS-AC>>>
+	       <EMIT ,INST-TSTL <VAR-VALUE-ADDRESS .SVAR>>)>
+	<COND (<==? .DIR +> <SET CC ,COND-CODE-EQ>)
+	      (ELSE <SET CC ,COND-CODE-NE>)>
+	<GEN-BRANCH <NTH ,BRANCHES <+ .CC 1>> .LABEL <> <>>
+	<CLEAR-STATUS>
+	NORMAL>
+
+<DEFINE BLOCK-EMP-GEN (SVAR DIR LABEL "OPTIONAL" HINT) 
+	#DECL ((DIR LABEL) ATOM)
+	<COND (<TYPE? .SVAR VARTBL>
+	       <ZERO-COUNT-TEST-GEN .SVAR .DIR .LABEL>
+	       <CLEAR-STATUS>)
+	      (<OR <TYPE? .SVAR ATOM> <NOT <EMPTY? .SVAR>>>
+	       <COND (<==? .DIR ->
+		      <GEN-BRANCH ,INST-BBR .LABEL <>>)>)
+	      (<==? .DIR +>
+	       <GEN-BRANCH ,INST-BBR .LABEL <>>)>
+	NORMAL>
+
+<DEFINE ZERO-COUNT-TEST-GEN (VAR DIR LABEL
+			     "AUX" STATUS? VADDR VAC LVAR (USE-CMP <>))
+	#DECL ((VAR) VARTBL (DIR) ATOM (LABEL) ATOM)
+	<COND (<OR <NOT <SET LVAR <FIND-CACHE-VAR .VAR>>>
+		   <LINKVAR-COUNT-STORED .LVAR>>
+	       <SET VADDR <VAR-COUNT-ADDRESS .VAR>>)
+	      (<SET VAC <LINKVAR-COUNT-AC .LVAR>>
+	       <SET VADDR <MA-REG .VAC>>)
+	      (<SET VAC <LINKVAR-TYPE-WORD-AC .LVAR>>
+	       <SET VADDR <MA-REG .VAC>>
+	       <SET USE-CMP T>)
+	      (T
+	       <SET VADDR <VAR-COUNT-ADDRESS .VAR>>)>
+	<COND (<NOT <SET STATUS? <STATUS? .VAR COUNT>>>
+	       <COND (.USE-CMP
+		      <EMIT ,INST-CMPL .VADDR <MA-IMM *177777*>>)
+		     (ELSE <EMIT ,INST-TSTW .VADDR>)>)
+	      (ELSE <SET USE-CMP <>>)>
+	<COND (<==? .DIR +> <GEN-BRANCH ,INST-BLEQU .LABEL <>>)
+	      (ELSE <GEN-BRANCH ,INST-BGTRU .LABEL <>>)>>
+
+<DEFINE PUTREST-GEN (VAL1 VAL2 "AUX" VAC OFF NADDR) 
+	#DECL ((VAL1) VARTBL (VAL2) <OR <PRIMTYPE LIST> VARTBL>)
+	<PROTECT <SET VAC <LOAD-VAR .VAL1 VALUE <> PREF-VAL>>>
+	<SET NADDR <MA-DISP .VAC ,LIST-NEXT-OFFSET>>
+	<COND (<TYPE? .VAL2 LIST>
+	       <COND (<EMPTY? .VAL2> <EMIT ,INST-CLRL .NADDR>)
+		     (ELSE
+		      <SET OFF <ADD-MVEC .VAL2>>
+		      <EMIT ,INST-MOVL <ADDR-VALUE-M .OFF> .NADDR>)>)
+	      (<EMIT ,INST-MOVL <VAR-VALUE-ADDRESS .VAL2> .NADDR>)>
+	<CLEAR-STATUS>
+	NORMAL>
+
+<DEFINE PUT-LIST-GEN (VAR OFF VAL "OPTIONAL" (HINT <>) "AUX" VAC) 
+	#DECL ((VAR) VARTBL (OFF) <OR FIX VARTBL> (VAL) ANY)
+	<COND (.HINT <SET HINT <PARSE-HINT .HINT TYPE>>)>
+	<PROTECT-VAL .VAL>
+	<COND (<==? .OFF 1> <SLOT-CLOBBER .VAR 1 .VAL <> .HINT>)
+	      (<TYPE? .OFF FIX>
+	       <SET VAC <LIST-REST-CONSTANT-GEN .VAR <- .OFF 1>>>
+	       <FINISH-SLOT-CLOBBER .VAC 1 .VAL <> .HINT>)
+	      (ELSE
+	       <SET VAC <LIST-REST-VAR-GEN .VAR .OFF NTH>>
+	       <FINISH-SLOT-CLOBBER .VAC 1 .VAL <> .HINT>)>
+	<CLEAR-STATUS>
+	NORMAL>
+
+<DEFINE SLOT-CLOBBER (VAR OFF VAL UVC HINT "AUX" VAC ROFF) 
+	#DECL ((VAR) VARTBL (OFF) FIX (VAL) ANY (UVC) BOOLEAN)
+	<PROTECT <SET VAC <LOAD-VAR .VAR VALUE <> PREF-VAL>>>
+	<FINISH-SLOT-CLOBBER .VAC .OFF .VAL .UVC .HINT>>
+
+<DEFINE FINISH-SLOT-CLOBBER (VAC OFF VAL UVC HINT
+			     "OPT" (INDXAC <>)
+			     "AUX" DTADDR DVADDR DCADDR ROFF
+				   (KLUDGE
+				    <TUPLE <COND (.INDXAC <MA-INDX .INDXAC>)
+						 (ELSE <>)>>) LAC GAC DCL
+				   FX? LVAR (DONE? <>))
+	#DECL ((VAC) AC (OFF) FIX (VAL) ANY (UVC) BOOLEAN
+	       (INDXAC) <OR AC FALSE> (KLUDGE) TUPLE (LAC GAC) <OR AC FALSE>
+	       (LVAR) <OR FALSE LINKVAR>)
+	<COND (.INDXAC <PROTECT .INDXAC>) (ELSE <SET KLUDGE <REST .KLUDGE>>)>
+	<COND (.UVC <SET ROFF <* <- .OFF 1> 4>>)
+	      (ELSE <SET ROFF <* <- .OFF 1> 8>>)>
+	<PROTECT .VAC>
+	<COND (<NOT <TYPE? .VAL VARTBL>>
+	       <COND (<SET FX? <FIX-CONSTANT? .VAL>>
+		      <COND (.UVC
+			     <COND (<0? .FX?>
+				    <EMIT ,INST-CLRL
+					  !.KLUDGE
+					  <MA-DISP .VAC .ROFF>>)
+				   (<AND <L? .FX? 0>
+					 <G? .FX? -64>>
+				    ; "Lets us use literal"
+				    <EMIT ,INST-MNEGL
+					  <MA-IMM <- .FX?>>
+					  !.KLUDGE <MA-DISP .VAC .ROFF>>)
+				   (<EMPTY? .KLUDGE>
+				    <EMIT-MOVE <MA-IMM .FX?> <MA-DISP .VAC .ROFF>
+					       LONG>)
+				   (ELSE
+				    <EMIT ,INST-MOVL
+					  <MA-IMM .FX?>
+					  !.KLUDGE
+					  <MA-DISP .VAC .ROFF>>)>)
+			    (ELSE
+			     <COND (.INDXAC
+				    <COND (<OR <AVAILABLE? .INDXAC>
+					       <NOT <SET LAC <FREE-AC?>>>>
+					   <MUNG-AC .INDXAC>
+					   <EMIT ,INST-ASHL <MA-IMM 1>
+						 <MA-REG .INDXAC>
+						 <MA-REG .INDXAC>>)
+					  (ELSE
+					   <EMIT ,INST-ASHL <MA-IMM 1>
+						 <MA-REG .INDXAC>
+						 <MA-REG <SET INDXAC .LAC>>>)>
+				    <PUT .KLUDGE 1 <MA-INDX .INDXAC>>)>
+			     <COND (<NOT .HINT>
+				    <EMIT-MOVE <TYPE-WORD <TYPE .VAL>>
+					       <MA-DISP .VAC .ROFF>
+					       LONG
+					       .KLUDGE>)>
+			     <COND (<0? .FX?>
+				    <EMIT ,INST-CLRL
+					  !.KLUDGE
+					  <MA-DISP .VAC <+ .ROFF 4>>>)
+				   (<AND <L? .FX? 0>
+					 <G? .FX? -64>>
+				    <EMIT ,INST-MNEGL
+					  <MA-IMM <- .FX?>>
+					  !.KLUDGE
+					  <MA-DISP .VAC <+ .ROFF 4>>>)
+				   (ELSE
+				    <EMIT-MOVE <MA-IMM .FX?>
+					       <MA-DISP .VAC <+ .ROFF 4>>
+					       LONG
+					       .KLUDGE>)>)>)
+		     (.UVC
+		      <EMIT ,INST-MOVL
+			    <ADDR-VALUE-MQUOTE .VAL>
+			    !.KLUDGE
+			    <MA-DISP .VAC .ROFF>>)
+		     (ELSE
+		      <EMIT ,INST-MOVQ
+			    <ADDR-TYPE-MQUOTE .VAL>
+			    !.KLUDGE
+			    <MA-DISP .VAC .ROFF>>)>)
+	      (.UVC
+	       <EMIT ,INST-MOVL
+		     <VAR-VALUE-ADDRESS .VAL>
+		     !.KLUDGE
+		     <MA-DISP .VAC .ROFF>>)
+	      (ELSE
+	       <SET LVAR <FIND-CACHE-VAR .VAL>>
+	       <COND (<AND .LVAR
+			   <SET LAC <LINKVAR-TYPE-WORD-AC .LVAR>>
+			   <SET GAC <LINKVAR-VALUE-AC .LVAR>>
+			   <==? .GAC <NEXT-AC .LAC>>>
+		      <SET DONE? T>
+		      <EMIT ,INST-MOVQ
+			    <MA-REG .LAC>
+			    !.KLUDGE
+			    <MA-DISP .VAC .ROFF>>)
+		     (<OR <NOT .LVAR>
+			  <AND <LINKVAR-VALUE-STORED .LVAR>
+			       <LINKVAR-TYPE-STORED .LVAR>
+			       <OR <AND .HINT
+					<NOT <COUNT-NEEDED? .HINT>>>
+				   <AND <SET DCL <VARTBL-DECL .VAL>>
+					<NOT <COUNT-NEEDED? .DCL>>>
+				   <LINKVAR-COUNT-STORED .LVAR>>>>
+		      <SET DONE? T>
+		      <EMIT ,INST-MOVQ
+			    <ADDR-VAR-TYPE-VALUE .VAL>
+			    !.KLUDGE
+			    <MA-DISP .VAC .ROFF>>)
+		     (ELSE
+		      <COND (.INDXAC
+			     <COND (<OR <AVAILABLE? .INDXAC>
+					<NOT <SET LAC <FREE-AC?>>>>
+				    <MUNG-AC .INDXAC>
+				    <EMIT ,INST-ASHL <MA-IMM 1>
+					  <MA-REG .INDXAC> <MA-REG .INDXAC>>)
+				   (ELSE
+				    <EMIT ,INST-ASHL <MA-IMM 1>
+					  <MA-REG .INDXAC>
+					  <MA-REG <SET INDXAC .LAC>>>)>
+			     <PUT .KLUDGE 1 <MA-INDX .INDXAC>>)>
+		      <COND (<AND .HINT
+				  <NOT <COUNT-NEEDED? .HINT>>>)
+			    (<OR <NOT .LVAR>
+				 <AND <LINKVAR-TYPE-STORED .LVAR>
+				      <OR <AND <SET DCL <VARTBL-DECL .VAL>>
+					       <NOT <COUNT-NEEDED? .DCL>>>
+					  <LINKVAR-COUNT-STORED .LVAR>>>
+				  <LINKVAR-TYPE-WORD-AC .LVAR>>
+			     <EMIT ,INST-MOVL
+				   <VAR-TYPE-ADDRESS .VAL TYPEWORD>
+				   !.KLUDGE
+				   <MA-DISP .VAC .ROFF>>)
+			    (ELSE
+			     <COND (<SET DCL <VARTBL-DECL .VAL>>
+				    <COND (<NOT <COUNT-NEEDED? .DCL>>
+					   <COND (<NOT .HINT>
+						  ; "Will do right thing
+						     with atoms & stuff
+						     (they really need count)"
+						  <STORE-TYPE .DCL
+							      <MA-DISP .VAC .ROFF>
+							      !.KLUDGE>)>)
+					  (<LINKVAR-COUNT-STORED .LVAR>
+					   ; "Could be better if could get
+					      around indexing stuff"
+					   <STORE-TYPE .DCL <ADDR-VAR-TYPE .VAL>>
+					   <PUT .LVAR ,LINKVAR-TYPE-STORED
+						T>
+					   <EMIT ,INST-MOVL
+						 <ADDR-VAR-TYPE .VAL>
+						 !.KLUDGE
+						 <MA-DISP .VAC .ROFF>>)
+					  (ELSE
+					   <STORE-TYPE .DCL <ADDR-VAR-TYPE .VAL>>
+					   <EMIT ,INST-MOVW
+						 <MA-REG
+						  <LINKVAR-COUNT-AC .LVAR>>
+						 <ADDR-VAR-COUNT .VAL>>
+					   <LINKVAR-COUNT-STORED .LVAR T>
+					   <LINKVAR-TYPE-STORED .LVAR T>
+					   <EMIT ,INST-MOVL
+						 <ADDR-VAR-TYPE .VAL>
+						 !.KLUDGE
+						 <MA-DISP .VAC .ROFF>>)>)
+				   (ELSE
+				    <COND (<LINKVAR-TYPE-STORED .LVAR>
+					   <EMIT ,INST-MOVW
+						 <MA-REG
+						  <LINKVAR-COUNT-AC .LVAR>>
+						 <ADDR-VAR-COUNT .VAL>>
+					   <LINKVAR-COUNT-STORED .LVAR T>)
+					  (ELSE
+					   <EMIT ,INST-MOVW
+						 <MA-REG
+						   <LINKVAR-TYPE-AC .LVAR>>
+						 <ADDR-VAR-TYPE .VAL>>
+					   <LINKVAR-TYPE-STORED .LVAR T>)>
+				    <EMIT ,INST-MOVL
+					  <ADDR-VAR-TYPE .VAL>
+					  !.KLUDGE
+					  <MA-DISP .VAC .ROFF>>)>)>
+		      <COND (<NOT .DONE?>
+			     <EMIT ,INST-MOVL
+				   <VAR-VALUE-ADDRESS .VAL>
+				   !.KLUDGE
+				   <MA-DISP .VAC <+ .ROFF 4>>>)>)>)>
+	.VAC>
+
+<DEFINE PUT-VEC-GEN (VAR OFF VAL "OPTIONAL" (HINT <>) (UVC <>)) 
+	#DECL ((VAR) VARTBL (OFF) <OR FIX VARTBL> (VAL) ANY)
+	<AND .HINT <SET HINT <PARSE-HINT .HINT TYPE>>>
+	<PROTECT-VAL .VAL>
+	<COND (<TYPE? .OFF FIX>
+	       <SLOT-CLOBBER .VAR .OFF .VAL .UVC .HINT>)
+	      (ELSE
+	       <VAR-SLOT-CLOBBER .VAR .OFF .VAL .UVC .HINT>)>
+	<CLEAR-STATUS>
+	NORMAL>
+
+<DEFINE PROTECT-VAL (VAL "AUX" LV)
+  #DECL ((VAL) ANY (LV) <OR FALSE LINKVAR>)
+  <COND (<AND <TYPE? .VAL VARTBL>
+	      <SET LV <FIND-CACHE-VAR .VAL>>>
+	 ; "Protect ACs for value, so don't clobber it when loading
+	    stuff."
+	 <COND (<LINKVAR-VALUE-AC .LV>
+		<PROTECT <LINKVAR-VALUE-AC .LV>>)>
+	 <COND (<LINKVAR-TYPE-WORD-AC .LV>
+		<PROTECT <LINKVAR-TYPE-WORD-AC .LV>>)>
+	 <COND (<LINKVAR-TYPE-AC .LV>
+		<PROTECT <LINKVAR-TYPE-AC .LV>>)>
+	 <COND (<LINKVAR-COUNT-AC .LV>
+		<PROTECT <LINKVAR-COUNT-AC .LV>>)>)>>
+
+<DEFINE VAR-SLOT-CLOBBER (VAR OFF VAL UVC HINT "AUX" VAC NAC) 
+	#DECL ((VAR) VARTBL (OFF) VARTBL (VAL) ANY (UVC) BOOLEAN)
+	<PROTECT-VAL .VAR>
+	<PROTECT-USE <SET NAC <LOAD-VAR .OFF VALUE <> PREF-VAL>>>
+	<PROTECT-USE <SET VAC <LOAD-VAR .VAR VALUE <> PREF-VAL>>>
+	<FINISH-SLOT-CLOBBER .VAC 0 .VAL .UVC .HINT .NAC>
+	.VAC>
+
+<DEFINE NTH-STRING-GEN (S N R "OPTIONAL" (H <>))
+  <COND (<NTH-LOOK-AHEAD NTHUS!-MIMOP .S .N .R .H>)
+	(T
+	 <NTH-STRING-GEN-1 .S .N .R CHARACTER>)>>
+
+<DEFINE NTH-BYTE-GEN (S N R "OPTIONAL" (H <>))
+  <COND (<NTH-LOOK-AHEAD NTHUB!-MIMOP .S .N .R .H>)
+	(T <NTH-STRING-GEN-1 .S .N .R FIX>)>>
+
+<DEFINE NTH-STRING-GEN-1 (SVAR NUM RES TYP "AUX" VAC RVAC ACN NAC) 
+	#DECL ((SVAR) <OR VARTBL STRING BYTES> (NUM) <OR VARTBL FIX>)
+	<COND (<TYPE? .SVAR VARTBL>
+	       <SET VAC <LOAD-VAR .SVAR VALUE <> PREF-VAL>>)
+	      (ELSE
+	       <SET VAC <GET-AC PREF-VAL T>>
+	       <MOVE-VALUE .SVAR .VAC>)>
+	<PROTECT-USE .VAC>
+	<SET RVAC <GET-AC PREF-VAL T>>
+	<PROTECT .RVAC>
+	<COND (<TYPE? .NUM FIX>
+	       <EMIT ,INST-MOVZBL
+		     <MA-DISP .VAC <- .NUM 1>>
+		     <MA-REG .RVAC>>)
+	      (ELSE
+	       <PROTECT-USE <SET NAC <LOAD-VAR .NUM VALUE <> PREF-VAL>>>
+	       <EMIT ,INST-MOVZBL <MA-INDX .NAC>
+		     <MA-DISP .VAC -1> <MA-REG .RVAC>>)>
+	<DEST-DECL .RVAC .RES .TYP>
+	NORMAL>
+
+<DEFINE PUT-STRING-GEN (SVAR NUM VAL "OPTIONAL" (INS PUTUS!-MIMOP)
+			"AUX" VAC CADDR CVAC DADDR NAC) 
+	#DECL ((SVAR) VARTBL (NUM) <OR VARTBL FIX> (VAL) <OR VARTBL
+							     CHARACTER
+							     FIX>)
+	<PROTECT-VAL .VAL>
+	<SET VAC <LOAD-VAR .SVAR VALUE <> PREF-VAL>>
+	<PROTECT-USE .VAC>
+	<COND (<TYPE? .VAL CHARACTER> <SET CADDR <MA-IMM <ASCII .VAL>>>)
+	      (<TYPE? .VAL FIX> <SET CADDR <MA-IMM .VAL>>)
+	      (ELSE
+	       <COND (<SET CVAC <VAR-VALUE-IN-AC? .VAL>>
+		      <PROTECT-USE .CVAC>
+		      <SET CADDR <MA-REG .CVAC>>)
+		     (ELSE
+		      <SET CADDR <ADDR-VAR-CHAR-VALUE .VAL>>)>)>
+	<COND (<TYPE? .NUM FIX>
+	       <SET DADDR <MA-DISP .VAC <- .NUM 1>>>
+	       <EMIT ,INST-MOVB .CADDR .DADDR>)
+	      (ELSE
+	       <PROTECT-USE <SET NAC <LOAD-VAR .NUM VALUE <> PREF-VAL>>>
+	       <SET DADDR <MA-DISP .VAC -1>>
+	       <EMIT ,INST-MOVB .CADDR <MA-INDX .NAC> .DADDR>)>
+	NORMAL>
+
+<DEFINE PUT-BYTE-GEN (SVAR OFF VAL)
+  <PUT-STRING-GEN .SVAR .OFF .VAL PUTUB!-MIMOP>>
+
+<DEFINE NTH-UVECTOR-GEN NUG (UVAR NUM RES
+			 "OPTIONAL" (HINT <>)
+			 "AUX" TYP VAC TAC CADDR RVAC (NAC <>) VAL)
+	#DECL ((UVAR) <OR VARTBL UVECTOR> (NUM) <OR VARTBL FIX>
+	       (RES) <OR VARTBL ATOM> (HINT) <OR FALSE HINT>)
+	<COND (<TYPE? .UVAR UVECTOR> <SET TYP FIX> ;<SET TYP <UTYPE .UVAR>>)
+	      (.HINT <SET TYP <PARSE-HINT .HINT TYPE>>)
+	      (ELSE <SET TYP FIX>)>
+	<COND (<SET VAL <NTH-LOOK-AHEAD NTHUU!-MIMOP .UVAR .NUM .RES .TYP>>
+	       <RETURN .VAL .NUG>)>
+	<COND (<TYPE? .NUM FIX>
+	       <COND (<TYPE? .UVAR VARTBL>
+		      <SET VAC <LOAD-VAR .UVAR VALUE <> PREF-VAL>>)
+		     (ELSE
+		      <SET VAC <GET-AC PREF-VAL T>>
+		      <MOVE-VALUE .UVAR .VAC>)>
+	       <PROTECT-USE .VAC>)>
+	<COND (<NOT .TYP>
+	       <ERROR>
+	       <PROTECT-USE <SET TAC <LOAD-VAR .UVAR COUNT <> DATA>>>
+	       <EMIT-SHIFT ,INST-ASHL 2 .TAC LONG>
+	       <ADD-TO-AC .TAC <VAR-VALUE-ADDRESS .UVAR>>
+	       <COND (<==? .RES STACK>
+		      <EMIT-PUSH <MA-DISP .TAC 0> WORD>
+		      <CLEAR-PUSH WORD>)
+		     (<MOVE-TO-AC .TAC <MA-DISP .TAC 4> WORD>)>)>
+	<COND (<TYPE? .RES VARTBL>
+	       <PROTECT <SET RVAC <GET-AC PREF-VAL T>>>)>
+	<COND (<TYPE? .NUM FIX>
+	       <SET CADDR <MA-DISP .VAC <* <- .NUM 1> 4>>>)
+	      (ELSE
+	       <SET NAC <LOAD-VAR .NUM VALUE <> PREF-VAL>>
+	       <PROTECT-USE .NAC>
+	       <COND (<TYPE? .UVAR VARTBL>
+		      <SET VAC <LOAD-VAR .UVAR VALUE <> PREF-VAL>>)
+		     (ELSE
+		      <SET VAC <GET-AC PREF-VAL T>>
+		      <MOVE-VALUE .UVAR <MA-REG .VAC>>)>
+	       <PROTECT-USE .VAC>
+	       <SET CADDR <MA-DISP .VAC -4>>)>
+	<COND (<==? .RES STACK>
+	       <COND (.TYP <EMIT-PUSH <TYPE-WORD .TYP> LONG>)>
+	       <COND (.NAC
+		      <EMIT ,INST-MOVL <MA-INDX .NAC> .CADDR
+			    <MA-AINC ,AC-TP>>)
+		     (ELSE
+		      <EMIT ,INST-MOVL .CADDR <MA-AINC ,AC-TP>>)>)
+	      (ELSE
+	       <COND (.NAC
+		      <EMIT ,INST-MOVL <MA-INDX .NAC> .CADDR
+			    <MA-REG .RVAC>>)
+		     (ELSE
+		      <EMIT ,INST-MOVL .CADDR <MA-REG .RVAC>>)>
+	       <COND (.TYP <DEST-DECL .RVAC .RES .TYP>)
+		     (ELSE <DEST-TYPE-VALUE .RVAC .TAC .RES>)>)>
+	NORMAL>
+
+<DEFINE PUT-UVECTOR-GEN (VAR OFF VAL "OPTIONAL" (HINT <>)) 
+	#DECL ((VAR) VARTBL (OFF) <OR FIX VARTBL> (VAL) ANY)
+	<PUT-VEC-GEN .VAR .OFF .VAL .HINT T>>
+
+<DEFINE BACKU-GEN (STR NUM RES "OPTIONAL" (HINT <>)) 
+	<CALL-RTE ,IBACKU!-MIMOP CALL .RES .HINT .STR .NUM>
+	NORMAL>
+
+<DEFINE TOPU-GEN (STR RES "OPTIONAL" (HINT <>)) 
+	<CALL-RTE ,ITOPU!-MIMOP CALL .RES .HINT .STR>
+	NORMAL>
+
+<SETG SAVES <IVECTOR 3 <>>>
+
+<DEFINE MOVE-WORDS-GEN (FROM TO CT "TUPLE" HINTS "AUX" (TYPE <>) SHIFT)
+  <MAPF <>
+    <FUNCTION (H)
+      <COND (<SET TYPE <PARSE-HINT .H TYPE>>
+	     <MAPLEAVE>)>>
+    .HINTS>
+  <COND (.TYPE
+	 <COND (<==? .TYPE VECTOR> <SET SHIFT 3>)
+	       (T <SET SHIFT 2>)>
+	 <DO-BLT .FROM .TO .CT .SHIFT>)
+	(T
+	 <ERROR BAD-HINT!-ERRORS .HINTS MOVE-WORDS-GEN>)>>
+
+<DEFINE MOVE-STRING-GEN (FROM TO CT "OPTIONAL" (HINT <>))
+  <DO-BLT .FROM .TO .CT 0>>
+
+<DEFINE DO-BLT (FROM TO CT SHIFT
+			 "AUX" (SAVES ,SAVES) TAC)
+  #DECL ((SAVES) VECTOR)
+  <COND (<AND <TYPE? .FROM VARTBL>
+	      <SET TAC <VAR-VALUE-IN-AC? .FROM>>>
+	 ; "If this guy is in AC, save everything, but remember that
+	    he's here."
+	 <STORE-AC .TAC>
+	 <PROTECT .TAC>
+	 <1 .SAVES .TAC>)
+	(<1 .SAVES <>>)>
+  <COND (<AND <TYPE? .TO VARTBL>
+	      <SET TAC <VAR-VALUE-IN-AC? .TO>>>
+	 <STORE-AC .TAC>
+	 <PROTECT .TAC>
+	 <2 .SAVES .TAC>)
+	(<2 .SAVES <>>)>
+  <SET TAC <>>
+  <COND (<NOT <TYPE? .CT VARTBL>>
+	 <SET CT <LSH .CT .SHIFT>>)
+	(T
+	 <COND (<G? .SHIFT 0>
+		<SET TAC <LOAD-VAR .CT VALUE T PREF-VAL>>
+		<PROTECT .TAC>
+		<EMIT ,INST-ASHL <MA-IMM .SHIFT> <MA-REG .TAC> <MA-REG .TAC>>
+		<3 .SAVES .TAC>)
+	       (<SET TAC <VAR-VALUE-IN-AC? .CT>>
+		<STORE-AC .TAC>
+		<PROTECT .TAC>
+		<3 .SAVES .TAC>)
+	       (T
+		<3 .SAVES <>>)>)>
+  ; "Now clobber all the ACs that don't have our arguments"
+  <COND (<NOT <MEMQ ,AC-0 .SAVES>> <MUNG-AC ,AC-0>)>
+  <COND (<NOT <MEMQ ,AC-1 .SAVES>> <MUNG-AC ,AC-1>)>
+  <COND (<NOT <MEMQ ,AC-2 .SAVES>> <MUNG-AC ,AC-2>)>
+  <COND (<NOT <MEMQ ,AC-3 .SAVES>> <MUNG-AC ,AC-3>)>
+  <COND (<NOT <MEMQ ,AC-4 .SAVES>> <MUNG-AC ,AC-4>)>
+  <COND (<NOT <MEMQ ,AC-5 .SAVES>> <MUNG-AC ,AC-5>)>
+  <EMIT ,INST-MOVC3
+	<COND (<TYPE? .CT VARTBL>
+	       <COND (<3 .SAVES> <MA-REG <3 .SAVES>>)
+		     (<VAR-VALUE-ADDRESS .CT>)>)
+	      (T
+	       <MA-IMM .CT>)>
+	<COND (<TYPE? .FROM VARTBL>
+	       <COND (<1 .SAVES> <MA-REGD <1 .SAVES>>)
+		     (T
+		      <GEN-LOC .FROM 4 T>)>)
+	      (T
+	       <MA-DEF-DISP ,AC-M <+ <ADD-MVEC .FROM> 4>>)>
+	<COND (<TYPE? .TO VARTBL>
+	       <COND (<2 .SAVES> <MA-REGD <2 .SAVES>>)
+		     (T
+		      <GEN-LOC .TO 4 T>)>)
+	      (T
+	       <MA-DEF-DISP ,AC-M <+ <ADD-MVEC .TO> 4>>)>>
+  ; "Clobber acs that had our arguments"
+  <MAPF <>
+    <FUNCTION (X)
+      <COND (<AND .X <L=? <AC-NUMBER .X> 5>>
+	     <MUNG-AC .X>)>>
+    .SAVES>
+  NORMAL>
+
+<DEFINE STRING-EQUAL?-GEN (STR1 STR2 DIR LABEL "AUX" ELABEL
+			   (SAVES ,SAVES) TAC LV)
+  #DECL ((DIR LABEL) ATOM (SAVES) VECTOR)
+  <COND (<AND <NOT <TYPE? .STR1 VARTBL>>
+	      <NOT <TYPE? .STR2 VARTBL>>>
+	 ; "Handle constants, just for fun"
+	 <COND (<==? .DIR ->
+		<COND (<N=? .STR1 .STR2>
+		       <UCBRANCH-GEN .DIR .LABEL>)>)
+	       (<=? .STR1 .STR2>
+		<UCBRANCH-GEN .DIR .LABEL>)>
+	 UNCONDITIONAL-BRANCH)
+	(T
+	 ; "First, make sure lengths are equal"
+	 <COND (<AND <TYPE? .STR1 VARTBL> <SET TAC <VAR-TYPE-WORD-IN-AC? .STR1>>>
+		<STORE-AC .TAC T <SET LV <FIND-CACHE-VAR .STR1>>>
+		<STORE-AC .TAC <>>)>
+	 <COND (<AND <TYPE? .STR2 VARTBL> <SET TAC <VAR-TYPE-WORD-IN-AC? .STR2>>>
+		<STORE-AC .TAC T <SET LV <FIND-CACHE-VAR .STR2>>>
+		<STORE-AC .TAC <>>)>
+	 <EMIT ,INST-CMPW
+	       <COND (<TYPE? .STR1 VARTBL> <VAR-COUNT-ADDRESS .STR1>)
+		     (T <MA-IMM <LENGTH .STR1>>)>
+	       <COND (<TYPE? .STR2 VARTBL> <VAR-COUNT-ADDRESS .STR2>)
+		     (T <MA-IMM <LENGTH .STR2>>)>>
+	 <SET ELABEL <MAKE-LABEL>>
+	 <COND (<==? .DIR ->
+		; "Jump if different lengths, since that's all we need."
+		<GEN-BRANCH ,INST-BNEQ .LABEL <> <> <> T>)
+	       (T
+		; "Jump to failure location"
+		<GEN-BRANCH ,INST-BNEQ .ELABEL <> <> <> T>)>
+	 <1 .SAVES <>>
+	 ; "Try to get an AC with length"
+	 <COND (<TYPE? .STR1 VARTBL>
+		<COND (<SET TAC <VAR-COUNT-IN-AC? .STR1>>
+		       <PROTECT .TAC>
+		       <1 .SAVES .TAC>)>)>
+	 <COND (<AND <NOT <1 .SAVES>>
+		     <TYPE? .STR2 VARTBL>>
+		<COND (<SET TAC <VAR-COUNT-IN-AC? .STR2>>
+		       <PROTECT .TAC>
+		       <1 .SAVES .TAC>)>)>
+	 ; "Try to get AC with 1st string pointer"
+	 <COND (<AND <TYPE? .STR1 VARTBL>
+		     <SET TAC <VAR-VALUE-IN-AC? .STR1>>>
+		<PROTECT .TAC>
+		<2 .SAVES .TAC>)
+	       (<2 .SAVES <>>)>
+	 ; "2nd string pointer"
+	 <COND (<AND <TYPE? .STR2 VARTBL>
+		     <SET TAC <VAR-VALUE-IN-AC? .STR2>>>
+		<PROTECT .TAC>
+		<3 .SAVES .TAC>)
+	       (<3 .SAVES <>>)>
+	 ; "Make sure nothing left in these acs"
+	 <COND (<NOT <MEMQ ,AC-0 .SAVES>> <MUNG-AC ,AC-0>)
+	       (<STORE-AC ,AC-0>)>
+	 <COND (<NOT <MEMQ ,AC-1 .SAVES>> <MUNG-AC ,AC-1>)
+	       (<STORE-AC ,AC-1>)>
+	 <COND (<NOT <MEMQ ,AC-2 .SAVES>> <MUNG-AC ,AC-2>)
+	       (<STORE-AC ,AC-2>)>
+	 <COND (<NOT <MEMQ ,AC-3 .SAVES>> <MUNG-AC ,AC-3>)
+	       (<STORE-AC ,AC-3>)>
+	 ; "Do compare"
+	 <EMIT ,INST-CMPC3
+	       ; "Length operand"
+	       <COND (<1 .SAVES> <MA-REG <1 .SAVES>>)
+		     (<NOT <TYPE? .STR1 VARTBL>>
+		      <MA-IMM <LENGTH .STR1>>)
+		     (<NOT <TYPE? .STR2 VARTBL>>
+		      <MA-IMM <LENGTH .STR2>>)
+		     (T
+		      <VAR-COUNT-ADDRESS .STR1>)>
+	       ; "First pointer"
+	       <COND (<2 .SAVES> <MA-REGD <2 .SAVES>>)
+		     (<TYPE? .STR1 VARTBL>
+		      <GEN-LOC .STR1 4 T>)
+		     (T
+		      <MA-DEF-DISP ,AC-M <+ <ADD-MVEC .STR1> 4>>)>
+	       ; "Second pointer"
+	       <COND (<3 .SAVES> <MA-REGD <3 .SAVES>>)
+		     (<TYPE? .STR2 VARTBL>
+		      <GEN-LOC .STR2 4 T>)
+		     (T
+		      <MA-DEF-DISP ,AC-M <+ <ADD-MVEC .STR2> 4>>)>>
+	 ; "Clobber the acs we munged"
+	 <MUNG-AC ,AC-0>
+	 <MUNG-AC ,AC-1>
+	 <MUNG-AC ,AC-2>
+	 <MUNG-AC ,AC-3>
+	 ; "And jump to the right place"
+	 <COND (<==? .DIR ->
+		<GEN-BRANCH ,INST-BNEQ .LABEL <>>)
+	       (T
+		<GEN-BRANCH ,INST-BEQL .LABEL <>>)>
+	 ; "Will jump here if lengths not equal and dir +"
+	 <EMIT-LABEL .ELABEL <>>
+	 CONDITIONAL-BRANCH)>>
+
+<DEFINE STRCOMP-GEN (STR1 STR2 RES "AUX" TAC LVAR
+		     LAB1 LAB2 LV)
+  <COND (<AND <NOT <TYPE? .STR1 VARTBL>>
+	      <NOT <TYPE? .STR2 VARTBL>>>
+	 <COND (<TYPE? .RES ATOM>
+		<PUSH-CONSTANT <STRCOMP .STR1 .STR2>>)
+	       (T
+		<SET-GEN .RES <STRCOMP .STR1 .STR2>>)>)
+	(T
+	 <GET-AC ,AC-4 T>
+	 <GET-AC ,AC-3 T>
+	 <MUNG-AC ,AC-0>
+	 <MUNG-AC ,AC-1>
+	 <MUNG-AC ,AC-2>
+	 <EMIT-MOVE <MA-IMM 0> <MA-REG ,AC-4> LONG>
+	 <COND (<NOT <TYPE? .STR1 VARTBL>>
+		<SET LVAR <MA-IMM <LENGTH .STR1>>>)
+	       (<SET TAC <VAR-COUNT-IN-AC? .STR1>>
+		<SET LVAR <MA-REG .TAC>>)
+	       (T
+		<COND (<SET TAC <VAR-TYPE-WORD-IN-AC? .STR1>>
+		       <STORE-AC .TAC T <SET LV <FIND-CACHE-VAR .STR1>>>
+		       <STORE-AC .TAC <>>)>
+		<SET LVAR <VAR-COUNT-ADDRESS .STR1>>)>
+	 <EMIT-MOVE .LVAR <MA-REG ,AC-3> LONG>
+	 <EMIT ,INST-CMPW
+	       <MA-REG ,AC-3>
+	       <COND (<NOT <TYPE? .STR2 VARTBL>>
+		      <MA-IMM <LENGTH .STR2>>)
+		     (<SET TAC <VAR-COUNT-IN-AC? .STR2>>
+		      <MA-REG .TAC>)
+		     (T
+		      <COND (<SET TAC <VAR-TYPE-WORD-IN-AC? .STR2>>
+			     <STORE-AC .TAC T <FIND-CACHE-VAR .STR1>>
+			     <STORE-AC .TAC <>>)>
+		      <VAR-COUNT-ADDRESS .STR2>)>>
+	 <SET LAB1 <MAKE-LABEL>>
+	 <SET LAB2 <MAKE-LABEL>>
+	 <GEN-BRANCH ,INST-BEQL .LAB1 <> <> <> T>
+	 <GEN-BRANCH ,INST-BLSS .LAB2 <> <> <> T>
+	 ; "First is longer than second, so bias toward returning 1"
+	 <EMIT-MOVE <MA-IMM 1> <MA-REG ,AC-4> LONG>
+	 ; "Get right length into ac-3"
+	 <EMIT-MOVE <COND (<TYPE? .STR2 VARTBL>
+			   <VAR-COUNT-ADDRESS .STR2>)
+			  (T
+			   <MA-IMM <LENGTH .STR2>>)>
+		    <MA-REG ,AC-3> LONG>
+	 <GEN-BRANCH ,INST-BRB .LAB1 UNCONDITIONAL-BRANCH <> <> T>
+	 <EMIT-LABEL .LAB2 <>>
+	 ; "First is shorter"
+	 <EMIT-MOVE <MA-IMM -1> <MA-REG ,AC-4> LONG>
+	 <EMIT-LABEL .LAB1 <>>
+	 <EMIT ,INST-CMPC3
+	       <MA-REG ,AC-3>
+	       <COND (<TYPE? .STR1 VARTBL>
+		      <COND (<SET TAC <VAR-VALUE-IN-AC? .STR1>>
+			     <MA-REGD .TAC>)
+			    (T
+			     <GEN-LOC .STR1 4 T>)>)
+		     (<MA-DEF-DISP ,AC-M <+ <ADD-MVEC .STR1> 4>>)>
+	       <COND (<TYPE? .STR2 VARTBL>
+		      <COND (<SET TAC <VAR-VALUE-IN-AC? .STR2>>
+			     <MA-REGD .TAC>)
+			    (T
+			     <GEN-LOC .STR2 4 T>)>)
+		     (<MA-DEF-DISP ,AC-M <+ <ADD-MVEC .STR2> 4>>)>>
+	 <SET LAB1 <MAKE-LABEL>>
+	 <SET LAB2 <MAKE-LABEL>>
+	 ; "Just return what's in AC-4"
+	 <GEN-BRANCH ,INST-BEQL .LAB1 <> <> <> T>
+	 <GEN-BRANCH ,INST-BLSS .LAB2 <> <> <> T>
+	 <EMIT-MOVE <MA-IMM 1> <MA-REG ,AC-4> LONG>
+	 <GEN-BRANCH ,INST-BRB .LAB1 UNCONDITIONAL-BRANCH <> <> T>
+	 <EMIT-LABEL .LAB2 <>>
+	 <EMIT-MOVE <MA-IMM -1> <MA-REG ,AC-4> LONG>
+	 <EMIT-LABEL .LAB1 <>>
+	 <COND (<==? .RES STACK>
+		<EMIT-PUSH <TYPE-WORD FIX> LONG>
+		<EMIT-PUSH <MA-REG ,AC-4> LONG>)
+	       (T
+		<DEST-DECL ,AC-4 .RES FIX>)>)>
+  NORMAL>

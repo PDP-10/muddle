@@ -1,0 +1,938 @@
+
+<BLOCK (<ROOT>)>
+PAGE-ADDRESS
+ADDRESS-PAGE
+LHW
+RHW
+PUTRHW
+PUTLHW
+ISYSOP
+ISYSCALL
+TYPE-ENTRY
+T$TYPE-ENTRY
+T$ATOM
+T$FRAME
+MUD-CHAN
+ADECL
+CLASS
+HANDLER
+READ-INFO
+PCODE
+ZONE
+AREA
+MSUBR
+MCODE
+IMSUBR
+GC-PARAMS GC-FCN MOVE-FCN GROW-FCN ZONE-ID ALL-SPACES GC-CTL
+GCC-MIN-SPACE GCC-MS-FREQ GCC-MS-CT
+GCSBOT GCSMIN GCSMAX
+GCSFLG ABOT AMIN AMAX AFLGS AF-EXTRA AF-READ-ONLY CURRENT-ZONE
+RCL RCLV
+NEW-CHANNEL-TYPE
+M$$NTYPE M$$PTYPE M$$APPLY M$$NEVAL M$$PRINT M$$TYWRD M$$TDECL
+M$$TYSAT M$$TYOFF
+M$$FRM-MSUB
+M$$GVAL M$$LVAL M$$PNAM M$$OBLS M$$TYPE M$$ATML
+M$$VALU M$$ATOM M$$DECL M$$PBND M$$PATM M$$UBID M$$BNDL
+M$$H-CLASS M$$H-FUNCTION M$$H-PRIORITY M$$H-ARG M$$H-NEXT
+M$$C-NAME M$$C-ENABLE M$$C-HANDLER M$$C-CHANNEL M$$C-PRIORITY
+M$$INFINT M$$CONTINT
+M$$INT-QUEUE M$$INT-QUEUE-R
+M$$INT-LEVEL M$$INT-CLASSES
+M$$OFF-FIX M$$OFF-DCL M$$OFF-ELT
+DB-NAME DB-CHANNEL DB
+MIN-NEW-SPACE
+CHANNEL-TYPE CHANNEL-SCRIPT CHANNEL-NAME CHANNEL-OPEN?
+CHANNEL-DATA CHANNEL-USER
+MC-HLEN MC-HPOS MC-VLEN MC-VPOS MC-ORAD MC-BITS MC-IRAD
+BIT-ACCESS BIT-INTELLIGENT
+<ENDBLOCK>
+
+; "Read character types"
+<SETG M$$R-BREAK 0>
+<SETG M$$R-ESCAPE 1>
+<SETG M$$R-MIN-BRACK 2>
+<SETG M$$R-PAREN 2>
+<SETG M$$R-ANGLE 3>
+<SETG M$$R-SQUARE 4>
+<SETG M$$R-DOUBLE 5>
+<SETG M$$R-SQUIGGLE 6>
+<SETG M$$R-ENDBR 7>
+<SETG M$$R-MAX-BRACK 7>
+<SETG M$$R-EXCL 8>
+<SETG M$$R-SEMI 9>
+<SETG M$$R-SHARP 10>
+<SETG M$$R-COMMA 11>
+<SETG M$$R-PERCENT 12>
+<SETG M$$R-QUOTE 13>
+<SETG M$$R-MAX-ATM-BRK 13>
+<SETG M$$R-VERT 14>
+<SETG M$$R-BACKS 15>
+<SETG M$$R-ALPHA 16>
+<SETG M$$R-MIN-NUM-PART 17>
+<SETG M$$R-E 17>
+<SETG M$$R-DOT 18>
+<SETG M$$R-DIGIT 19>
+<SETG M$$R-PLUS 20>
+<SETG M$$R-STAR 21>
+<MANIFEST M$$R-BREAK M$$R-ESCAPE M$$R-MIN-BRACK M$$R-PAREN M$$R-ANGLE M$$R-SQUARE
+	  M$$R-DOUBLE M$$R-SQUIGGLE M$$R-ENDBR M$$R-MAX-BRACK M$$R-EXCL
+	  M$$R-SEMI M$$R-SHARP M$$R-COMMA M$$R-PERCENT M$$R-QUOTE
+	  M$$R-MAX-ATM-BRK M$$R-VERT M$$R-BACKS M$$R-DOT M$$R-ALPHA
+	  M$$R-E M$$R-MIN-NUM-PART
+	  M$$R-DIGIT M$$R-PLUS M$$R-STAR>
+
+<GDECL (I$TRANS-TABLE) BYTES>
+
+; "PRINT's magic finite-state machine for atoms"
+
+<SETG M$$FS-NSTATE 9>	; "# states, not counting terminals"
+<SETG M$$FS-NOSLASH <+ ,M$$FS-NSTATE 1>>	; "No initial \ needed"
+<SETG M$$FS-SLASH1 <+ ,M$$FS-NSTATE 2>>	; "Initial \ needed"
+<SETG M$$FS-SLASH2 <+ ,M$$FS-NSTATE 3>>	; "Initial \ needed, done otherwise"
+<SETG M$$END-STATE 6>	; "Slot in state for end of string"
+<MANIFEST M$$FS-NSTATE M$$FS-NOSLASH M$$FS-SLASH1 M$$FS-SLASH2 M$$END-STATE>
+
+<BLOCK (<ROOT>)>
+
+<COND (<NOT <GASSIGNED? NEW-CHANNEL-TYPE>>
+       <DEFINE NEW-CHANNEL-TYPE ("TUPLE" FOO) T>)>
+<SETG T$NEW-CHANNEL-TYPE ,NEW-CHANNEL-TYPE>
+
+<NEWTYPE T$BITS WORD>
+
+<NEWTYPE T$ATOM TEMPLATE '<<PRIMTYPE TEMPLATE> <OR FALSE T$GBIND>
+			                       <OR FALSE T$LBIND>
+					       STRING
+					       <OR T$OBLIST FALSE>
+					       <OR T$TYPE-C FALSE>>>
+<PUTPROP T$ATOM ALT-DECL ATOM>
+
+<PUTPROP T$LINK ALT-DECL LINK>
+
+<PUTPROP T$TYPE-C ALT-DECL TYPE-C>
+
+<NEWTYPE LVAL TEMPLATE '<<PRIMTYPE TEMPLATE> <OR FALSE T$GBIND>
+			                       <OR FALSE T$LBIND>
+					       STRING
+					       <OR T$OBLIST FALSE>
+					       <OR T$TYPE-C FALSE>>>
+<NEWTYPE T$LVAL T$ATOM>
+<NEWTYPE GVAL TEMPLATE '<<PRIMTYPE TEMPLATE> <OR FALSE T$GBIND>
+			                       <OR FALSE T$LBIND>
+					       STRING
+					       <OR T$OBLIST FALSE>
+					       <OR T$TYPE-C FALSE>>>
+<NEWTYPE T$GVAL T$ATOM>
+<NEWTYPE T$OBLIST TEMPLATE '<<PRIMTYPE TEMPLATE> <OR FALSE T$GBIND>
+			                         <OR FALSE T$LBIND>
+					         STRING
+					         <OR T$OBLIST FALSE>
+					         <OR T$TYPE-C FALSE>>>
+<NEWTYPE T$LINK TEMPLATE '<<PRIMTYPE TEMPLATE> T$GBIND
+			                         <OR FALSE T$LBIND>
+					         STRING
+					         <OR T$OBLIST FALSE>
+					         <OR T$TYPE-C FALSE>>>
+<NEWTYPE I$TERMIN WORD>
+<NEWTYPE T$DEFER LIST>
+<NEWTYPE T$TYPE-C FIX>
+<NEWTYPE T$TYPE-W FIX>
+<NEWTYPE T$FRAME
+	 TEMPLATE
+	 '<<PRIMTYPE TEMPLATE> T$MSUBR>>
+<NEWTYPE T$LBIND
+	 TEMPLATE
+	 '<<PRIMTYPE TEMPLATE> ANY
+			     <OR T$ATOM T$LINK>
+			     <OR T$ATOM FORM FALSE>
+			     [2 <OR T$LBIND FALSE>]
+			     FIX>>
+
+
+<NEWTYPE T$GBIND
+	 TEMPLATE
+	 '<<PRIMTYPE TEMPLATE> ANY
+			     <OR T$ATOM T$LINK>
+			     <OR T$ATOM FORM FALSE>>>
+<NEWTYPE GBIND T$GBIND>
+<NEWTYPE LBIND T$LBIND>
+<PUTPROP T$GBIND ALT-DECL GBIND>
+<PUTPROP T$LBIND ALT-DECL LBIND>
+
+<NEWTYPE T$FUNCTION LIST>
+<NEWTYPE T$ADECL VECTOR>
+<NEWTYPE ADECL VECTOR>
+<NEWTYPE T$MCODE UVECTOR>
+<NEWTYPE MCODE UVECTOR '<<PRIMTYPE UVECTOR> [REST FIX]>>
+<NEWTYPE T$MSUBR
+	 VECTOR
+	 '<<PRIMTYPE VECTOR> MCODE T$ATOM LIST [REST ANY]>>
+<NEWTYPE MSUBR VECTOR>
+<NEWTYPE T$IMSUBR VECTOR>
+<NEWTYPE IMSUBR VECTOR>
+<NEWTYPE T$MACRO LIST>
+
+<SETG POBL (<GET INITIAL OBLIST> <ROOT>)>
+
+<DEFINE P-R (STR)
+	<COND (<OR <LENGTH? .STR 2>
+		   <AND <==? <1 .STR> !\T>
+			<==? <2 .STR> !\$>>>
+	       <PARSE .STR 10 ,POBL>)
+	      (T <PARSE <STRING "T$" .STR> 10 ,POBL>)>>
+
+<SETG P-I ,P-R>
+
+<DEFINE P-E (STR) <PARSE <STRING !\@ .STR> 10 ,POBL>>
+
+<NEWTYPE T$UNBOUND FIX>
+
+<PUTPROP ATOM DECL T$ATOM>
+
+<ENDBLOCK>
+; "Stuff for compiling BOOT i/o"
+<SETG M$$CHAN 1>  ;"channel identifier"
+<SETG M$$MODE 2>  ;"mode: PRINT, READ, etc."
+<SETG M$$DEV 3>   ;"device name"
+<SETG M$$FNAM 4>  ;"file name"
+<SETG M$$HLEN 5>  ;"horizontal line length"
+<SETG M$$HPOS 6>  ;"horizontal position"
+<SETG M$$VLEN 7>  ;"vertical length"
+<SETG M$$VPOS 8>  ;"vertical position"
+<SETG M$$RADX 9>  ;"radix"
+<SETG M$$BUFF 10> ;"channel buffer"
+<SETG M$$BUFL 11> ;"buffer valid length"
+<SETG M$$BPOS 12> ;"buffer position"
+<SETG M$$INTR 13> ;"internal: 0=normal, 1=PRINC, 2=UNPARSE"
+<SETG M$$NXTC 14> ;"read ahead character (or FALSE CHARACTER)"
+<SETG M$$FFRM 15> ;"Frame to go to in flatsize"
+
+<MANIFEST M$$CHAN M$$MODE M$$DEV M$$FNAM M$$HLEN M$$HPOS M$$VLEN M$$VPOS
+	  M$$RADX M$$BUFF M$$BUFL M$$BPOS M$$INTR M$$NXTC M$$FFRM>
+
+<BLOCK (<ROOT>)>
+<PUTPROP T$BCHANNEL DECL
+	 '<<PRIMTYPE VECTOR> FIX [3 STRING] [5 FIX] STRING [3 FIX]>>
+<ENDBLOCK>
+
+<NEWTYPE I$SDTABLE VECTOR
+	 '!<<PRIMTYPE VECTOR> ATOM <OR FALSE ATOM <LIST [REST ATOM]>>
+			      <LIST [REST ATOM <OR ATOM MSUBR FALSE>]>>>
+<SETG I$SDNAME 1>
+<SETG I$SD-INHERIT 2>
+<SETG I$SD-OPER 3>
+<MANIFEST I$SDNAME I$SD-INHERIT I$SD-OPER>
+
+<NEWTYPE I$DISK-CHANNEL VECTOR>
+
+<GDECL (I$CHANNEL-TYPES) <LIST [REST ATOM I$SDTABLE]>>
+<GDECL (T$DEVVEC) <VECTOR [REST FIX <OR ATOM VECTOR>]>>
+
+<BLOCK (<ROOT>)>
+
+<NEWTYPE T$CHANNEL VECTOR '!<<PRIMTYPE VECTOR>
+			     ATOM
+			     <OR T$CHANNEL FALSE>
+			     <OR STRING FALSE>
+			     <OR ATOM FALSE>
+			     ANY
+			     ANY>>
+
+<PUTPROP CHANNEL DECL '!<<PRIMTYPE VECTOR> ATOM
+					  <OR CHANNEL FALSE>
+					  <OR STRING FALSE>
+					  <OR ATOM FALSE>
+					  ANY
+					  ANY>>
+
+<SETG T$CHANNEL-TYPE 1>  ;"Type of CHANNEL"
+<SETG T$CHANNEL-SCRIPT 2>  ;"Scripting CHANNEL"
+<SETG T$CHANNEL-NAME 3>   ;"Passed to CHANNEL-OPEN"
+<SETG T$CHANNEL-OPEN? 4> ;"Is CHANNEL still open?"
+<SETG T$CHANNEL-DATA 5> ;"Device-dependent stuff"
+<SETG T$CHANNEL-USER 6> ;"Application-dependent stuff"
+
+<MANIFEST T$CHANNEL-TYPE T$CHANNEL-SCRIPT T$CHANNEL-NAME T$CHANNEL-OPEN?
+	  T$CHANNEL-DATA T$CHANNEL-USER>
+
+<NEWTYPE T$MUD-CHAN VECTOR '!<<PRIMTYPE VECTOR>
+			     [6 FIX]
+			     <OR CHARACTER FALSE>
+			     <OR FALSE FRAME>
+			     FIX
+			     FIX>>
+<PUT MUD-CHAN DECL '!<<PRIMTYPE VECTOR>
+		     [6 FIX]
+		     <OR CHARACTER FALSE>
+		     <OR FALSE FRAME>
+		     FIX
+		     FIX>>
+
+<SETG T$MC-HLEN 1>
+<SETG T$MC-HPOS 2>
+<SETG T$MC-VLEN 3>
+<SETG T$MC-VPOS 4>
+<SETG T$MC-ORAD 5>
+<SETG T$MC-INTR 6>
+<SETG T$MC-NCHR 7>
+<SETG T$MC-FFRM 8>
+<SETG T$MC-BITS 9>
+<SETG T$MC-IRAD 10>
+
+<SETG T$BIT-ACCESS 1>
+<SETG T$BIT-INTELLIGENT 2>
+<MANIFEST T$MC-HLEN T$MC-HPOS T$MC-VLEN T$MC-VPOS T$MC-ORAD
+	  T$MC-INTR T$MC-NCHR T$MC-FFRM T$MC-BITS T$MC-IRAD T$BIT-ACCESS
+	  T$BIT-INTELLIGENT>
+
+<SETG CHANNEL-TYPE 1>
+<SETG CHANNEL-SCRIPT 2>
+<SETG CHANNEL-NAME 3>
+<SETG CHANNEL-OPEN? 4>
+<SETG CHANNEL-DATA 5>
+<SETG CHANNEL-USER 6>
+<MANIFEST CHANNEL-TYPE CHANNEL-SCRIPT CHANNEL-NAME CHANNEL-OPEN?
+	  CHANNEL-DATA CHANNEL-USER>
+
+<SETG MC-HLEN 1>
+<SETG MC-HPOS 2>
+<SETG MC-VLEN 3>
+<SETG MC-VPOS 4>
+<SETG MC-ORAD 5>
+<SETG MC-BITS 9>
+<SETG MC-IRAD 10>
+<SETG BIT-ACCESS 1>
+<SETG BIT-INTELLIGENT 2>
+<MANIFEST MC-HLEN MC-HPOS MC-VLEN MC-VPOS MC-RADX BIT-ACCESS BIT-INTELLIGENT>
+<ENDBLOCK>
+;"Internal modes of a channel."
+<SETG M$$PR-PRC 1>	; "Bit--on if PRINC"
+<SETG M$$PR-UNP 2>	; "UNPARSE"
+<SETG M$$PR-FLT 4>	; "FLATSIZE"
+<MANIFEST M$$PR-PRC M$$PR-UNP M$$PR-FLT>
+
+;"Some globals used in PRINT."
+<SETG M$$PR-MAX 10000000>	;"Maximum size of UNPARSE buffer."
+<SETG M$$PR-TAB 8>		;"Maximum number of <SPACE>s in a <TAB>."
+<SETG M$$PR-SIGD 10>		;"Number of significant digits in a FLOAT."
+<SETG M$$PR-FRAD 2>		;"Number of decimal places in a FLOAT."
+<SETG M$$PR-BUFL 64>		;"Size of temporary buffer."
+
+<MANIFEST M$$PR-MAX M$$PR-TAB M$$PR-SIGD M$$PR-FRAD M$$PR-BUFL>
+
+<GDECL (M$$PR-BUFS M$$PR-BREAKS M$$PR-BRACKS M$$PR-NUMBER) STRING
+       (M$$FLATCHAN M$$INTCHAN M$$OUTCHAN M$$INCHAN) T$CHANNEL
+       (M$$CHANLIST) <LIST [REST T$CHANNEL]>>
+
+<GDECL (I$R?) ANY (BI$RADIX QWSIZ) FIX>
+<GDECL (I$CHRSTR BREAKS BRACKS) STRING>
+<GDECL (I$POWERS I$FLOAT-TABLE) <VECTOR [REST FLOAT]>>
+<GDECL (BI$NCHR) <OR CHARACTER FALSE> (BI$STR) STRING>
+
+;"Offsets for FRAME."
+
+;"More cretinous offsets"
+
+<SETG M$$FRM-MSUB 1>
+
+;"The FRAME's MSUBR."
+
+<SETG M$$FRM-PC 2>
+
+;"Unused - Saved PC"
+
+<SETG M$$FRM-ARGN 3>
+
+;"Number of arguments"
+
+<SETG M$$FRM-ID 4>
+
+;"FRAME Unique ID"
+
+<SETG M$$FRM-PREV 5>
+
+;"The previous FRAME"
+
+<SETG M$$FRM-TP 6>
+
+;"Unused - Saved TP"
+
+<SETG M$$FRM-ARGS 6>
+
+;"We will hide <ARGS .FRAME> here in simulation"
+
+<SETG M$$FRM-BIND 7>
+
+;"The FRAME's BINDing."
+
+<SETG M$$FRM-ACTN 8>
+
+;"The FRAME's ACTIVATION."
+
+<MANIFEST M$$FRM-MSUB
+	  M$$FRM-ARGN
+	  M$$FRM-ID
+	  M$$FRM-PREV
+	  M$$FRM-BIND
+	  M$$FRM-ARGS
+	  M$$FRM-ACTN
+	  M$$FRM-PC
+	  M$$FRM-TP>
+
+<SETG M$$LVAL 2>
+
+;"ATOM - offset to LVAL binding"
+
+<SETG M$$GVAL 1>
+
+;"ATOM - offset to GVAL binding"
+
+<SETG M$$PNAM 3>
+
+;"ATOM - offset to PNAME string"
+
+<SETG M$$OBLS 4>
+
+;"ATOM - offset to OBLIST (primtype ATOM)"
+
+<SETG M$$TYPE 5>
+
+;"ATOM - valid type TYPE-C or FALSE"
+
+<SETG M$$ATML 5>
+
+;"ATOM - length of block for atom"
+
+<MANIFEST M$$LVAL M$$GVAL M$$PNAM M$$OBLS M$$TYPE M$$ATML>
+
+;"Offsets for LBIND."
+
+<SETG M$$VALU 1>
+
+;"BIND - value of this binding"
+
+<SETG M$$ATOM 2>
+
+;"BIND - ATOM that this binding represent"
+
+<SETG M$$DECL 3>
+
+;"BIND - this binding's DECL or FALSE if none"
+
+<SETG M$$PBND 4>
+
+;"BIND - closest previous binding block for any atom"
+
+<SETG M$$PATM 5>
+
+;"BIND - closest previous binding block for this atom"
+
+<SETG M$$UBID 6>
+
+;"BIND - unique bind id for this binding block"
+
+<SETG M$$BNDL 6>
+
+;"BIND - length of block for bind"
+
+<MANIFEST M$$VALU M$$ATOM M$$DECL M$$PBND M$$PATM M$$UBID M$$BNDL>
+
+<SETG M$$T-FIX 0>	;"SAT code for FIX."
+<SETG M$$T-LST 1>	;"SAT code for LIST."
+<SETG M$$T-REC 2>	;"SAT code for RECORD."
+<SETG M$$T-TEM 3>	;"SAT code for TEMPLATE."
+<SETG M$$T-BYT 4>	;"SAT code for BYTES."
+<SETG M$$T-STR 5>	;"SAT code for STRING."
+<SETG M$$T-UVC 6>	;"SAT code for UVECTOR."
+<SETG M$$T-VEC 7>	;"SAT code for VECTOR."
+<SETG M$$T-UBK [,M$$T-BYT ,M$$T-STR ,M$$T-UVC ,M$$T-VEC]>
+			;"SAT codes for UBLOCK types."
+
+<MANIFEST M$$T-FIX M$$T-LST M$$T-REC M$$T-TEM M$$T-BYT M$$T-STR
+	  M$$T-UVC M$$T-VEC M$$T-UBK>
+
+<NEWTYPE T$TYPE-ENTRY
+	 VECTOR
+	 '<<PRIMTYPE VECTOR> T$ATOM
+			     T$ATOM
+			     <OR APPLICABLE T$ATOM FALSE>
+			     <OR APPLICABLE T$ATOM FALSE>
+			     <OR APPLICABLE T$ATOM FALSE>
+			     T$TYPE-C
+			     <OR FALSE T$ATOM FORM SEGMENT>>>
+
+<PUTPROP TYPE-ENTRY
+	 DECL
+	 '<<PRIMTYPE VECTOR> ATOM
+			     ATOM
+			     <OR APPLICABLE ATOM FALSE>
+			     <OR APPLICABLE ATOM FALSE>
+			     <OR APPLICABLE ATOM FALSE>
+			     TYPE-C
+			     <OR FALSE ATOM FORM SEGMENT>>>
+
+<SETG M$$NTYPE 1>	;"TYPE name."
+<SETG M$$PTYPE 2>	;"PRIMTYPE name."
+<SETG M$$APPLY 3>	;"Applicable for APPLYTYPE."
+<SETG M$$NEVAL 4>	;"Applicable for EVALTYPE."
+<SETG M$$PRINT 5>	;"Applicable for PRINTTYPE."
+<SETG M$$TYWRD 6>	;"TYPE-WORD for this type."
+<SETG M$$TDECL 7>	;"DECL for this type."
+
+;"Bit offset for TYPE-WORD slot."
+
+<SETG M$$TYSAT 7>	;"The first three bits are used for SAT."
+<SETG M$$TYOFF 6>	;"Amount to LSH to get offset."
+
+<MANIFEST M$$NTYPE M$$PTYPE M$$APPLY M$$NEVAL M$$PRINT M$$TYWRD M$$TDECL
+	  M$$TYSAT M$$TYOFF>
+
+;"Definition for ADECL."
+
+<NEWTYPE ADECL
+	 VECTOR
+	 '!<<PRIMTYPE VECTOR> [2 ANY]>>
+
+<SETG M$$ADCL-VAL 1>	;"The VALUE of the ADECL."
+<SETG M$$ADCL-DCL 2>	;"The DECL of the ADECL."
+
+;"Definition for OFFSET."
+
+<NEWTYPE T$OFFSET
+	 VECTOR
+	 '!<<PRIMTYPE VECTOR> FIX <OR T$ATOM FORM SEGMENT>
+			      <OR T$ATOM FORM SEGMENT FALSE>>>
+
+<SETG M$$OFF-FIX 1>
+<SETG M$$OFF-DCL 2>
+<SETG M$$OFF-ELT 3>
+
+<MANIFEST M$$OFF-FIX M$$OFF-DCL M$$OFF-ELT>
+
+<GDECL (M$$TOPLEV-FRAME) T$FRAME (M$$INT-LEVEL) FIX
+       (M$$DECL-CHECK) <OR ATOM FALSE>
+       (I$INTCHAN) T$CHANNEL
+       (M$$PI/2 M$$LIMIT T$MINFL T$MAXFL I$PMINFL) FLOAT
+       (M$$OBLIST) <VECTOR [REST <LIST [REST <OR T$ATOM T$LINK>]>]>
+       (M$$OBLNAM) <LIST [REST T$OBLIST]> (M$$OBLSIZ) FIX
+       (M$$OBLSTK) <LIST [REST <LIST <OR T$OBLIST
+					 <LIST [REST <OR T$OBLIST
+							 T$ATOM>]>>>]>
+       (M$$TBIND) <OR T$LBIND FALSE> (M$$BINDID) FIX
+       (M$$OBLIST-ROOT M$$ONLIST-ERRORS M$$OBLIST-INTERRUPTS) T$OBLIST
+       (I$BREAKS I$BRACKS) STRING (I$POWERS) <VECTOR [REST FLOAT]>
+       (I$RDCHRSTR) <STRING CHARACTER>
+       (M$$TYPE-UNSTRUC) <VECTOR [REST ATOM]>
+       ;(M$$CHANLIST) ;<LIST [REST T$CHANNEL]>
+       (M$$GBIND) <LIST [REST T$GBIND]> (M$$UNBOUND) T$UNBOUND
+       (M$$TYP-COUNT) FIX (M$$TYP-NEW) STRING
+       (M$$TYP-GROUP) <VECTOR [REST ATOM]>
+       (M$$TYPE-INFO) <VECTOR [REST <OR T$TYPE-ENTRY FALSE>]>
+       (M$$PRINT-TYPES M$$NEVAL-TYPES M$$APPLY-TYPES M$$LOCATIVE
+	M$$STRUCTURED) <VECTOR [REST ATOM]>
+       (M$$INITIAL-TYPES)
+       <VECTOR [REST <VECTOR [2 STRING]
+			     FIX
+			     STRING
+			     <OR FALSE FIX>>]>
+       (M$$NEWTYPE?) <OR ATOM FALSE>
+       (M$$ALLTYPES) <VECTOR [REST T$ATOM]>
+       (M$$PRINT-TYPES M$$NEVAL-TYPES M$$APPLY-TYPES M$$LOCATIVE M$$STRUCTURED)
+       <VECTOR [REST ATOM]>
+       (M$$FREE-FRAMES M$$FRAMES) <LIST [REST T$FRAME]>
+       (M$$FRAME-ID) FIX
+       (M$$LBIND) <OR FALSE T$LBIND>
+       (M$$STRUCTURED) <VECTOR [REST ATOM]>
+       (M$$RHI M$$RLOW I$MINFX I$MAXFX) FIX>
+
+;"Manifest GVALs for APPLY"
+
+<SETG M$$F-PROG 1>	;"For the SUBR PROG."
+<SETG M$$F-BIND 2>	;"For the SUBR BIND."
+<SETG M$$F-REPEAT 3>	;"For the SUBR REPEAT."
+<SETG M$$F-APPLY 4>	;"For the SUBR APPLY."
+<SETG M$$F-EVAL 5>	;"For functional calls."
+
+<MANIFEST M$$F-PROG M$$F-BIND M$$F-REPEAT M$$F-APPLY M$$F-EVAL>
+
+
+<SETG M$$TYPE-INFO-SIZE 1024>
+
+<MANIFEST M$$TYPE-INFO-SIZE>
+
+;"Offsets for MSUBR."
+
+<SETG M$$MSB-CODE 1>		;"Code for the T$MSUBR."
+<SETG M$$MSB-NAME 2>		;"Name of the T$MSUBR."
+<SETG M$$MSB-DECL 3>		;"Decl of the T$MSUBR."
+
+<MANIFEST M$$MSB-CODE M$$MSB-NAME M$$MSB-DECL>
+
+<GDECL (M$$INT-LEVEL) FIX
+       (M$$INT-CLASSES) <OR CLASS FALSE>>
+
+<NEWTYPE CLASS
+	 VECTOR
+	 '<<PRIMTYPE VECTOR> STRING
+			     <OR T$ATOM FALSE>
+			     <OR T$HANDLER FALSE>
+			     <OR FIX FALSE>
+			     FIX>>
+
+<SETG M$$C-NAME 1>
+<SETG M$$C-ENABLE 2>
+<SETG M$$C-HANDLER 3>
+<SETG M$$C-CHANNEL 4>
+<SETG M$$C-PRIORITY 5>
+<MANIFEST M$$C-NAME M$$C-ENABLE M$$C-HANDLER M$$C-CHANNEL M$$C-PRIORITY>
+
+<SETG M$$INFINT 19>
+<SETG M$$CONTINT 35>
+<MANIFEST M$$INFINT M$$CONTINT>
+
+<NEWTYPE T$HANDLER
+	 VECTOR
+	 '<<PRIMTYPE VECTOR> CLASS
+			     <OR APPLICABLE T$FUNCTION>
+			     FIX
+			     ANY
+			     <OR FALSE T$HANDLER>>>
+
+<SETG M$$H-CLASS 1>
+<SETG M$$H-FUNCTION 2>
+<SETG M$$H-PRIORITY 3>
+<SETG M$$H-ARG 4>
+<SETG M$$H-NEXT 5>
+
+<MANIFEST M$$H-CLASS M$$H-FUNCTION M$$H-PRIORITY M$$H-ARG M$$H-NEXT>
+
+<GDECL (M$$INT-QUEUE) <LIST ATOM [REST FIX LIST LIST]>
+       (M$$INT-CLASSES) <VECTOR [REST <OR FALSE CLASS>]>
+       (M$$INT-LEVEL) FIX
+       (M$$EVALCLASS) CLASS>
+
+;"Some offsets for ASSOCIATIONs."
+<SETG M$$AS-ITEM 1>
+<SETG M$$AS-INDIC 2>
+<SETG M$$AS-VALUE 3>
+<MANIFEST M$$AS-ITEM M$$AS-INDIC M$$AS-VALUE>
+
+;"***************************************************************
+  *		Some OFFSETs used in TEMPLATE			*
+  ***************************************************************"
+
+;"NOTE: The following notation is used -
+	TDT	- Template Data Table
+	TAT	- Template Access Table
+	DT	- Discriminant Table
+	TT	- Temporary Table
+	ET	- Element Table
+	PT	- Position Table."
+
+;"ATOMs in <ROOT> that are used by TEMPLATE:
+  ANY, BOOLEAN, ENUM, FIX, SBOOL, STRUC."
+
+;"Newtype for the Template Access Table (TAT)."
+<PUTPROP PT-DECL DECL '<VECTOR TYPE-C [3 FIX]>>
+
+<PUTPROP ET-DECL
+	 DECL
+	 '<VECTOR ATOM <OR ATOM FORM> [2 FIX] [OPTIONAL <OR FIX VECTOR>]>>
+
+<PUTPROP TT-DECL DECL '<VECTOR ET-DECL [OPTIONAL PT-DECL PT-DECL]>>
+
+<PUTPROP DT-DECL DECL '<VECTOR [2 FIX] [REST ET-DECL]>>
+
+<NEWTYPE TAT
+	 VECTOR
+	 '<<PRIMTYPE VECTOR> ATOM FORM [3 FIX] VECTOR [REST DT-DECL]>>
+
+;"Table to store the TAT and TDT for all Templates."
+<SETG M$$R-TAT <IVECTOR ,M$$TYPE-INFO-SIZE <>>>
+<SETG M$$R-TDT <IVECTOR ,M$$TYPE-INFO-SIZE <>>>
+
+<GDECL (M$$R-TAT) <VECTOR [REST <OR FALSE TAT>]>
+       (M$$R-TDT) <VECTOR [REST <OR FALSE UVECTOR>]>>
+
+;"Flags to indicate the type of template element."
+<SETG M$$R-BOOLN 1>  ;"Boolean	     - off:BOOLEAN"
+<SETG M$$R-ENUMO 2>  ;"Enumeration   - off:(ENUM [obj])"
+<SETG M$$R-ENUME 3>  ;"Enumeration   - off:(ENUM vec)"
+<SETG M$$R-SUBRA 4>  ;"Sub-range     - off:(FIX prim-fix low-lim high-lim)"
+<SETG M$$R-SUBSB 5>  ;"Sub-range (S) - off:(SBOOL prim-fix low-lim high-lim)"
+<SETG M$$R-UNSTR 6>  ;"Unstruc	     - off:type"
+<SETG M$$R-UNSSB 7>  ;"Unstruc (S)   - off:(SBOOL type)"
+<SETG M$$R-STRUC 8>  ;"Struc	     - off:struc"
+<SETG M$$R-STRSB 9>  ;"Struc (S)     - off:(SBOOL struc)"
+<SETG M$$R-STRLN 10> ;"Struc+lnt     - off:(STRUC struc #-of-ele)"
+<SETG M$$R-SLNSB 11> ;"Struc+lnt (S) - off:(SBOOL struc #-of-ele)"
+<SETG M$$R-ANYOB 12> ;"Any	     - off:ANY"
+
+<MANIFEST M$$R-BOOLN M$$R-ENUMO M$$R-ENUME M$$R-SUBRA M$$R-SUBSB M$$R-UNSTR
+	  M$$R-UNSSB M$$R-STRUC M$$R-STRSB M$$R-STRLN M$$R-SLNSB M$$R-ANYOB>
+
+;"Offsets in the Template Access Table (TAT)."
+<SETG M$$R-TNAM 1> ;"ATOM    - Name of this template."
+<SETG M$$R-TDCL 2> ;"FORM    - Decl for this template."
+<SETG M$$R-TTYP 3> ;"FIX     - Offset of this template in the type table."
+<SETG M$$R-TLNT 4> ;"FIX     - Length info is stored here."
+<SETG M$$R-TLOC 5> ;"FIX     - Location of the discriminant type in record."
+<SETG M$$R-TDIS 6> ;"VECTOR  - Vector of discriminants."
+<SETG M$$R-TSDT 6> ;"VECTOR  - 1 word before start of discriminant field data."
+<SETG M$$R-TDTA 7> ;"VECTOR  - Beginning of each discriminant field data."
+
+<MANIFEST M$$R-TNAM M$$R-TDCL M$$R-TTYP M$$R-TLNT M$$R-TLOC M$$R-TDIS
+	  M$$R-TSDT M$$R-TDTA>
+
+;"Offsets in the Discriminant Table (DT)."
+<SETG M$$R-DLNT 1> ;"FIX     - Length of this discriminant type."
+<SETG M$$R-DWRD 2> ;"FIX     - Number of words required by this discriminant."
+<SETG M$$R-DATA 2> ;"VECTOR  - (start of discriminant element data) - 1."
+
+<MANIFEST M$$R-DLNT M$$R-DWRD M$$R-DATA>
+
+;"Offsets in the Element Table (ET)."
+<SETG M$$R-EOFF 1> ;"ATOM	    - Name of the offset for this element."
+<SETG M$$R-EDCL 2> ;"<OR ATOM FORM> - Decl for this element."
+<SETG M$$R-EFLG 3> ;"FIX	    - Flag to indicate what this element is."
+<SETG M$$R-EELE 4> ;"FIX	    - Record offset for this element."
+<SETG M$$R-ESBL 5> ;"FIX	    - Record offset for the SBOOL flag."
+<SETG M$$R-ESLN 5> ;"FIX	    - Record offset for fix STRUCTURED length."
+<SETG M$$R-EVEC 5> ;"VECTOR	    - Enumeration or Subrange information."
+
+<MANIFEST M$$R-EOFF M$$R-EDCL M$$R-EFLG M$$R-EELE M$$R-ESBL M$$R-ESLN
+	  M$$R-EVEC>
+
+;"Offsets in the Position Table (PT)."
+<SETG M$$R-PTYP 1> ;"TYPE-C - Type code for this element."
+<SETG M$$R-PBIT 2> ;"FIX    - Length of structured or position of bit."
+<SETG M$$R-PLOC 3> ;"FIX    - First half-word location of storage in template."
+<SETG M$$R-PLNT 4> ;"FIX    - Length (in half-words) of storage in template."
+
+<MANIFEST M$$R-PTYP M$$R-PBIT M$$R-PLOC M$$R-PLNT>
+
+;"Number of half-words needed to store various MUDDLE objects."
+<SETG M$$R-FCNT 1> ;"Half-words to store structured object length."
+<SETG M$$R-FPTR 2> ;"Half-words to store object pointer or unstructured."
+<SETG M$$R-STLN 3> ;"Half-words to store object pointer and length."
+<SETG M$$R-FULL 4> ;"Half-words to store an ANY."
+
+<MANIFEST M$$R-FCNT M$$R-FPTR M$$R-STLN M$$R-FULL>
+
+;"Number of bits in a byte, half-word and word. -- Replaced to be computed
+	at run time"
+;<SETG M$$R-BQWD 9>  ;"Number of bits in 1/4 of a word."
+;<SETG M$$R-BHWD 18> ;"Number of bits in a half-word."
+;<SETG M$$R-BWRD 36> ;"Number of bits in a word."
+<GDECL (M$$R-BQWD M$$R-BHWD M$$R-BWRD M$$R-BQWD!-INTERNAL M$$R-BHWD!-INTERNAL
+	M$$R-BWRD!-INTERNAL) FIX>
+;<MANIFEST M$$R-BQWD M$$R-BHWD M$$R-BWRD>
+<SETG M$$CHR-CHR 1>		;"Character to xlate to"
+<SETG M$$CHR-ASC 2>		;"Code of character to act like"
+<SETG M$$CHR-BRK 3>		;"True ==> break on this, else don't"
+<SETG M$$CHR-APL 4>		;"Apply this to read object"
+<SETG M$$CHR-PRE 5>		;"Pass previously read object"
+
+<SETG M$$EXCALT *1033*>	;"!$"
+<SETG M$$CNCLSQBK *2000*>	;"Control close square bracket"
+
+<MANIFEST M$$EXCALT M$$CNCLSQBK M$$CHR-CHR M$$CHR-ASC M$$CHR-BRK
+	  M$$CHR-APL M$$CHR-PRE>
+
+'<GDECL (I$READ-TABLE) <OR FALSE <VECTOR [REST <OR FALSE VECTOR>]>>>
+
+<GDECL (I$MACHINE-INFO) !<UVECTOR [7 FIX]>>
+
+<SETG I$MINF-TTYI 1>		;"TTY input jfn"
+<SETG I$MINF-TTYO 2>		;"TTY output jfn"
+<SETG I$MINF-WDSIZE 3>		;"Bits per word"
+<SETG I$MINF-BYTE-SIZE 4>	;"Bits per byte"
+<SETG I$MINF-PAGE-SIZE 5>	;"Words per page"
+<SETG I$MINF-BYTES-PER-WORD 6>	;"characters per word"
+<SETG I$MINF-ADDRESS-SHIFT 7>	;"Amount to shift from 'word' address"
+<SETG I$MINF-8BYTES-PER-WORD 8>	;"8-bit bytes per word"
+<SETG I$MINF-MINFL 9>		;"Largest floating point number"
+<SETG I$MINF-MAXFL 10>		;"Smallest f.p. number"
+
+<MANIFEST I$MINF-TTYI I$MINF-TTYO I$MINF-WDSIZE I$MINF-BYTE-SIZE
+	  I$MINF-PAGE-SIZE I$MINF-BYTES-PER-WORD I$MINF-ADDRESS-SHIFT
+	  I$MINF-8BYTES-PER-WORD I$MINF-MAXFL I$MINF-MINFL>
+
+<PUTPROP I$SEG-EVAL FRAME T>
+
+<PUTPROP T$EVAL FRAME T>
+
+<PUTPROP T$PRINT-OUTPUT-BUFFER FRAME T>
+
+<PUTPROP T$READ-INPUT-BUFFER FRAME T>
+
+<SETG I$READ-TABLE 1>		;"current read-table if any"
+<SETG I$RDCONT 2>		;"characters available"
+<SETG I$CHANNEL 3>		;"CHANNEL"
+<SETG I$RADIX 4>		;"radix for numbers"
+<SETG I$POINT 5>		;"decimal point seen flag"
+<SETG I$RDBUFFER 6>		;"buffer used w/ access channels"
+<SETG I$RDCT 7>			;"bytes in buffer"
+<SETG I$SAVCHR 8>		;"re-read character"
+<SETG I$TBUFFER 9>
+<MANIFEST I$READ-TABLE I$RDCONT I$CHANNEL I$RADIX I$POINT
+	  I$RDBUFFER I$RDCT I$RDACC I$SAVCHR I$TBUFFER>
+
+<PUTPROP READ-INFO DECL '<TUPLE <OR !<FALSE> VECTOR> FIX
+				T$CHANNEL  FIX <OR ATOM !<FALSE>>
+				<OR STRING !<FALSE>> FIX CHARACTER
+				<OR STRING !<FALSE>>>>
+<SETG RI-CHANNEL 3>
+<MANIFEST RI-CHANNEL>
+
+
+; "Stuff for MAPPUR and friends"
+
+<NEWTYPE T$PCODE UVECTOR '<<PRIMTYPE UVECTOR> [5 FIX]>>
+<PUTPROP PCODE DECL '<<PRIMTYPE UVECTOR> [5 FIX]>>
+
+<SETG M$$MP-IDENT -10>	; "Used to mark pages taken by mappur"
+<SETG M$$PC-ID 1>	; "File ID"
+<SETG M$$PC-DB 2>	; "DB index"
+<SETG M$$PC-DBLOC 3>	; "Location in DB"
+<SETG M$$PC-CORLOC 4>	; "Location in core"
+<SETG M$$PC-LEN 5>	; "Length of code"
+<SETG M$$PC-ENTLEN 5>	; "length of entry"
+<MANIFEST M$$MP-IDENT M$$PC-ID M$$PC-DB M$$PC-DBLOC M$$PC-CORLOC M$$PC-LEN
+	  M$$PC-ENTLEN>
+
+; "Needed here for BOOT to compile"
+<SETG DB-NAME 1>
+<SETG DB-CHANNEL <OFFSET 2 DB>>
+<COND (<GASSIGNED? MUDDLE>
+       <PUT DB DECL '<VECTOR STRING <OR FALSE FIX>>>)
+      (<PUT-DECL DB '<VECTOR STRING <OR FALSE FIX>>>)>
+
+<MANIFEST DB-NAME DB-CHANNEL>
+
+<GDECL (T$PSIZE T$CHARS-WD T$BYTES-WD) FIX>
+
+<BLOCK (<ROOT>)>
+
+<NEWTYPE T$ZONE VECTOR
+	 '<<PRIMTYPE VECTOR> <OR FALSE T$GC-PARAMS>
+			     <OR T$ATOM FALSE> <OR T$ATOM FALSE>
+			     <OR T$ATOM FALSE> FIX <LIST [REST T$AREA]>
+			     <OR FALSE <UVECTOR [3 FIX]>>>>
+<PUTPROP ZONE DECL
+	 '<<PRIMTYPE VECTOR> <OR FALSE GC-PARAMS>
+			     <OR ATOM FALSE> <OR ATOM FALSE> <OR ATOM FALSE>
+			     FIX <LIST [REST AREA]>
+			     <OR FALSE <UVECTOR [3 FIX]>>>>
+<SETG GC-PARAMS 1>
+<SETG GC-FCN 2>
+<SETG MOVE-FCN 3>
+<SETG GROW-FCN 4>
+<SETG ZONE-ID 5>
+<SETG ALL-SPACES 6>
+<SETG GC-CTL 7>
+<MANIFEST GC-PARAMS GC-FCN MOVE-FCN GROW-FCN ZONE-ID ALL-SPACES GC-CTL>
+
+<SETG GCC-MIN-SPACE 1>
+<SETG GCC-MS-FREQ 2>
+<SETG GCC-MS-CT 3>
+<MANIFEST GCC-MIN-SPACE GCC-MS-FREQ GCC-MS-CT>
+
+<NEWTYPE T$GC-PARAMS UVECTOR '<<PRIMTYPE UVECTOR> [16 FIX]>>
+<PUTPROP GC-PARAMS DECL '<<PRIMTYPE UVECTOR> [16 FIX] [REST FIX]>>
+
+<SETG RCL 1> <SETG RCLV 2> <SETG RCLV1 3> <SETG RCLV2 4>
+<SETG RCLV3 5> <SETG RCLV4 6> <SETG RCLV5 7> <SETG RCLV6 8>
+<SETG RCLV7 9> <SETG RCLV8 10> <SETG RCLV9 11> <SETG RCLV10 12>
+<SETG GCSBOT 13> <SETG GCSMIN 14> <SETG GCSMAX 15> <SETG GCSFLG 16>
+<MANIFEST RCL RCLV RCLV1 RCLV2 RCLV3 RCLV4 RCLV5 RCLV6 RCLV7 RCLV8
+	  RCLV9 RCLV10 GCSBOT GCSMIN GCSMAX GCSFLG>
+<SETG GCF-NO-DOPE *400000000000*>
+<SETG GCF-PAGE-ONLY *200000000000*>
+<MANIFEST GCF-NO-DOPE GCF-PAGE-ONLY>
+
+<NEWTYPE T$AREA UVECTOR '<<PRIMTYPE UVECTOR> [4 FIX]>>
+<PUTPROP AREA DECL '<<PRIMTYPE UVECTOR> [4 FIX]>>
+<SETG ABOT 1>
+<SETG AMIN 2>
+<SETG AMAX 3>
+<SETG AFLGS 4>
+<SETG AF-EXTRA 1>
+<SETG AF-READ-ONLY 2>
+<MANIFEST ABOT AMIN AMAX AFLGS AF-EXTRA AF-READ-ONLY>
+
+<GDECL (T$CURRENT-ZONE) T$ZONE (I$ZONE-LIST) <LIST [REST T$ZONE]>
+       (I$ALL-ZONES) <VECTOR [REST <OR FALSE T$ZONE>]>>
+
+<GDECL (I$LENGTH-GC-PARAMS I$LH-MASK I$RH-MASK T$MIN-NEW-SPACE
+	MIN-NEW-SPACE
+	I$NEW-SPACE-SIZE I$HHIGH-BIT I$ZONE-COUNT I$ADDR-SHIFT
+	I$PSIZE I$CHARS-WD I$CHARS-WD-1) FIX>
+
+
+<SETG M$$MY-PROC *400000*>
+<SETG M$$MY-PROC-LH <LSH ,M$$MY-PROC 18>>
+<SETG M$$SETZ <LSH *400000* 18>>
+<SETG M$$COPY-ON-WRITE *000400000000*>
+<SETG M$$READ-ONLY-EXECUTE *120000000000*>
+<MANIFEST M$$MY-PROC M$$MY-PROC-LH M$$SETZ M$$COPY-ON-WRITE M$$READ-ONLY-EXECUTE>
+<ENDBLOCK>
+<DEFMAC ISYSOP (NAME "ARGS" STUFF)
+  <COND (<AND <TYPE? .NAME ATOM>
+	      <MEMBER <SPNAME .NAME> '["BIN" "WAIT" "DISMS"]>>
+	 <FORM BIND (VAL)
+	   <FORM CALL SETS RUNINT -1>
+	   <FORM SET VAL <FORM CALL SYSOP .NAME !.STUFF>>
+	   <FORM CALL SETS RUNINT 0>
+	   '.VAL>)
+	(<ERROR CANT-ENABLE-INTERRUPTS .NAME ISYSOP>)>>
+
+<DEFMAC ISYSCALL (NAME "ARGS" STUFF)
+  <COND (<AND <TYPE? .NAME ATOM>
+	      <MEMBER <SPNAME .NAME> '["WRITE" "SELECT" "READ" "WAIT" "SIGPAUSE"]>>
+	 <FORM BIND (VAL)
+	   <FORM CALL SETS RUNINT -1>
+	   <FORM SET VAL <FORM CALL SYSCALL .NAME !.STUFF>>
+	   <FORM CALL SETS RUNINT 0>
+	   '.VAL>)
+	(<ERROR CANT-ENABLE-INTERRUPTS .NAME ISYSCALL>)>>
+
+<DEFMAC M$$NO-SAVCHR () '<CHTYPE -1 CHARACTER>>
+
+<DEFMAC RHW ('WD)
+  <FORM
+   IFSYS ("TOPS20"
+	  <FORM GETBITS .WD <FORM BITS 18 0>>)
+	 ("UNIX"
+	  <FORM GETBITS .WD <FORM BITS 16 0>>)>>
+<DEFMAC LHW ('WD)
+  <FORM IFSYS
+	("TOPS20"
+	 <FORM GETBITS .WD <FORM BITS 18 18>>)
+	("UNIX"
+	 <FORM GETBITS .WD <FORM BITS 16 16>>)>>
+<DEFMAC PUTRHW ('WD 'NEW)
+  <FORM IFSYS
+	("TOPS20"
+	 <FORM PUTBITS .WD <FORM BITS 18 0> .NEW>)
+	("UNIX"
+	 <FORM PUTBITS .WD <FORM BITS 16 0> .NEW>)>>
+<DEFMAC PUTLHW ('WD 'NEW)
+  <FORM IFSYS
+	("TOPS20"
+	 <FORM PUTBITS .WD <FORM BITS 18 18> .NEW>)
+	("UNIX"
+	 <FORM PUTBITS .WD <FORM BITS 16 16> .NEW>)>>
+<DEFMAC PAGE-ADDRESS ('PAGENO)
+  <FORM IFSYS
+	("TOPS20"
+	 <FORM * .PAGENO 512>)
+	("UNIX"
+	 <FORM LSH <FORM * .PAGENO 256> 2>)>>
+<DEFMAC ADDRESS-PAGE ('ADDR)
+  <FORM IFSYS
+	("TOPS20"
+	 <FORM / .ADDR 512>)
+	("UNIX"
+	 <FORM LSH <FORM / .ADDR 256> -2>)>>

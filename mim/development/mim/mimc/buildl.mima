@@ -1,0 +1,748 @@
+
+<PACKAGE "BUILDL">
+
+<ENTRY LIST-BUILD>
+
+<USE "COMPDEC" "CODGEN" "CHKDCL" "ADVMESS" "MIMGEN" "STRGEN">
+
+#WORD *13417153157*
+		    <GFCN LIST-BUILD ("VALUE" ANY NODE ANY) NOD4 W5>
+		    <TEMP K6:LIST (KK7:LIST ()) (OOPSF15 %<>) (SUGGEST18 'DONT-CARE) TEMP22 N39 TEMP43 TG116>
+		    <INTGO>
+		    <NTHUV NOD4 5 = K6 (TYPE LIST)>
+		    <DEAD NOD4>
+		    <TYPE? W5 <TYPE-CODE TEMP> - PHRASE20>
+		    <NTHUV W5 2 = TEMP22 (TYPE FIX)>
+		    <VEQUAL? TEMP22 0 - PHRASE20 (TYPE FIX)>
+		    <DEAD TEMP22>
+		    <SET SUGGEST18 W5>
+PHRASE20
+		    <EMPL? K6 + BOOL28>
+		    <RESTL K6 1 = TEMP22 (TYPE LIST)>
+		    <EMPL? TEMP22 - BOOL28>
+		    <DEAD TEMP22>
+		    <SET KK7 K6>
+		    <DEAD K6>
+		    <JUMP + MAPAP33>
+BOOL28
+		    <SET TEMP22 K6 (TYPE LIST)>
+		    <EMPL? TEMP22 + PHRASE26>
+		    <LOOP>
+MAP30
+		    <INTGO>
+		    <EMPL? TEMP22 + MAPAP33>
+		    <NTHL TEMP22 1 = N39>
+		    <LENUV N39 = TEMP43 (TYPE FIX)>
+		    <LESS? TEMP43 8 + PHRASE41 (TYPE FIX)>
+		    <DEAD TEMP43>
+		    <NTHUV N39 8 = TEMP43>
+		    <TYPE? TEMP43 <TYPE-CODE FALSE> - PHRASE26>
+		    <DEAD TEMP43>
+PHRASE41
+		    <CONS N39 KK7 = KK7>
+		    <DEAD N39>
+		    <RESTL TEMP22 1 = TEMP22 (TYPE LIST)>
+		    <JUMP + MAP30>
+MAPAP33
+		    <NTHL KK7 1 = N39 (TYPE NODE)>
+		    <NTHUV N39 1 = TEMP22 (TYPE FIX)>
+		    <VEQUAL? TEMP22 68 - PHRASE46 (TYPE FIX)>
+		    <DEAD TEMP22>
+		    <FRAME 'STRUCTYP>
+		    <NTHUV N39 5 = OOPSF15 (TYPE LIST)>
+		    <DEAD N39>
+		    <NTHL OOPSF15 1 = N39 (TYPE NODE)>
+		    <DEAD OOPSF15>
+		    <NTHUV N39 3 = STACK>
+		    <CALL 'STRUCTYP 1 = OOPSF15>
+		    <EQUAL? OOPSF15 'LIST - PHRASE46>
+		    <DEAD OOPSF15>
+		    <FRAME 'GEN>
+		    <PUSH N39>
+		    <DEAD N39>
+		    <CALL 'GEN 1 = TEMP22>
+		    <RESTL KK7 1 = KK7 (TYPE LIST)>
+		    <JUMP + PHRASE50>
+PHRASE46
+		    <FRAME 'REFERENCE>
+		    <PUSH ()>
+		    <CALL 'REFERENCE 1 = TEMP22>
+PHRASE50
+		    <SET OOPSF15 KK7 (TYPE LIST)>
+		    <DEAD KK7>
+		    <LOOP>
+MAP53
+		    <INTGO>
+		    <EMPL? OOPSF15 + MAPAP56>
+		    <SET K6 OOPSF15>
+		    <NTHL K6 1 = TEMP43 (TYPE NODE)>
+		    <NTHUV TEMP43 1 = N39 (TYPE FIX)>
+		    <VEQUAL? N39 68 - PHRASE62 (TYPE FIX)>
+		    <DEAD N39>
+		    <FRAME 'SEG-BUILD-LIST>
+		    <NTHUV TEMP43 5 = N39 (TYPE LIST)>
+		    <DEAD TEMP43>
+		    <NTHL N39 1 = STACK (TYPE NODE)>
+		    <DEAD N39>
+		    <PUSH TEMP22>
+		    <DEAD TEMP22>
+		    <PUSH %<>>
+		    <PUSH %<>>
+		    <PUSH %<>>
+		    <CALL 'SEG-BUILD-LIST 5 = TEMP22>
+		    <JUMP + PHRASE65>
+PHRASE62
+		    <FRAME 'FREE-TEMP>
+		    <FRAME 'GEN>
+		    <PUSH TEMP43>
+		    <DEAD TEMP43>
+		    <CALL 'GEN 1 = TEMP43>
+		    <PUSH TEMP43>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <EQUAL? TEMP22 W5 + PHRASE69>
+		    <EQUAL? TEMP22 SUGGEST18 + PHRASE69>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH TEMP22>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <JUMP + PHRASE72>
+PHRASE69
+		    <FRAME 'DEALLOCATE-TEMP>
+		    <PUSH TEMP22>
+		    <CALL 'DEALLOCATE-TEMP 1>
+PHRASE72
+		    <FRAME 'IEMIT>
+		    <PUSH '`CONS>
+		    <FRAME 'ATOMCHK>
+		    <PUSH TEMP43>
+		    <DEAD TEMP43>
+		    <CALL 'ATOMCHK 1 = STACK>
+		    <PUSH TEMP22>
+		    <DEAD TEMP22>
+		    <PUSH '=>
+		    <RESTL K6 1 = N39 (TYPE LIST)>
+		    <DEAD K6>
+		    <EMPL? N39 - PHRASE77 (TYPE LIST)>
+		    <DEAD N39>
+		    <EQUAL? W5 'DONT-CARE + PHRASE77>
+		    <TYPE? W5 <TYPE-CODE TEMP> - PHRASE80>
+		    <FRAME 'USE-TEMP>
+		    <PUSH W5>
+		    <PUSH 'LIST>
+		    <CALL 'USE-TEMP 2>
+PHRASE80
+		    <SET TEMP22 W5>
+		    <JUMP + PHRASE84>
+PHRASE77
+		    <TYPE? SUGGEST18 <TYPE-CODE TEMP> - PHRASE82>
+		    <FRAME 'USE-TEMP>
+		    <PUSH SUGGEST18>
+		    <PUSH 'LIST>
+		    <CALL 'USE-TEMP 2>
+		    <SET TEMP22 SUGGEST18>
+		    <JUMP + PHRASE84>
+PHRASE82
+		    <FRAME 'GEN-TEMP>
+		    <PUSH 'LIST>
+		    <CALL 'GEN-TEMP 1 = TEMP22>
+PHRASE84
+		    <PUSH TEMP22>
+		    <CALL 'IEMIT 5>
+PHRASE65
+		    <RESTL OOPSF15 1 = OOPSF15 (TYPE LIST)>
+		    <JUMP + MAP53>
+MAPAP56
+		    <FRAME 'MOVE-ARG>
+		    <PUSH TEMP22>
+		    <DEAD TEMP22>
+		    <PUSH W5>
+		    <DEAD W5>
+		    <CALL 'MOVE-ARG 2 = OOPSF15>
+		    <RETURN OOPSF15>
+		    <DEAD OOPSF15>
+PHRASE26
+		    <NTHL K6 1 = N39 (TYPE NODE)>
+		    <NTHUV N39 1 = TEMP22 (TYPE FIX)>
+		    <VEQUAL? TEMP22 68 - PHRASE89 (TYPE FIX)>
+		    <DEAD TEMP22>
+		    <FRAME 'SEG-BUILD-LIST>
+		    <NTHUV N39 5 = TEMP22 (TYPE LIST)>
+		    <DEAD N39>
+		    <NTHL TEMP22 1 = STACK (TYPE NODE)>
+		    <DEAD TEMP22>
+		    <FRAME 'REFERENCE>
+		    <PUSH ()>
+		    <CALL 'REFERENCE 1 = STACK>
+		    <PUSH 'T>
+		    <PUSH 'T>
+		    <PUSH %<>>
+		    <CALL 'SEG-BUILD-LIST 5 = TEMP22>
+		    <FRAME 'NTH>
+		    <PUSH TEMP22>
+		    <PUSH 2>
+		    <CALL 'NTH 2 = SUGGEST18>
+		    <NTH1 TEMP22 = TEMP43>
+		    <FRAME 'NTH>
+		    <PUSH TEMP22>
+		    <DEAD TEMP22>
+		    <PUSH 3>
+		    <CALL 'NTH 2 = OOPSF15>
+		    <JUMP + PHRASE94>
+PHRASE89
+		    <FRAME 'GEN>
+		    <PUSH N39>
+		    <DEAD N39>
+		    <PUSH 'DONT-CARE>
+		    <CALL 'GEN 2 = TEMP22>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH TEMP22>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <FRAME 'IEMIT>
+		    <PUSH '`CONS>
+		    <FRAME 'ATOMCHK>
+		    <PUSH TEMP22>
+		    <DEAD TEMP22>
+		    <CALL 'ATOMCHK 1 = STACK>
+		    <PUSH ()>
+		    <PUSH '=>
+		    <TYPE? SUGGEST18 <TYPE-CODE TEMP> - PHRASE100>
+		    <FRAME 'USE-TEMP>
+		    <PUSH SUGGEST18>
+		    <PUSH 'LIST>
+		    <CALL 'USE-TEMP 2>
+		    <JUMP + PHRASE102>
+PHRASE100
+		    <FRAME 'GEN-TEMP>
+		    <PUSH 'LIST>
+		    <CALL 'GEN-TEMP 1 = SUGGEST18>
+PHRASE102
+		    <SET TEMP43 SUGGEST18>
+		    <PUSH TEMP43>
+		    <CALL 'IEMIT 5>
+PHRASE94
+		    <RESTL K6 1 = K6 (TYPE LIST)>
+		    <LOOP>
+MAP105
+		    <INTGO>
+		    <EMPL? K6 + MAPAP108>
+		    <SET KK7 K6>
+		    <NTHL KK7 1 = TEMP22 (TYPE NODE)>
+		    <NTHUV TEMP22 1 = N39 (TYPE FIX)>
+		    <VEQUAL? N39 68 - PHRASE116 (TYPE FIX)>
+		    <DEAD N39>
+		    <FRAME 'STRUCTYP>
+		    <NTHUV TEMP22 5 = N39 (TYPE LIST)>
+		    <DEAD TEMP22>
+		    <NTHL N39 1 = TEMP22 (TYPE NODE)>
+		    <DEAD N39>
+		    <NTHUV TEMP22 3 = STACK>
+		    <CALL 'STRUCTYP 1 = N39>
+		    <EQUAL? N39 'LIST - PHRASE119>
+		    <DEAD N39>
+		    <RESTL KK7 1 = N39 (TYPE LIST)>
+		    <DEAD KK7>
+		    <EMPL? N39 - PHRASE119 (TYPE LIST)>
+		    <DEAD N39>
+		    <FRAME 'GEN>
+		    <PUSH TEMP22>
+		    <DEAD TEMP22>
+		    <PUSH 'DONT-CARE>
+		    <CALL 'GEN 2 = TEMP22>
+		    <TYPE? OOPSF15 <TYPE-CODE FALSE> + PHRASE124>
+		    <FRAME 'EMPTY-LIST>
+		    <PUSH SUGGEST18>
+		    <FRAME 'MAKE-TAG>
+		    <CALL 'MAKE-TAG 0 = TG116>
+		    <PUSH TG116>
+		    <PUSH 'T>
+		    <CALL 'EMPTY-LIST 3>
+PHRASE124
+		    <FRAME 'IEMIT>
+		    <PUSH '`PUTREST>
+		    <PUSH SUGGEST18>
+		    <PUSH TEMP22>
+		    <CALL 'IEMIT 3>
+		    <TYPE? OOPSF15 <TYPE-CODE FALSE> + PHRASE129>
+		    <FRAME 'LABEL-TAG>
+		    <PUSH TG116>
+		    <DEAD TG116>
+		    <CALL 'LABEL-TAG 1>
+		    <FRAME 'EMPTY-LIST>
+		    <PUSH SUGGEST18>
+		    <FRAME 'MAKE-TAG>
+		    <CALL 'MAKE-TAG 0 = TG116>
+		    <PUSH TG116>
+		    <PUSH %<>>
+		    <CALL 'EMPTY-LIST 3>
+		    <FRAME 'SET-TEMP>
+		    <PUSH TEMP43>
+		    <PUSH TEMP22>
+		    <CALL 'SET-TEMP 2>
+		    <FRAME 'LABEL-TAG>
+		    <PUSH TG116>
+		    <CALL 'LABEL-TAG 1>
+PHRASE129
+		    <FRAME 'FREE-TEMP>
+		    <PUSH TEMP22>
+		    <DEAD TEMP22>
+		    <CALL 'FREE-TEMP 1>
+		    <JUMP + PHRASE158>
+PHRASE119
+		    <FRAME 'SEG-BUILD-LIST>
+		    <PUSH TEMP22>
+		    <DEAD TEMP22>
+		    <PUSH SUGGEST18>
+		    <DEAD SUGGEST18>
+		    <PUSH 'T>
+		    <PUSH %<>>
+		    <SET N39 OOPSF15>
+		    <TYPE? N39 <TYPE-CODE FALSE> + PHRASE139>
+		    <SET N39 TEMP43>
+PHRASE139
+		    <PUSH N39>
+		    <DEAD N39>
+		    <CALL 'SEG-BUILD-LIST 5 = SUGGEST18>
+		    <JUMP + PHRASE158>
+PHRASE116
+		    <FRAME 'FREE-TEMP>
+		    <FRAME 'GEN>
+		    <PUSH TEMP22>
+		    <DEAD TEMP22>
+		    <PUSH 'DONT-CARE>
+		    <CALL 'GEN 2 = TEMP22>
+		    <PUSH TEMP22>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <FRAME 'IEMIT>
+		    <PUSH '`CONS>
+		    <FRAME 'ATOMCHK>
+		    <PUSH TEMP22>
+		    <DEAD TEMP22>
+		    <CALL 'ATOMCHK 1 = STACK>
+		    <PUSH ()>
+		    <PUSH '=>
+		    <FRAME 'GEN-TEMP>
+		    <PUSH 'LIST>
+		    <CALL 'GEN-TEMP 1 = TEMP22>
+		    <PUSH TEMP22>
+		    <CALL 'IEMIT 5>
+		    <TYPE? OOPSF15 <TYPE-CODE FALSE> + PHRASE147>
+		    <FRAME 'EMPTY-LIST>
+		    <PUSH SUGGEST18>
+		    <FRAME 'MAKE-TAG>
+		    <CALL 'MAKE-TAG 0 = TG116>
+		    <PUSH TG116>
+		    <PUSH 'T>
+		    <CALL 'EMPTY-LIST 3>
+PHRASE147
+		    <FRAME 'IEMIT>
+		    <PUSH '`PUTREST>
+		    <PUSH SUGGEST18>
+		    <PUSH TEMP22>
+		    <CALL 'IEMIT 3>
+		    <TYPE? OOPSF15 <TYPE-CODE FALSE> + PHRASE152>
+		    <FRAME 'BRANCH-TAG>
+		    <FRAME 'MAKE-TAG>
+		    <CALL 'MAKE-TAG 0 = N39>
+		    <PUSH N39>
+		    <CALL 'BRANCH-TAG 1>
+		    <FRAME 'LABEL-TAG>
+		    <PUSH TG116>
+		    <CALL 'LABEL-TAG 1>
+		    <FRAME 'SET-TEMP>
+		    <PUSH TEMP43>
+		    <PUSH TEMP22>
+		    <DEAD TEMP22>
+		    <CALL 'SET-TEMP 2>
+		    <FRAME 'LABEL-TAG>
+		    <PUSH N39>
+		    <DEAD N39>
+		    <CALL 'LABEL-TAG 1>
+		    <JUMP + PHRASE158>
+PHRASE152
+		    <EQUAL? SUGGEST18 TEMP43 + PHRASE160>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH SUGGEST18>
+		    <DEAD SUGGEST18>
+		    <CALL 'FREE-TEMP 1>
+PHRASE160
+		    <SET SUGGEST18 TEMP22>
+		    <DEAD TEMP22>
+PHRASE158
+		    <RESTL K6 1 = K6 (TYPE LIST)>
+		    <JUMP + MAP105>
+MAPAP108
+		    <EQUAL? TEMP43 SUGGEST18 + PHRASE163>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH SUGGEST18>
+		    <DEAD SUGGEST18>
+		    <CALL 'FREE-TEMP 1>
+PHRASE163
+		    <FRAME 'MOVE-ARG>
+		    <PUSH TEMP43>
+		    <DEAD TEMP43>
+		    <PUSH W5>
+		    <DEAD W5>
+		    <CALL 'MOVE-ARG 2 = OOPSF15>
+		    <RETURN OOPSF15>
+		    <DEAD OOPSF15>
+		    <END LIST-BUILD>
+
+#WORD *21245437214*
+		    <GFCN SEG-BUILD-LIST ("VALUE" ANY NODE ANY ANY ANY ANY) NOD4 DAT5 FLG6 FST7 SMQ8>
+		    <TEMP TYP9 TG210 ITYP11 TPS12 ET13 ML14:FIX D320 TEM18 FDAT21:TEMP TEMP69 TEMP76:ATOM TG315>
+		    <INTGO>
+		    <NTHUV NOD4 3 = TYP9>
+		    <FRAME 'MAKE-TAG>
+		    <CALL 'MAKE-TAG 0 = TG210>
+		    <FRAME 'ISTYPE?>
+		    <PUSH TYP9>
+		    <CALL 'ISTYPE? 1 = ITYP11>
+		    <FRAME 'STRUCTYP>
+		    <PUSH TYP9>
+		    <CALL 'STRUCTYP 1 = TPS12>
+		    <FRAME 'GET-ELE-TYPE>
+		    <PUSH TYP9>
+		    <PUSH 'ALL>
+		    <CALL 'GET-ELE-TYPE 2 = ET13>
+		    <FRAME 'MINL>
+		    <PUSH TYP9>
+		    <DEAD TYP9>
+		    <CALL 'MINL 1 = ML14>
+		    <FRAME 'MAKE-TAG>
+		    <CALL 'MAKE-TAG 0 = TYP9>
+		    <SET D320 DAT5>
+		    <TYPE? D320 <TYPE-CODE TEMP> - PHRASE29>
+		    <FRAME 'USE-TEMP>
+		    <PUSH D320>
+		    <PUSH 'LIST>
+		    <CALL 'USE-TEMP 2>
+PHRASE29
+		    <FRAME 'ISTYPE-GOOD?>
+		    <PUSH ET13>
+		    <DEAD ET13>
+		    <CALL 'ISTYPE-GOOD? 1>
+		    <FRAME 'GEN>
+		    <PUSH NOD4>
+		    <DEAD NOD4>
+		    <FRAME 'GEN-TEMP>
+		    <PUSH %<>>
+		    <CALL 'GEN-TEMP 1 = STACK>
+		    <CALL 'GEN 2 = ET13>
+		    <TYPE? FST7 <TYPE-CODE FALSE> - BOOL36>
+		    <TYPE? FLG6 <TYPE-CODE FALSE> - PHRASE35>
+BOOL36
+		    <VEQUAL? ML14 0 - PHRASE38 (TYPE FIX)>
+		    <FRAME 'MOVE-ARG>
+		    <PUSH DAT5>
+		    <DEAD DAT5>
+		    <FRAME 'GEN-TEMP>
+		    <PUSH %<>>
+		    <CALL 'GEN-TEMP 1 = STACK>
+		    <CALL 'MOVE-ARG 2 = DAT5>
+		    <FRAME 'MT-TEST>
+		    <PUSH ET13>
+		    <PUSH TYP9>
+		    <PUSH TPS12>
+		    <PUSH ITYP11>
+		    <CALL 'MT-TEST 4>
+		    <JUMP + PHRASE44>
+PHRASE38
+		    <FRAME 'GEN-TEMP>
+		    <CALL 'GEN-TEMP 0 = DAT5>
+PHRASE44
+		    <FRAME 'NTH-DO>
+		    <PUSH TPS12>
+		    <PUSH ET13>
+		    <FRAME 'GEN-TEMP>
+		    <CALL 'GEN-TEMP 0 = TEM18>
+		    <PUSH TEM18>
+		    <PUSH 1>
+		    <CALL 'NTH-DO 4>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH TEM18>
+		    <PUSH %<>>
+		    <CALL 'FREE-TEMP 2>
+		    <FRAME 'IEMIT>
+		    <PUSH '`CONS>
+		    <PUSH TEM18>
+		    <DEAD TEM18>
+		    <PUSH D320>
+		    <PUSH '=>
+		    <FRAME 'GEN-TEMP>
+		    <PUSH 'LIST>
+		    <CALL 'GEN-TEMP 1 = FDAT21>
+		    <PUSH FDAT21>
+		    <CALL 'IEMIT 5>
+		    <FRAME 'SET-TEMP>
+		    <PUSH DAT5>
+		    <PUSH FDAT21>
+		    <CALL 'SET-TEMP 2>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH DAT5>
+		    <CALL 'FREE-TEMP 1>
+		    <JUMP + PHRASE53>
+PHRASE35
+		    <FRAME 'SET-TEMP>
+		    <FRAME 'GEN-TEMP>
+		    <PUSH %<>>
+		    <CALL 'GEN-TEMP 1 = FDAT21>
+		    <PUSH FDAT21>
+		    <PUSH DAT5>
+		    <CALL 'SET-TEMP 2>
+PHRASE53
+		    <TYPE? FST7 <TYPE-CODE FALSE> - BOOL58>
+		    <TYPE? FLG6 <TYPE-CODE FALSE> - PHRASE57>
+BOOL58
+		    <FRAME '1REST>
+		    <PUSH ET13>
+		    <DEAD ET13>
+		    <PUSH TPS12>
+		    <CALL '1REST 2 = ET13>
+PHRASE57
+		    <GRTR? ML14 1 + PHRASE61 (TYPE FIX)>
+		    <FRAME 'MT-TEST>
+		    <PUSH ET13>
+		    <PUSH TYP9>
+		    <PUSH TPS12>
+		    <PUSH ITYP11>
+		    <CALL 'MT-TEST 4>
+PHRASE61
+		    <FRAME 'IEMIT>
+		    <PUSH '`LOOP>
+		    <TYPE? TPS12 <TYPE-CODE FALSE> - PHRASE67>
+		    <CONS 'LENGTH () = TEM18>
+		    <CONS 'VALUE TEM18 = TEM18>
+		    <CONS 'TYPE TEM18 = TEM18>
+		    <NTHUV ET13 1 = TEMP69 (TYPE ATOM)>
+		    <CONS TEMP69 TEM18 = TEM18>
+		    <DEAD TEMP69>
+		    <JUMP + PHRASE71>
+PHRASE67
+		    <EQUAL? TPS12 'LIST - PHRASE70>
+		    <CONS 'VALUE () = TEM18>
+		    <NTHUV ET13 1 = TEMP69 (TYPE ATOM)>
+		    <CONS TEMP69 TEM18 = TEM18>
+		    <DEAD TEMP69>
+		    <JUMP + PHRASE71>
+PHRASE70
+		    <CONS 'LENGTH () = TEM18>
+		    <CONS 'VALUE TEM18 = TEM18>
+		    <NTHUV ET13 1 = TEMP69 (TYPE ATOM)>
+		    <CONS TEMP69 TEM18 = TEM18>
+		    <DEAD TEMP69>
+PHRASE71
+		    <PUSH TEM18>
+		    <DEAD TEM18>
+		    <CONS 'VALUE () = TEM18>
+		    <NTHUV FDAT21 1 = TEMP69 (TYPE ATOM)>
+		    <CONS TEMP69 TEM18 = STACK>
+		    <DEAD TEMP69 TEM18>
+		    <SET TEMP69 3 (TYPE FIX)>
+		    <TYPE? FLG6 <TYPE-CODE FALSE> - PHRASE73>
+		    <TYPE? D320 <TYPE-CODE TEMP> - PHRASE73>
+		    <CONS 'VALUE () = TEM18>
+		    <NTHUV D320 1 = TEMP76 (TYPE ATOM)>
+		    <CONS TEMP76 TEM18 = TEM18>
+		    <DEAD TEMP76>
+		    <CONS TEM18 () = TEM18>
+		    <JUMP + PHRASE77>
+PHRASE73
+		    <SET TEM18 () (TYPE LIST)>
+PHRASE77
+		    <LOOP (TEM18 VALUE) (TEMP69 VALUE)>
+TAG78
+		    <INTGO>
+		    <EMPL? TEM18 + TAG65>
+		    <NTHL TEM18 1 = STACK>
+		    <RESTL TEM18 1 = TEM18 (TYPE LIST)>
+		    <ADD TEMP69 1 = TEMP69 (TYPE FIX)>
+		    <JUMP + TAG78>
+TAG65
+		    <CALL 'IEMIT TEMP69>
+		    <DEAD TEMP69>
+		    <FRAME 'LABEL-TAG>
+		    <PUSH TG210>
+		    <CALL 'LABEL-TAG 1>
+		    <FRAME 'NTH-DO>
+		    <PUSH TPS12>
+		    <PUSH ET13>
+		    <FRAME 'GEN-TEMP>
+		    <CALL 'GEN-TEMP 0 = TEM18>
+		    <PUSH TEM18>
+		    <PUSH 1>
+		    <CALL 'NTH-DO 4>
+		    <FRAME 'IEMIT>
+		    <PUSH '`CONS>
+		    <PUSH TEM18>
+		    <TYPE? FLG6 <TYPE-CODE FALSE> + PHRASE85>
+		    <SET TEMP69 () (TYPE LIST)>
+		    <JUMP + PHRASE86>
+PHRASE85
+		    <SET TEMP69 D320>
+		    <DEAD D320>
+PHRASE86
+		    <PUSH TEMP69>
+		    <DEAD TEMP69>
+		    <PUSH '=>
+		    <PUSH TEM18>
+		    <CALL 'IEMIT 5>
+		    <TYPE? SMQ8 <TYPE-CODE FALSE> + PHRASE88>
+		    <FRAME 'EMPTY-LIST>
+		    <PUSH FDAT21>
+		    <FRAME 'MAKE-TAG>
+		    <CALL 'MAKE-TAG 0 = TG315>
+		    <PUSH TG315>
+		    <PUSH 'T>
+		    <CALL 'EMPTY-LIST 3>
+PHRASE88
+		    <FRAME 'IEMIT>
+		    <PUSH '`PUTREST>
+		    <PUSH FDAT21>
+		    <PUSH TEM18>
+		    <CALL 'IEMIT 3>
+		    <TYPE? SMQ8 <TYPE-CODE FALSE> + PHRASE93>
+		    <FRAME 'BRANCH-TAG>
+		    <FRAME 'MAKE-TAG>
+		    <CALL 'MAKE-TAG 0 = D320>
+		    <PUSH D320>
+		    <CALL 'BRANCH-TAG 1>
+		    <FRAME 'LABEL-TAG>
+		    <PUSH TG315>
+		    <DEAD TG315>
+		    <CALL 'LABEL-TAG 1>
+		    <FRAME 'EMPTY-LIST>
+		    <PUSH FDAT21>
+		    <PUSH D320>
+		    <DEAD D320>
+		    <PUSH %<>>
+		    <CALL 'EMPTY-LIST 3>
+		    <FRAME 'SET-TEMP>
+		    <PUSH SMQ8>
+		    <DEAD SMQ8>
+		    <PUSH TEM18>
+		    <CALL 'SET-TEMP 2>
+PHRASE93
+		    <FRAME 'SET-TEMP>
+		    <PUSH FDAT21>
+		    <PUSH TEM18>
+		    <CALL 'SET-TEMP 2>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH FDAT21>
+		    <CALL 'FREE-TEMP 1>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH TEM18>
+		    <DEAD TEM18>
+		    <CALL 'FREE-TEMP 1>
+		    <FRAME 'REST-N-JMP>
+		    <PUSH ET13>
+		    <PUSH TPS12>
+		    <DEAD TPS12>
+		    <PUSH TG210>
+		    <DEAD TG210>
+		    <PUSH ET13>
+		    <PUSH ITYP11>
+		    <DEAD ITYP11>
+		    <CALL 'REST-N-JMP 5>
+		    <FRAME 'LABEL-TAG>
+		    <PUSH TYP9>
+		    <DEAD TYP9>
+		    <CALL 'LABEL-TAG 1>
+		    <FRAME 'FREE-TEMP>
+		    <PUSH ET13>
+		    <DEAD ET13>
+		    <CALL 'FREE-TEMP 1>
+		    <TYPE? FLG6 <TYPE-CODE FALSE> + PHRASE106>
+		    <TYPE? FST7 <TYPE-CODE FALSE> + PHRASE106>
+		    <DEAD FST7>
+		    <VEQUAL? ML14 0 - TAG108 (TYPE FIX)>
+		    <DEAD ML14>
+		    <SET TEMP69 'T (TYPE ATOM)>
+		    <JUMP + TAG111>
+TAG108
+		    <SET TEMP69 %<> (TYPE FALSE)>
+TAG111
+		    <CONS TEMP69 () = TEM18>
+		    <DEAD TEMP69>
+		    <CONS FDAT21 TEM18 = TEM18>
+		    <DEAD FDAT21>
+		    <CONS DAT5 TEM18 = TEM18>
+		    <DEAD DAT5>
+		    <RETURN TEM18>
+		    <DEAD TEM18>
+PHRASE106
+		    <TYPE? FLG6 <TYPE-CODE FALSE> + PHRASE112>
+		    <DEAD FLG6>
+		    <RETURN FDAT21>
+		    <DEAD FDAT21>
+PHRASE112
+		    <FRAME 'FREE-TEMP>
+		    <PUSH FDAT21>
+		    <DEAD FDAT21>
+		    <CALL 'FREE-TEMP 1>
+		    <RETURN DAT5>
+		    <DEAD DAT5>
+		    <END SEG-BUILD-LIST>
+
+#WORD *17620227635*
+		    <GFCN MT-TEST ("VALUE" ANY ANY ANY ATOM ANY) D4 TG5 TP6 TYP7>
+		    <TEMP TEMP9>
+		    <INTGO>
+		    <FRAME 'EMPTY-CHECK>
+		    <PUSH TP6>
+		    <DEAD TP6>
+		    <PUSH D4>
+		    <DEAD D4>
+		    <PUSH TYP7>
+		    <DEAD TYP7>
+		    <PUSH 'T>
+		    <PUSH TG5>
+		    <DEAD TG5>
+		    <CALL 'EMPTY-CHECK 5 = TEMP9>
+		    <RETURN TEMP9>
+		    <DEAD TEMP9>
+		    <END MT-TEST>
+
+#WORD *1223203161*
+		    <GFCN 1REST ("VALUE" ANY ANY ATOM) D4 TP5>
+		    <TEMP>
+		    <INTGO>
+		    <FRAME 'REST-DO>
+		    <PUSH TP5>
+		    <DEAD TP5>
+		    <PUSH D4>
+		    <PUSH D4>
+		    <PUSH 1>
+		    <CALL 'REST-DO 4>
+		    <RETURN D4>
+		    <DEAD D4>
+		    <END 1REST>
+
+#WORD *1205147616*
+		    <GFCN REST-N-JMP ("VALUE" ATOM ANY ANY ANY ANY ANY) D4 TP5 TG6 D17 TYP8>
+		    <TEMP>
+		    <INTGO>
+		    <FRAME 'REST-DO>
+		    <PUSH TP5>
+		    <PUSH D4>
+		    <PUSH D17>
+		    <DEAD D17>
+		    <PUSH 1>
+		    <CALL 'REST-DO 4>
+		    <FRAME 'EMPTY-CHECK>
+		    <PUSH TP5>
+		    <DEAD TP5>
+		    <PUSH D4>
+		    <DEAD D4>
+		    <PUSH TYP8>
+		    <DEAD TYP8>
+		    <PUSH %<>>
+		    <PUSH TG6>
+		    <DEAD TG6>
+		    <CALL 'EMPTY-CHECK 5>
+		    <RETURN 'T>
+		    <END REST-N-JMP>
+
+<ENDPACKAGE>

@@ -1,0 +1,285 @@
+"Display operations"
+
+"Get/set x/y position, width, height"
+<DEFINE TTY-PARM (CHANNEL OPER "OPTIONAL" NEW
+		  "AUX" (DATA <CHANNEL-DATA .CHANNEL>))
+  #DECL ((CHANNEL) CHANNEL (NEW) FIX (DATA) TTY-CHANNEL)
+  <COND (<TC-TTY .DATA>
+	 <COND (<==? .OPER PAGE-WIDTH>
+		<COND (<NOT <ASSIGNED? NEW>>
+		       <DO-TTY-PARM .DATA PAGE-WIDTH>)
+		      (T
+		       <DO-TTY-PARM .DATA PAGE-WIDTH .NEW>)>)
+	       (<==? .OPER PAGE-HEIGHT>
+		<COND (<NOT <ASSIGNED? NEW>>
+		       <DO-TTY-PARM .DATA PAGE-HEIGHT>)
+		      (T
+		       <DO-TTY-PARM .DATA PAGE-HEIGHT .NEW>)>)
+	       (<==? .OPER PAGE-X>
+		<COND (<NOT <ASSIGNED? NEW>>
+		       <DO-TTY-PARM .DATA PAGE-X>)
+		      (T
+		       <DO-TTY-PARM .DATA PAGE-X .NEW>
+		       <UPDATE-MC .CHANNEL <DO-TTY-PARM .DATA PAGE-X>>)>)
+	       (<==? .OPER PAGE-Y>
+		<COND (<NOT <ASSIGNED? NEW>>
+		       <DO-TTY-PARM .DATA PAGE-Y>)
+		      (T
+		       <DO-TTY-PARM .DATA PAGE-Y .NEW>
+		       <UPDATE-MC .CHANNEL <> <DO-TTY-PARM .DATA PAGE-Y>>)>)>)
+	(0)>>
+
+; "Anything that is simple (perhaps change cursor position, and output
+   some string) is handled by DO-TTY-OP."
+<DEFINE CLEAR-SCREEN (CHANNEL OPER)
+  #DECL ((CHANNEL) CHANNEL)
+  <DO-TTY-OP ,TTY-CLR .CHANNEL 0 0>>
+
+<DEFINE CLEAR-EOL (CHANNEL OPER)
+  #DECL ((CHANNEL) CHANNEL)
+  <DO-TTY-OP ,TTY-CEL .CHANNEL>>
+
+<DEFINE CLEAR-EOS (CHANNEL OPER)
+  #DECL ((CHANNEL) CHANNEL)
+  <DO-TTY-OP ,TTY-CEW .CHANNEL>>
+
+<DEFINE FRESH-LINE (CHANNEL OPER "OPTIONAL" (N 1)
+		    "AUX" (DATA <CHANNEL-DATA .CHANNEL>) (TTY <TC-TTY .DATA>))
+  #DECL ((N) FIX (CHANNEL) CHANNEL (DATA) TTY-CHANNEL (TTY) TTY)
+  <COND (<0? <TT-X .TTY>>
+	 <SET N <- .N 1>>)>
+  <COND (<G? .N 0>
+	 <REPEAT ()
+	   <TTY-NORMAL-OUT .CHANNEL .OPER ,CRLF-STRING>
+	   <COND (<L=? <SET N <- .N 1>> 0> <RETURN>)>>)>>
+
+<DEFINE HOME-CURSOR (CHANNEL OPER)
+  #DECL ((CHANNEL) CHANNEL)
+  <DO-TTY-OP ,TTY-HOM .CHANNEL 0 0>>
+
+<DEFINE BOTTOM-CURSOR (CHANNEL OPER "AUX" (DATA <CHANNEL-DATA .CHANNEL>)
+		       H)
+  #DECL ((CHANNEL) CHANNEL (DATA) TTY-CHANNEL)
+  <COND (<DO-TTY-OP ,TTY-HMD .CHANNEL 0
+		    <SET H <- <TD-HEIGHT <TT-DESC <TC-TTY .DATA>>> 1>>>)
+	(T
+	 <DO-TTY-OP ,TTY-MOV .CHANNEL 0 .H>)>>
+
+<DEFINE HOR-POS-CURSOR (CHANNEL OPER NEW)
+  #DECL ((CHANNEL) CHANNEL (NEW) FIX)
+  <DO-TTY-OP ,TTY-HRZ .CHANNEL .NEW>>
+
+<DEFINE VER-POS-CURSOR (CHANNEL OPER NEW)
+  #DECL ((CHANNEL) CHANNEL (NEW) FIX)
+  <DO-TTY-OP ,TTY-VRT .CHANNEL <> .NEW>>
+
+<DEFINE MOVE-CURSOR (CHANNEL OPER X Y)
+  #DECL ((CHANNEL) CHANNEL (X Y) FIX)
+  <DO-TTY-OP ,TTY-MOV .CHANNEL .X .Y>>
+
+<DEFINE SAVE-CURSOR (CHANNEL OPER "AUX" (DATA <CHANNEL-DATA .CHANNEL>)
+		     (TTY <TC-TTY .DATA>))
+  #DECL ((CHANNEL) CHANNEL (DATA) TTY-CHANNEL (TTY) TTY)
+  <TT-SAV-X .TTY <TT-X .TTY>>
+  <TT-SAV-Y .TTY <TT-Y .TTY>>>
+
+<DEFINE RESTORE-CURSOR (CHANNEL OPER "AUX" (DATA <CHANNEL-DATA .CHANNEL>)
+			(TTY <TC-TTY .DATA>))
+  #DECL ((CHANNEL) CHANNEL (DATA) TTY-CHANNEL (TTY) TTY)
+  <COND (<TT-SAV-X .TTY>
+	 <DO-TTY-OP ,TTY-MOV .CHANNEL <TT-SAV-X .TTY> <TT-SAV-Y .TTY>>)>>
+
+<DEFINE BACK-CURSOR (CHANNEL OPER "OPTIONAL" (N 1)
+		     "AUX" (TC <CHANNEL-DATA .CHANNEL>) (TTY <TC-TTY .TC>)
+		     (CURX <TT-X .TTY>) TD WIDTH HEIGHT CURY NEWX NEWY)
+  #DECL ((CHANNEL) CHANNEL (N CURX WIDTH HEIGHT CURY NEWX NEWY) FIX
+	 (TC) TTY-CHANNEL (TTY) TTY)
+  <COND (<L? .N 0>
+	 <FORWARD-CURSOR .CHANNEL .OPER <- .N>>)
+	(<L=? .N .CURX>
+	 <COND (<NOT <AND <1? .N>
+			  <DO-TTY-OP ,TTY-BCK .CHANNEL <- .CURX 1>>>>
+		<DO-TTY-OP ,TTY-HRZ .CHANNEL <- .CURX .N>>)>)
+	(T
+	 <SET CURY <TT-Y .TTY>>
+	 <SET TD <TT-DESC .TTY>>
+	 <SET WIDTH <TD-WIDTH .TD>>
+	 <SET HEIGHT <TD-HEIGHT .TD>>
+	 <SET NEWX <- .CURX .N>>
+	 <SET NEWY .CURY>
+	 <REPEAT ()
+	   <SET NEWX <+ .NEWX .WIDTH>>
+	   <SET NEWY <- .NEWY 1>>
+	   <COND (<G=? .NEWX 0> <RETURN>)>>
+	 <COND (<L? .NEWY 0>
+		<SET NEWY <+ .HEIGHT .NEWY>>)>
+	 <COND (<==? .NEWY .CURY>
+		<DO-TTY-OP ,TTY-HRZ .CHANNEL .NEWX>)
+	       (T
+		<DO-TTY-OP ,TTY-MOV .CHANNEL .NEWX .NEWY>)>)>>
+
+<DEFINE FORWARD-CURSOR (CHANNEL OPER "OPTIONAL" (N 1)
+			"AUX" (TC <CHANNEL-DATA .CHANNEL>) (TTY <TC-TTY .TC>)
+			(CURX <TT-X .TTY>) (TD <TT-DESC .TTY>)
+			(WIDTH <TD-WIDTH .TD>) HEIGHT CURY NEWX NEWY)
+  #DECL ((CHANNEL) CHANNEL (N CURX WIDTH HEIGHT CURY NEWX NEWY) FIX
+	 (TC) TTY-CHANNEL (TTY) TTY (TD) TTY-DESC)
+  <COND (<L? .N 0>
+	 <BACK-CURSOR .CHANNEL .OPER <- .N>>)
+	(<L? <SET NEWX <+ .CURX .N>> .WIDTH>
+	 <COND (<NOT <AND <1? .N>
+			  <DO-TTY-OP ,TTY-FWD .CHANNEL <+ .CURX 1>>>>
+		<DO-TTY-OP ,TTY-HRZ .CHANNEL .NEWX>)>)
+	(T
+	 <SET CURY <TT-Y .TTY>>
+	 <SET CURX <MOD .NEWX .WIDTH>>
+	 <SET NEWY <+ .CURY </ .NEWX .WIDTH>>>
+	 <COND (<G=? .NEWY <SET HEIGHT <TD-HEIGHT .TD>>>
+		<SET NEWY <MOD .NEWY .HEIGHT>>)>
+	 <DO-TTY-OP ,TTY-MOV .CHANNEL .CURX .NEWY>)>>
+
+<DEFINE UP-CURSOR (CHANNEL OPER "OPTIONAL" (N 1)
+		   "AUX" (TC <CHANNEL-DATA .CHANNEL>) (TTY <TC-TTY .TC>)
+		   (TD <TT-DESC .TTY>) (CURY <TT-Y .TTY>)
+		   (HEIGHT <TD-HEIGHT .TD>))
+  #DECL ((CHANNEL) CHANNEL (TC) TTY-CHANNEL (TTY) TTY (TD) TTY-DESC
+	 (CURY HEIGHT N) FIX)
+  <COND (<L? .N 0> <DOWN-CURSOR .CHANNEL .OPER <- .N>>)
+	(<G=? <SET CURY <- .CURY .N>> 0>
+	 <COND (<NOT <AND <1? .N>
+			  <DO-TTY-OP ,TTY-UP .CHANNEL <> .CURY>>>
+		<DO-TTY-OP ,TTY-VRT .CHANNEL <> .CURY>)>)
+	(T
+	 <SET CURY <MOD .CURY .HEIGHT>>
+	 <DO-TTY-OP ,TTY-VRT .CHANNEL <> .CURY>)>>
+
+<DEFINE DOWN-CURSOR (CHANNEL OPER "OPTIONAL" (N 1)
+		     "AUX" (TC <CHANNEL-DATA .CHANNEL>) (TTY <TC-TTY .TC>)
+		     (TD <TT-DESC .TTY>) (CURY <TT-Y .TTY>)
+		     (HEIGHT <TD-HEIGHT .TD>))
+  #DECL ((CHANNEL) CHANNEL (TC) TTY-CHANNEL (TTY) TTY (TD) TTY-DESC
+	 (CURY HEIGHT N) FIX)
+  <COND (<L? .N 0> <UP-CURSOR .CHANNEL .OPER <- .N>>)
+	(<L? <SET CURY <+ .CURY .N>> .HEIGHT>
+	 <COND (<AND <1? .N>
+		     <0? <TT-X .TTY>>>
+		; "Output a linefeed where possible."
+		<TT-Y .TTY .CURY>
+		<OUTPUT-RAW-STRING .CHANNEL <ASCII 10>>)
+	       (<NOT <AND <1? .N>
+			  <DO-TTY-OP ,TTY-DWN .CHANNEL <> .CURY>>>
+		<DO-TTY-OP ,TTY-VRT .CHANNEL <> .CURY>)>)
+	(T
+	 <SET CURY <MOD .CURY .HEIGHT>>
+	 <DO-TTY-OP ,TTY-VRT .CHANNEL <> .CURY>)>>
+
+<DEFINE KILL-CHAR (CHANNEL OPER)
+  #DECL ((CHANNEL) CHANNEL)
+  <BACK-CURSOR .CHANNEL .OPER>
+  <OUTPUT-RAW-STRING .CHANNEL " ">>
+
+<DEFINE ERASE-CHAR (CHANNEL OPER "OPTIONAL" (N 1)
+		    "AUX" (TC <CHANNEL-DATA .CHANNEL>) (TTY <TC-TTY .TC>)
+			  (X <TT-X .TTY>))
+  #DECL ((CHANNEL) CHANNEL (N X) FIX (TC) TTY-CHANNEL (TTY) TTY)
+  <COND
+   (<G? .N 0>
+    <REPEAT (NX (NY <TT-Y .TTY>))
+      #DECL ((NX) FIX)
+      <COND
+       (<G? .X 0>
+	<COND (<G? .N .X>
+	       <SET NX 0>
+	       <SET N <- .N .X>>)
+	      (T
+	       <SET NX <- .X .N>>
+	       <SET N 0>)>
+	; "Avoid absolute cursor position where possible on rubouts"
+	<COND (<N==? .NY <TT-Y .TTY>>
+	       <MOVE-CURSOR .CHANNEL .OPER .NX .NY>)
+	      (<1? <- .X .NX>>
+	       <BACK-CURSOR .CHANNEL .OPER>)
+	      (T
+	       <HOR-POS-CURSOR .CHANNEL .OPER .NX>)>
+	<CLEAR-EOL .CHANNEL .OPER>)>
+      <COND (<G? .N 0>
+	     <COND (<L? <SET NY <- .NY 1>> 0>
+		    <SET NY <- <TD-HEIGHT <TT-DESC .TTY>> 1>>)>
+	     <SET X <- <TD-WIDTH <TT-DESC .TTY>> 1>>)
+	    (<RETURN>)>>)>>
+
+
+"More operations--line and char i&d"
+<DEFINE INSERT-LINE (CHANNEL OPER "OPTIONAL" (N 1) (TOP <>) (BOT <>)
+		     "AUX" (TC <CHANNEL-DATA .CHANNEL>) (TTY <TC-TTY .TC>)
+			   (TD <TT-DESC .TTY>) (RBOT <- <TD-HEIGHT .TD> 1>)
+			   TEMP (SAVX <TT-X .TTY>) (SAVY <TT-Y .TTY>))
+  #DECL ((CHANNEL) CHANNEL (N) FIX (TOP BOT) <OR FALSE FIX>
+	 (TC) TTY-CHANNEL (TTY) TTY (TD) TTY-DESC (TEMP RBOT) FIX)
+  <COND (<NOT .TOP>
+	 <SET TOP .SAVY>)>
+  <COND (<NOT .BOT>
+	 <SET BOT .RBOT>)>
+  <COND (<G? .TOP .BOT>
+	 <SET TEMP .BOT>
+	 <SET BOT .TOP>
+	 <SET TOP .TEMP>)>
+  <COND (<AND <L=? .TOP .RBOT>
+	      <NOT <0? .N>>>
+	 <SET BOT <MIN .BOT .RBOT>>
+	 <COND (<DO-TTY-OP ,TTY-DS .CHANNEL .BOT .TOP <>>
+		; "Try defining a scrolling region, making things much simpler"
+		<COND (<L? .N 0>	; "Deleting lines"
+		       <MOVE-CURSOR .CHANNEL .OPER 0 .BOT>
+		       <REPEAT ()
+		         <DO-TTY-OP ,TTY-SU .CHANNEL>
+			 <COND (<0? <SET N <+ .N 1>>> <RETURN>)>>)
+		      (T
+		       <MOVE-CURSOR .CHANNEL .OPER 0 .TOP>
+		       <REPEAT ()
+		         <DO-TTY-OP ,TTY-SD .CHANNEL>
+			 <COND (<0? <SET N <- .N 1>>> <RETURN>)>>)>
+		<DO-TTY-OP ,TTY-DS .CHANNEL .RBOT 0 <>>)
+	       (<==? .BOT .RBOT>
+		; "Straight line insert/delete"
+		<MOVE-CURSOR .CHANNEL .OPER 0 .TOP>
+		<PROG (OP)
+		  <COND (<L? .N 0> <SET OP ,TTY-DL>)
+			(<SET OP ,TTY-IL>)>
+		  <SET N <ABS .N>>
+		  <REPEAT ()
+		    <DO-TTY-OP .OP .CHANNEL>
+		    <COND (<0? <SET N <- .N 1>>> <RETURN>)>>>)
+	       (T
+		; "Simulated scrolling region"
+		<COND (<G? .N 0>
+		       <SET N <MIN .N <- .BOT .TOP>>>
+		       <MOVE-CURSOR .CHANNEL .OPER 0 <- .BOT <- .N 1>>>
+		       <INSERT-LINE .CHANNEL .OPER <- .N>>
+		       <MOVE-CURSOR .CHANNEL .OPER 0 .TOP>
+		       <INSERT-LINE .CHANNEL .OPER .N>)
+		      (T
+		       <SET N <MAX .N <- .TOP .BOT>>>
+		       <MOVE-CURSOR .CHANNEL .OPER 0 .TOP>
+		       <INSERT-LINE .CHANNEL .OPER .N>
+		       <MOVE-CURSOR .CHANNEL .OPER 0 <+ .BOT .N 1>>
+		       <INSERT-LINE .CHANNEL .OPER <- .N>>)>)>
+	 <MOVE-CURSOR .CHANNEL .OPER .SAVX .SAVY>)>>
+
+<DEFINE INSERT-CHAR (CHANNEL OPER "OPTIONAL" (N 1) (LEFT <>) (RIGHT <>)
+		     "AUX" (TC <CHANNEL-DATA .CHANNEL>) (TTY <TC-TTY .TC>)
+		     (TD <TT-DESC .TTY>) (RRIGHT <- <TD-WIDTH .TD> 1>)
+		     (SAVX <TT-X .TTY>) TEMP)
+  #DECL ((CHANNEL) CHANNEL (N RRIGHT SAVX) FIX (LEFT RIGHT) <OR FALSE FIX>
+	 (TC) TTY-CHANNEL (TTY) TTY (TD) TTY-DESC)
+  <COND (<NOT .LEFT>
+	 <SET LEFT .SAVX>)>
+  <COND (<NOT .RIGHT>
+	 <SET RIGHT .RRIGHT>)>
+  <COND (<G? .LEFT .RIGHT>
+	 <SET TEMP .LEFT>
+	 <SET LEFT .RIGHT>
+	 <SET RIGHT .TEMP>)>
+  <COND (<AND <L=? .LEFT .RRIGHT>
+	      <NOT <0? .N>>>
+	 <SET LEFT <MIN .LEFT .RRIGHT>>)>>

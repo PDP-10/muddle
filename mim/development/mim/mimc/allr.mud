@@ -1,0 +1,66 @@
+
+<PACKAGE "ALLR">
+
+<ENTRY ALL-REST-GEN>
+
+<USE "COMPDEC" "CODGEN" "CHKDCL" "STRGEN" "MIMGEN">
+
+<DEFINE ALL-REST-GEN (N W
+		      "AUX" (R? <==? <NODE-SUBR .N> ,REST>) SAC NAC TEM STR NUM
+			    SPARE (K <KIDS .N>) (SS <TYPE-INFO .N>) T1 T2 CAC)
+   #DECL ((N) NODE (K) <LIST NODE NODE> (SS) <LIST LIST LIST LIST>)
+   <SET STR
+	<GEN <1 .K>
+	     <COND (<TYPE? .W TEMP> .W)
+		   (<NOT <EMPTY? <3 .SS>>> <TEMP-NAME-SYM <NODE-NAME <3 .SS>>>)
+		   (ELSE DONT-CARE)>>>
+   <COND (<OR <NOT <TYPE? .STR TEMP>>
+	      <AND <N==? .W .STR> <G? <TEMP-REFS .STR> 1>>>
+	  <SET STR <MOVE-ARG .STR <GEN-TEMP <>>>>)>
+   <COND (.CAREFUL <EMPTY-CHECK LIST .STR LIST>)>
+   <COND
+    (<OR <NOT <EMPTY? <1 .SS>>> <NOT <EMPTY? <2 .SS>>>>
+     <SET-TEMP
+      <SET NUM
+	   <COND (<NOT <EMPTY? <1 .SS>>>
+		  <TEMP-NAME-SYM <NODE-NAME <1 <1 .SS>>>>)
+		 (<NOT <EMPTY? <2 .SS>>>
+		  <TEMP-NAME-SYM <NODE-NAME <1 <2 .SS>>>>)
+		 (ELSE <GEN-TEMP>)>>
+      0>)>
+   <COND (<ASSIGNED? NUM> <IEMIT `LOOP (<TEMP-NAME .MUM> VALUE)
+				       (<TEMP-NAME .STR> VALUE)>)
+	 (ELSE <IEMIT `LOOP (<TEMP-NAME .STR> VALUE)>)>
+   <LABEL-TAG <SET T1 <MAKE-TAG>>>
+   <REST-LIST .STR <SET SPARE <GEN-TEMP>> 1>
+   <EMPTY-LIST .SPARE <SET T2 <MAKE-TAG>> T>
+   <SET-TEMP .STR .SPARE>
+   <FREE-TEMP .SPARE>
+   <COND (<ASSIGNED? NUM> <IEMIT `ADD .NUM 1 = .NUM>)>
+   <BRANCH-TAG .T1>
+   <LABEL-TAG .T2>
+   <MUNG-VALS .STR <3 .SS>>
+   <COND (<ASSIGNED? NUM>
+	  <MUNG-VALS .NUM <1 .SS>>
+	  <COND (<AND <NOT <EMPTY? <2 .SS>>> <NOT <EMPTY? <1 .SS>>>>
+		 <IEMIT `ADD .NUM 1 = .NUM>)>
+	  <MUNG-VALS .NUM <2 .SS>>)>
+   <COND (.R? <MOVE-ARG .STR .W>)
+	 (ELSE
+	  <COND (<==? .W DONT-CARE> <SET W <GEN-TEMP>>)
+		(<TYPE? .W TEMP> <USE-TEMP .W>)>
+	  <NTH-LIST .STR .W 1>
+	  <FREE-TEMP .STR>
+	  .W)>>
+
+<DEFINE MUNG-VALS (D L) 
+	#DECL ((L) <LIST [REST NODE]>)
+	<MAPF <>
+	      <FUNCTION (N "AUX" (S <NODE-NAME .N>))
+		      #DECL ((S) SYMTAB)
+		      <COND (<N==? .D <TEMP-NAME-SYM .S>>
+			     <SET-SYM .S .D>)>>
+	      .L>>
+
+<ENDPACKAGE>
+

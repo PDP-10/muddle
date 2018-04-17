@@ -1,0 +1,284 @@
+
+<PACKAGE "NEWREP">
+
+<ENTRY PROG-REP-GEN RETURN-GEN AGAIN-GEN ACTIV? MULTI-RETURN-GEN>
+
+<USE "COMPDEC" "CODGEN" "CHKDCL" "MIMGEN" "ADVMESS" "NOTGEN">
+
+" Generate code for a poor innocent PROG or REPEAT."
+
+""
+
+<DEFINE PROG-REP-GEN (PNOD PWHERE
+		      "OPT" (NOTF <>) (BRANCH <>) (DIR <>)
+		      "AUX" START-TAG (BASEF .BASEF) EXIT AGAIN (CD <>)
+			    (DEST
+			     <COND (<==? .PWHERE FLUSHED> FLUSHED)
+				   (<==? .PWHERE DONT-CARE> <GEN-TEMP <>>)
+				   (ELSE .PWHERE)>) (K <KIDS .PNOD>) TEM SPECD
+			    (ORPNOD <AND <ASSIGNED? RPNOD> .RPNOD>) RPNOD
+			    BNDTMP (OTMPS .TMPS) (OTMPS-NEXT .TMPS-NEXT)
+			    (OFREE-TEMPS .FREE-TEMPS) RDEST
+			    (RT <RESULT-TYPE <NTH .K <LENGTH .K>>>)
+			    (FOK <TYPE-OK? .RT FALSE>)
+			    (TRUE-OK <N==? <ISTYPE? .RT> FALSE>) (STK 0)
+			    (STK-CHARS7 0) (STK-CHARS8 0) STKTMP)
+   #DECL ((NTSLOTS STB) <SPECIAL LIST> (BASEF PNOD RPNOD) <SPECIAL NODE>
+	  (START-TAG) <SPECIAL ATOM> (K) <LIST [REST NODE]>
+	  (STK-CHARS7 STK-CHARS8 STK) <SPECIAL FIX> (STKTMP) <SPECIAL ANY>
+	  (SPECD) <SPECIAL ANY>)
+   <COND (<AND <OR <ACTIVATED .PNOD> <ACTIV? <BINDING-STRUCTURE .PNOD>>>
+	       <TYPE? .DEST TEMP>>
+	  <USE-TEMP .DEST>)>
+   <PROG ((TMPS .TMPS) (TMPS-NEXT .TMPS-NEXT) (FREE-TEMPS .FREE-TEMPS)
+	  (ALL-TEMPS-LIST .ALL-TEMPS-LIST) MYFRAME)
+	 #DECL ((TMPS-NEXT FREE-TEMPS ALL-TEMPS-LIST) <SPECIAL LIST>
+		(TMPS) <SPECIAL FORM>)
+	 <COND (<N==? <NODE-SUBR .PNOD> ,BIND> <SET RPNOD .PNOD>)
+	       (.ORPNOD <SET RPNOD .ORPNOD>)>
+	 <SET RDEST .DEST>
+	 <SET EXIT <MAKE-TAG "EXIT">>
+	 <COND (<OR <ACTIVATED .PNOD> <ACTIV? <BINDING-STRUCTURE .PNOD>>>
+		<PUT .PNOD ,ACTIVATED T>
+		<SET BASEF .PNOD>
+		<SET ALL-TEMPS-LIST
+		     ((.TMPS .TMPS-NEXT .FREE-TEMPS <>) !.ALL-TEMPS-LIST)>
+		<COND (<==? .DEST FLUSHED> <IEMIT `ICALL .EXIT>)
+		      (ELSE <IEMIT `ICALL .EXIT = .DEST>)>
+		<MIM-TEMPS-HOLD>
+		<MIM-TEMPS-EMIT>
+		<SET FREE-TEMPS ()>
+		<SET MYFRAME <GEN-TEMP>>
+		<PREV-FRAME .MYFRAME>
+		<PUT <1 .ALL-TEMPS-LIST> 4 .MYFRAME>
+		<COND (<NOT <==? .PWHERE FLUSHED>> <SET DEST <GEN-TEMP <>>>)>)>
+	 <SET SPECD
+	      <COND (<ACTIVATED .PNOD> <BIND-CODE .PNOD>)
+		    (ELSE <BIND-CODE .PNOD T <SET BNDTMP <GEN-TEMP <>>>>)>>
+	 <SET BASEF .PNOD>
+	 <COND (<OR <==? <NODE-SUBR .PNOD> ,REPEAT> <AGND .PNOD>>
+		<IEMIT `LOOP>)>
+	 <LABEL-TAG <SET AGAIN <MAKE-TAG "AGAIN">>>
+	 <COND (<OR <==? <NODE-SUBR .PNOD> ,REPEAT> <AGND .PNOD>>
+		<IEMIT `INTGO>)>
+	 <COND (.NOTF <SET DIR <NOT .DIR>>)>
+	 <PUT .PNOD ,CDST <COND (.BRANCH (.BRANCH .DIR)) (ELSE ,NO-DATUM)>>
+	 <PUT .PNOD ,DST .DEST>
+	 <PUT .PNOD ,SPCS-X .SPECD>
+	 <PUT .PNOD ,ATAG .AGAIN>
+	 <PUT .PNOD ,RTAG .EXIT>
+	 <COND (<OR <==? <NODE-SUBR .PNOD> ,REPEAT> <AGND .PNOD>>
+		<COND (<==? <NODE-SUBR .PNOD> ,REPEAT>
+		       <SET TEM <SEQ-GEN .K FLUSHED>>)
+		      (<==? .DEST FLUSHED>
+		       <COND (<AND .BRANCH .FOK .TRUE-OK>
+			      <SET TEM <PSEQ-GEN .K FLUSHED .BRANCH .DIR <>>>)
+			     (<AND .BRANCH <COND (.DIR .TRUE-OK) (ELSE .FOK)>>
+			      <SET TEM <SEQ-GEN .K FLUSHED>>
+			      <BRANCH-TAG .BRANCH>)
+			     (ELSE <SET TEM <SEQ-GEN .K FLUSHED>>)>)
+		      (ELSE
+		       <SET TEM <SET CD <SEQ-GEN .K .DEST>>>
+		       <COND (<==? .TEM ,NO-DATUM>
+			      <COND (<EMPTY? <CDST .PNOD>> <SET CD ,NO-DATUM>)
+				    (ELSE <SET CD <CDST .PNOD>>)>)
+			     (<==? <CDST .PNOD> ,NO-DATUM>
+			      <PUT .PNOD ,CDST .CD>)>)>)
+	       (ELSE
+		<COND (<==? .DEST FLUSHED>
+		       <COND (<AND .BRANCH .FOK .TRUE-OK>
+			      <SET TEM <PSEQ-GEN .K FLUSHED .BRANCH .DIR <>>>)
+			     (<AND .BRANCH <COND (.DIR .TRUE-OK) (ELSE .FOK)>>
+			      <SET TEM <SEQ-GEN .K FLUSHED>>
+			      <BRANCH-TAG .BRANCH>)
+			     (ELSE <SET TEM <SEQ-GEN .K FLUSHED>>)>)
+		      (ELSE
+		       <SET TEM <SET CD <SEQ-GEN .K .DEST T>>>
+		       <COND (<==? .TEM ,NO-DATUM>
+			      <COND (<OR <EMPTY? <CDST .PNOD>>
+					 <==? <CDST .PNOD> ,NO-DATUM>>
+				     <SET CD ,NO-DATUM>)
+				    (ELSE <SET CD <CDST .PNOD>>)>)
+			     (<==? <CDST .PNOD> ,NO-DATUM>
+			      <PUT .PNOD ,CDST .CD>)>)>)>
+	 <COND (<NOT <ASSIGNED? NPRUNE>> <PUT .PNOD ,KIDS ()>)>
+	 <COND (<N==? <NODE-SUBR .PNOD> ,REPEAT>
+		<COND (<ACTIVATED .PNOD> <PROG-END .DEST> <FREE-TEMP .MYFRAME>)
+		      (.SPECD <IEMIT `UNBIND .BNDTMP> <FREE-TEMP .BNDTMP>)>)
+	       (ELSE <BRANCH-TAG .AGAIN>)>
+	 <LABEL-TAG .EXIT>
+	 <COND (<N==? .STK-CHARS8 0>
+		<SET STK-CHARS8 <+ .STK-CHARS8 .STK>>
+		<SET STK-CHARS7 <+ .STK-CHARS7 .STK>>
+		<SET STK 0>)>
+	 <COND (<ACTIVATED .PNOD>)
+	       (ELSE
+		<COND (<ASSIGNED? STKTMP>
+		       <COND (<N==? .STK 0>
+			      <IEMIT `SUB .STKTMP .STK = .STKTMP (`TYPE FIX)>)
+			     (<N==? .STK-CHARS7 0>
+			      <IEMIT `IFSYS "TOPS20">
+			      <IEMIT `SUB .STKTMP .STK-CHARS7 = .STKTMP>
+			      <IEMIT `ENDIF "TOPS20">
+			      <IEMIT `IFSYS "UNIX">
+			      <IEMIT `SUB .STKTMP .STK-CHARS8 = .STKTMP>
+			      <IEMIT `ENDIF "UNIX">)>
+		       <IEMIT `ADJ .STKTMP>
+		       <FREE-TEMP .STKTMP>)
+		      (<N==? .STK 0> <IEMIT `ADJ <- .STK>>)
+		      (<N==? .STK-CHARS8 0>
+		       <IEMIT `IFSYS "TOPS20">
+		       <IEMIT `ADJ <- .STK-CHARS7>>
+		       <IEMIT `ENDIF "TOPS20">
+		       <IEMIT `IFSYS "UNIX">
+		       <IEMIT `ADJ <- .STK-CHARS8>>
+		       <IEMIT `ENDIF "UNIX">)>
+		<SET OFREE-TEMPS .FREE-TEMPS>)>>
+   <SET FREE-TEMPS .OFREE-TEMPS>
+   <SET TMPS-NEXT <REST .TMPS <- <LENGTH .TMPS> 1>>>
+   <COND (<OR <==? <CDST .PNOD> ,NO-DATUM> .BRANCH>
+	  <COND (<AND <ACTIVATED .PNOD> <N==? .PWHERE FLUSHED>>
+		 <MOVE-ARG .RDEST .PWHERE>)
+		(ELSE ,NO-DATUM)>)
+	 (ELSE <MOVE-ARG .RDEST .PWHERE>)>>
+
+<DEFINE PROG-END (RESULT)
+	<COND (<==? .RESULT FLUSHED> <MIM-RETURN T>)
+	      (ELSE <MIM-RETURN .RESULT>)>>
+
+<DEFINE ACTIV? (BST) 
+	#DECL ((BST) <LIST [REST SYMTAB]>)
+	<REPEAT ()
+		<COND (<EMPTY? .BST> <RETURN <>>)>
+		<COND (<AND <==? <CODE-SYM <1 .BST>> ,ARGL-ACT>
+			    <OR <NOT <RET-AGAIN-ONLY <1 .BST>>>
+				<SPEC-SYM <1 .BST>>>>
+		       <RETURN T>)>
+		<SET BST <REST .BST>>>>
+
+""
+
+" Generate code for a RETURN."
+
+<DEFINE RETURN-GEN (NOD WHERE
+		    "AUX" N NN (CD1 <>) DEST (NF 0) LL RT (FOK <>) RTA)
+   #DECL ((NOD N RPNOD) NODE (NF) FIX)
+   <PROG ()
+     <COND (<1? <LENGTH <KIDS .NOD>>> <SET N .RPNOD>)
+	   (<SET NN <RET-AGAIN-ONLY <NODE-NAME <2 <KIDS .NOD>>>>> <SET N .NN>)
+	   (ELSE <RETURN <SUBR-GEN .NOD .WHERE>>)>
+     <SET RTA <RTAG .N>>
+     <COND
+      (<==? <SET DEST <DST .N>> FLUSHED>
+       <COND
+	(<AND <TYPE? <SET LL <CDST .N>> LIST> <N==? .LL ,NO-DATUM>>
+	 <COND
+	  (<AND <TYPE-OK? <SET RT <RESULT-TYPE <SET NN <1 <KIDS .NOD>>>>>
+			  FALSE>
+		<SET FOK T>
+		<N==? <ISTYPE? .RT> FALSE>>
+	   <PRED-BRANCH-GEN <1 .LL> .NN <2 .LL> FLUSHED <>>)
+	  (<COND (<2 .LL> <NOT .FOK>) (ELSE .FOK)>
+	   <COND (<N==? <NODE-TYPE .NN> ,QUOTE-CODE> <GEN .NN FLUSHED>)>
+	   <SET RTA <1 .LL>>)
+	  (<N==? <NODE-TYPE .NN> ,QUOTE-CODE> <GEN .NN FLUSHED>)>)
+	(ELSE <GEN <1 <KIDS .NOD>> FLUSHED>)>)
+      (ELSE
+       <COND (<==? .DEST DONT-CARE> <SET DEST <GEN-TEMP <>>>)>
+       <SET CD1 <GEN <1 <KIDS .NOD>> .DEST>>
+       <COND (<==? <DST .N> DONT-CARE> <PUT .N ,DST .CD1>)>
+       <COND (<N==? <CDST .N> ,NO-DATUM> <DEALLOCATE-TEMP .CD1>)>
+       <PUT .N ,CDST .CD1>)>
+     <COND (<ACTIVATED .N> <PROG-END .DEST>)
+	   (ELSE
+	    <COND (<SPCS-X .N> <IEMIT `UNBIND <SPCS-X .N>>)>
+	    <BRANCH-TAG .RTA>)>
+     ,NO-DATUM>>
+
+<DEFINE MULTI-RETURN-GEN (NOD WHERE
+			  "AUX" (K <KIDS .NOD>) NN (CD1 <>) DEST FTMP
+				(N <1 .K>) (LOCAL <>) FR SEGTMP (I 0))
+   #DECL ((NOD N RPNOD) NODE)
+   <PROG ()
+     <COND (<==? <NODE-TYPE .N> ,QUOTE-CODE>
+	    <SET LOCAL T>
+	    <SET N .RPNOD>
+	    <COND (<ASSIGNED? SEGLABEL> <SET FTMP .COUNTMP>)>)
+	   (<AND <==? <NODE-TYPE .N> ,LVAL-CODE>
+		 <SET NN <RET-AGAIN-ONLY <NODE-NAME .N>>>>
+	    <SET N .NN>
+	    <SET FR 0>)
+	   (ELSE <SET FR <GEN .N DONT-CARE>>)>
+     <MAPF <>
+	   <FUNCTION (N) 
+		   #DECL ((N) NODE)
+		   <COND (<N==? <NODE-TYPE .N> ,SEGMENT-CODE>
+			  <SET I <+ .I 1>>)>>
+	   <REST .K>>
+     <MAPF <>
+      <FUNCTION (NOD "AUX" TG STYP N TT) 
+	      #DECL ((NOD) NODE)
+	      <COND (<==? <NODE-TYPE .NOD> ,SEGMENT-CODE>
+		     <COND (<NOT <ASSIGNED? SEGTMP>>
+			    <COND (<ASSIGNED? FTMP>
+				   <COND (<N==? .I 0>
+					  <IEMIT `ADD .FTMP .I = .FTMP>)>)
+				  (ELSE
+				   <SET FTMP <GEN-TEMP>>
+				   <IEMIT `SET .FTMP .I>)>
+			    <SET SEGTMP <GEN-TEMP <>>>)>
+		     <SET STYP <STRUCTYP-SEG
+				<RESULT-TYPE <SET N <1 <KIDS .NOD>>>>>>
+		     <COND (.LOCAL
+			    <GEN .N .SEGTMP>
+			    <SEGMENT-STACK
+			     .SEGTMP
+			     .FTMP
+			     .STYP
+			     <ISTYPE? <RESULT-TYPE .N>>>)
+			   (ELSE
+			    <PROG ((SEGLABEL <MAKE-TAG>) (COUNTMP .FTMP)
+				   (SEGCALLED <>) RES)
+				  #DECL ((SEGLABEL COUNTMP SEGCALLED)
+					 <SPECIAL ANY>)
+				  <SET RES <GEN .N .SEGTMP>>
+				  <COND (<OR <N==? .RES ,NO-DATUM>
+					     <N==? .STYP MULTI>>
+					 <SEGMENT-STACK .SEGTMP
+							.COUNTMP
+							.STYP
+							<ISTYPE? <RESULT-TYPE .N>>
+							.SEGLABEL>)
+					(.SEGCALLED
+					 <LABEL-TAG .SEGLABEL>)>>)>)
+		    (ELSE <GEN .NOD ,POP-STACK>)>>
+      <REST .K>>
+     <COND (<AND .LOCAL
+		 <OR <==? <SET DEST <DST .N>> FLUSHED>
+		     <NOT <ASSIGNED? SEGLABEL>>>>
+	    <COMPILE-ERROR "MULTI-RETURN to nothing" .NOD>)
+	   (<AND .LOCAL <ASSIGNED? SEGLABEL>>
+	    <COND (<NOT <ASSIGNED? SEGTMP>> <IEMIT `SET .FTMP .I>)>
+	    <COND (<SPCS-X .N> <IEMIT `UNBIND <SPCS-X .N>>)>
+	    <BRANCH-TAG .SEGLABEL>)
+	   (ELSE
+	    <IEMIT `MRETURN <COND (<ASSIGNED? FTMP> .FTMP) (ELSE .I)> .FR>)>
+     ,NO-DATUM>>
+
+""
+
+" Generate code for an AGAIN."
+
+<DEFINE AGAIN-GEN (NOD WHERE "AUX" N NN) 
+	#DECL ((NOD N RPNOD) NODE)
+	<PROG ()
+	      <COND (<EMPTY? <KIDS .NOD>> <SET N .RPNOD>)
+		    (<SET NN <RET-AGAIN-ONLY <NODE-NAME <1 <KIDS .NOD>>>>>
+		     <SET N .NN>)
+		    (ELSE <RETURN <SUBR-GEN .NOD .WHERE>>)>
+	      <BRANCH-TAG <ATAG .N>>
+	      ,NO-DATUM>>
+
+<DEFINE UNBIND-LOCS () T>
+
+<ENDPACKAGE>

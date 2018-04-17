@@ -1,0 +1,548 @@
+"I/O for non-paged disk:  may or may not use buffers (according to user
+ desires), never uses pmap.  Note that input and output use the same buffer,
+so this is not suitable for devices that don't random-access (chaos net, tty,
+...)."
+
+"Possible modes:  READ, CREATE, MODIFY, APPEND/ASCII, BINARY, 8BIT"
+
+<DEFINE X$DISK-FILE-HANDLE (CHANNEL OPR "AUX" (DATA <T$CHANNEL-DATA .CHANNEL>))
+  #DECL ((CHANNEL) T$CHANNEL (DATA) I$DISK-CHANNEL)
+  <NS-JFN .DATA>>
+
+<DEFINE X$DISK-QUERY (CHANNEL OPR BIT "AUX" (DATA <T$CHANNEL-DATA .CHANNEL>))
+  #DECL ((CHANNEL) T$CHANNEL (BIT) FIX (DATA) I$DISK-CHANNEL)
+  <COND (<==? .BIT ,T$BIT-ACCESS>
+	 T)>>
+
+<DEFINE X$DISK-OPEN (STYPE OPR NAME MODS
+		  "OPTIONAL" (BYTES "ASCII") (BUF? T) (THAWED? <>)
+		  (NO-REF? <>)
+		  "AUX" (NEW? <>) MODE JFN BSZ (APP? <>) PTR BUF)
+	#DECL ((NAME MODS BYTES) STRING (NO-REF? THAWED? NEW?) <OR ATOM FALSE>
+	       (PTR MODE BSZ) FIX (JFN) <OR FIX FALSE>
+	       (BUF?) <OR ATOM FALSE>
+	       (APP?) <OR ATOM FALSE>)
+	<COND (<S=? .MODS "READ">
+	       <SET MODE %<CHTYPE <ORB ,OF-RD ,OF-PLN> FIX>>)
+	      (<S=? .MODS "CREATE">
+	       <SET NEW? T>
+	       <SET MODE %<CHTYPE <ORB ,OF-RD ,OF-WR ,OF-PLN> FIX>>)
+	      (<S=? .MODS "MODIFY">
+	       <SET MODE %<CHTYPE <ORB ,OF-RD ,OF-WR ,OF-PLN> FIX>>)
+	      (<S=? .MODS "APPEND">
+	       <SET APP? T>
+	       <SET MODE %<CHTYPE <ORB ,OF-APP ,OF-RD ,OF-PLN> FIX>>)
+	      (T <ERROR %<P-E "ILLEGAL-MODE"> .MODS I$DISK-OPEN>)>
+	<COND (<S=? .BYTES "ASCII"> <SET BSZ 7>)
+	      (<S=? .BYTES "8BIT"> <SET BSZ 8>)
+	      (<S=? .BYTES "BINARY"> <SET BSZ 36>)
+	      (T <ERROR %<P-E "ILLEGAL-BYTE-SIZE"> .BYTES I$DISK-OPEN>)>
+	<COND (.THAWED? <SET MODE <ORB .MODE ,OF-THW>>)>
+	<COND (.NO-REF? <SET MODE <ORB .MODE ,OF-PDT>>)>
+	<COND (<SET JFN <T$GET-JFN .NAME .MODE .BSZ .NEW?>>
+	       <CHTYPE [.JFN
+			.MODE
+			.BSZ
+			<COND (.APP?
+			       ;<CALL SYSOP SFPTR .JFN -1>
+			       <SET PTR <T$GET-BYTE-COUNT .JFN .BSZ>>)
+			      (<SET PTR 0>)>
+			.PTR
+			<SET BUF
+			 <COND (.BUF?
+			        <COND (<==? .BSZ 7>
+				       <T$REQUEST-BUFFER <> T$STRING <>>)
+				      (<==? .BSZ 8>
+				       <T$REQUEST-BUFFER <> T$BYTES <>>)
+				      (T
+				       <T$REQUEST-BUFFER <> T$UVECTOR <>>)>)>>
+			0
+			0
+			<>
+			.BUF]
+		       I$DISK-CHANNEL>)>>
+
+<DEFINE X$DISK-FLUSH (CHANNEL OPER "AUX" (DATA <T$CHANNEL-DATA .CHANNEL>) VAL)
+  #DECL ((CHANNEL) T$CHANNEL (DATA) I$DISK-CHANNEL)
+  <SET VAL <CALL SYSOP CLOSF <ORB ,CZ-ABT <NS-JFN .DATA>>>>
+  <COND (<NS-TBUF .DATA>
+	 <T$RELEASE-BUFFER <NS-TBUF .DATA>>)>
+  <NS-BUF .DATA <>>
+  <NS-TBUF .DATA <>>
+  <NS-JFN .DATA -1>>
+
+<DEFINE X$DISK-CLOSE (CHANNEL OPER "AUX" (DATA <T$CHANNEL-DATA .CHANNEL>) VAL) 
+	#DECL ((CHANNEL) T$CHANNEL (DATA) I$DISK-CHANNEL)
+	<I$FLUSH-BUFFER .DATA>
+	<COND (<NS-TBUF .DATA>
+	       <T$RELEASE-BUFFER <NS-TBUF .DATA>>)>
+	<NS-TBUF .DATA <>>
+	<NS-BUF .DATA <>>
+	<SET VAL <CALL SYSOP CLOSF <NS-JFN .DATA>>>
+	<NS-JFN .DATA -1>>
+
+\ 
+
+<DEFINE X$DISK-READ-BYTE (CHANNEL OPER
+		       "AUX" (DATA <T$CHANNEL-DATA .CHANNEL>)
+		       (BUF <NS-BUF .DATA>) BYTE BC)
+	#DECL ((CHANNEL) T$CHANNEL (DATA) I$DISK-CHANNEL
+	       (BUF) <OR STRING BYTES FALSE UVECTOR> (BC) FIX)
+	<COND (<NOT .BUF>
+	       <COND (<SET BYTE <CALL SYSOP BIN <NS-JFN .DATA> '(RETURN 2)>>
+		      <NS-PTR .DATA <+ <NS-PTR .DATA> 1>>
+		      <NS-SPTR .DATA <NS-PTR .DATA>>
+		      <COND (<==? <NS-BSZ .DATA> 7> <CHTYPE .BYTE CHARACTER>)
+			    (.BYTE)>)>)
+	      (T
+	       <PROG ((ONCE? <>))
+		     #DECL ((ONCE?) <OR ATOM FALSE>)
+		     <COND (<NOT <0? <SET BC <NS-BC .DATA>>>>
+			    <SET BYTE <1 .BUF>>
+			    <NS-PTR .DATA <+ <NS-PTR .DATA> 1>>
+			    <NS-BUF .DATA <COND (<TYPE? .BUF STRING>
+						 <REST .BUF>)
+						(<TYPE? .BUF UVECTOR>
+						 <REST .BUF>)
+						(<TYPE? .BUF BYTES>
+						 <REST .BUF>)>>
+			    <NS-BC .DATA <- .BC 1>>
+			    .BYTE)
+			   (.ONCE? <>)
+			   (<I$READ-BUFFER .DATA>
+			    <SET BUF <NS-BUF .DATA>>
+			    <SET ONCE? T>
+			    <AGAIN>)>>)>>
+
+<DEFINE I$DO-SOUT (JFN BUF LEN "AUX" VAL)
+  #DECL ((JFN LEN) FIX)
+  <COND (<0? .LEN> 0)
+	(<SET VAL <CALL SYSOP SOUT .JFN .BUF <- .LEN>>>
+	 <- <CALL LENU .BUF>:FIX <CALL LENU .VAL>:FIX>)>>
+
+<DEFINE I$DO-SIN (JFN BUF LEN START "AUX" VAL STS)
+  #DECL ((START JFN LEN) FIX)
+  <COND (<0? .LEN> 0)
+	(<SET VAL <CALL SYSOP SIN-JSYS .JFN .BUF <- .LEN>>>
+	 <- <CALL LENU .BUF>:FIX <CALL LENU .VAL>:FIX>)
+	(T
+	 <SET STS <CALL SYSOP GTSTS .JFN '(RETURN 2)>>
+	 <COND (<NOT <0? <ANDB .STS ,GS-EOF>>>
+		<- <CALL SYSOP RFPTR .JFN '(RETURN 2)>:FIX
+		   .START>)
+	       (.VAL)>)>>
+
+<DEFINE I$READ-BUFFER (DATA
+		     "AUX" (JFN <NS-JFN .DATA>) CT (OB <NS-BUF .DATA>)
+			   (BUF <NS-TBUF .DATA>)
+			   STS)
+	#DECL ((DATA) I$DISK-CHANNEL (STS CT) <OR FIX FALSE> (JFN) FIX
+	       (OB BUF) <OR BYTES UVECTOR STRING>)
+	<COND (<NS-WRITE-BUF? .DATA> <I$FLUSH-BUFFER .DATA>)>
+	<COND (<NOT <SET CT <I$DO-SIN .JFN .BUF
+				      <COND (<TYPE? .BUF STRING><LENGTH .BUF>)
+					    (<TYPE? .BUF UVECTOR><LENGTH .BUF>)
+					    (<LENGTH .BUF>)>
+				      <NS-SPTR .DATA>>>>
+	       <ERROR %<P-E "ERROR-ON-READ"> .CT I$READ-BUFFER>)>
+	<NS-BUF .DATA .BUF>
+	<NS-SPTR .DATA <+ <NS-SPTR .DATA> .CT>>
+	<NS-BC .DATA .CT>
+	<NS-OBC .DATA .CT>>
+
+<DEFINE X$DISK-READ-BUFFER (CHANNEL OPER BUFFER
+			 "OPTIONAL" CT (CONT 0)
+			 "AUX" (DATA <T$CHANNEL-DATA .CHANNEL>)
+			       (IBUF <NS-BUF .DATA>) TRANS BC RD
+			       PT)
+	#DECL ((CHANNEL) T$CHANNEL (BUFFER) <OR <PRIMTYPE STRING>
+						<PRIMTYPE BYTES>
+						<PRIMTYPE UVECTOR>>
+	       (CT CONT) FIX
+	       (DATA) I$DISK-CHANNEL (IBUF) <OR STRING UVECTOR FALSE BYTES>
+	       (BC) FIX (TRANS RD) <OR FIX FALSE>)
+	<SET PT <ANDB ,M$$TYSAT <CALL TYPE .BUFFER>>>
+	<COND (<AND .IBUF <N==? <ANDB ,M$$TYSAT <CALL TYPE .IBUF>> .PT>>
+	       <ERROR %<P-E "BUFFER-IS-WRONG-TYPE">
+		      <TYPE .BUFFER> I$DISK-READ-BUFFER>)>
+	<COND
+	 (<NOT <ASSIGNED? CT>>
+	  <SET CT
+	       <CASE ,==? .PT
+		     (,M$$T-STR <LENGTH .BUFFER:STRING>)
+		     (,M$$T-UVC <LENGTH .BUFFER:UVECTOR>)
+		     (,M$$T-BYT <LENGTH .BUFFER:BYTES>)>>)>
+	<SET CT <MIN .CT <CALL LENU .BUFFER>:FIX>>
+	<COND
+	 (<0? .CT> 0)
+	 (T <REPEAT ((RD 0) DONE)
+		#DECL ((RD DONE) FIX)
+		<COND (<AND .IBUF <NOT <0? <SET BC <NS-BC .DATA>>>>>
+		       <SET TRANS <MIN .BC .CT>>
+		       <SET DONE 0>
+		       <CASE ,==? .PT
+		        (,M$$T-STR
+			 <SUBSTRUC .IBUF:STRING 0 .TRANS .BUFFER:STRING>
+			 <SET RD <+ .RD .TRANS>>
+			 <SET CT <- .CT .TRANS>>
+			 <NS-BUF .DATA <REST .IBUF:STRING .TRANS>>
+			 <NS-BC .DATA <- .BC .TRANS>>
+			 <SET BUFFER
+			      <REST .BUFFER:STRING .TRANS>>
+			 <NS-PTR .DATA <+ <NS-PTR .DATA> .TRANS>>)
+			(,M$$T-UVC
+			 <SUBSTRUC .IBUF:UVECTOR 0 .TRANS .BUFFER:UVECTOR>
+			 <SET RD <+ .RD .TRANS>>
+			 <SET CT <- .CT .TRANS>>
+			 <NS-BUF .DATA <REST .IBUF:UVECTOR .TRANS>>
+			 <NS-BC .DATA <- .BC .TRANS>>
+			 <SET BUFFER
+			      <REST .BUFFER:UVECTOR .TRANS>>
+			 <NS-PTR .DATA <+ <NS-PTR .DATA> .TRANS>>)
+			(,M$$T-BYT
+			 <SUBSTRUC .IBUF:BYTES 0 .TRANS .BUFFER:BYTES>
+			 <SET RD <+ .RD .TRANS>>
+			 <SET CT <- .CT .TRANS>>
+			 <NS-BUF .DATA <REST .IBUF:BYTES .TRANS>>
+			 <NS-BC .DATA <- .BC .TRANS>>
+			 <SET BUFFER
+			      <REST .BUFFER:BYTES .TRANS>>
+			 <NS-PTR .DATA <+ <NS-PTR .DATA> .TRANS>>)>)>
+		<COND (<NOT <0? .CT>>
+		     ;"Only use the buffer here if it might save a system call"
+		       <COND (<AND .IBUF
+				   <L? .CT <CASE ,==? .PT
+						 (,M$$T-STR
+						  <LENGTH
+						   <NS-TBUF .DATA>:STRING>)
+						 (,M$$T-UVC
+						  <LENGTH
+						   <NS-TBUF .DATA>:UVECTOR>)
+						 (,M$$T-BYT
+						  <LENGTH
+						   <NS-TBUF .DATA>:BYTES>)>>>
+			      <I$READ-BUFFER .DATA>
+			      <COND (<0? <NS-BC .DATA>>
+				     <RETURN .RD>)>
+			      <SET IBUF <NS-BUF .DATA>>)
+			     (<SET TRANS
+				   <I$DO-SIN <NS-JFN .DATA>
+					     .BUFFER
+					     .CT
+					     <NS-SPTR .DATA>>>
+			      <NS-PTR .DATA <+ <NS-PTR .DATA> .TRANS>>
+			      <NS-SPTR .DATA <+ <NS-SPTR .DATA> .TRANS>>
+			      <NS-OBC .DATA 0>
+			      <COND (.IBUF <NS-BUF .DATA <NS-TBUF .DATA>>)>
+			      <RETURN <+ .TRANS .RD>>)
+			     (<RETURN .TRANS>)>)
+		      (<RETURN .RD>)>>)>>
+
+\ 
+
+<DEFINE X$DISK-WRITE-BYTE (CHANNEL OPER BYTE
+			"AUX" (DATA <T$CHANNEL-DATA .CHANNEL>)
+			      (BUF <NS-BUF .DATA>) (PT <ANDB <CALL TYPE .BUF>
+							     ,M$$TYSAT>))
+	#DECL ((CHANNEL) T$CHANNEL (BYTE) <OR FIX CHARACTER>
+	       (DATA) I$DISK-CHANNEL
+	       (BUF) <OR FALSE BYTES STRING UVECTOR>)
+	<COND (<0? <ANDB <NS-MODE .DATA> %<+ ,OF-WR ,OF-APP>>>
+	       <ERROR %<P-E "CHANNEL-NOT-OPEN-FOR-WRITING">
+		      .CHANNEL I$DISK-WRITE-BYTE>)>
+	<COND (<NOT .BUF>
+	       <CALL SYSOP BOUT <NS-JFN .DATA> .BYTE>
+	       <NS-PTR .DATA <+ <NS-PTR .DATA> 1>>
+	       <NS-SPTR .DATA <+ <NS-SPTR .DATA> 1>>
+	       .BYTE)
+	      (T
+	       <COND (<CASE ,==? .PT
+			    (,M$$T-STR <EMPTY? .BUF:STRING>)
+			    (,M$$T-UVC <EMPTY? .BUF:UVECTOR>)
+			    (,M$$T-BYT <EMPTY? .BUF:BYTES>)>
+		      <I$FLUSH-BUFFER .DATA>
+		      <SET BUF <NS-BUF .DATA>>)>
+	       <CASE ,==? .PT
+	        (,M$$T-STR
+		 <1 .BUF:STRING .BYTE>
+		 <NS-BUF .DATA <SET BUF <REST .BUF:STRING>>>
+		 <NS-OBC .DATA
+			 <MAX <NS-OBC .DATA>
+			      <- <LENGTH <NS-TBUF .DATA>:STRING>
+				 <LENGTH .BUF:STRING>>>>)
+		(,M$$T-UVC
+		 <1 .BUF:UVECTOR .BYTE>
+		 <NS-BUF .DATA <SET BUF <REST .BUF:UVECTOR>>>
+		 <NS-OBC .DATA
+			 <MAX <NS-OBC .DATA>
+			      <- <LENGTH <NS-TBUF .DATA>:UVECTOR>
+				 <LENGTH .BUF:UVECTOR>>>>)
+		(,M$$T-BYT
+		 <1 .BUF:BYTES .BYTE>
+		 <NS-BUF .DATA <SET BUF <REST .BUF:BYTES>>>
+		 <NS-OBC .DATA
+			 <MAX <NS-OBC .DATA>
+			      <- <LENGTH <NS-TBUF .DATA>:BYTES>
+				 <LENGTH .BUF:BYTES>>>>)>
+	       <NS-PTR .DATA <+ <NS-PTR .DATA> 1>>
+	       <NS-WRITE-BUF? .DATA T>
+	       <NS-BC .DATA <MAX 0 <- <NS-BC .DATA> 1>>>
+	       .BYTE)>>
+
+<DEFINE I$FLUSH-BUFFER (DATA
+		        "AUX" (BUF <NS-BUF .DATA>) LEN SP (JFN <NS-JFN .DATA>)
+			      TB (PT <ANDB <CALL TYPE .BUF> ,M$$TYSAT>))
+	#DECL ((DATA) I$DISK-CHANNEL (BUF) <OR BYTES UVECTOR STRING FALSE>
+	       (JFN SP LEN) FIX)
+	<COND (<NS-WRITE-BUF? .DATA>
+	       <NS-WRITE-BUF? .DATA <>>
+	       <COND (.BUF
+		      <SET SP <- <NS-PTR .DATA>
+				 <CASE ,==? .PT
+				       (,M$$T-STR
+					<- <LENGTH
+					    <SET TB <NS-TBUF .DATA>:STRING>>
+					   <LENGTH .BUF:STRING>>)
+				       (,M$$T-UVC
+					<- <LENGTH
+					    <SET TB <NS-TBUF .DATA>:UVECTOR>>
+					   <LENGTH .BUF:UVECTOR>>)
+				       (,M$$T-BYT
+					<- <LENGTH
+					    <SET TB <NS-TBUF .DATA>:BYTES>>
+					   <LENGTH .BUF:BYTES>>)>>>
+		      <COND (<N==? <NS-SPTR .DATA> .SP>
+			     <CALL SYSOP SFPTR .JFN .SP>
+			     <NS-SPTR .DATA .SP>)>
+		      <COND (<NOT <0? <SET LEN <NS-OBC .DATA>>>>
+			     <CALL SYSOP SOUT .JFN .TB <- .LEN>>)>
+		      <SET SP <+ .LEN <NS-SPTR .DATA>>>
+		      <COND (<N==? .SP <NS-PTR .DATA>>
+			     <SET SP <NS-PTR .DATA>>
+			     <NS-SPTR .DATA .SP>
+			     <CALL SYSOP SFPTR .JFN .SP>)
+			    (<NS-SPTR .DATA .SP>)>
+		      <NS-BUF .DATA .TB>
+		      <NS-BC .DATA 0>
+		      <NS-OBC .DATA 0>)>)
+	      (T
+	       <COND (<N==? <NS-PTR .DATA> <NS-SPTR .DATA>>
+		      <CALL SYSOP SFPTR .JFN <NS-PTR .DATA>>)>
+	       <NS-SPTR .DATA <NS-PTR .DATA>>
+	       <NS-BC .DATA 0>
+	       <NS-OBC .DATA 0>
+	       <COND (.BUF <NS-BUF .DATA
+				   <NS-TBUF .DATA>>)>)>>
+
+<DEFINE X$DISK-WRITE-BUFFER (CHANNEL OPER BUFFER
+			  "OPTIONAL" LEN
+			  "AUX" (PT <ANDB <CALL TYPE .BUFFER> ,M$$TYSAT>)
+				(DATA <T$CHANNEL-DATA .CHANNEL>)
+				(IBUF <NS-BUF .DATA>) (JFN <NS-JFN .DATA>)
+				VAL TIB)
+   #DECL ((CHANNEL) T$CHANNEL (JFN LEN) FIX
+	  (DATA) I$DISK-CHANNEL (IBUF) <OR BYTES UVECTOR STRING FALSE>
+	  (VAL) <OR FALSE FIX> (TIB) FIX (BUFFER) <OR <PRIMTYPE UVECTOR>
+						       <PRIMTYPE STRING>
+						       <PRIMTYPE BYTES>>)
+   <COND (<NOT <ASSIGNED? LEN>>
+	  <SET LEN
+	   <CASE ,==? .PT
+		(,M$$T-STR <LENGTH .BUFFER:STRING>)
+		(,M$$T-UVC <LENGTH .BUFFER:UVECTOR>)
+		(,M$$T-BYT <LENGTH .BUFFER:BYTES>)>>)>
+   <SET LEN <MIN .LEN <CALL LENU .BUFFER>:FIX>>
+   <COND (<0? <ANDB <NS-MODE .DATA> %<+ ,OF-WR ,OF-APP>>>
+	  <ERROR %<P-E "CHANNEL-NOT-OPEN-FOR-WRITING">
+		 .CHANNEL I$DISK-WRITE-BUFFER>)>
+   <COND (<0? .LEN> 0)
+	 (<NOT .IBUF>
+	  <COND (<SET VAL <I$DO-SOUT .JFN .BUFFER .LEN>>
+		 <NS-PTR .DATA <+ <NS-PTR .DATA> .VAL>>
+		 <NS-SPTR .DATA <+ <NS-SPTR .DATA> .VAL>>
+		 .VAL)>)
+	 (<N==? .PT <ANDB <CALL TYPE .IBUF> ,M$$TYSAT>>
+	  <ERROR %<P-E "BUFFER-IS-WRONG-TYPE">
+		 <TYPE .BUFFER> I$DISK-WRITE-BUFFER>)
+	 (T
+	  <SET TIB
+	       <CASE ,==? .PT
+		     (,M$$T-STR <LENGTH <NS-TBUF .DATA>:STRING>)
+		     (,M$$T-UVC <LENGTH <NS-TBUF .DATA>:UVECTOR>)
+		     (,M$$T-BYT <LENGTH <NS-TBUF .DATA>:BYTES>)>>
+	  <REPEAT ((RD 0) TRANS (IBUF .IBUF) DONE)
+		  #DECL ((RD TRANS) FIX (IBUF) <OR BYTES STRING UVECTOR>)
+		  <COND (<NOT <CASE ,==? .PT
+				    (,M$$T-STR <EMPTY? .IBUF:STRING>)
+				    (,M$$T-UVC <EMPTY? .IBUF:UVECTOR>)
+				    (,M$$T-BYT <EMPTY? .IBUF:BYTES>)>>
+			 <SET DONE 0>
+			 <CASE ,==? .PT
+			  (,M$$T-STR
+			   <SET TRANS <MIN .LEN <LENGTH .IBUF:STRING>>>
+			   <SUBSTRUC .BUFFER:STRING 0 .TRANS .IBUF:STRING>
+			   <SET RD <+ .RD .TRANS>>
+			   <SET LEN <- .LEN .TRANS>>
+			   <SET BUFFER <REST .BUFFER:STRING .TRANS>>
+			   <NS-WRITE-BUF? .DATA T>
+			   <NS-BUF .DATA <SET IBUF <REST .IBUF:STRING .TRANS>>>
+			   <NS-PTR .DATA <+ <NS-PTR .DATA> .TRANS>>
+			   <NS-BC .DATA <MAX 0 <- <NS-BC .DATA> .TRANS>>>
+			   <NS-OBC .DATA
+				   <MAX <NS-OBC .DATA>
+					<- .TIB <LENGTH .IBUF:STRING>>>>)
+			  (,M$$T-UVC
+			   <SET TRANS <MIN .LEN <LENGTH .IBUF:UVECTOR>>>
+			   <SUBSTRUC .BUFFER:UVECTOR 0 .TRANS .IBUF:UVECTOR>
+			   <SET RD <+ .RD .TRANS>>
+			   <SET LEN <- .LEN .TRANS>>
+			   <SET BUFFER <REST .BUFFER:UVECTOR .TRANS>>
+			   <NS-WRITE-BUF? .DATA T>
+			   <NS-BUF .DATA
+				   <SET IBUF <REST .IBUF:UVECTOR .TRANS>>>
+			   <NS-PTR .DATA <+ <NS-PTR .DATA> .TRANS>>
+			   <NS-BC .DATA <MAX 0 <- <NS-BC .DATA> .TRANS>>>
+			   <NS-OBC .DATA
+				   <MAX <NS-OBC .DATA>
+					<- .TIB <LENGTH .IBUF:UVECTOR>>>>)
+			  (,M$$T-BYT
+			   <SET TRANS <MIN .LEN <LENGTH .IBUF:BYTES>>>
+			   <SUBSTRUC .BUFFER:BYTES 0 .TRANS .IBUF:BYTES>
+			   <SET RD <+ .RD .TRANS>>
+			   <SET LEN <- .LEN .TRANS>>
+			   <SET BUFFER <REST .BUFFER:BYTES .TRANS>>
+			   <NS-WRITE-BUF? .DATA T>
+			   <NS-BUF .DATA <SET IBUF <REST .IBUF:BYTES .TRANS>>>
+			   <NS-PTR .DATA <+ <NS-PTR .DATA> .TRANS>>
+			   <NS-BC .DATA <MAX 0 <- <NS-BC .DATA> .TRANS>>>
+			   <NS-OBC .DATA
+				   <MAX <NS-OBC .DATA>
+					<- .TIB <LENGTH .IBUF:BYTES>>>>)>)>
+		  <COND (<NOT <0? .LEN>>
+			 <I$FLUSH-BUFFER .DATA>
+			 <COND (<G? .LEN .TIB>
+				<SET TRANS
+				     <I$DO-SOUT .JFN .BUFFER .LEN>>
+				<NS-SPTR .DATA <+ <NS-SPTR .DATA> .TRANS>>
+				<NS-PTR .DATA <+ <NS-PTR .DATA> .TRANS>>
+				<RETURN <+ .TRANS .RD>>)
+			       (<SET IBUF <NS-BUF .DATA>>)>)
+			(<RETURN .RD>)>>)>>
+
+\ 
+
+<DEFINE X$DISK-ACCESS (CHANNEL OPER "OPTIONAL" PTR
+		    "AUX" (DATA <T$CHANNEL-DATA .CHANNEL>) (JFN <NS-JFN .DATA>)
+			  (OPTR <NS-PTR .DATA>) (BUF <NS-BUF .DATA>) INC TL L
+			  (PT <ANDB <CALL TYPE .BUF> ,M$$TYSAT>))
+	#DECL ((CHANNEL) T$CHANNEL (DATA) I$DISK-CHANNEL
+	       (TL L OPTR JFN INC) FIX (PTR) <OR FIX FALSE>)
+	<COND (.BUF
+	       <CASE ,==? .PT
+		     (,M$$T-STR
+		      <SET L <LENGTH .BUF:STRING>>
+		      <SET TL <LENGTH <NS-TBUF .DATA>:STRING>>)
+		     (,M$$T-UVC
+		      <SET L <LENGTH .BUF:UVECTOR>>
+		      <SET TL <LENGTH <NS-TBUF .DATA>:UVECTOR>>)
+		     (,M$$T-BYT
+		      <SET L <LENGTH .BUF:BYTES>>
+		      <SET TL <LENGTH <NS-TBUF .DATA>:BYTES>>)>)>
+	<COND (<OR <NOT <ASSIGNED? PTR>>
+		   <NOT .PTR>>
+	       <SET PTR .OPTR>)
+	      (<==? .PTR .OPTR>)
+	      (<AND .BUF
+		    <G=? .PTR <- .OPTR <- .TL .L>>>
+		    <L=? .PTR <+ .OPTR <NS-BC .DATA>>>>
+	       <COND (<G? .PTR .OPTR>
+		      <NS-BC .DATA <- <NS-BC .DATA> <SET INC <- .PTR .OPTR>>>>
+		      <CASE ,==? .PT
+			    (,M$$T-STR
+			     <NS-BUF .DATA <REST .BUF:STRING .INC>>)
+			    (,M$$T-BYT
+			     <NS-BUF .DATA <REST .BUF:BYTES .INC>>)
+			    (,M$$T-UVC
+			     <NS-BUF .DATA <REST .BUF:UVECTOR .INC>>)>)
+		     (T
+		      <NS-BUF .DATA
+			      <CALL BACKU .BUF <SET INC <- .OPTR .PTR>>>>
+		      <NS-BC .DATA <+ <NS-BC .DATA> .INC>>)>
+	       <NS-PTR .DATA .PTR>)
+	      (T
+	       <I$FLUSH-BUFFER .DATA>
+	       <CALL SYSOP SFPTR .JFN .PTR>
+	       <COND (<==? .PTR -1>
+		      <SET PTR <CALL SYSOP RFPTR .JFN '(RETURN 2)>>)>
+	       <NS-PTR .DATA .PTR>
+	       <NS-SPTR .DATA .PTR>)>
+	.PTR>
+
+<DEFINE X$DISK-BUFOUT (CHANNEL OPER "OPTIONAL" (FORCE? T)
+		       "AUX" (DATA <T$CHANNEL-DATA .CHANNEL>)) 
+	#DECL ((CHANNEL) T$CHANNEL (DATA) I$DISK-CHANNEL
+	       (FORCE?) <OR ATOM FALSE>)
+	<COND (<NS-WRITE-BUF? .DATA>
+	       <I$FLUSH-BUFFER .DATA>)>
+	<COND (.FORCE?
+	       <T$CLOSE-OPEN <NS-JFN .DATA> <NS-MODE .DATA> <NS-BSZ .DATA>>)>
+	<COND (<0? <ANDB <NS-MODE .DATA> ,OF-APP>>
+	       <CALL SYSOP SFPTR <NS-JFN .DATA> <NS-SPTR .DATA>>)>
+	.CHANNEL>
+
+<DEFINE X$DISK-FILE-LENGTH (CHANNEL:T$CHANNEL OPER
+			    "OPT" (NEW-SIZE:<OR FALSE FIX> <>) (BSZ:FIX 7)
+			    "AUX" (DATA:I$DISK-CHANNEL
+				   <T$CHANNEL-DATA .CHANNEL>))
+	<COND
+	 (.NEW-SIZE
+	  <COND (<==? .NEW-SIZE -1>
+		 <BIND (PGS MULT)
+		   <SET PGS <CALL SYSOP SIZEF <NS-JFN .DATA> '(RETURN 3)>>
+		   <SET MULT </ 36 .BSZ>>
+		   <SET NEW-SIZE <* .MULT 512 .PGS>>>)>
+	  <CALL SYSOP CHFDB
+		<PUTLHW <NS-JFN .DATA> <ORB *400000* ,/FBBYV>>
+		,FB-BSZ
+		<LSH .BSZ 24>>
+	  <CALL SYSOP CHFDB
+		<PUTLHW <NS-JFN .DATA> ,/FBSIZ>
+		-1
+		.NEW-SIZE>
+	  .NEW-SIZE)
+	 (T
+	  <X$DISK-BUFOUT .CHANNEL .OPER T>
+	  <T$GET-BYTE-COUNT <NS-JFN .DATA> <NS-BSZ .DATA>>)>>
+\ 
+
+<DEFINE X$DISK-PRINT-DATA (CHANNEL OPER OUTCHAN
+			  "AUX" (DATA <T$CHANNEL-DATA .CHANNEL>) BUF)
+  #DECL ((CHANNEL) T$CHANNEL (DATA) I$DISK-CHANNEL)
+  <PRINC "#DISK-CHANNEL [">
+  <PRINC "JFN:">
+  <PRIN1 <NS-JFN .DATA>>
+  <PRINC " MODE:">
+  <PRIN1 <NS-MODE .DATA>>
+  <PRINC " BSZ:">
+  <PRIN1 <NS-BSZ .DATA>>
+  <PRINC " PTR:">
+  <PRIN1 <NS-PTR .DATA>>
+  <PRINC " SPTR:">
+  <PRIN1 <NS-SPTR .DATA>>
+  <PRINC " BUF:">
+  <COND (<SET BUF <NS-BUF .DATA>>
+	 <PRIN1 <NS-BC .DATA>>
+	 <PRINC !\/>
+	 <COND (<TYPE? .BUF STRING>
+		<PRIN1 <- <LENGTH <NS-TBUF .DATA>>
+			  <LENGTH <NS-BUF .DATA>>>>
+		<PRINC !\/>
+		<PRIN1 <LENGTH <NS-BUF .DATA>>>)
+	       (<PRIN1 <- <LENGTH <NS-TBUF .DATA>>
+			  <LENGTH <NS-BUF .DATA>>>>
+		<PRINC !\/>
+		<PRIN1 <LENGTH <NS-BUF .DATA>>>)>)
+	(T
+	 <PRINC "<>">)>
+  <PRINC !\]>
+  T>

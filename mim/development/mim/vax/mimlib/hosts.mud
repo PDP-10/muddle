@@ -1,0 +1,188 @@
+<PACKAGE "HOSTS">
+
+<ENTRY HOST NICKNAMES SITE-ENTRY HOST-NAME>
+
+<SETG BREAKS <STRING <ASCII 13> <ASCII 10> <ASCII 32> <ASCII 9>>>
+
+<GDECL (BREAKS) STRING>
+
+<SETG WH-HOSTNUM 1>
+
+<SETG WH-HOSTNAME 2>
+
+<SETG WH-NICKNAMES 3>
+
+<SETG WH-NUMHOST 4>
+
+<SETG WH-ENTRY 5>
+
+<MANIFEST WH-HOSTNUM WH-HOSTNAME WH-NICKNAMES WH-NUMHOST WH-ENTRY>
+
+<DEFINE NICKNAMES (WHICH)
+  #DECL ((WHICH) <OR FIX STRING>)
+  <SEARCH-HOSTS .WHICH ,WH-NICKNAMES>>
+
+<DEFINE HOST-NAME (WHICH)
+  #DECL ((WHICH) <OR FIX STRING>)
+  <SEARCH-HOSTS .WHICH ,WH-HOSTNAME>>
+
+<DEFINE SITE-ENTRY (WHICH)
+  #DECL ((WHICH) <OR FIX STRING>)
+  <SEARCH-HOSTS .WHICH ,WH-ENTRY>>
+
+<DEFINE HOST (WHICH) 
+	#DECL ((WHICH) <OR STRING FIX>)
+        <SEARCH-HOSTS .WHICH <COND (<TYPE? .WHICH FIX> ,WH-NUMHOST)
+				  (T ,WH-HOSTNUM)>>>
+
+<DEFINE NUM2STR (SPEC STR "AUX" (CT 0)) 
+	#DECL ((SPEC) FIX)
+	<SET CT <PUTFIELD <GETBITS .SPEC <BITS 8 0>> .STR .CT>>
+	<PUT .STR <SET CT <+ .CT 1>> !\.>
+	<SET CT <PUTFIELD <GETBITS .SPEC <BITS 8 8>> .STR .CT>>
+	<PUT .STR <SET CT <+ .CT 1>> !\.>
+	<SET CT <PUTFIELD <GETBITS .SPEC <BITS 8 16>> .STR .CT>>
+	<PUT .STR <SET CT <+ .CT 1>> !\.>
+	<SET CT <PUTFIELD <GETBITS .SPEC <BITS 8 24>> .STR .CT>>
+	<SUBSTRUC .STR 0 .CT <REST .STR <- <LENGTH .STR> .CT>>>>
+
+<DEFINE PUTFIELD (VAL STR STRT "AUX" (DIV 100) (ANY? <>)) 
+	#DECL ((VAL) FIX (STR) STRING (STRT DIV) FIX)
+	<REPEAT (TMP)
+		<COND (<OR <NOT <0? <SET TMP </ .VAL .DIV>>>> .ANY?>
+		       <PUT .STR
+			    <SET STRT <+ .STRT 1>>
+			    <ASCII <+ .TMP <ASCII !\0>>>>
+		       <SET VAL <MOD .VAL .DIV>>
+		       <SET ANY? T>)>
+		<COND (<0? <SET DIV </ .DIV 10>>>
+		       <COND (<NOT .ANY?>
+			      <PUT .STR <SET STRT <+ .STRT 1>> !\0>)>
+		       <RETURN .STRT>)>>>
+
+<DEFINE SEARCH-HOSTS (ITARG WHICH "AUX" TARG (NUM? <>)
+		      (STR <STACK <ISTRING <COND (<TYPE? .ITARG FIX> 15)
+						 (T <LENGTH .ITARG>)>>>)
+		      (BUF <STACK <ISTRING 512>>)
+		      (CH <>)) 
+   #DECL ((TARG) STRING (FIRST?) <OR ATOM !<FALSE>> (BUF) STRING
+	  (CH) <OR <CHANNEL 'DISK> FALSE> (ITARG) <OR STRING FIX>)
+   <COND (<TYPE? .ITARG FIX>
+	  <SET TARG <NUM2STR .ITARG .STR>>
+	  <SET NUM? T>)
+	 (T
+	  <MAPR <>
+	    <FUNCTION (S1 S2 "AUX" (CHR <1 .S1>))
+	      #DECL ((S1 S2) STRING)
+	      <COND (<AND <G=? <ASCII .CHR> <ASCII !\A>>
+			  <L=? <ASCII .CHR> <ASCII !\Z>>>
+		     <SET CHR <ASCII <- <ASCII .CHR>
+					%<- <ASCII !\A> <ASCII !\a>>>>>)>
+	      <1 .S2 .CHR>>
+	    .ITARG .STR>
+	  <SET TARG .STR>)>
+  <UNWIND
+   <COND
+    (<SET CH <CHANNEL-OPEN DISK "/ETC/HOSTS" "READ" "ASCII" <>>>
+     <REPEAT (CS (NS "") (STR <>) MSTR)
+	     #DECL ((NS MSTR) STRING (CS STR) <OR STRING FALSE>)
+	     <COND (<NOT .STR>
+		    <SUBSTRUC .NS 0 <LENGTH .NS> <SET MSTR .BUF>>
+		    <SET STR .MSTR>
+		    <COND (<0? <CHANNEL-OP .CH
+					   READ-BUFFER
+					   <REST .BUF <LENGTH .NS>>>:FIX>
+			   <CLOSE .CH>
+			   <RETURN <>>)>)
+		   (T <SET MSTR .STR>)>
+	     <COND (<SET CS <MEMBER .TARG .MSTR>>
+		    <SET NS <LINE-BEGIN .CS .BUF>>
+		    <COND (<==? <1 .NS> !\#> <SET STR <LINE-END .MSTR>>)
+			  (<AND <OR <==? .CS .NS>
+				    <MEMQ <1 <BACK .CS>> ,BREAKS>>
+				<G? <LENGTH .CS> <LENGTH .TARG>>
+				<MEMQ <NTH .CS <+ <LENGTH .TARG> 1>> ,BREAKS>>
+			   <COND (<NOT <SET STR <LINE-END .CS>>> <AGAIN>)>
+			   <COND (<COND (.NUM? <==? .CS .NS>)
+					(T <N==? .CS .NS>)>
+				  <CLOSE .CH>
+				  <RETURN <WINNER .TARG .WHICH .NS .STR>>)>)
+			  (<L=? <LENGTH .CS> <LENGTH .TARG>> <SET STR <>>)
+			  (T <SET STR <REST .CS <LENGTH .TARG>>>)>)
+		   (T
+		    <SET NS <LINE-BEGIN <REST .MSTR <LENGTH .MSTR>> .BUF>>
+		    <SET STR <>>)>>)>
+  <COND (<AND .CH <CHANNEL-OPEN? .CH>> <CLOSE .CH> <>)>>>
+
+<DEFINE LINE-BEGIN (STR TOP) 
+	#DECL ((STR TOP) STRING)
+	<REPEAT (CHR)
+		<COND (<==? .STR .TOP> <RETURN .STR>)>
+		<COND (<==? <1 <SET STR <BACK .STR>>> <ASCII 10>>
+		       <RETURN <REST .STR>>)>>>
+
+<DEFINE LINE-END (STR) 
+	#DECL ((STR) STRING)
+	<REPEAT ()
+		<COND (<EMPTY? .STR> <RETURN <>>)>
+		<COND (<==? <1 .STR> <ASCII 10>> <RETURN <REST .STR>>)>
+		<SET STR <REST .STR>>>>
+
+\ 
+
+<DEFINE WINNER (TARG WHICH NS STR "AUX" NNS TS) 
+	#DECL ((TARG NS STR) STRING (WHICH) FIX)
+	<CASE ,==?
+	      .WHICH
+	      (,WH-ENTRY <SUBSTRUC .NS 0 <- <LENGTH .NS> <LENGTH .STR> 1>>)
+	      (,WH-HOSTNUM
+	       <REPEAT ((HNUM 0) (CT 0) (ACC 0) CHR)
+		       <COND (<==? <SET CHR <1 .NS>> !\.>
+			      <SET HNUM
+				   <PUTBITS .HNUM <BITS 8 <* .CT 8>> .ACC>>
+			      <SET ACC 0>
+			      <SET CT <+ .CT 1>>)
+			     (<AND <G=? <ASCII .CHR> <ASCII !\0>>
+				   <L=? <ASCII .CHR> <ASCII !\9>>>
+			      <SET ACC
+				   <+ <* .ACC 10>
+				      <- <ASCII .CHR> <ASCII !\0>>>>)
+			     (T
+			      <SET HNUM
+				   <PUTBITS .HNUM <BITS 8 <* .CT 8>> .ACC>>
+			      <RETURN .HNUM>)>
+		       <SET NS <REST .NS>>>)
+	      (!'(,WH-NUMHOST ,WH-HOSTNAME)
+	       <SET NS <FIND-BREAK .NS .STR>>
+	       <SET NS <FIND-NON-BREAK .NS .STR>>
+	       <SET STR <FIND-BREAK .NS .STR>>
+	       <SUBSTRUC .NS 0 <- <LENGTH .NS> <LENGTH .STR>>>)
+	      (,WH-NICKNAMES
+	       <SET NS <FIND-NON-BREAK <FIND-BREAK .NS .STR> .STR>>
+	       <MAPF ,VECTOR
+		 <FUNCTION ()
+		    <SET NNS <FIND-BREAK .NS .STR>>
+		    <COND (<==? <1 .NNS> <ASCII 10>>
+			   <MAPSTOP
+			    <SUBSTRUC .NS 0 <- <LENGTH .NS> <LENGTH .NNS>>>>)
+			  (T
+			   <SET TS
+			    <SUBSTRUC .NS 0 <- <LENGTH .NS> <LENGTH .NNS>>>>
+			   <SET NS <FIND-NON-BREAK .NNS .STR>>
+			   .TS)>>>)>>
+
+<DEFINE FIND-BREAK (STRT END)
+  #DECL ((STRT END) STRING)
+  <REPEAT ()
+    <COND (<==? .STRT .END> <RETURN <>>)>
+    <COND (<MEMQ <1 .STRT> ,BREAKS> <RETURN .STRT>)>
+    <SET STRT <REST .STRT>>>>
+
+<DEFINE FIND-NON-BREAK (STRT END)
+  #DECL ((STRT END) STRING)
+  <REPEAT ()
+    <COND (<==? .STRT .END> <RETURN <>>)>
+    <COND (<NOT <MEMQ <1 .STRT> ,BREAKS>> <RETURN .STRT>)>
+    <SET STRT <REST .STRT>>>>
+
+<ENDPACKAGE>

@@ -1,0 +1,433 @@
+<DEFINITIONS "VSOPS">
+
+<INCLUDE "VSDEFS" "VSTYPES">
+
+<USE "NEWSTRUC" "VSBASE">
+
+<GDECL (OPLIST) <LIST [REST ATOM OP]>>
+
+<NEWSTRUC OP VECTOR
+	  OP-NAME ATOM
+	  OP-CODE FIX
+	  OP-REPLY? <OR ATOM FALSE>
+	  OP-ARGS <VECTOR [REST ANY]>
+	  OP-STUFF? <OR ATOM FALSE>
+	  OP-FORCE? <OR ATOM FALSE>>
+
+<SETG OPLIST ()>
+
+<DEFINE COP ("TUPLE" STUFF "AUX" (REPLY?:<SPECIAL ATOM> STRING))
+   <OP !.STUFF>>
+
+<DEFINE FOP ("TUPLE" STUFF "AUX" (FORCE?:<SPECIAL ATOM> T))
+   <OP !.STUFF>>
+
+<DEFINE SOP (NAME CODE REPLY?:<SPECIAL ATOM> "TUPLE" STUFF)
+   <OP .NAME .CODE !.STUFF>>
+
+<DEFINE ROP ("TUPLE" STUFF "AUX" (REPLY?:<SPECIAL ATOM> T))
+   <OP !.STUFF>>
+
+<MSETG ARG-FUNC 1>
+<MSETG ARG-WINDOW 2>
+<MSETG ARG-MASK 3>
+<NEWTYPE LONG FIX>
+<NEWTYPE SHORT FIX>
+<NEWTYPE BYTE FIX>
+<NEWTYPE COUNT-STRING FIX>
+<NEWTYPE COUNT FIX>
+<MSETG SEND-PACKET-WORD-LENGTH 6>
+
+<DEFINE OP (NAME CODE "TUPLE" ARGDESC "AUX" (REPLY? <AND <ASSIGNED? REPLY?>
+							 .REPLY?>)
+	    (FORCE? <AND <ASSIGNED? FORCE?> .FORCE?>)
+	    (SCT 0) (STUFF? <>) (STYPE <>) AVEC)
+  <MSETG .NAME .CODE>
+  <SET AVEC
+       <MAPF ,VECTOR
+	<FUNCTION (X "AUX" NUM)
+	   <COND (<==? .X F>
+		  ,ARG-FUNC)
+		 (<==? .X W>
+		  ,ARG-WINDOW)
+		 (<==? .X M>
+		  ,ARG-MASK)
+		 (<MEMQ .X '[B S L CS CB]>
+		  <COND (<==? .X L> 
+			 <COND (<NOT <0? <MOD .SCT 4>>>
+				<SET SCT <* </ <+ .SCT 4> 4> 4>>)>
+			 <SET NUM <CHTYPE </ .SCT 4> LONG>>
+			 <SET SCT <+ .SCT 4>>)
+			(<==? .X B>
+			 <SET NUM <CHTYPE .SCT BYTE>>
+			 <SET SCT <+ .SCT 1>>)
+			(T
+			 <COND (<NOT <0? <MOD .SCT 2>>>
+				<SET SCT <+ .SCT 1>>)>
+			 <SET NUM <CHTYPE </ .SCT 2> SHORT>>
+			 <SET SCT <+ .SCT 2>>)>
+		  <COND (<MEMQ .X '[CS CB]>
+			 <COND (<==? .X CS>
+				<SET NUM <CHTYPE .NUM COUNT-STRING>>)
+			       (T
+				<SET NUM <CHTYPE .NUM COUNT>>)>
+			 <SET STUFF? T>)>
+		  .NUM)
+		 (<==? .X STUFF>
+		  <SET STUFF? T>
+		  <MAPRET>)>>
+	.ARGDESC>>
+  <SETG OPLIST (.NAME <CHTYPE [.NAME .CODE .REPLY? .AVEC .STUFF? .FORCE?] OP>
+		!,OPLIST)>>
+
+<COND
+ (<GASSIGNED? OP>
+  <SOP X-CREATE-WINDOW 1 LONG F W S S S S L L>
+  <SOP X-CREATE-TRANSPARENCY 2 LONG W S S S S>
+  <FOP X-DESTROY-WINDOW 3 W>
+  <FOP X-DESTROY-SUBWINDOWS 4 W>
+  <FOP X-MAP-WINDOW 5 W>
+  <FOP X-MAP-SUBWINDOWS 6 W>
+  <FOP X-UNMAP-WINDOW 7 W>
+  <FOP X-UNMAP-SUBWINDOWS 8 W>
+  <FOP X-UNMAP-TRANSPARENT 9 W>
+  <FOP X-RAISE-WINDOW 10 W>
+  <FOP X-LOWER-WINDOW 11 W>
+  <FOP X-CIRC-WINDOW-UP 12 W>
+  <FOP X-MOVE-WINDOW 13 W S S>
+  <FOP X-CHANGE-WINDOW 14 W S S>
+  <FOP X-CONFIGURE-WINDOW 15 W S S S S>
+  <FOP X-CHANGE-BACKGROUND 16 W L>
+  <FOP X-CHANGE-BORDER 17 W L>
+  <OP X-TILE-MODE 18 F W>
+  <OP X-CLIPMODE 19 F W>
+  <ROP X-QUERY-WINDOW 20 W>
+  <OP X-STORE-NAME 21 W CS>
+  <COP X-FETCH-NAME 22 W>
+  <OP X-SET-ICON-WINDOW 23 W L>
+  <OP X-SET-RESIZE-HINT 24 W S S S S>
+  <ROP X-GET-RESIZE-HINT 25 W>
+  <FOP X-DEFINE-CURSOR 26 W L>
+  <FOP X-SELECT-INPUT 27 W L>
+  <SOP X-GRAB-MOUSE 28 ERROR W L L>
+  <SOP X-GRAB-BUTTON 29 ERROR M W L L>
+  <ROP X-QUERY-MOUSE 30 W>
+  <ROP X-INTERPRET-LOCATOR 31 W L>
+  <FOP X-WARP-MOUSE 32 W S S>
+  <FOP X-FOCUS-KEYBOARD 33 F W>
+  <FOP X-CIRC-WINDOW-DOWN 34 W>
+  <OP X-CLEAR 40 W>
+  <OP X-PIX-FILL 41 F M W S S S S S L>
+  <OP X-TILE-FILL 42 F M W S S S S L L>
+  <OP X-PIXMAP-PUT 43 F M W S S S S L S S>
+  <OP X-PIXMAP-BITS-PUT 44 F M W S S S S S L>
+  <OP X-BITMAP-BITS-PUT 45 F M W S S S S S S L>
+  <OP X-COPY-AREA 46 F M W S S S S S S>
+  <OP X-TEXT 47 F M W S S L S S S B B STUFF>
+  <OP X-TEXT-MASK 48 F M W S S L S S B B STUFF>
+  <OP X-LINE 49 F M W S S S S S B B>
+  <OP X-DRAW 50 F M W S S B B S S S S S STUFF>
+  <OP X-DRAW-FILLED 51 F M W S S L STUFF>
+  <SOP X-PIXMAP-SAVE 52 LONG W S S S S>
+  <COP X-PIXMAP-GET 53 F W S S S S>
+  <ROP X-SETUP 80 W>
+  <FOP X-UNGRAB-MOUSE 81 W>
+  <FOP X-UNGRAB-BUTTON 82 M W>
+  <SOP X-GET-COLOR 83 SHORT W S S S>
+  <SOP X-GET-COLOR-CELLS 84 SHORT F W S S>
+  <OP X-FREE-COLORS 85 M W S STUFF>
+  <OP X-STORE-COLORS 86 W S STUFF>
+  <ROP X-QUERY-COLOR 87 W S>
+  <SOP X-GET-FONT 88 LONG W S STUFF>
+  <OP X-FREE-FONT 89 W L>
+  <ROP X-QUERY-FONT 90 W L>
+  <COP X-CHAR-WIDTHS 91 W L STUFF>
+  <SOP X-STRING-WIDTH 92 SHORT W L CS>
+  <COP X-FONT-WIDTHS 93 W L>
+  <SOP X-STORE-BITMAP 94 LONG W S S STUFF>
+  <OP X-FREE-BITMAP 95 W L>
+  <SOP X-CHAR-BITMAP 96 LONG W L S>
+  <SOP X-STORE-PIXMAP 97 LONG F W S S STUFF>
+  <OP X-FREE-PIXMAP 98 W L>
+  <SOP X-MAKE-PIXMAP 99 LONG W L S S>
+  <SOP X-QUERY-SHAPE 100 LONG F W S S>
+  <SOP X-STORE-CURSOR 101 LONG F W L S S L S S>
+  <OP X-FREE-CURSOR 102 W L>
+  <FOP X-MOUSE-CONTROL 103 W S S>
+  <FOP X-FEEP-CONTROL 104 F W>
+  <FOP X-FEEP 105 W S>
+  <FOP X-SHIFT-LOCK 106 F W>
+  <FOP X-KEY-CLICK 107 F W>
+  <FOP X-AUTO-REPEAT 108 F W>
+  <FOP X-SCREEN-SAVER 109 W S S>
+  <FOP X-STORE-BYTES 110 F W S STUFF>
+  <COP X-FETCH-BYTES 111 F W>
+  <COP X-ROTATE-CUTS 112 F W>
+  <OP X-ADD-HOST 113 W L>
+  <OP X-REMOVE-HOST 114 W L>
+  <COP X-GET-HOSTS 115 W>)>
+
+<DEFMAC VSOP ('VS100 NAME "ARGS" ARGS "AUX" L OD ALIST AAL
+	      (COUNTER <>) (ARGL .ARGS) (FARGL <>) (AUXL ())
+	      RES (VALDECL <>) REPLY?)
+  <COND (<SET L <MEMQ .NAME ,OPLIST>>
+	 <SET OD <2 .L>>
+	 <SET ALIST (<FORM O-FUNC&CODE '.PACKET <OP-CODE .OD>>)>
+	 <SET AAL .ALIST>
+	 <REPEAT ((ADESC <OP-ARGS .OD>) D TEMP (GOT-FUNC? <>))
+	    <COND (<EMPTY? .ADESC> 
+		   <COND (<AND <NOT <OP-STUFF? .OD>>
+			       <NOT <EMPTY? .ARGL>>>
+			  <ERROR TOO-MANY-ARGUMENTS-TO-VSOP .NAME .OD
+				 .ARGS>)>
+		   <RETURN>)>
+	    <COND (<EMPTY? .ARGL>
+		   <ERROR TOO-FEW-ARGUMENTS-TO-VSOP .NAME .OD .ARGS>)>
+	    <COND (<TYPE? <SET D <1 .ADESC>> FIX>
+		   <COND (<==? .D ,ARG-FUNC>
+			  <SET GOT-FUNC? <1 .ARGL>>
+			  <1 .ALIST
+			     <FORM O-FUNC&CODE '.PACKET
+				   <COMBINE-BYTES <OP-CODE .OD> .GOT-FUNC?>>>)
+			 (<==? .D ,ARG-WINDOW>
+			  <SET AAL <REST <PUTREST .AAL
+						  (<FORM O-WINDOW '.PACKET
+							 <1 .ARGL>>)>>>)
+			 (<==? .D ,ARG-MASK>
+			  <COND (<NOT .GOT-FUNC?>
+				 <1 .ALIST
+				    <FORM O-FUNC-CODE-MASK
+					  '.PACKET
+					  <COMBINE <OP-CODE .OD> <1 .ARGL>>>>)
+				(T
+				 <1 .ALIST
+				    <FORM O-FUNC-CODE-MASK
+					  '.PACKET
+					  <COMBINE-FCM <OP-CODE .OD>
+						       .GOT-FUNC?
+						       <1 .ARGL>>>>)>)
+			 (T
+			  <ERROR BAD-VSOP-DESCRIPTOR .OD .D>)>)
+		  (<TYPE? .D LONG>
+		   <SET AAL <REST <PUTREST .AAL
+					   (<FORM <NTH ,LONGS
+						       <+ <CHTYPE .D FIX> 1>>
+						  '.PACKET
+						  <1 .ARGL>>)>>>)
+		  (<TYPE? .D SHORT>
+		   <COND (<AND <0? <MOD <CHTYPE .D FIX> 2>>
+			       <NOT <EMPTY? <REST .ADESC>>>
+			       <NOT <EMPTY? <REST .ARGL>>>
+			       <TYPE? <2 .ADESC> SHORT>>
+			  <SET AAL
+			       <REST
+				<PUTREST .AAL
+					 (<FORM <NTH ,LONGS
+						     <+ </ <CHTYPE .D FIX> 2>
+							1>>
+						'.PACKET
+						<COMBINE <1 .ARGL> <2 .ARGL>>>)>>>
+			  <SET ARGL <REST .ARGL>>
+			  <SET ADESC <REST .ADESC>>)
+			 (T
+			  <SET AAL
+			       <REST
+				<PUTREST .AAL
+					 (<FORM <NTH ,SHORTS
+						     <+ <CHTYPE .D FIX> 1>>
+						'.PACKET
+						<1 .ARGL>>)>>>)>)
+		  (<TYPE? .D BYTE>
+		   <PROG ((OFFS <TUPLE .D <> <> <>>) 
+			  (ARGS <TUPLE <1 .ARGL> <> <> <>>) (CCT 1))
+		      <COND (<AND <0? <MOD <CHTYPE .D FIX> 4>>
+				  <NOT <EMPTY? <REST .ADESC>>>
+				  <NOT <EMPTY? <REST .ARGL>>>
+				  <TYPE? <2 .ADESC> SHORT BYTE>>
+			     <SET CCT 2>
+			     <2 .OFFS <2 .ADESC>>
+			     <2 .ARGS <2 .ARGL>>
+			     <COND (<AND <TYPE? <2 .ADESC> BYTE>
+					 <NOT <EMPTY? <REST .ADESC 2>>>
+					 <NOT <EMPTY? <REST .ARGL 2>>>
+					 <TYPE? <3 .ADESC> SHORT BYTE>>
+				    <SET CCT 3>
+				    <3 .OFFS <3 .ADESC>>
+				    <3 .ARGS <3 .ARGL>>
+				    <COND (<AND <TYPE? <3 .ADESC> BYTE>
+						<NOT <EMPTY? <REST .ADESC 3>>>
+						<NOT <EMPTY? <REST .ARGL 3>>>
+						<TYPE? <4 .ADESC> BYTE>>
+					   <SET CCT 4>
+					   <4 .OFFS <4 .ADESC>>
+					   <4 .ARGS <4 .ARGL>>)>)>)
+			    (<AND <0? <MOD <CHTYPE .D FIX> 2>>
+				  <NOT <EMPTY? <REST .ADESC>>>
+				  <NOT <EMPTY? <REST .ARGL>>>
+				  <TYPE? <2 .ADESC> BYTE>>
+			     <2 .OFFS <2 .ADESC>>
+			     <2 .ARGS <2 .ARGL>>
+			     <SET CCT 2>)>
+		      <COND (<1? .CCT>
+			     <SET AAL <REST
+				       <PUTREST .AAL
+						(<FORM <NTH ,BYTE-MACS
+							    <+ <CHTYPE .D FIX> 1>>
+						       '.PACKET
+						       <1 .ARGL>>)>>>)
+			    (T
+			     <SET AAL
+				  <REST
+				   <PUTREST .AAL
+					    (<COMBINE-HAIRY .OFFS .ARGS .CCT
+							    <NTH ,SHORTS
+								 <+
+								  </ <CHTYPE .D FIX>
+								     2> 1>>
+							    <NTH ,LONGS
+								 <+
+								  </ <CHTYPE .D FIX>
+								     4> 1>>>)>>>
+			     <SET ARGL <REST .ARGL <- .CCT 1>>>
+			     <SET ADESC <REST .ADESC <- .CCT 1>>>)>>)
+		  (<TYPE? .D COUNT COUNT-STRING>
+		   <SET COUNTER (.D <1 .ARGL>)>)
+		  (T
+		   <ERROR BAD-DESCRIPTOR .OD>)>
+	    <SET ARGL <REST .ARGL>>
+	    <SET ADESC <REST .ADESC>>>
+	 <COND (<==? <OP-REPLY? .OD> T>
+		<SET VALDECL '<OR FALSE UVECTOR>>
+		<SET REPLY? T>)
+	       (<==? <OP-REPLY? .OD> ERROR>
+		<SET VALDECL '<OR ATOM FALSE>>
+		<SET REPLY? ERROR>)
+	       (<==? <OP-REPLY? .OD> STRING>
+		<SET VALDECL '<OR STRING FALSE>>
+		<SET REPLY? STRING>)
+	       (<OP-REPLY? .OD>
+		<SET VALDECL '<OR FIX FALSE>>
+		<COND (<==? <OP-REPLY? .OD> LONG>
+		       <SET REPLY? 1>)
+		      (T
+		       <SET REPLY? 2>)>)
+	       (T
+		<SET REPLY? <>>)>
+	 <COND (<NOT .COUNTER>
+		<COND (<==? <LENGTH .ARGL> 1>
+		       <COND (<TYPE? <1 .ARGL> STRING UVECTOR>
+			      <SET ARGL (<1 .ARGL> <LENGTH <1 .ARGL>>)>)
+			     (T
+			      <SET FARGL <1 .ARGL>>
+			      <SET ARGL ('.FROB <FORM LENGTH '.FROB>)>)>)>
+		<SET AUXL (('PACKET:UVECTOR ',SEND-PACKET))>
+		<COND (.FARGL
+		       <SET AUXL ((FROB .FARGL) !.AUXL)>)>
+		<SET RES
+		   <FORM BIND .AUXL
+		      !.ALIST
+		      <FORM VSB-SEND .VS100 <COND (.REPLY? T)
+						(T
+						 <OP-FORCE? .OD>)>
+			    .REPLY? '.PACKET ,SEND-PACKET-WORD-LENGTH
+			    !.ARGL>>>)
+	       (T
+		<SET AUXL (('PACKET:UVECTOR ',SEND-PACKET))>
+		<SET RES
+		   <FORM BIND .AUXL
+		      !.ALIST
+		      <FORM <NTH ,SHORTS
+				 <+ <CHTYPE <1 .COUNTER> FIX> 1>>
+			    '.PACKET
+			    <2 .COUNTER>>
+		      <FORM VSB-SEND .VS100
+			    <COND (.REPLY? T)
+				  (T <OP-FORCE? .OD>)>
+			    .REPLY?
+			    '.PACKET ,SEND-PACKET-WORD-LENGTH
+			    !<COND (<==? <LENGTH .ARGL> 1>
+				    (<1 .ARGL> <2 .COUNTER>))
+				   (T .ARGL)>>>>)>
+	 <COND (.VALDECL <CHTYPE [.RES .VALDECL] ADECL>)
+	       (T .RES)>)
+	(T
+	 <ERROR NO-SUCH-VSOP!-ERRORS .NAME VSOP>)>>
+
+<DEFINE COMBINE-FCM (CODE FUNC MASK "AUX" FC)
+   <SET FC <COMBINE-BYTES .CODE .FUNC>>
+   <COMBINE .FC .MASK>>
+
+<DEFINE COMBINE-HAIRY (OFFS:<PRIMTYPE VECTOR> ARGS:<PRIMTYPE VECTOR> CCT:FIX
+		       SMAC LMAC)
+   <SET OFFS <SUBSTRUC .OFFS 0 .CCT <REST .OFFS <- <LENGTH .OFFS> .CCT>>>>
+   <SET ARGS <SUBSTRUC .ARGS 0 .CCT <REST .ARGS <- <LENGTH .ARGS> .CCT>>>>
+   <MAPR <>
+	 <FUNCTION (V)
+	    <1 .V <REDUCE <1 .V>>>>
+	 .ARGS>
+   <COND (<AND <TYPE? <1 .OFFS> BYTE>
+	       <TYPE? <2 .OFFS> SHORT>>
+	  <1 .OFFS <CHTYPE </ <CHTYPE <1 .OFFS> FIX> 2> SHORT>>
+	  <FORM .LMAC '.PACKET <COMBINE <1 .ARGS> <2 .ARGS>>>)
+	 (<==? .CCT 2>
+	  <FORM .SMAC '.PACKET <COMBINE-BYTES <1 .ARGS> <2 .ARGS>>>)
+	 (<==? .CCT 3>
+	  <COND (<TYPE? <3 .OFFS> SHORT>
+		 <FORM .LMAC '.PACKET <COMBINE <COMBINE-BYTES <1 .ARGS>
+							      <2 .ARGS>>
+					       <3 .ARGS>>>)
+		(T
+		 <FORM .LMAC '.PACKET <COMBINE <COMBINE-BYTES <1 .ARGS>
+							      <2 .ARGS>>
+					       <COMBINE-BYTES <3 .ARGS> 0>>>)>)
+	 (T
+	  <FORM .LMAC '.PACKET <COMBINE <COMBINE-BYTES <1 .ARGS> <2 .ARGS>>
+					<COMBINE-BYTES <3 .ARGS> <4 .ARGS>>>>)>>
+
+<DEFINE COMBINE-BYTES (X Y)
+   <COND (<AND <TYPE? .X FIX>
+	       <TYPE? .Y FIX>>
+	  <PUTBITS .X <BITS 8 8> .Y>)
+	 (<AND <TYPE? .Y FIX>
+	       <0? .Y>>
+	  .X)
+	 (<AND <TYPE? .X FIX>
+	       <0? .X>>
+	  <FORM LSH .X 8>)
+	 (T
+	  <FORM PUTBITS .X <BITS 8 8> .Y>)>>
+
+<DEFINE COMBINE (X Y)
+   <SET X <REDUCE .X>>
+   <SET Y <REDUCE .Y>>
+   <COND (<AND <TYPE? .X FIX>
+	       <TYPE? .Y FIX>>
+	  <PUTLHW .X .Y>)
+	 (<AND <TYPE? .Y FIX>
+	       <0? .Y>>
+	  .X)
+	 (T
+	  <FORM PUTLHW .X .Y>)>>
+
+<DEFINE REDUCE (X)
+   <COND (<TYPE? .X FIX> .X)
+	 (T
+	  <COND (<TYPE? .X GVAL>)
+		(<AND <TYPE? .X FORM>
+		      <==? <LENGTH .X> 2>
+		      <==? <1 .X> GVAL>
+		      <TYPE? <2 .X> ATOM>>
+		 <SET X <CHTYPE <2 .X> GVAL>>)>
+	  <COND (<AND <TYPE? .X GVAL>
+		      <MANIFEST? <CHTYPE .X ATOM>>>
+		 <SET X <EVAL .X>>)>
+	  .X)>>
+
+<SETG LONGS [O-LPAR0 O-LPAR1 O-LPAR2 O-LPAR3]>
+<SETG SHORTS [O-SPAR0 O-SPAR1 O-SPAR2 O-SPAR3 O-SPAR4 O-SPAR5 O-SPAR6
+	      O-SPAR7]>
+<SETG BYTE-MACS [O-BPAR0 O-BPAR1 O-BPAR2 O-BPAR3 O-BPAR4 O-BPAR5 O-BPAR6
+		 O-BPAR7 O-BPAR8 O-BPAR9 O-BPAR10 O-BPAR11 O-BPAR12 O-BPAR13
+		 O-BPAR14 O-BPAR15]>
+
+<END-DEFINITIONS>
