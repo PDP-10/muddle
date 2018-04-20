@@ -1,32 +1,35 @@
-:midas .temp.;_mdlint; pure
-:midas .temp.;_mdlint; mudits
-:midas .temp.;_mdlint; specs
-:midas .temp.;_mdlint; ldgc
-:midas .temp.;_mdlint; utilit
-:midas .temp.;_mdlint; uuoh
-:midas .temp.;_mdlint; mappur
-:midas .temp.;_mdlint; core
-:midas .temp.;_mdlint; atomhk
-:midas .temp.;_mdlint; interr
-:midas .temp.;_mdlint; gchack
-:midas .temp.;_mdlint; readch
-:midas .temp.;_mdlint; agcmrk
-:midas .temp.;_mdlint; reader
-:midas .temp.;_mdlint; print
-:midas .temp.;_mdlint; bufmod
-:midas .temp.;_mdlint; arith
-:midas .temp.;_mdlint; maps
-:midas .temp.;_mdlint; primit
-:midas .temp.;_mdlint; stbuil
-:midas .temp.;_mdlint; eval
-:midas .temp.;_mdlint; decl
-:midas .temp.;_mdlint; main
-:midas .temp.;_mdlint; mudsqu
-:midas .temp.;_mdlint; fopen
-:midas .temp.;_mdlint; putget
-:midas .temp.;_mdlint; create
-:midas .temp.;_mdlint; save
-:midas .temp.;_mdlint; agc
-:midas .temp.;_mdlint; amsgc
-:midas .temp.;_mdlint; secagc
-:midas .temp.;_mdlint; initm
+:mid323 pure
+:mid323 specs
+:mid323 const
+:mid323 ldgc
+:mid323 utilit
+:mid323 uuoh
+:mid323 mudits
+:mid323 mappur
+:mid323 core
+:mid323 atomhk
+:mid323 interr
+:mid323 nfree
+:mid323 gchack
+:mid323 readch
+:mid323 agcmrk
+:mid323 reader
+:mid323 print
+:mid323 bufmod
+:mid323 arith
+:mid323 maps
+:mid323 primit
+:mid323 stbuil
+:mid323 eval
+:mid323 decl
+:mid323 main
+:mid323 mudsqu
+:mid323 fopen
+:mid323 putget
+:mid323 create
+:mid323 save
+:mid323 ipc
+:mid323 agc
+:mid323 amsgc
+:mid323 secagc
+:mid323 initm
