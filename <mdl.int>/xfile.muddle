@@ -1,34 +1,48 @@
-:mid323 pure
-:mid323 specs
-:mid323 const
-:mid323 ldgc
-:mid323 utilit
-:mid323 uuoh
-:mid323 mudits
-:mid323 mappur
-:mid323 core
-:mid323 atomhk
-:mid323 interr
-:mid323 nfree
-:mid323 gchack
-:mid323 readch
-:mid323 agcmrk
-:mid323 reader
-:mid323 print
-:mid323 bufmod
-:mid323 arith
-:mid323 maps
-:mid323 primit
-:mid323 stbuil
-:mid323 eval
-:mid323 decl
-:mid323 main
-:mid323 mudsqu
-:mid323 fopen
-:mid323 putget
-:mid323 create
-:mid323 save
-:mid323 ipc
-:mid323 agc
-:mid323 amsgc
-:mid323 initm
+:cwd mudsys;
+:mid289 midasm bin_midas
+:job midasm
+:load midasm bin
+purifygmudsys;ts midasm
+:kill
+:midas ts stinkm_stink
+:midasm pure
+:midasm specs
+:midasm const
+:midasm ldgc
+:midasm utilit
+:midasm uuoh
+:midasm mudits
+:midasm mappur
+:midasm core
+:midasm atomhk
+:midasm interr
+:midasm nfree
+:midasm gchack
+:midasm readch
+:midasm agcmrk
+:midasm reader
+:midasm print
+:midasm bufmod
+:midasm arith
+:midasm maps
+:midasm primit
+:midasm stbuil
+:midasm eval
+:midasm decl
+:midasm main
+:midasm mudsqu
+:midasm fopen
+:midasm putget
+:midasm create
+:midasm save
+:midasm ipc
+:midasm agc
+:midasm amsgc
+:midasm initm
+:
+Type:	MMUDDLE LOADER$@$$
+	D$$
+	:PDUMP MUDSAV;TS MUDG
+	$G
+
+:stinkm
