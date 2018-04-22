@@ -44,5 +44,8 @@ Type:	MMUDDLE LOADER$@$$
 	D$$
 	:PDUMP MUDSAV;TS MUDG
 	$G
+Once it returns to DDT:
+	:PDUMP MUDSAV;TS MUDDLE
+	:KILL
 
 :stinkm
