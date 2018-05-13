@@ -1,0 +1,484 @@
+<PACKAGE "ISTRUC">
+
+<ENTRY ISTRUC-GEN>
+
+<USE "CODGEN" "COMCOD" "CACS" "CHKDCL" "COMPDEC">
+
+
+"ILIST, IVECTOR, IUVECTOR AND ISTRING."
+
+<DEFINE ISTRUC-GEN (N W
+		    "AUX" (NAM <NODE-NAME .N>) (K <KIDS .N>)
+			  (NT <NODE-TYPE .N>) (BYTSZ <>))
+	#DECL ((N NUM EL) NODE)
+	<COND (<==? .NAM ITUPLE>
+	       <ITUPLE-GEN .N
+			   .W
+			   <==? .NT ,ISTRUC-CODE>
+			   <1 .K>
+			   <2 .K>
+			   <ISTYPE? <RESULT-TYPE .N>>
+			   .BYTSZ>)
+	      (ELSE
+	       <PROG ((STK (0 !.STK)))
+		     #DECL ((STK) <SPECIAL LIST>)
+		     <COND (<==? .NAM IBYTES>
+			    <SET BYTSZ <1 .K>>
+			    <SET K <REST .K>>)>
+		     <APPLY <NTH ,IERS <LENGTH <MEMQ .NAM ,NAMVEC>>>
+			    .N
+			    .W
+			    <==? .NT ,ISTRUC-CODE>
+			    <1 .K>
+			    <2 .K>
+			    <ISTYPE? <RESULT-TYPE .N>>
+			    .BYTSZ>>)>>
+
+<DEFINE ILIST-GEN (N W GENR NUMN EL TYP BYTSZ "AUX" NUM START TEM END ELD) 
+	#DECL ((N NUMN EL) NODE (NUM VALUE) DATUM (START END) ATOM)
+	<SET NUM <GEN .NUMN DONT-CARE>>
+	<EMIT <INSTRUCTION `PUSH  `P*  !<ADDR:VALUE .NUM>>>
+	<RET-TMP-AC .NUM>
+	<STACK:ARGUMENT <REFERENCE ()>>
+	<STACK:ARGUMENT <REFERENCE ()>>
+	<ADD:STACK 4>
+	<ADD:STACK PSLOT>
+	<COND (.GENR <SET ELD <GEN .EL DONT-CARE>>)>
+	<REGSTO T>
+	<LABEL:TAG <SET START <MAKE:TAG>>>
+	<EMIT '<`SOSGE  `(P) >>
+	<BRANCH:TAG <SET END <MAKE:TAG>>>
+	<RET-TMP-AC <COND (.GENR <DOEVS .ELD <DATUM ,AC-C ,AC-D>>)
+			  (ELSE <GEN .EL <DATUM ,AC-C ,AC-D>>)>>
+	<REGSTO T>
+	<EMIT '<`MOVEI  `E* >>
+	<EMIT '<`PUSHJ  `P*  |CICONS >>
+	<EMIT '<`SKIPE  `(TP) >>
+	<EMIT '<`HRRM  `B*  `@  `(TP) >>
+	<EMIT '<`MOVEM  `B*  `(TP) >>
+	<EMIT '<`SKIPN  `(TP)  -2>>
+	<EMIT '<`MOVEM  `B*  `(TP)  -2>>
+	<BRANCH:TAG .START>
+	<LABEL:TAG .END>
+	<EMIT '<`MOVE  `B*  `(TP)  -2>>
+	<EMIT '<`SUB  `TP*  [<4 (4)>]>>
+	<EMIT '<`SUB  `P*  [<1 (1)>]>>
+	<AND .GENR <RET-TMP-AC .ELD>>
+	<SET TEM <DATUM .TYP ,AC-B>>
+	<SGETREG ,AC-B .TEM>
+	<MOVE:ARG .TEM .W>>
+
+<DEFINE IVEC-GEN (N W GENR NUMN EL TYP BYTSZ
+		  "AUX" NT (UV <==? .TYP UVECTOR>) START END TEM (ETY <>) ADS
+			ACS ANAC ATAG DAT AC OFPT ELD TTEM)
+   #DECL ((N NUMN EL) NODE (NT) FIX (DAT TEM) DATUM (AC) AC (OFPT) OFFPTR)
+   <REGSTO T>
+   <RET-TMP-AC <GEN .NUMN <DATUM FIX ,AC-A>>>
+   <COND (.UV <EMIT '<`MOVEI  `O*  |IBLOCK >>)
+	 (ELSE <EMIT '<`MOVEI  `O*  |IBLOK1 >>)>
+   <REGSTO T>
+   <EMIT '<`PUSHJ  `P*  |RCALL >>
+   <COND
+    (<AND <NOT .GENR>
+	  <==? <NODE-TYPE .EL> ,QUOTE-CODE>
+	  <==? <NODE-NAME .EL> #LOSE *000000000000*>>
+     <MOVE:ARG <FUNCTION:VALUE T> .W>)
+    (<AND <NOT .GENR>
+	  <OR <==? <SET NT <NODE-TYPE .EL>> ,QUOTE-CODE>
+	      <==? .NT ,LVAL-CODE>
+	      <==? .NT ,FLVAL-CODE>
+	      <==? .NT ,FGVAL-CODE>
+	      <==? .NT ,GVAL-CODE>>>
+     <SET DAT <DATUM .TYP ,AC-B>>
+     <SGETREG <DATVAL .DAT> .DAT>
+     <MUNG-AC ,AC-B .DAT>
+     <SET TEM
+	  <GEN .EL
+	       <COND (<AND .UV <SET ETY <ISTYPE? <RESULT-TYPE .EL>>>>
+		      <DATUM .ETY <GETREG <>>>)
+		     (ELSE <ANY2ACS>)>>>
+     <EMIT <INSTRUCTION `MOVE  <SET ACS <ACSYM <SET AC <GETREG <>>>>> `B >>
+     <SET ADS <ADDRSYM .AC>>
+     <COND (<==? <NODE-TYPE .NUMN> ,QUOTE-CODE>
+	    <OR <G? <CHTYPE <NODE-NAME .NUMN> FIX> 0>
+		    <MESSAGE ERROR "BAD ARG TO " <NODE-NAME .N>>>)
+	   (ELSE <EMIT <INSTRUCTION `JUMPGE  .ACS <SET END <MAKE:TAG>>>>)>
+     <LABEL:TAG <SET START <MAKE:TAG>>>
+     <MUNG-AC .AC>
+     <SET OFPT <OFFPTR <COND (.UV -1) (ELSE 0)> <DATUM .TYP .AC> .TYP>>
+     <MOVE:ARG .TEM <DATUM <COND (.ETY) (.UV WORD) (ELSE .OFPT)> .OFPT>>
+     <AND <TYPE? <DATVAL .TEM> AC> <MUNG-AC <DATVAL .TEM> .TEM>>
+     <AND <TYPE? <DATTYP .TEM> AC> <MUNG-AC <DATTYP .TEM> .TEM>>
+     <COND (.UV <EMIT <INSTRUCTION `AOBJN  .ACS .START>>)
+	   (ELSE
+	    <EMIT <INSTRUCTION `ADD  .ACS '[<2 (2)>]>>
+	    <EMIT <INSTRUCTION `JUMPL  .ACS .START>>)>
+     <AND <ASSIGNED? END> <LABEL:TAG .END>>
+     <COND (.ETY
+	    <EMIT <INSTRUCTION `MOVEI 
+			       `O* 
+			       <FORM TYPE-CODE!-OP!-PACKAGE .ETY>>>
+	    <EMIT <INSTRUCTION PUTYP!-OP!-PACKAGE `O*  (.ADS)>>)
+	   (.UV
+	    <EMIT <INSTRUCTION GETYP!-OP!-PACKAGE `O*  !<ADDR:TYPE .TEM>>>
+	    <EMIT <INSTRUCTION PUTYP!-OP!-PACKAGE `O*  (.ADS)>>)>
+     <RET-TMP-AC .OFPT>
+     <MOVE:ARG .DAT .W>)
+    (ELSE
+     <REGSTO T>
+     <COND (<==? <NODE-TYPE .NUMN> ,QUOTE-CODE>
+	    <OR <G? <CHTYPE <NODE-NAME .NUMN> FIX> 0>
+		    <MESSAGE ERROR "BAD ARG TO " <NODE-NAME .N>>>)
+	   (ELSE <EMIT <INSTRUCTION `JUMPGE  `B*  <SET END <MAKE:TAG>>>>)>
+     <SET ETY <ISTYPE? <RESULT-TYPE .EL>>>
+     <COND (<AND .UV .CAREFUL <NOT .ETY>>
+	    <EMIT <INSTRUCTION `PUSH  `P*  '[0]>>
+	    <ADD:STACK PSLOT>)>
+     <STACK:ARGUMENT <DATUM .TYP ,AC-B>>
+     <STACK:ARGUMENT <DATUM .TYP ,AC-B>>
+     <ADD:STACK 4>
+     <COND (<AND .ETY .UV>
+	    <COND (<N==? <NODE-TYPE .NUMN> ,QUOTE-CODE>
+		   <EMIT '<`HLRE  `O*  `B >>
+		   <EMIT '<`SUB  `B*  `O* >>)>
+	    <EMIT <INSTRUCTION `MOVEI 
+			       `O* 
+			       <FORM TYPE-CODE!-OP!-PACKAGE .ETY>>>
+	    <EMIT <INSTRUCTION PUTYP!-OP!-PACKAGE
+			       `O* 
+			       <COND (<==? <NODE-TYPE .NUMN> ,QUOTE-CODE>
+				      <NODE-NAME .NUMN>)
+				     (ELSE 0)>
+			       `(B) >>)>
+     <COND (.GENR <SET ELD <GEN .EL DONT-CARE>> <REGSTO T>)>
+     <LABEL:TAG <SET START <MAKE:TAG>>>
+     <SET TTEM
+	  <COND (<AND .UV .ETY> <DATUM .ETY ANY-AC>)
+		(.UV DONT-CARE)
+		(ELSE <DATUM ANY-AC ANY-AC>)>>
+     <SET TEM <COND (.GENR <DOEVS .ELD .TTEM>) (ELSE <GEN .EL .TTEM>)>>
+     <AND <TYPE? <DATVAL .TEM> AC> <MUNG-AC <DATVAL .TEM> .TEM>>
+     <AND <TYPE? <DATTYP .TEM> AC> <MUNG-AC <DATTYP .TEM> .TEM>>
+     <EMIT <INSTRUCTION `MOVE  <SET ACS <ACSYM <SET AC <GETREG <>>>>> `(TP) >>
+     <COND (<AND .UV <NOT .ETY>>
+	    <EMIT <INSTRUCTION GETYP!-OP!-PACKAGE `O*  !<ADDR:TYPE .TEM>>>
+	    <COND (.CAREFUL
+		   <EMIT <INSTRUCTION `SKIPE  '`(P) >>
+		   <BRANCH:TAG <SET ATAG <MAKE:TAG>>>)>
+	    <COND (<==? <NODE-TYPE .NUMN> ,QUOTE-CODE>
+		   <EMIT <INSTRUCTION PUTYP!-OP!-PACKAGE
+				      `O* 
+				      <NODE-NAME .NUMN>
+				      (<ADDRSYM .AC>)>>)
+		  (ELSE
+		   <PUT .AC ,ACPROT T>
+		   <EMIT <INSTRUCTION `HLRE 
+				      <ACSYM <SET ANAC <GETREG <>>>>
+				      <ADDRSYM .AC>>>
+		   <PUT .AC ,ACPROT <>>
+		   <EMIT <INSTRUCTION `SUBM  .ACS <ADDRSYM .ANAC>>>
+		   <EMIT <INSTRUCTION PUTYP!-OP!-PACKAGE
+				      `O* 
+				      (<ADDRSYM .ANAC>)>>)>
+	    <COND (.CAREFUL
+		   <EMIT <INSTRUCTION `MOVEM  `O*  '`(P) >>
+		   <LABEL:TAG .ATAG>
+		   <EMIT <INSTRUCTION `CAIE  `O*  `@  '`(P) >>
+		   <BRANCH:TAG |COMPER >)>)>
+     <SET OFPT <OFFPTR <COND (.UV -1) (ELSE 0)> <DATUM .TYP .AC> .TYP>>
+     <VAR-STORE T>
+     <MOVE:ARG .TEM <DATUM <COND (.UV WORD) (ELSE .OFPT)> .OFPT>>
+     <EMIT <INSTRUCTION `ADD  .ACS <COND (.UV '[<1 (1)>]) (ELSE '[<2 (2)>])>>>
+     <EMIT <INSTRUCTION `MOVEM  .ACS '`(TP) >>
+     <EMIT <INSTRUCTION `JUMPL  .ACS .START>>
+     <RET-TMP-AC .OFPT>
+     <RET-TMP-AC .TEM>
+     <SET TEM <DATUM <COND (<ISTYPE? <RESULT-TYPE .N>>) (ELSE ,AC-A)> ,AC-B>>
+     <EMIT <INSTRUCTION `MOVE  <ACSYM <CHTYPE <DATVAL .TEM> AC>> -2 '`(TP) >>
+     <EMIT <INSTRUCTION `SUB  `TP*  '[<4 (4)>]>>
+     <COND (<AND .UV .CAREFUL <NOT .ETY>>
+	    <EMIT <INSTRUCTION `SUB  `P*  '[<1 (1)>]>>)>
+     <AND <ASSIGNED? END> <LABEL:TAG .END>>
+     <MOVE:ARG .TEM .W>)>>
+
+<DEFINE DOEVS (D W) 
+	#DECL ((D VALUE) DATUM)
+	<STACK:ARGUMENT .D>
+	<REGSTO T>
+	<SUBR:CALL EVAL 1>
+	<MOVE:ARG <FUNCTION:VALUE T> .W>>
+
+<DEFINE ISTR-GEN (N W GENR NUMN EL TYP BYTSZ
+		  "AUX" RES NK TN NN TT ACS OAC TEM BP START END ETY DAT
+			(SOB <==? <NODE-SUBR .N> ,ISTRING>) ELD TTEM
+			(OT <COND (.SOB CHARACTER) (ELSE FIX)>)
+			(NT <COND (.SOB STRING) (ELSE BYTES)>) (SIZ 7) SIZD)
+   #DECL ((N NUMN EL) NODE (TN SIZ) FIX (RES DAT SIZD TEM) DATUM (TT) AC
+	  (NN) <PRIMTYPE WORD> (BYTSZ) <OR FALSE NODE>
+	  (BP) <FORM ANY <LIST ANY>>)
+   <COND (.BYTSZ
+	  <COND (<==? <NODE-TYPE .BYTSZ> ,QUOTE-CODE>
+		 <SET SIZ <NODE-NAME .BYTSZ>>)
+		(ELSE <SET SIZD <GEN .BYTSZ <DATUM FIX ANY-AC>>>)>)>
+   <REGSTO T>
+   <COND (<==? <NODE-TYPE .NUMN> ,QUOTE-CODE>
+	  <SET NK T>
+	  <SGETREG ,AC-A <>>
+	  <AND <OR <L? <SET TN <NODE-NAME .NUMN>> 0> <G? .TN 262143>>
+	      <MESSAGE ERROR "BAD ARG TO ISTRING/IBYTES ">>
+	  <COND (<ASSIGNED? SIZD>
+		 <EMIT '<`MOVEI  `A*  36>>
+		 <EMIT <INSTRUCTION `IDIV  `A*  !<ADDR:VALUE .SIZD>>>
+		 <EMIT <INSTRUCTION `MOVEI  `O*  .TN>>
+		 <EMIT '<`ADDI  `O*  (`A ) -1>>
+		 <EMIT '<`IDIVM  `O*  `A >>)
+		(ELSE
+		 <EMIT <INSTRUCTION `MOVEI 
+				    `A* 
+				    </ <+ .TN </ 36 .SIZ> -1> </ 36 .SIZ>>>>)>)
+	 (ELSE
+	  <SET NK <>>
+	  <SET TEM <GEN .NUMN <DATUM FIX ,AC-A>>>
+	  <MUNG-AC ,AC-A .TEM>
+	  <RET-TMP-AC .TEM>
+	  <SGETREG ,AC-B <>>
+	  <ADD:STACK PSLOT>
+	  <COND (<NOT <ASSIGNED? SIZD>>
+		 <EMIT '<`PUSH  `P*  `A >>
+		 <EMIT <INSTRUCTION `ADDI  `A*  <- </ 36 .SIZ> 1>>>
+		 <EMIT <INSTRUCTION `IDIVI  `A*  </ 36 .SIZ>>>)
+		(ELSE
+		 <EMIT '<`PUSH  `P*  `A >>
+		 <EMIT '<`MOVEI  `A*  36>>
+		 <EMIT <INSTRUCTION `IDIV  `A*  !<ADDR:VALUE .SIZD>>>
+		 <EMIT <INSTRUCTION `MOVE  `O*  (`P )>>
+		 <EMIT '<`ADDI  `O*  (`A ) -1>>
+		 <EMIT '<`IDIVM  `O*  `A >>)>)>
+   <EMIT '<`MOVEI  `O*  |IBLOCK >>
+   <EMIT '<`PUSHJ  `P*  |RCALL >>
+   <SET RES <DATUM UVECTOR ,AC-B>>
+   <SGETREG ,AC-B .RES>
+   <MUNG-AC ,AC-A>
+   <MUNG-AC ,AC-B .RES>
+   <COND
+    (<AND <NOT .GENR> <==? <NODE-TYPE .EL> ,QUOTE-CODE> <NOT <ASSIGNED? SIZD>>>
+     <COND (<NOT <0? <CHTYPE <SET NN <NODE-NAME .EL>> FIX>>>
+	    <OR .NK
+		    <EMIT <INSTRUCTION `JUMPGE  `B*  <SET END <MAKE:TAG>>>>>
+	    <SET NN <WOFBYTE .SIZ <CHTYPE .NN FIX>>>
+	    <SET DAT <DATUM FIX FIX>>
+	    <PUT .DAT ,DATVAL <GETREG .DAT>>
+	    <EMIT <INSTRUCTION `MOVE  <SET ACS <ACSYM <DATVAL .DAT>>> `B >>
+	    <EMIT <INSTRUCTION `MOVE  <SET OAC <ACSYM <GETREG <>>>> [.NN]>>
+	    <LABEL:TAG <SET START <MAKE:TAG>>>
+	    <EMIT <INSTRUCTION `MOVEM 
+			       .OAC
+			       (<ADDRSYM <CHTYPE <DATVAL .DAT> AC>>)>>
+	    <EMIT <INSTRUCTION `AOBJN  .ACS .START>>
+	    <RET-TMP-AC .DAT>
+	    <MUNG-AC <DATVAL .DAT>>)>)
+    (ELSE
+     <OR .NK
+	 <ASSIGNED? SIZD>
+	 <EMIT <INSTRUCTION `JUMPGE  `B*  <SET END <MAKE:TAG>>>>>
+     <RET-TMP-AC <STACK:ARGUMENT .RES>>
+     <COND (.NK <EMIT <INSTRUCTION `PUSH  `P*  [.TN]>>)
+	   (ELSE <EMIT '<`PUSH  `P*  `(P) >>)>
+     <EMIT <INSTRUCTION `PUSH 
+			`P* 
+			[<SET BP
+			  <FORM (<COND (<NOT <ASSIGNED? SIZD>>
+					<ORB #WORD *000000440000*
+					     <LSH .SIZ 6>>)
+				       (ELSE #WORD *000000440000*)>)
+				(IDX)>>]>>
+     <MAPF <> ,ADD:STACK '(2 PSLOT PSLOT)>
+     <COND (<ASSIGNED? SIZD>
+	    <SGETREG ,AC-A <>>
+	    <EMIT '<`MOVEI  36>>
+	    <EMIT <INSTRUCTION `IDIV  !<ADDR:VALUE .SIZD>>>
+	    <EMIT '<`ASH  `A*  6>>
+	    <EMIT <INSTRUCTION `IOR  `A*  !<ADDR:VALUE .SIZD>>>
+	    <RET-TMP-AC .SIZD>
+	    <EMIT '<`DPB  `A*  [<(#WORD *000000300600*) `(P) >]>>
+	    <EMIT '<`ASH  `A*  6>>
+	    <EMIT '<`HRRM  `A*  `(TP)  -1>>
+	    <COND (<NOT .NK>
+		   <EMIT '<`SKIPG  `(P)  -1>>
+		   <BRANCH:TAG <SET END <MAKE:TAG>>>)>)>
+     <COND (.GENR <SET ELD <GEN .EL DONT-CARE>> <REGSTO T>)>
+     <LABEL:TAG <SET START <MAKE:TAG>>>
+     <SET ETY <ISTYPE? <RESULT-TYPE .EL>>>
+     <SET TTEM
+	  <COND (<AND .CAREFUL <NOT .ETY>> <DATUM ANY-AC ANY-AC>)
+		(ELSE <DATUM .OT ANY-AC>)>>
+     <SET TEM <COND (.GENR <DOEVS .ELD .TTEM>) (ELSE <GEN .EL .TTEM>)>>
+     <COND (<AND .CAREFUL <NOT .ETY>>
+	    <EMIT <INSTRUCTION GETYP!-OP!-PACKAGE `O*  !<ADDR:TYPE .TEM>>>
+	    <EMIT <INSTRUCTION `CAIE  `O*  <FORM TYPE-CODE!-OP!-PACKAGE .OT>>>
+	    <BRANCH:TAG |COMPER >)>
+     <EMIT <INSTRUCTION `HRRZ  <ACSYM <SET TT <GETREG <>>>> '`(TP) >>
+     <PUT <2 .BP> 1 <ADDRSYM .TT>>
+     <EMIT <INSTRUCTION `IDPB  <ACSYM <CHTYPE <DATVAL .TEM> AC>> '`(P) >>
+     <MUNG-AC <DATVAL .TEM> .TEM>
+     <AND <TYPE? <DATTYP .TEM> AC> <MUNG-AC <DATTYP .TEM> .TEM>>
+     <RET-TMP-AC .TEM>
+     <VAR-STORE T>
+     <EMIT '<`SOSE  `(P)  -1>>
+     <BRANCH:TAG .START>
+     <COND (<ASSIGNED? END> <LABEL:TAG .END>)>
+     <EMIT '<`MOVE  `B*  `(TP) >>
+     <EMIT '<`HRL  `B*  `(TP)  -1>>
+     <EMIT '<`SUB  `TP*  [<2 (2)>]>>
+     <EMIT '<`SUB  `P*  [<2 (2)>]>>
+     <SGETREG <DATVAL .RES> .RES>)>
+   <RET-TMP-AC .RES>
+   <COND (.NK
+	  <EMIT <INSTRUCTION `MOVE 
+			     `A* 
+			     [<FORM .TN
+				    (<FORM TYPE-CODE!-OP!-PACKAGE .NT>)>]>>)
+	 (ELSE
+	  <AND <ASSIGNED? END> <LABEL:TAG .END>>
+	  <EMIT '<`POP  `P*  `A >>
+	  <EMIT <INSTRUCTION `HRLI  `A*  <FORM TYPE-CODE!-OP!-PACKAGE .NT>>>)>
+   <COND (<NOT <ASSIGNED? SIZD>>
+	  <EMIT <INSTRUCTION `HRLI 
+			     `B* 
+			     <CHTYPE <ORB <LSH .SIZ 6> <LSH <MOD 36 .SIZ> 12>>
+				     FIX>>>)>
+   <EMIT '<`SUBI  `B*  1>>
+   <MOVE:ARG <FUNCTION:VALUE T> .W>>
+
+<DEFINE ITUPLE-GEN (N W GENR NUMN EL TYP BYTSZ
+		    "AUX" (START <MAKE:TAG>) (END <MAKE:TAG>) NX NT TEM
+			  (NTEM <DATUM FIX ,AC-D>) (DOFLG <>) (ONEFLG <>)
+			  (SFLG <GOOD-TUPLE .N>) ELD TTEM NW)
+   #DECL ((NT) FIX (NTEM TEM) DATUM (START END) ATOM (NUMN N EL) NODE
+	  (DOFLG) <OR FIX ATOM FALSE>)
+   <REGSTO T>
+   <OR <TYPE-OK? <RESULT-TYPE .NUMN> FIX>
+	   <MESSAGE ERROR "BAD ARG TO ITUPLE" .N>>
+   <COND (<==? <NODE-TYPE .NUMN> ,QUOTE-CODE>
+	  <COND (<L? <SET DOFLG <NODE-NAME .NUMN>> 0>
+		 <MESSAGE ERROR "BAD-ARG TO ITUPLE" .N>)>)>
+   <COND
+    (<AND .SFLG <0? .DOFLG>> <ADD:STACK 2>)
+    (<COND
+      (<AND <NOT .GENR>
+	    <==? <NODE-TYPE .EL> ,QUOTE-CODE>
+	    <==? <NODE-NAME .EL> #LOSE *000000000000*>>
+       <COND (.DOFLG <EMIT <INSTRUCTION `MOVEI  `A*  <* .DOFLG 2>>>)
+	     (ELSE
+	      <GEN .NUMN .NTEM>
+	      <AND .CAREFUL <EMIT <INSTRUCTION `JUMPL  `D*  |COMPER >>>
+	      <EMIT <INSTRUCTION `MOVEI  `A*  (<ADDRSYM <CHTYPE <DATVAL .NTEM> AC>>)>>
+	      <EMIT <INSTRUCTION `ASH  `A*  1>>
+	      <EMIT <INSTRUCTION `PUSH  `P*  <ADDRSYM <CHTYPE <DATVAL .NTEM> AC>>>>
+	      <EMIT <INSTRUCTION `JUMPE  <ACSYM <CHTYPE <DATVAL .NTEM> AC>> .END>>
+	      <RET-TMP-AC .NTEM>)>
+       <REGSTO T>
+       <EMIT '<`PUSHJ  `P*  |TPALOC >>
+       <COND (<SET NX <GOOD-TUPLE .N>> <ADD:STACK <+ <CHTYPE .NX FIX> 2>>)
+	     (ELSE <ADD:STACK PSTACK>)>
+       <LABEL:TAG .END>)
+      (<AND <NOT .GENR>
+	    <OR <==? <SET NT <NODE-TYPE .EL>> ,QUOTE-CODE>
+		<==? .NT ,LVAL-CODE>
+		<==? .NT ,FLVAL-CODE>
+		<==? .NT ,FGVAL-CODE>
+		<==? .NT ,GVAL-CODE>>>
+       <COND (<NOT .DOFLG>
+	      <GEN .NUMN .NTEM>
+	      <AND .CAREFUL
+		   <EMIT <INSTRUCTION `JUMPL 
+				      <ACSYM <CHTYPE <DATVAL .NTEM> AC>>
+				      |COMPER >>>)>
+       <SET TEM <GEN .EL <DATUM ANY-AC ANY-AC>>>
+       <COND (<NOT .DOFLG> <TOACV .NTEM> <ADD:STACK PSLOT> <ADD:STACK PSTACK>)>
+       <COND (.DOFLG
+	      <COND (<==? .DOFLG 1> <SET ONEFLG T>)
+		    (<EMIT <INSTRUCTION `PUSH  `P*  <VECTOR <- .DOFLG 1>>>>)>)
+	     (ELSE
+	      <EMIT <INSTRUCTION `PUSH  `P*  <ADDRSYM <CHTYPE <DATVAL .NTEM> AC>>>>
+	      <EMIT <INSTRUCTION `PUSH  `P*  <ADDRSYM <CHTYPE <DATVAL .NTEM> AC>>>>)>
+       <COND (<NOT .DOFLG>
+	      <EMIT <INSTRUCTION `JUMPE  <ACSYM <CHTYPE <DATVAL .NTEM> AC>> .END>>)>
+       <TOACV .TEM>
+       <EMIT <INSTRUCTION `PUSH  `TP*  <ADDRSYM <CHTYPE <DATTYP .TEM> AC>>>>
+       <EMIT <INSTRUCTION `PUSH  `TP*  <ADDRSYM <CHTYPE <DATVAL .TEM> AC>>>>
+       <COND (<NOT .DOFLG>
+	      <EMIT '<`SOSG  -1 `(P) >>
+	      <EMIT <INSTRUCTION `JRST  .END>>
+	      <RET-TMP-AC .NTEM>)>
+       <RET-TMP-AC .TEM>
+       <REGSTO T>
+       <COND (<AND .DOFLG .ONEFLG>)
+	     (<LABEL:TAG .START>
+	      <EMIT '<INTGO!-OP!-PACKAGE>>
+	      <EMIT <INSTRUCTION `PUSH  `TP*  -1 `(TP) >>
+	      <EMIT <INSTRUCTION `PUSH  `TP*  -1 `(TP) >>
+	      <EMIT <COND (.DOFLG '<`SOSE  `(P) >) ('<`SOSE  -1 `(P) >)>>
+	      <EMIT <INSTRUCTION `JRST  .START>>)>
+       <LABEL:TAG .END>
+       <COND (<SET NX <GOOD-TUPLE .N>>
+	      <OR .ONEFLG <EMIT '<`SUB  `P*  [<1 (1)>]>>>
+	      <ADD:STACK <+ <CHTYPE .NX FIX> 2>>)>)
+      (ELSE
+       <COND (<NOT .DOFLG>
+	      <GEN .NUMN .NTEM>
+	      <EMIT <INSTRUCTION `PUSH  `P*  <ADDRSYM <CHTYPE <DATVAL .NTEM> AC>>>>
+	      <EMIT <INSTRUCTION `PUSH  `P*  <ADDRSYM <CHTYPE <DATVAL .NTEM> AC>>>>)
+	     (ELSE
+	      <EMIT <INSTRUCTION `PUSH  `P*  [.DOFLG]>>
+	      <EMIT <INSTRUCTION `PUSH  `P*  [.DOFLG]>>)>
+       <ADD:STACK PSLOT>
+       <ADD:STACK PSTACK>
+       <COND (<NOT .DOFLG>
+	      <AND .CAREFUL
+		   <EMIT <INSTRUCTION `JUMPL 
+				      <ACSYM <CHTYPE <DATVAL .NTEM> AC>>
+				      |COMPER >>>
+	      <EMIT <INSTRUCTION `JUMPE  <ACSYM <CHTYPE <DATVAL .NTEM> AC>> .END>>
+	      <RET-TMP-AC .NTEM>)>
+       <COND (.GENR <SET ELD <GEN .EL DONT-CARE>>)>
+       <COND (<AND .DOFLG <0? .DOFLG>> <REGSTO T>)
+	     (<REGSTO T>
+	      <LABEL:TAG .START>
+	      <EMIT '<INTGO!-OP!-PACKAGE>>
+	      <SET TEM
+		   <COND (.GENR <DOEVS .ELD <DATUM ANY-AC ANY-AC>>)
+			 (ELSE <GEN .EL <DATUM ANY-AC ANY-AC>>)>>
+	      <EMIT <INSTRUCTION `PUSH  `TP*  <ADDRSYM <CHTYPE <DATTYP .TEM> AC>>>>
+	      <EMIT <INSTRUCTION `PUSH  `TP*  <ADDRSYM <CHTYPE <DATVAL .TEM> AC>>>>
+	      <RET-TMP-AC .TEM>
+	      <REGSTO T>
+	      <EMIT <INSTRUCTION `SOSE  -1 `(P) >>
+	      <BRANCH:TAG .START>)>
+       <LABEL:TAG .END>)>)>
+   <COND (<NOT .SFLG>
+	  <COND (.DOFLG <EMIT <INSTRUCTION `MOVEI  `D*  <* .DOFLG 2>>>)
+		(ELSE <EMIT '<`MOVE  `D*  `(P) >> <EMIT '<`ASH  `D*  1>>)>
+	  <EMIT '<`AOS  `(P) >>)
+	 (<EMIT <INSTRUCTION `MOVEI  `D*  <* .DOFLG 2>>>)>
+   <SET NW <TUPLE:FINAL>>
+   <COND (<==? .W DONT-CARE> .NW) (ELSE <MOVE:ARG .W .NW>)>>
+
+<SETG NAMVEC '![ITUPLE ILIST IFORM IVECTOR IUVECTOR ISTRING IBYTES!]>
+
+<SETG IERS
+      ![,ISTR-GEN
+	,ISTR-GEN
+	,IVEC-GEN
+	,IVEC-GEN
+	,ILIST-GEN
+	,ILIST-GEN
+	,ITUPLE-GEN!]>
+
+<DEFINE WOFBYTE (SIZ VAL "AUX" (M <MOD 36 .SIZ>) (NUM </ 36 .SIZ>)) 
+	#DECL ((SIZ VAL NUM M) FIX)
+	<REPEAT ((TOT 0))
+		#DECL ((TOT) FIX)
+		<SET TOT <CHTYPE <ORB <LSH .TOT .SIZ> .VAL> FIX>>
+		<AND <L? <SET NUM <- .NUM 1>> 0> <RETURN <LSH .TOT .M>>>>>
+<ENDPACKAGE>

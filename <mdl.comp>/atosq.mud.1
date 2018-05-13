@@ -1,0 +1,24 @@
+
+
+        <TITLE  ATOSQ>
+
+        <DECLARE ("VALUE" ANY <PRIMTYPE WORD>)>
+        <DPUSH  TP* (AB)>
+        <PUSHJ  P* IATOSQ>
+        <JRST   FINIS>
+
+        <INTERNAL-ENTRY IATOSQ 1>
+        <SUBM   M* (P)>
+        <MOVE   E* (TP)>
+        <PUSHJ  P* ATOSQ>
+        <JRST	FALS>
+        <MOVE   B* E>
+        <MOVSI  A* <TYPE-CODE FIX>>
+FOO	<SUB	TP* [<(2) 2>]>
+        <JRST   MPOPJ>
+
+
+FALS	<MOVEI	B* 0>
+	<MOVSI	A* <TYPE-CODE FALSE>>
+	<JRST	FOO>
+

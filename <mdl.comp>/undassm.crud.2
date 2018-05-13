@@ -1,0 +1,4329 @@
+<DEFINE MERGE-STATE (STATV) 
+   #DECL ((STATV) SAVED-STATE)
+   <MAPF <>
+    <FUNCTION (STATV
+	       "AUX" (AC <1 .STATV>) (DATS <REST .STATV 2>)
+		     (STATAC <ACRESIDUE .AC>) (NINACS ()) (NRES ()))
+       #DECL ((STATV) <LIST AC ANY [REST <LIST SYMBOL ANY>]>
+	      (AC) AC (DATS) <LIST [REST <LIST SYMBOL ANY>]>
+	      (STATAC) <OR FALSE <LIST [REST SYMBOL]>>
+	      (NRES) <LIST [REST SYMBOL]>
+	      (NINACS) <LIST [REST <LIST SYMBOL ANY>]>)
+       <MAPF <>
+	<FUNCTION (ACX
+		   "AUX" (SYMT <1 .ACX>) (INAC <2 .ACX>) (OINAC <SINACS .SYMT>)
+			 (TEM <>) (PMERG T))
+		#DECL ((ACX) <LIST SYMBOL ANY>
+		       (SYMT) SYMBOL
+		       (INAC OINAC) <PRIMTYPE LIST>)
+		<COND (<TYPE? .SYMT SYMTAB>
+		       <COND (<STORED .SYMT>
+			      <PUT .SYMT
+				   ,STORED
+				   <GET-STORED .SYMT <3 .ACX> <4 .ACX>>>)>
+		       <COND (<AND <SS-POTENT-SLOT .ACX> <NOT <PROG-AC .SYMT>>>
+			      <SET PMERG <>>)>)>
+		<COND
+		 (<AND <MEMQ .SYMT .STATAC>
+		       .OINAC
+		       .INAC
+		       .PMERG
+		       <==? <DATVAL .INAC> <DATVAL .OINAC>>
+		       <OR <==? <DATTYP .INAC> <DATTYP .OINAC>>
+			   <AND <TYPE? .SYMT SYMTAB>
+				<SET TEM
+				     <ISTYPE? <1 <CHTYPE <DECL-SYM .SYMT>
+							 LIST>>>>
+				<OR <==? <DATTYP .INAC> .TEM>
+				    <==? <DATTYP .OINAC> .TEM>>>>>
+		  <SET NRES (.SYMT !.NRES)>
+		  <SET NINACS
+		       ((.SYMT <DATUM <OR .TEM <DATTYP .INAC>> <DATVAL .INAC>>)
+			!.NINACS)>
+		  <COND (<AND .TEM
+			      <OR <TYPE? <SET TEM <DATTYP .INAC>> AC>
+				  <TYPE? <SET TEM <DATTYP .OINAC>> AC>>>
+			 <FLUSH-RESIDUE .TEM .SYMT>)>)>
+		<COND (<AND .OINAC
+			    <OR <==? .AC <DATTYP .OINAC>>
+				<==? .AC <DATVAL .OINAC>>>>
+		       <SMASH-INACS .SYMT <> <>>)>>
+	.DATS>
+       <MAPF <>
+	     <FUNCTION (SYMT) 
+		     #DECL ((SYMT) SYMBOL)
+		     <SMASH-INACS .SYMT <> <>>>
+	     <ACRESIDUE .AC>>
+       <PUT .AC ,ACRESIDUE <COND (<NOT <EMPTY? .NRES>> .NRES)>>
+       <MAPF <>
+	     <FUNCTION (SYMB "AUX" (SYMT <1 .SYMB>) (ELEIN <2 .SYMB>)) 
+		     #DECL ((SYMT) SYMBOL)
+		     <SMASH-INACS .SYMT .ELEIN>>
+	     .NINACS>>
+    .STATV>>
+
+	<TITLE MERGE-STATE>
+
+	<DECLARE ("VALUE" <OR COMMON!-COMPDEC!-PACKAGE FALSE 
+SYMTAB!-COMPDEC!-PACKAGE TEMP!-COMPDEC!-PACKAGE> SAVED-STATE!-COMPDEC!-PACKAGE)>
+	<PUSH	TP* (AB) >
+	<PUSH	TP* (AB) 1>
+	<PUSHJ	P* TAG1>
+	<JRST	|FINIS >
+TAG1	<SUBM	M* (P) >				    ; 4
+	<PUSH	TP* <MQUOTE %<TYPE-W SAVED-STATE!-COMPDEC!-PACKAGE LIST>>>; [2]
+	<PUSH	TP* [0]>				    ; [3]
+	<INTGO>
+	<MOVE	B* (TP) -2>				    ; (1)
+	<MOVEM	B* (TP) >				    ; (3)
+	<MOVE	A* <TYPE-WORD FALSE>>
+	<MOVEI	B* 0>
+	<MOVE	D* (TP) >				    ; (3)
+	<JUMPE	D* TAG2>
+TAG25	<PUSH	TP* [0]>				    ; 15 [4]
+	<PUSH	TP* [0]>				    ; [5]
+	<MOVE	PVP* (D) 1>
+	<PUSH	TP* <MQUOTE %<TYPE-W AC!-COMPDEC!-PACKAGE VECTOR>>>; [6]
+	<PUSH	TP* (PVP) 1>				    ; [7]
+	<HRRZ	TVP* (PVP) >
+	<HRRZ	TVP* (TVP) >
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [8]
+	<PUSH	TP* TVP>				    ; [9]
+	<MOVE	SP* (TP) -2>				    ; (7)
+	<PUSH	TP* (SP) 14>				    ; [10]
+	<PUSH	TP* (SP) 15>				    ; [11]
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [12]
+	<PUSH	TP* [0]>				    ; [13]
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [14]
+	<PUSH	TP* [0]>				    ; [15]
+	<SKIPGE	|INTFLG >
+	<TAG3>
+	<MOVE	B* (TP) -6>				    ; (9)
+	<MOVEM	D* (TP) -12>				    ; (3)
+	<JUMPE	B* TAG4>
+TAG17	<PUSH	TP* <TYPE-WORD LIST>>			    ; 36 [16]
+	<PUSH	TP* [0]>				    ; [17]
+	<PUSH	TP* [0]>				    ; [18]
+	<PUSH	TP* [0]>				    ; [19]
+	<MOVE	E* (B) 1>
+	<PUSH	TP* (E) >				    ; [20]
+	<PUSH	TP* (E) 1>				    ; [21]
+	<HRRZ	TVP* (E) >
+	<PUSH	TP* (TVP) >				    ; [22]
+	<PUSH	TP* (TVP) 1>				    ; [23]
+	<PUSH	TP* (TP) -3>				    ; (20) [24]
+	<PUSH	TP* (TP) -3>				    ; (21) [25]
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (TP) -21>				    ; (4)
+	<MOVEM	B* (TP) -20>				    ; (5)
+	<MOVEM	E* (TP) -8>				    ; (17)
+	<MCALL	1 SINACS>
+	<PUSH	TP* A>					    ; [24]
+	<PUSH	TP* B>					    ; [25]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [26]
+	<PUSH	TP* [0]>				    ; [27]
+	<PUSH	TP* <MQUOTE T> -1>			    ; [28]
+	<PUSH	TP* <MQUOTE T>>				    ; [29]
+	<INTGO>
+	<GETYP	O* (TP) -9>				    ; (20)
+	<CAIE	O* <MQUOTE %<TYPE-C SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG5>
+	<MOVE	B* (TP) -8>				    ; (21)
+	<SKIPL	(B) 27>
+	<JRST	TAG6>
+	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; [30]
+	<PUSH	TP* B>					    ; [31]
+	<MOVE	D* (TP) -14>				    ; (17)
+	<JUMPE	D* |CERR2 >
+	<HRRZ	PVP* (D) >
+	<JUMPE	PVP* |CERR2 >
+	<HRRZ	PVP* (PVP) >
+	<JUMPE	PVP* |CERR2 >
+	<PUSH	TP* (PVP) >				    ; [32]
+	<PUSH	TP* (PVP) 1>				    ; [33]
+	<MOVEI	PVP* 3 >
+TAG7	<JUMPE	D* |CERR2 >				    ; 78
+	<HRRZ	D* (D) >
+	<SOJG	PVP* TAG7>
+	<JUMPE	D* |CERR2 >
+	<PUSH	TP* (D) >				    ; [34]
+	<PUSH	TP* (D) 1>				    ; [35]
+	<MOVE	O* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>
+	<MOVEM	O* (TP) -17>				    ; (18)
+	<MOVEM	B* (TP) -16>				    ; (19)
+	<MCALL	3 GET-STORED>
+	<MOVE	D* (TP) -10>				    ; (19)
+	<MOVEM	A* (D) 26>
+	<MOVEM	B* (D) 27>
+TAG6	<MOVE	B* (TP) -12>				    ; 91 (17)
+	<MOVEI	D* 3 >
+TAG8	<JUMPE	B* |CERR2 >				    ; 93
+	<HRRZ	B* (B) >
+	<SOJG	D* TAG8>
+	<JUMPE	B* |CERR2 >
+	<GETYP	O* (B) 0>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	B* (B) 1>
+	<GETYP	O* (B) 0>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG5>
+	<MOVE	B* (TP) -8>				    ; (21)
+	<GETYP	O* (B) 32>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG5>
+	<MOVE	B* <TYPE-WORD FALSE>>
+	<MOVEI	D* 0>
+	<MOVEM	B* (TP) -1>				    ; (28)
+	<MOVEM	D* (TP) >				    ; (29)
+TAG5	<MOVE	B* (TP) -18>				    ; 111 (11)
+	<MOVE	D* (TP) -8>				    ; (21)
+	<GETYP	PVP* (TP) -9>				    ; (20)
+	<JUMPE	B* TAG9>
+TAG11	<GETYP	O* (B) 0>				    ; 115
+	<CAIN	O* (PVP) 0>
+	<CAME	D* (B) 1>
+	<SKIPA	O>
+	<JRST	TAG10>
+	<HRRZ	B* (B) >
+	<JUMPN	B* TAG11>
+	<JRST	TAG9>
+TAG10	<GETYP	O* (TP) -5>				    ; 123 (24)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG9>
+	<GETYP	O* (TP) -7>				    ; (22)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<SKIPL	(TP) >					    ; (29)
+	<JRST	TAG9>
+	<MOVE	B* (TP) -6>				    ; (23)
+	<HRRZ	D* (B) >
+	<MOVE	PVP* (D) >
+	<MOVE	TVP* (D) 1>
+	<MOVE	D* (TP) -4>				    ; (25)
+	<HRRZ	A* (D) >
+	<GETYP	O* (A) 0>
+	<GETYP	C* PVP>
+	<CAMN	TVP* (A) 1>
+	<CAIE	O* (C) 0>
+	<JRST	TAG9>
+	<MOVE	E* (B) >
+	<MOVE	C* (B) 1>
+	<GETYP	O* (D) 0>
+	<GETYP	A* E>
+	<CAMN	C* (D) 1>
+	<CAIE	O* (A) 0>
+	<SKIPA	O>
+	<JRST	TAG12>
+	<GETYP	O* (TP) -9>				    ; (20)
+	<CAIE	O* <MQUOTE %<TYPE-C SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG9>
+	<MOVE	A* (TP) -8>				    ; (21)
+	<MOVE	SP* (A) 13>
+	<JUMPE	SP* |CERR2 >
+	<GETYP	O* (SP) 0>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	SP* (SP) 1>
+	<PUSH	TP* (SP) >				    ; [30]
+	<PUSH	TP* (SP) 1>				    ; [31]
+	<MCALL	1 ISTYPE?>
+	<MOVEM	A* (TP) -3>				    ; (26)
+	<MOVEM	B* (TP) -2>				    ; (27)
+	<GETYP	O* A>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG9>
+	<MOVE	D* (TP) -6>				    ; (23)
+	<MOVE	PVP* (D) >
+	<MOVE	TVP* (D) 1>
+	<GETYP	O* A>
+	<GETYP	E* PVP>
+	<CAMN	TVP* B>
+	<CAIE	O* (E) 0>
+	<SKIPA	O>
+	<JRST	TAG12>
+	<MOVE	C* (TP) -4>				    ; (25)
+	<MOVE	E* (C) >
+	<MOVE	SP* (C) 1>
+	<GETYP	O* A>
+	<GETYP	C* E>
+	<CAMN	SP* B>
+	<CAIE	O* (C) 0>
+	<JRST	TAG9>
+TAG12	<MOVE	E* (TP) -14>				    ; 183 (15)
+	<MOVE	C* (TP) -9>				    ; (20)
+	<MOVE	D* (TP) -8>				    ; (21)
+	<PUSHJ	P* |C1CONS >
+	<MOVE	C* (TP) -9>				    ; (20)
+	<MOVE	D* (TP) -8>				    ; (21)
+	<MOVEI	E* 0>
+	<MOVEM	B* (TP) -14>				    ; (15)
+	<PUSHJ	P* |C1CONS >
+	<MOVEM	B* (TP) -12>				    ; (17)
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (TP) -11>				    ; (18)
+	<MOVEM	B* (TP) -10>				    ; (19)
+	<MOVE	D* (TP) -3>				    ; (26)
+	<MOVE	PVP* (TP) -2>				    ; (27)
+	<GETYP	O* D>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG13>
+	<MOVE	TVP* (TP) -6>				    ; (23)
+	<MOVE	D* (TVP) >
+	<MOVE	PVP* (TVP) 1>
+TAG13	<PUSH	TP* D>					    ; 204 [30]
+	<PUSH	TP* PVP>				    ; [31]
+	<MOVE	D* (TP) -8>				    ; (23)
+	<HRRZ	PVP* (D) >
+	<PUSH	TP* (PVP) >				    ; [32]
+	<PUSH	TP* (PVP) 1>				    ; [33]
+	<MCALL	2 DATUM>
+	<MOVE	C* A>
+	<MOVE	D* B>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+	<HRRM	B* @ (TP) -10>				    ; (19)
+	<MOVEM	B* (TP) -10>				    ; (19)
+	<MOVE	C* <TYPE-WORD LIST>>
+	<MOVE	D* (TP) -12>				    ; (17)
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVEM	B* (TP) -12>				    ; (17)
+	<MOVE	D* (TP) -16>				    ; (13)
+	<HRRM	D* @ B>
+	<MOVE	B* (TP) -12>				    ; (17)
+	<MOVEM	B* (TP) -16>				    ; (13)
+	<GETYP	O* (TP) -3>				    ; (26)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG9>
+	<MOVE	D* (TP) -6>				    ; (23)
+	<MOVE	PVP* (D) >
+	<MOVE	TVP* (D) 1>
+	<MOVEM	PVP* (TP) -3>				    ; (26)
+	<MOVEM	TVP* (TP) -2>				    ; (27)
+	<GETYP	O* PVP>
+	<CAIN	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG14>
+	<MOVE	D* (TP) -4>				    ; (25)
+	<MOVE	C* (D) >
+	<MOVE	E* (D) 1>
+	<MOVEM	C* (TP) -3>				    ; (26)
+	<MOVEM	E* (TP) -2>				    ; (27)
+	<GETYP	O* C>
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG9>
+TAG14	<PUSH	TP* (TP) -3>				    ; 245 (26) [30]
+	<PUSH	TP* (TP) -3>				    ; (27) [31]
+	<PUSH	TP* (TP) -11>				    ; (20) [32]
+	<PUSH	TP* (TP) -11>				    ; (21) [33]
+	<MCALL	2 FLUSH-RESIDUE>
+TAG9	<GETYP	O* (TP) -5>				    ; 250 (24)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG15>
+	<MOVE	B* (TP) -4>				    ; (25)
+	<MOVE	D* (B) >
+	<MOVE	PVP* (B) 1>
+	<GETYP	O* D>
+	<CAMN	PVP* (TP) -22>				    ; (7)
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<SKIPA	O>
+	<JRST	TAG16>
+	<HRRZ	B* (B) >
+	<MOVE	TVP* (B) >
+	<MOVE	E* (B) 1>
+	<GETYP	O* TVP>
+	<CAMN	E* (TP) -22>				    ; (7)
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG15>
+TAG16	<PUSH	TP* (TP) -9>				    ; 268 (20) [30]
+	<PUSH	TP* (TP) -9>				    ; (21) [31]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [32]
+	<PUSH	TP* [0]>				    ; [33]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [34]
+	<PUSH	TP* [0]>				    ; [35]
+	<MCALL	3 SMASH-INACS>
+TAG15	<SUB	TP* [<(14) 14>]>			    ; 275
+	<MOVE	B* (TP) -10>				    ; (5)
+	<HRRZ	B* (B) >
+	<JUMPN	B* TAG17>
+TAG4	<MOVE	B* (TP) -8>				    ; 279 (7)
+	<MOVE	D* (B) 14>
+	<MOVE	PVP* (B) 15>
+	<JUMPE	PVP* TAG18>
+TAG19	<MOVE	TVP* (PVP) >				    ; 283
+	<MOVE	A* (PVP) 1>
+	<SKIPGE	|INTFLG >
+	<SAVAC	O* [<(*71500*) 4>]>
+	<PUSH	TP* TVP>				    ; [16]
+	<PUSH	TP* A>					    ; [17]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [18]
+	<PUSH	TP* [0]>				    ; [19]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [20]
+	<PUSH	TP* [0]>				    ; [21]
+	<MOVEM	D* (TP) -17>				    ; (4)
+	<MOVEM	PVP* (TP) -16>				    ; (5)
+	<MCALL	3 SMASH-INACS>
+	<MOVE	D* (TP) -11>				    ; (4)
+	<MOVE	PVP* (TP) -10>				    ; (5)
+	<HRRZ	PVP* (PVP) >
+	<JUMPN	PVP* TAG19>
+TAG18	<MOVE	B* (TP) >				    ; 300 (15)
+	<JUMPN	B* TAG20>
+	<MOVE	D* <TYPE-WORD FALSE>>
+	<MOVEI	PVP* 0>
+	<JRST	TAG21>
+TAG20	<MOVE	D* <TYPE-WORD LIST>>			    ; 305
+	<MOVE	PVP* B>
+TAG21	<MOVE	TVP* (TP) -8>				    ; 307 (7)
+	<MOVEM	D* (TVP) 14>
+	<MOVEM	PVP* (TVP) 15>
+	<MOVE	C* (TP) -2>				    ; (13)
+	<MOVE	A* <TYPE-WORD FALSE>>
+	<MOVEI	B* 0>
+	<JUMPE	C* TAG22>
+TAG24	<MOVE	E* (C) 1>				    ; 314
+	<PUSH	TP* (E) >				    ; [16]
+	<PUSH	TP* (E) 1>				    ; [17]
+	<HRRZ	E* (E) >
+	<GETYP	O* (E) 0>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	E* (E) 1>
+	<PUSH	TP* (E) >				    ; [18]
+	<PUSH	TP* (E) 1>				    ; [19]
+	<SKIPGE	|INTFLG >
+	<TAG23>
+	<PUSH	TP* (TP) -3>				    ; (16) [20]
+	<PUSH	TP* (TP) -3>				    ; (17) [21]
+	<PUSH	TP* (TP) -3>				    ; (18) [22]
+	<PUSH	TP* (TP) -3>				    ; (19) [23]
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (TP) -19>				    ; (4)
+	<MOVEM	C* (TP) -18>				    ; (5)
+	<MCALL	2 SMASH-INACS>
+	<SUB	TP* [<(4) 4>]>
+	<MOVE	C* (TP) -10>				    ; (5)
+	<HRRZ	C* (C) >
+	<JUMPN	C* TAG24>
+TAG22	<SUB	TP* [<(12) 12>]>			    ; 337
+	<HRRZ	O* @ (TP) >				    ; (3)
+	<MOVEM	O* (TP) >				    ; (3)
+	<JUMPN	O* TAG25>
+TAG2	<SUB	TP* [<(4) 4>]>				    ; 341
+	<JRST	|MPOPJ >
+	<0>
+TAG3	<*120012*>					    ; 344
+	<(*121500*) 0>
+	<IMULI	TB* (TP) -9>				    ; (-10)
+	<IMULI	TB* (B) 0>
+	<IMULI	TB* (B) 0>
+	<IMULI	TB* (B) 32>
+	<IMULI	TB* (B) 0>
+	<IMULI	TB* (TP) -5>				    ; (-6)
+	<IMULI	TB* (TP) -7>				    ; (-8)
+	<IMULI	TB* (A) 0>
+	<IMULI	TB* 6 >
+	<IMULI	TB* (D) 0>
+	<IMULI	TB* 5 >
+	<IMULI	TB* (SP) 0>
+	<IMULI	TB* 1 >
+	<IMULI	TB* 4 >
+	<IMULI	TB* (TP) -3>				    ; (-4)
+	<IMULI	TB* 3 >
+	<IMULI	TB* 7 >
+	<(14) 14>
+	<(*71500*) 4>
+	<IMULI	TB* (E) 0>
+TAG23	<(*12*) 0>					    ; 366
+	<FSB	O* O>
+	<(4) 4>
+	<(12) 12>
+	<(1) 4>
+	<(*61661*) *632265*>
+	<0>
+	<(1) 2>
+
+
+<DEFINE RESTORE-STATE (STATV
+		       "OPTIONAL" (NORET T)
+		       "AUX" (MUNGED-SYMS ()) PA OACR)
+   #DECL ((STATV) SAVED-STATE (PA) <OR FALSE <LIST NODE>> (OACR) <OR FALSE LIST>)
+   <MAPF <>
+    <FUNCTION (ACLST
+	       "AUX" (AC <1 .ACLST>) (SMT <2 .ACLST>) (SYMT <REST .ACLST 2>))
+       #DECL ((ACLST)
+	      <LIST AC
+		    <OR FALSE <LIST [REST SYMBOL]>>
+		    [REST <LIST SYMBOL ANY>]>
+	      (SYMT)
+	      <LIST [REST <LIST SYMBOL ANY>]>
+	      (AC)
+	      AC
+	      (SMT)
+	      <OR FALSE <LIST [REST SYMBOL]>>)
+       <AND .SMT <EMPTY? .SMT> <SET SMT <>>>
+       <MAPF <>
+	     <FUNCTION (ST) 
+		     <OR <MEMQ .ST .MUNGED-SYMS> <SMASH-INACS .ST <> <>>>>
+	     <ACRESIDUE .AC>>
+       <AND .SMT <SET SMT <LIST !.SMT>>>
+       <SET OACR <ACRESIDUE .AC>>
+       <PUT .AC ,ACRESIDUE .SMT>
+       <MAPF <>
+	<FUNCTION (SYMB "AUX" (SYMT <1 .SYMB>) (INAC <2 .SYMB>)) 
+		#DECL ((SYMB) <LIST SYMBOL ANY> (SYMT) SYMBOL)
+		<COND (<TYPE? .SYMT SYMTAB>
+		       <PUT .SYMT
+			    ,STORED
+			    <GET-STORED .SYMT <3 .SYMB> <4 .SYMB>>>
+		       <COND (<SET PA <PROG-AC .SYMT>>
+			      <AND <STORED .SYMT>
+				   <NOT <MEMQ .SYMT <LOOP-VARS <1 .PA>>>>
+				   <NOT .NORET>
+				   <NOT <MEMQ .SYMT .OACR>>
+				   <KILL-LOOP-AC .SYMT>
+				   <FLUSH-RESIDUE .AC .SYMT>
+				   <SET INAC <>>>)
+			     (<4 .SYMB>
+			      <FLUSH-RESIDUE .AC .SYMT>
+			      <SET INAC <>>)>)>
+		<OR <MEMQ .SYMT .MUNGED-SYMS>
+		    <SET MUNGED-SYMS (.SYMT !.MUNGED-SYMS)>>
+		<SMASH-INACS .SYMT .INAC>>
+	.SYMT>>
+    .STATV>>
+
+	<TITLE RESTORE-STATE>
+
+	<DECLARE ("VALUE" <OR COMMON!-COMPDEC!-PACKAGE FALSE 
+SYMTAB!-COMPDEC!-PACKAGE TEMP!-COMPDEC!-PACKAGE> SAVED-STATE!-COMPDEC!-PACKAGE 
+"OPTIONAL" ANY)>
+	<MOVE	A* AB>
+TAG1	<PUSH	TP* (AB) >				    ; 1
+	<PUSH	TP* (AB) 1>
+	<ADD	AB* [<(2) 2>]>
+	<JUMPL	AB* TAG1>
+	<HLRES	A>
+	<ASH	A* -1 >
+	<ADDI	A* TAG2>
+	<PUSHJ	P* @ (A) 1 >
+	<JRST	|FINIS >
+	<TAG3>
+TAG2	<TAG4>						    ; 11
+TAG4	<PUSH	TP* <MQUOTE T> -1>			    ; 12 [2]
+	<PUSH	TP* <MQUOTE T>>				    ; [3]
+TAG3	<SUBM	M* (P) >				    ; 14
+	<PUSH	TP* [0]>				    ; [4]
+	<PUSH	TP* [0]>				    ; [5]
+	<PUSH	TP* <MQUOTE %<TYPE-W SAVED-STATE!-COMPDEC!-PACKAGE LIST>>>; [6]
+	<PUSH	TP* [0]>				    ; [7]
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [8]
+	<PUSH	TP* [0]>				    ; [9]
+	<INTGO>
+	<MOVE	B* (TP) -8>				    ; (1)
+	<MOVEM	B* (TP) -2>				    ; (7)
+	<MOVE	A* <TYPE-WORD FALSE>>
+	<MOVEI	B* 0>
+	<MOVE	D* (TP) -2>				    ; (7)
+	<JUMPE	D* TAG5>
+TAG29	<PUSH	TP* [0]>				    ; 29 [10]
+	<PUSH	TP* [0]>				    ; [11]
+	<MOVE	PVP* (D) 1>
+	<PUSH	TP* <MQUOTE %<TYPE-W AC!-COMPDEC!-PACKAGE VECTOR>>>; [12]
+	<PUSH	TP* (PVP) 1>				    ; [13]
+	<HRRZ	TVP* (PVP) >
+	<PUSH	TP* (TVP) >				    ; [14]
+	<PUSH	TP* (TVP) 1>				    ; [15]
+	<HRRZ	TVP* (PVP) >
+	<HRRZ	TVP* (TVP) >
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [16]
+	<PUSH	TP* TVP>				    ; [17]
+	<SKIPGE	|INTFLG >
+	<TAG6>
+	<MOVEM	D* (TP) -10>				    ; (7)
+	<GETYP	O* (TP) -3>				    ; (14)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG7>
+	<MOVE	B* (TP) -2>				    ; (15)
+	<JUMPN	B* TAG7>
+	<MOVE	C* <TYPE-WORD FALSE>>
+	<MOVEI	E* 0>
+	<MOVEM	C* (TP) -3>				    ; (14)
+	<MOVEM	E* (TP) -2>				    ; (15)
+TAG7	<MOVE	B* (TP) -4>				    ; 53 (13)
+	<MOVE	D* (B) 14>
+	<MOVE	PVP* (B) 15>
+	<JUMPE	PVP* TAG8>
+TAG12	<MOVE	A* PVP>					    ; 57
+	<GETYP	O* (PVP) 0>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	A* (A) 1>
+	<MOVE	TVP* (A) >
+	<MOVE	A* (A) 1>
+	<SKIPGE	|INTFLG >
+	<SAVAC	O* [<(*71500*) 4>]>
+	<MOVEM	D* (TP) -7>				    ; (10)
+	<MOVEM	PVP* (TP) -6>				    ; (11)
+	<MOVE	C* (TP) -8>				    ; (9)
+	<GETYP	E* TVP>
+	<JUMPE	C* TAG9>
+TAG11	<GETYP	O* (C) 0>				    ; 70
+	<MOVE	SP* C>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	SP* (SP) 1>
+	<GETYP	O* (SP) 0>
+	<CAIN	O* (E) 0>
+	<CAME	A* (SP) 1>
+	<SKIPA	O>
+	<JRST	TAG10>
+	<HRRZ	C* (C) >
+	<JUMPN	C* TAG11>
+TAG9	<PUSH	TP* TVP>				    ; 81 [18]
+	<PUSH	TP* A>					    ; [19]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [20]
+	<PUSH	TP* [0]>				    ; [21]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [22]
+	<PUSH	TP* [0]>				    ; [23]
+	<MCALL	3 SMASH-INACS>
+TAG10	<MOVE	D* (TP) -7>				    ; 88 (10)
+	<MOVE	PVP* (TP) -6>				    ; (11)
+	<HRRZ	PVP* (PVP) >
+	<JUMPN	PVP* TAG12>
+TAG8	<GETYP	O* (TP) -3>				    ; 92 (14)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG13>
+	<MOVE	A* (TP) -3>				    ; (14)
+	<MOVE	B* (TP) -2>				    ; (15)
+	<PUSH	P* [0]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<PUSHJ	P* |IILIST >
+	<MOVEM	A* (TP) -3>				    ; (14)
+	<MOVEM	B* (TP) -2>				    ; (15)
+TAG13	<MOVE	B* (TP) -4>				    ; 104 (13)
+	<MOVE	D* (B) 14>
+	<MOVE	PVP* (B) 15>
+	<MOVE	O* (TP) -3>				    ; (14)
+	<MOVEM	O* (B) 14>
+	<MOVE	O* (TP) -2>				    ; (15)
+	<MOVEM	O* (B) 15>
+	<MOVE	TVP* (TP) >				    ; (17)
+	<MOVE	A* <TYPE-WORD FALSE>>
+	<MOVEI	B* 0>
+	<MOVEM	D* (TP) -13>				    ; (4)
+	<MOVEM	PVP* (TP) -12>				    ; (5)
+	<JUMPE	TVP* TAG14>
+TAG28	<PUSH	TP* <TYPE-WORD LIST>>			    ; 117 [18]
+	<PUSH	TP* [0]>				    ; [19]
+	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; [20]
+	<PUSH	TP* [0]>				    ; [21]
+	<MOVE	E* (TVP) 1>
+	<PUSH	TP* (E) >				    ; [22]
+	<PUSH	TP* (E) 1>				    ; [23]
+	<HRRZ	C* (E) >
+	<GETYP	O* (C) 0>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	C* (C) 1>
+	<PUSH	TP* (C) >				    ; [24]
+	<PUSH	TP* (C) 1>				    ; [25]
+	<SKIPGE	|INTFLG >
+	<TAG15>
+	<MOVEM	E* (TP) -6>				    ; (19)
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (TP) -15>				    ; (10)
+	<MOVEM	TVP* (TP) -14>				    ; (11)
+	<GETYP	O* (TP) -3>				    ; (22)
+	<CAIE	O* <MQUOTE %<TYPE-C SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG16>
+	<MOVE	B* (TP) -2>				    ; (23)
+	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; [26]
+	<PUSH	TP* B>					    ; [27]
+	<JUMPE	E* |CERR2 >
+	<HRRZ	C* (E) >
+	<JUMPE	C* |CERR2 >
+	<HRRZ	C* (C) >
+	<JUMPE	C* |CERR2 >
+	<PUSH	TP* (C) >				    ; [28]
+	<PUSH	TP* (C) 1>				    ; [29]
+	<MOVEI	C* 3 >
+TAG17	<JUMPE	E* |CERR2 >				    ; 150
+	<HRRZ	E* (E) >
+	<SOJG	C* TAG17>
+	<JUMPE	E* |CERR2 >
+	<PUSH	TP* (E) >				    ; [30]
+	<PUSH	TP* (E) 1>				    ; [31]
+	<MOVEM	B* (TP) -10>				    ; (21)
+	<MCALL	3 GET-STORED>
+	<MOVE	D* (TP) -4>				    ; (21)
+	<MOVEM	A* (D) 26>
+	<MOVEM	B* (D) 27>
+	<MOVE	D* (TP) -2>				    ; (23)
+	<MOVE	PVP* (D) 32>
+	<MOVE	TVP* (D) 33>
+	<GETYP	O* PVP>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG18>
+	<JUMPGE	B* TAG16>
+	<MOVE	C* (TVP) 1>
+	<ADD	C* [<(60) 60>]>
+	<JUMPGE	C* |CERR2 >
+	<MOVE	E* (C) 1>
+	<JUMPE	E* TAG19>
+TAG20	<GETYP	O* (E) 0>				    ; 173
+	<CAIN	O* <MQUOTE %<TYPE-C SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>
+	<CAME	D* (E) 1>
+	<SKIPA	O>
+	<JRST	TAG16>
+	<HRRZ	E* (E) >
+	<JUMPN	E* TAG20>
+TAG19	<GETYP	O* (TP) -23>				    ; 180 (2)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG16>
+	<MOVE	C* (TP) -20>				    ; (5)
+	<JUMPE	C* TAG21>
+TAG22	<GETYP	O* (C) 0>				    ; 185
+	<CAIN	O* <MQUOTE %<TYPE-C SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>
+	<CAME	D* (C) 1>
+	<SKIPA	O>
+	<JRST	TAG16>
+	<HRRZ	C* (C) >
+	<JUMPN	C* TAG22>
+TAG21	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; 192 [26
+]
+	<PUSH	TP* D>					    ; [27]
+	<MCALL	1 KILL-LOOP-AC>
+	<JUMPGE	B* TAG16>
+	<PUSH	TP* <MQUOTE %<TYPE-W AC!-COMPDEC!-PACKAGE VECTOR>>>; [26]
+	<PUSH	TP* (TP) -13>				    ; (13) [27]
+	<PUSH	TP* (TP) -5>				    ; (22) [28]
+	<PUSH	TP* (TP) -5>				    ; (23) [29]
+	<MCALL	2 FLUSH-RESIDUE>
+	<JUMPGE	B* TAG16>
+	<JRST	TAG23>
+TAG18	<MOVE	C* (TP) -6>				    ; 203 (19)
+	<MOVEI	E* 3 >
+TAG24	<JUMPE	C* |CERR2 >				    ; 205
+	<HRRZ	C* (C) >
+	<SOJG	E* TAG24>
+	<JUMPE	C* |CERR2 >
+	<GETYP	O* (C) 0>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	C* (C) 1>
+	<GETYP	O* (C) 0>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG16>
+	<PUSH	TP* <MQUOTE %<TYPE-W AC!-COMPDEC!-PACKAGE VECTOR>>>; [26]
+	<PUSH	TP* (TP) -13>				    ; (13) [27]
+	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; [28]
+	<PUSH	TP* D>					    ; [29]
+	<MCALL	2 FLUSH-RESIDUE>
+TAG23	<MOVE	B* <TYPE-WORD FALSE>>			    ; 220
+	<MOVEI	D* 0>
+	<MOVEM	B* (TP) -1>				    ; (24)
+	<MOVEM	D* (TP) >				    ; (25)
+TAG16	<MOVE	B* (TP) -16>				    ; 224 (9)
+	<MOVE	D* (TP) -2>				    ; (23)
+	<GETYP	PVP* (TP) -3>				    ; (22)
+	<JUMPE	B* TAG25>
+TAG27	<GETYP	O* (B) 0>				    ; 228
+	<CAIN	O* (PVP) 0>
+	<CAME	D* (B) 1>
+	<SKIPA	O>
+	<JRST	TAG26>
+	<HRRZ	B* (B) >
+	<JUMPN	B* TAG27>
+TAG25	<MOVE	E* (TP) -16>				    ; 235 (9)
+	<MOVE	C* (TP) -3>				    ; (22)
+	<MOVE	D* (TP) -2>				    ; (23)
+	<PUSHJ	P* |C1CONS >
+	<MOVEM	A* (TP) -17>				    ; (8)
+	<MOVEM	B* (TP) -16>				    ; (9)
+TAG26	<PUSH	TP* (TP) -3>				    ; 241 (22) [26]
+	<PUSH	TP* (TP) -3>				    ; (23) [27]
+	<PUSH	TP* (TP) -3>				    ; (24) [28]
+	<PUSH	TP* (TP) -3>				    ; (25) [29]
+	<MCALL	2 SMASH-INACS>
+	<SUB	TP* [<(8) 8>]>
+	<MOVE	TVP* (TP) -6>				    ; (11)
+	<HRRZ	TVP* (TVP) >
+	<JUMPN	TVP* TAG28>
+TAG14	<SUB	TP* [<(8) 8>]>				    ; 250
+	<HRRZ	O* @ (TP) -2>				    ; (7)
+	<MOVEM	O* (TP) -2>				    ; (7)
+	<JUMPN	O* TAG29>
+TAG5	<SUB	TP* [<(10) 10>]>			    ; 254
+	<JRST	|MPOPJ >
+	<(2) 2>
+	<0>
+TAG6	<*120012*>					    ; 258
+	<(*120000*) 0>
+	<IMULI	TB* (TP) -3>				    ; (-4)
+	<IMULI	TB* (PVP) 0>
+	<(*71500*) 4>
+	<IMULI	TB* 7 >
+	<IMULI	TB* (C) 0>
+	<IMULI	TB* (SP) 0>
+TAG15	<*1204*>					    ; 266
+	<(*120000*) 0>
+	<IMULI	TB* 6 >
+	<(60) 60>
+	<IMULI	TB* (E) 0>
+	<IMULI	TB* (TP) -23>				    ; (-24)
+	<IMULI	TB* (C) 0>
+	<IMULI	TB* (C) 0>
+	<IMULI	TB* (B) 0>
+	<(8) 8>
+	<(10) 10>
+	<(2) *16*>
+	<(1) *14*>
+	<(*65523*) *200604*>
+	<0>
+	<(2) 2>
+
+
+<DEFINE ASSERT-TYPES (L) 
+	#DECL ((L) <LIST [REST <LIST SYMTAB ANY ANY>]>)
+	<MAPF <>
+	      <FUNCTION (LL) <SET-CURRENT-TYPE <1 .LL> <2 .LL>>>
+	      .L>>
+
+	<TITLE ASSERT-TYPES>
+
+	<DECLARE ("VALUE" <OR FALSE SYMTAB!-COMPDEC!-PACKAGE> <LIST [REST <LIST 
+SYMTAB!-COMPDEC!-PACKAGE ANY ANY>]>)>
+	<PUSH	TP* (AB) >
+	<PUSH	TP* (AB) 1>
+	<PUSHJ	P* TAG1>
+	<JRST	|FINIS >
+TAG1	<SUBM	M* (P) >				    ; 4
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [2]
+	<PUSH	TP* [0]>				    ; [3]
+	<INTGO>
+	<MOVE	B* (TP) -2>				    ; (1)
+	<MOVEM	B* (TP) >				    ; (3)
+	<MOVE	A* <TYPE-WORD FALSE>>
+	<MOVEI	B* 0>
+	<MOVE	D* (TP) >				    ; (3)
+	<JUMPE	D* TAG2>
+TAG3	<MOVE	PVP* (D) 1>				    ; 15
+	<SKIPGE	|INTFLG >
+	<SAVAC	O* [*120012*]>
+	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; [4]
+	<PUSH	TP* (PVP) 1>				    ; [5]
+	<HRRZ	PVP* (PVP) >
+	<GETYP	O* (PVP) 0>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	PVP* (PVP) 1>
+	<PUSH	TP* (PVP) >				    ; [6]
+	<PUSH	TP* (PVP) 1>				    ; [7]
+	<MOVEM	D* (TP) -4>				    ; (3)
+	<MCALL	2 SET-CURRENT-TYPE>
+	<HRRZ	O* @ (TP) >				    ; (3)
+	<MOVEM	O* (TP) >				    ; (3)
+	<JUMPN	O* TAG3>
+TAG2	<SUB	TP* [<(4) 4>]>				    ; 31
+	<JRST	|MPOPJ >
+	<0>
+	<*120012*>
+	<IMULI	TB* (PVP) 0>
+	<(4) 4>
+	<(1) 4>
+	<(*50753*) *202076*>
+	<0>
+	<(1) 2>
+
+
+<DEFINE SAME-DECL? (D1 D2) <OR <=? .D1 .D2> <NOT <TYPE-OK? .D2 <NOTIFY .D1>>>>>
+
+	<TITLE SAME-DECL?>
+
+	<DECLARE ("VALUE" <OR ATOM FALSE> ANY ANY)>
+	<PUSH	TP* (AB) >				    ; [0]
+	<PUSH	TP* (AB) 1>				    ; [1]
+	<PUSH	TP* (AB) 2>				    ; [2]
+	<PUSH	TP* (AB) 3>				    ; [3]
+	<PUSHJ	P* TAG1>
+	<JRST	|FINIS >
+TAG1	<SUBM	M* (P) >				    ; 6
+	<INTGO>
+	<MOVE	A* (TP) -3>				    ; (0)
+	<MOVE	B* (TP) -2>				    ; (1)
+	<MOVE	C* (TP) -1>				    ; (2)
+	<MOVE	D* (TP) >				    ; (3)
+	<PUSHJ	P* |CIEQUA >
+	<JRST	TAG2>
+	<JRST	TAG3>
+TAG2	<PUSH	TP* (TP) -1>				    ; 16 (2) [4]
+	<PUSH	TP* (TP) -1>				    ; (3) [5]
+	<PUSH	TP* (TP) -5>				    ; (0) [6]
+	<PUSH	TP* (TP) -5>				    ; (1) [7]
+	<MCALL	1 NOTIFY>
+	<PUSH	TP* A>					    ; [6]
+	<PUSH	TP* B>					    ; [7]
+	<MCALL	2 TYPE-OK?>
+	<GETYP	O* A>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG4>
+	<MOVE	A* <MQUOTE T> -1>
+	<MOVE	B* <MQUOTE T>>
+	<JRST	TAG3>
+TAG4	<MOVE	A* <TYPE-WORD FALSE>>			    ; 30
+	<MOVEI	B* 0>
+TAG3	<SUB	TP* [<(4) 4>]>				    ; 32
+	<JRST	|MPOPJ >
+	<IMULI	TB* 1 >
+	<(4) 4>
+	<(2) 6>
+	<(*66261*) *202777*>
+	<0>
+	<(1) 2>
+
+
+<DEFINE AC? (SYMT ACS) 
+	#DECL ((SYMT) SYMTAB (ACS) LIST)
+	<MAPF <>
+	      <FUNCTION (AC) 
+		      #DECL ((AC) LIST)
+		      <REPEAT ((PTR .AC))
+			      #DECL ((PTR) LIST)
+			      <COND (<EMPTY? .PTR> <RETURN <>>)>
+			      <COND (<==? <CSYMT-SLOT .PTR> .SYMT> 
+				     <MAPLEAVE <CINACS-SLOT .PTR>>)>
+			      <SET PTR <REST .PTR ,LENGTH-CSTATE>>>>
+	      .ACS>>
+
+	<TITLE AC?>
+
+	<DECLARE ("VALUE" ANY SYMTAB!-COMPDEC!-PACKAGE LIST)>
+	<PUSH	TP* (AB) >
+	<PUSH	TP* (AB) 1>
+	<PUSH	TP* (AB) 2>
+	<PUSH	TP* (AB) 3>
+	<PUSHJ	P* TAG1>
+	<JRST	|FINIS >
+TAG1	<SUBM	M* (P) >				    ; 6
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [4]
+	<PUSH	TP* [0]>				    ; [5]
+	<INTGO>
+	<MOVE	B* (TP) -2>				    ; (3)
+	<MOVEM	B* (TP) >				    ; (5)
+	<MOVE	A* <TYPE-WORD FALSE>>
+	<MOVEI	B* 0>
+	<MOVE	D* (TP) >				    ; (5)
+	<JUMPE	D* TAG2>
+TAG8	<MOVE	PVP* (D) 1>				    ; 17
+	<SKIPGE	|INTFLG >
+	<SAVAC	O* [*120012*]>
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [6]
+	<PUSH	TP* [0]>				    ; [7]
+	<MOVEM	D* (TP) -2>				    ; (5)
+TAG7	<SKIPGE	|INTFLG >				    ; 23
+	<SAVAC	O* [*120012*]>
+	<JUMPN	PVP* TAG3>
+	<MOVEI	B* 0>
+	<SUB	TP* [<(2) 2>]>
+	<JRST	TAG4>
+TAG3	<MOVEM	PVP* (TP) >				    ; 29 (7)
+	<GETYP	O* (PVP) 0>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	PVP* (PVP) 1>
+	<MOVE	B* (PVP) >
+	<MOVE	TVP* (PVP) 1>
+	<GETYP	O* B>
+	<CAMN	TVP* (TP) -6>				    ; (1)
+	<CAIE	O* <MQUOTE %<TYPE-C SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG5>
+	<MOVE	E* (TP) >				    ; (7)
+	<JUMPE	E* |CERR2 >
+	<HRRZ	E* (E) >
+	<JUMPE	E* |CERR2 >
+	<GETYP	O* (E) 0>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	E* (E) 1>
+	<MOVE	A* (E) >
+	<MOVE	B* (E) 1>
+	<SUB	TP* [<(2) 2>]>
+	<JRST	TAG2>
+TAG5	<MOVE	E* (TP) >				    ; 50 (7)
+	<MOVEI	C* 4 >
+TAG6	<JUMPE	E* |CERR2 >				    ; 52
+	<HRRZ	E* (E) >
+	<SOJG	C* TAG6>
+	<MOVE	PVP* E>
+	<JRST	TAG7>
+TAG4	<MOVE	A* <TYPE-WORD FALSE>>			    ; 57
+	<HRRZ	O* @ (TP) >				    ; (5)
+	<MOVEM	O* (TP) >				    ; (5)
+	<JUMPN	O* TAG8>
+TAG2	<SUB	TP* [<(6) 6>]>				    ; 61
+	<JRST	|MPOPJ >
+	<0>
+	<*120012*>
+	<(2) 2>
+	<IMULI	TB* (PVP) 0>
+	<IMULI	TB* 2 >
+	<IMULI	TB* (E) 0>
+	<(6) 6>
+	<(2) 6>
+	<(*50507*) *650000*>
+	<0>
+	<(1) 2>
+
+
+<DEFINE FIXUP-STORES (STATE) 
+   #DECL ((STATE) <LIST [REST REP-STATE <PRIMTYPE LIST> LIST <OR ATOM FALSE>]>)
+   <REPEAT ((PTR .STATE))
+     <COND (<EMPTY? .PTR> <RETURN>)>
+     <MAPR <>
+      <FUNCTION (STATE-ITEMS "AUX" SYMT PAC (STATE-ITEM <1 .STATE-ITEMS>)) 
+	 <REPEAT ()
+	   <COND (<EMPTY? .STATE-ITEM> <RETURN>)>
+	   <SET SYMT <CSYMT-SLOT .STATE-ITEM>>
+	   <COND (<OR <CPOTLV-SLOT .STATE-ITEM>
+		      <N==? <CSTORED-SLOT .STATE-ITEM> T>>
+		  <COND (<OR <AND <N==? <CSTORED-SLOT .STATE-ITEM> T>
+				  <MEMQ <CSTORED-SLOT .STATE-ITEM> .KILL-LIST>>
+			     <AND <CPOTLV-SLOT .STATE-ITEM>
+				  <CSTORED-SLOT .STATE-ITEM>
+				  <SET PAC <PROG-AC .SYMT>>
+				  <MEMQ .SYMT <LOOP-VARS <PROG-SLOT .PAC>>>
+				  <NOT <STORED-SLOT .PAC>>>>
+			 <PUT .STATE-ITEM ,CSTORED-SLOT <>>)>)>
+	   <COND (<AND <CPOTLV-SLOT .STATE-ITEM>
+		       <OR <NOT <SET PAC <PROG-AC .SYMT>>>
+			   <NOT <MEMQ .SYMT <LOOP-VARS <PROG-SLOT .PAC>>>>>>
+		  <SET STATE-ITEM <REST .STATE-ITEM ,LENGTH-CSTATE>>)
+		 (<RETURN>)>>
+	 <COND
+	  (<NOT <EMPTY? .STATE-ITEM>>
+	   <REPEAT ((START-STATE .STATE-ITEM)
+		    (STATE-ITEM <REST .STATE-ITEM ,LENGTH-CSTATE>))
+	     <COND (<EMPTY? .STATE-ITEM> <RETURN>)>
+	     <SET SYMT <CSYMT-SLOT .STATE-ITEM>>
+	     <COND
+	      (<OR <CPOTLV-SLOT .STATE-ITEM>
+		   <N==? <CSTORED-SLOT .STATE-ITEM> T>>
+	       <COND (<OR <AND <N==? <CSTORED-SLOT .STATE-ITEM> T>
+			       <MEMQ <CSTORED-SLOT .STATE-ITEM> .KILL-LIST>>
+			  <AND <CPOTLV-SLOT .STATE-ITEM>
+			       <CSTORED-SLOT .STATE-ITEM>
+			       <SET PAC <PROG-AC .SYMT>>
+			       <MEMQ .SYMT <LOOP-VARS <PROG-SLOT .PAC>>>
+			       <NOT <STORED-SLOT .PAC>>>>
+		      <PUT .STATE-ITEM ,CSTORED-SLOT <>>)>)>
+	     <COND (<AND <CPOTLV-SLOT .STATE-ITEM>
+			 <OR <NOT <SET PAC <PROG-AC .SYMT>>>
+			     <NOT <MEMQ .SYMT <LOOP-VARS <PROG-SLOT .PAC>>>>>>
+		    <PUTREST .START-STATE <REST .STATE-ITEM ,LENGTH-CSTATE>>)>
+	     <SET STATE-ITEM <REST .STATE-ITEM ,LENGTH-CSTATE>>
+	     <SET START-STATE <REST .START-STATE ,LENGTH-CSTATE>>>)>
+	 <PUT .STATE-ITEMS 1 .STATE-ITEM>>
+      <SAVED-AC-STATE .PTR>>
+     <SET PTR <REST .PTR ,LENGTH-CONTROL-STATE>>>>
+
+	<TITLE FIXUP-STORES>
+
+	<DECLARE ("VALUE" ATOM <LIST [REST REP-STATE!-COMPDEC!-PACKAGE <PRIMTYPE
+LIST> LIST <OR ATOM FALSE>]>)>
+	<PUSH	TP* (AB) >
+	<PUSH	TP* (AB) 1>
+	<PUSHJ	P* TAG1>
+	<JRST	|FINIS >
+TAG1	<SUBM	M* (P) >				    ; 4
+	<INTGO>
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [2]
+	<PUSH	TP* (TP) -1>				    ; (1) [3]
+TAG31	<INTGO>						    ; 9
+	<MOVE	B* (TP) >				    ; (3)
+	<JUMPN	B* TAG2>
+	<MOVE	B* <MQUOTE T>>
+	<SUB	TP* [<(2) 2>]>
+	<JRST	TAG3>
+TAG2	<PUSH	TP* <TYPE-WORD FALSE>>			    ; 16 [4]
+	<PUSH	TP* [0]>				    ; [5]
+	<GETYP	O* (B) 0>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	B* (B) 1>
+	<PUSH	TP* (B) >				    ; [6]
+	<PUSH	TP* (B) 1>				    ; [7]
+	<PUSH	P* [-1]>
+TAG29	<MOVEI	O* 6 >					    ; 24
+	<PUSHJ	P* |NTPALO >
+	<MOVE	A* (TP) -7>				    ; (6)
+	<MOVE	B* (TP) -6>				    ; (7)
+	<PUSHJ	P* |TYPSEG >
+	<SKIPL	(P) >
+	<XCT	(C) |INCR1 >
+	<XCT	(C) |TESTR >
+	<JRST	TAG4>
+	<MOVE	A* |DSTORE >
+	<MOVE	B* D>
+	<MOVE	O* |DSTORE >
+	<MOVEM	O* (TP) -7>				    ; (6)
+	<MOVEM	D* (TP) -6>				    ; (7)
+	<SETZM	|DSTORE >
+	<MOVEI	C* 1 >
+	<MOVEM	A* (TP) -5>				    ; (8)
+	<MOVEM	B* (TP) -4>				    ; (9)
+	<PUSHJ	P* |CINTH >
+	<PUSH	TP* A>					    ; [14]
+	<PUSH	TP* B>					    ; [15]
+	<INTGO>
+	<PUSH	TP* [0]>				    ; [16]
+	<PUSH	TP* [0]>				    ; [17]
+TAG16	<INTGO>						    ; 49
+	<MOVE	A* (TP) -5>				    ; (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<PUSHJ	P* |CEMPTY >
+	<JRST	TAG5>
+TAG13	<SUB	TP* [<(2) 2>]>				    ; 55
+	<JRST	TAG6>
+TAG5	<MOVE	A* (TP) -5>				    ; 57 (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<MOVEI	C* 1 >
+	<PUSHJ	P* |CINTH >
+	<MOVEM	A* (TP) -7>				    ; (10)
+	<MOVEM	B* (TP) -6>				    ; (11)
+	<MOVE	A* (TP) -5>				    ; (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<MOVEI	C* 4 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG7>
+	<MOVE	A* (TP) -5>				    ; (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<MOVEI	C* 3 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAMN	B* <MQUOTE T>>
+	<CAIE	O* <TYPE-CODE ATOM>>
+	<SKIPA	O>
+	<JRST	TAG8>
+TAG7	<MOVE	A* (TP) -5>				    ; 79 (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<MOVEI	C* 3 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAMN	B* <MQUOTE T>>
+	<CAIE	O* <TYPE-CODE ATOM>>
+	<SKIPA	O>
+	<JRST	TAG9>
+	<MOVE	A* (TP) -5>				    ; (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<MOVEI	C* 3 >
+	<PUSHJ	P* |CINTH >
+	<MOVEM	A* (TP) -1>				    ; (16)
+	<MOVEM	B* (TP) >				    ; (17)
+	<MOVE	B* <MQUOTE KILL-LIST!-CACS!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<MOVE	C* A>
+	<MOVE	D* B>
+	<MOVE	A* (TP) -1>				    ; (16)
+	<MOVE	B* (TP) >				    ; (17)
+	<PUSHJ	P* |CIMEMQ >
+	<SKIPA	O>
+	<JRST	TAG10>
+TAG9	<MOVE	A* (TP) -5>				    ; 103 (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<MOVEI	C* 4 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG8>
+	<MOVE	A* (TP) -5>				    ; (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<MOVEI	C* 3 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG8>
+	<MOVE	B* (TP) -6>				    ; (11)
+	<MOVE	D* (B) 32>
+	<MOVE	PVP* (B) 33>
+	<MOVEM	D* (TP) -5>				    ; (12)
+	<MOVEM	PVP* (TP) -4>				    ; (13)
+	<GETYP	O* D>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG8>
+	<MOVE	A* D>
+	<MOVE	B* PVP>
+	<MOVEI	C* 1 >
+	<PUSHJ	P* |CINTH >
+	<ADD	B* [<(60) 60>]>
+	<JUMPGE	B* |CERR2 >
+	<MOVE	D* (B) 1>
+	<MOVE	B* (TP) -6>				    ; (11)
+	<GETYP	PVP* (TP) -7>				    ; (10)
+	<JUMPE	D* TAG8>
+TAG12	<GETYP	O* (D) 0>				    ; 135
+	<MOVE	TVP* D>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	TVP* (TVP) 1>
+	<GETYP	O* (TVP) 0>
+	<CAIN	O* (PVP) 0>
+	<CAME	B* (TVP) 1>
+	<SKIPA	O>
+	<JRST	TAG11>
+	<HRRZ	D* (D) >
+	<JUMPN	D* TAG12>
+	<JRST	TAG8>
+TAG11	<MOVE	A* (TP) -5>				    ; 147 (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<MOVEI	C* 3 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG8>
+TAG10	<MOVE	A* (TP) -5>				    ; 154 (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 3 >
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [18]
+	<PUSH	TP* [0]>				    ; [19]
+	<PUSHJ	P* |CIPUT >
+TAG8	<MOVE	A* (TP) -5>				    ; 161 (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<MOVEI	C* 4 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG13>
+	<MOVE	B* (TP) -6>				    ; (11)
+	<MOVE	D* (B) 32>
+	<MOVE	PVP* (B) 33>
+	<MOVEM	D* (TP) -5>				    ; (12)
+	<MOVEM	PVP* (TP) -4>				    ; (13)
+	<GETYP	O* D>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG14>
+	<MOVE	A* D>
+	<MOVE	B* PVP>
+	<MOVEI	C* 1 >
+	<PUSHJ	P* |CINTH >
+	<ADD	B* [<(60) 60>]>
+	<JUMPGE	B* |CERR2 >
+	<MOVE	D* (B) 1>
+	<MOVE	B* (TP) -6>				    ; (11)
+	<GETYP	PVP* (TP) -7>				    ; (10)
+	<JUMPE	D* TAG14>
+TAG15	<GETYP	O* (D) 0>				    ; 186
+	<MOVE	TVP* D>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	TVP* (TVP) 1>
+	<GETYP	O* (TVP) 0>
+	<CAIN	O* (PVP) 0>
+	<CAME	B* (TVP) 1>
+	<SKIPA	O>
+	<JRST	TAG13>
+	<HRRZ	D* (D) >
+	<JUMPN	D* TAG15>
+TAG14	<MOVE	A* (TP) -5>				    ; 197 (12)
+	<MOVE	B* (TP) -4>				    ; (13)
+	<MOVEI	C* 4 >
+	<PUSHJ	P* |CIREST >
+	<MOVEM	A* (TP) -5>				    ; (12)
+	<MOVEM	B* (TP) -4>				    ; (13)
+	<JRST	TAG16>
+TAG6	<MOVE	A* (TP) -3>				    ; 204 (12)
+	<MOVE	B* (TP) -2>				    ; (13)
+	<PUSHJ	P* |CEMPTY >
+	<SKIPA	O>
+	<JRST	TAG17>
+	<PUSH	TP* [0]>				    ; [16]
+	<PUSH	TP* [0]>				    ; [17]
+	<PUSH	TP* (TP) -5>				    ; (12) [18]
+	<PUSH	TP* (TP) -5>				    ; (13) [19]
+	<MOVE	A* (TP) -7>				    ; (12)
+	<MOVE	B* (TP) -6>				    ; (13)
+	<MOVEI	C* 4 >
+	<PUSHJ	P* |CIREST >
+	<PUSH	TP* A>					    ; [20]
+	<PUSH	TP* B>					    ; [21]
+TAG28	<INTGO>						    ; 219
+	<MOVE	A* (TP) -3>				    ; (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<PUSHJ	P* |CEMPTY >
+	<JRST	TAG18>
+	<SUB	TP* [<(6) 6>]>
+	<JRST	TAG17>
+TAG18	<MOVE	A* (TP) -3>				    ; 227 (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<MOVEI	C* 1 >
+	<PUSHJ	P* |CINTH >
+	<MOVEM	A* (TP) -11>				    ; (10)
+	<MOVEM	B* (TP) -10>				    ; (11)
+	<MOVE	A* (TP) -3>				    ; (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<MOVEI	C* 4 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG19>
+	<MOVE	A* (TP) -3>				    ; (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<MOVEI	C* 3 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAMN	B* <MQUOTE T>>
+	<CAIE	O* <TYPE-CODE ATOM>>
+	<SKIPA	O>
+	<JRST	TAG20>
+TAG19	<MOVE	A* (TP) -3>				    ; 249 (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<MOVEI	C* 3 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAMN	B* <MQUOTE T>>
+	<CAIE	O* <TYPE-CODE ATOM>>
+	<SKIPA	O>
+	<JRST	TAG21>
+	<MOVE	A* (TP) -3>				    ; (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<MOVEI	C* 3 >
+	<PUSHJ	P* |CINTH >
+	<MOVEM	A* (TP) -5>				    ; (16)
+	<MOVEM	B* (TP) -4>				    ; (17)
+	<MOVE	B* <MQUOTE KILL-LIST!-CACS!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<MOVE	C* A>
+	<MOVE	D* B>
+	<MOVE	A* (TP) -5>				    ; (16)
+	<MOVE	B* (TP) -4>				    ; (17)
+	<PUSHJ	P* |CIMEMQ >
+	<SKIPA	O>
+	<JRST	TAG22>
+TAG21	<MOVE	A* (TP) -3>				    ; 273 (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<MOVEI	C* 4 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG20>
+	<MOVE	A* (TP) -3>				    ; (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<MOVEI	C* 3 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG20>
+	<MOVE	B* (TP) -10>				    ; (11)
+	<MOVE	D* (B) 32>
+	<MOVE	PVP* (B) 33>
+	<MOVEM	D* (TP) -9>				    ; (12)
+	<MOVEM	PVP* (TP) -8>				    ; (13)
+	<GETYP	O* D>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG20>
+	<MOVE	A* D>
+	<MOVE	B* PVP>
+	<MOVEI	C* 1 >
+	<PUSHJ	P* |CINTH >
+	<ADD	B* [<(60) 60>]>
+	<JUMPGE	B* |CERR2 >
+	<MOVE	D* (B) 1>
+	<MOVE	B* (TP) -10>				    ; (11)
+	<GETYP	PVP* (TP) -11>				    ; (10)
+	<JUMPE	D* TAG20>
+TAG24	<GETYP	O* (D) 0>				    ; 305
+	<MOVE	TVP* D>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	TVP* (TVP) 1>
+	<GETYP	O* (TVP) 0>
+	<CAIN	O* (PVP) 0>
+	<CAME	B* (TVP) 1>
+	<SKIPA	O>
+	<JRST	TAG23>
+	<HRRZ	D* (D) >
+	<JUMPN	D* TAG24>
+	<JRST	TAG20>
+TAG23	<MOVE	A* (TP) -9>				    ; 317 (12)
+	<MOVE	B* (TP) -8>				    ; (13)
+	<MOVEI	C* 3 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG20>
+TAG22	<MOVE	A* (TP) -3>				    ; 324 (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 3 >
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [22]
+	<PUSH	TP* [0]>				    ; [23]
+	<PUSHJ	P* |CIPUT >
+TAG20	<MOVE	A* (TP) -3>				    ; 331 (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<MOVEI	C* 4 >
+	<PUSHJ	P* |CINTH >
+	<GETYP	O* A>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG25>
+	<MOVE	B* (TP) -10>				    ; (11)
+	<MOVE	D* (B) 32>
+	<MOVE	PVP* (B) 33>
+	<MOVEM	D* (TP) -9>				    ; (12)
+	<MOVEM	PVP* (TP) -8>				    ; (13)
+	<GETYP	O* D>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG26>
+	<MOVE	A* D>
+	<MOVE	B* PVP>
+	<MOVEI	C* 1 >
+	<PUSHJ	P* |CINTH >
+	<ADD	B* [<(60) 60>]>
+	<JUMPGE	B* |CERR2 >
+	<MOVE	D* (B) 1>
+	<MOVE	B* (TP) -10>				    ; (11)
+	<GETYP	PVP* (TP) -11>				    ; (10)
+	<JUMPE	D* TAG26>
+TAG27	<GETYP	O* (D) 0>				    ; 356
+	<MOVE	TVP* D>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	TVP* (TVP) 1>
+	<GETYP	O* (TVP) 0>
+	<CAIN	O* (PVP) 0>
+	<CAME	B* (TVP) 1>
+	<SKIPA	O>
+	<JRST	TAG25>
+	<HRRZ	D* (D) >
+	<JUMPN	D* TAG27>
+TAG26	<MOVE	A* (TP) -3>				    ; 367 (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<MOVEI	C* 4 >
+	<PUSHJ	P* |CIREST >
+	<SKIPN	(TP) -4>				    ; (17)
+	<JRST	|CERR2 >
+	<HRRM	B* @ (TP) -4>				    ; (17)
+TAG25	<MOVE	A* (TP) -3>				    ; 374 (18)
+	<MOVE	B* (TP) -2>				    ; (19)
+	<MOVEI	C* 4 >
+	<PUSHJ	P* |CIREST >
+	<MOVEM	A* (TP) -3>				    ; (18)
+	<MOVEM	B* (TP) -2>				    ; (19)
+	<MOVE	A* (TP) -5>				    ; (16)
+	<MOVE	B* (TP) -4>				    ; (17)
+	<MOVEI	C* 4 >
+	<PUSHJ	P* |CIREST >
+	<MOVEM	A* (TP) -5>				    ; (16)
+	<MOVEM	B* (TP) -4>				    ; (17)
+	<JRST	TAG28>
+TAG17	<MOVE	A* (TP) -7>				    ; 387 (8)
+	<MOVE	B* (TP) -6>				    ; (9)
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 1 >
+	<PUSH	TP* (TP) -3>				    ; (12) [16]
+	<PUSH	TP* (TP) -3>				    ; (13) [17]
+	<PUSHJ	P* |CIPUT >
+	<SUB	TP* [<(8) 8>]>
+	<SETZM	(P) >
+	<JRST	TAG29>
+TAG4	<SUB	TP* [<(6) 6>]>				    ; 397
+	<SETZM	|DSTORE >
+	<SUB	TP* [<(4) 4>]>
+	<SUB	P* [<(1) 1>]>
+	<MOVE	B* (TP) >				    ; (3)
+	<MOVEI	D* 4 >
+TAG30	<JUMPE	B* |CERR2 >				    ; 403
+	<HRRZ	B* (B) >
+	<SOJG	D* TAG30>
+	<MOVEM	B* (TP) >				    ; (3)
+	<JRST	TAG31>
+TAG3	<SUB	TP* [<(2) 2>]>				    ; 408
+	<MOVE	A* <TYPE-WORD ATOM>>
+	<JRST	|MPOPJ >
+	<(2) 2>
+	<0>
+	<IMULI	TB* (B) 0>
+	<-1>
+	<IMULI	TB* 1 >
+	<IMULI	TB* 4 >
+	<(60) 60>
+	<IMULI	TB* (TP) -7>				    ; (-8)
+	<IMULI	TB* (D) 0>
+	<IMULI	TB* (TVP) 0>
+	<(6) 6>
+	<IMULI	TB* (TP) -11>				    ; (-12)
+	<(8) 8>
+	<(4) 4>
+	<(1) 1>
+	<(1) 4>
+	<(*54454*) *24755*>
+	<0>
+	<(1) 2>
+
+<DEFINE HMAPFR (MNOD WHERE K
+		"AUX" XX (NTSLOTS .NTSLOTS)
+		      (NTMPS
+		       <COND (.PRE .TMPS) (<STACK:L .STK .BSTB>) (ELSE (0))>)
+		      TEM NSLOTS (SPECD <>) STB (DTEM <DATUM FIX ANY-AC>)
+		      (STKOFFS <>) (FAP <1 .K>) (INRAP <2 .K>) F? (POFF 0)
+		      (ANY? <>) (NARG <LENGTH <SET K <REST .K 2>>>) START:TAG
+		      (R? <==? <NODE-SUBR .MNOD> ,MAPR>) STRV (FF? <>)
+		      (MAPEND <ILIST .NARG '<MAKE:TAG "MAP">>) (OSTK .STK)
+		      (MAPLP <MAKE:TAG "MAP">) (MAPL2 <MAKE:TAG "MAP">) MAP:OFF
+		      (SUBRC <AP? .FAP>) STOP (STK (0 !.STK)) (TMPS .TMPS) BTP
+		      (BASEF .BASEF) (FRMS .FRMS) (MAYBE-FALSE <>) (OPRE .PRE)
+		      (OTAG ()) DEST CD (AC-HACK .AC-HACK)
+		      (EXIT <MAKE:TAG "MAPEX">) (APPLTAG <MAKE:TAG "MAPAP">) TT
+		      GMF (OUTD .WHERE) OUTSAV CHF (FLS <==? .WHERE FLUSHED>)
+		      (RTAG <MAKE:TAG "MAP">) (NEED-INT T) FSYM OS NS (DOIT T)
+		      RV GSTK)
+   #DECL ((NTSLOTS) <SPECIAL LIST> (DTEM) DATUM
+	  (SPECD) <SPECIAL <OR FALSE ATOM>> (TEM) <OR ATOM DATUM> (OFFS) FIX
+	  (TMPS) <SPECIAL LIST> (POFF NSLOTS NARG) <SPECIAL FIX> (FAP) NODE
+	  (BASEF MNOD INRAP) <SPECIAL NODE> (K) <LIST [REST NODE]>
+	  (MAPEND) <LIST [REST ATOM]> (MAP:OFF) ATOM
+	  (EXIT MAPLP RTAG APPLTAG) <SPECIAL ATOM> (OSTK) LIST
+	  (DEST CD) <SPECIAL <OR ATOM DATUM>> (FRMS) <SPECIAL LIST>
+	  (STOP STRV STB BTP STK GSTK) <SPECIAL LIST>
+	  (AC-HACK START:TAG) <SPECIAL ANY>
+	  (GMF MAYBE-FALSE ANY?) <SPECIAL ANY> (FSYM) SYMTAB)
+   <PUT .INRAP ,SPECS-START <- <SPECS-START .INRAP> .TOT-SPEC>>
+   <PROG ((PRE .PRE))
+     #DECL ((PRE) <SPECIAL ANY>)
+     <COND (<AND <NOT <EMPTY? .K>>
+		 <MAPF <>
+		       <FUNCTION (Z) 
+			       <AND <TYPE-OK? <RESULT-TYPE .Z>
+					      '<PRIMTYPE LIST>>
+				    <MAPLEAVE <>>>
+			       T>
+		       .K>>
+	    <SET NEED-INT <>>)>
+     <COND (<AND <NOT <AND <EMPTY? .K> <NODE-NAME .FAP>>>
+		 <OR <==? <NODE-NAME .FAP> <>>
+		     <AND <==? <NODE-TYPE .FAP> ,MFIRST-CODE>
+			  <N==? <NODE-SUBR .FAP> 5>>
+		     .SUBRC>
+		 <OR <EMPTY? .K>
+		     <==? <NAME-SYM <1 <BINDING-STRUCTURE .INRAP>>>
+			  DUMMY-MAPF>>>
+	    <SET GMF T>)
+	   (ELSE <SET GMF <>>)>
+     <COND (<AND <NOT <EMPTY? .K>>
+		 <L=? <MAPF ,MIN
+			    <FUNCTION (N) 
+				    #DECL ((N) NODE)
+				    <MINL <RESULT-TYPE .N>>>
+			    .K>
+		      0>>
+	    <SET CHF T>)
+	   (ELSE <SET CHF <>>)>
+     <SET DEST <SET OUTD <COND (.FLS FLUSHED) (ELSE <GOODACS .MNOD .WHERE>)>>>
+     <OR .PRE <EMIT-PRE <NOT <OR <ACTIVATED .INRAP> <0? <SSLOTS .BASEF>>>>>>
+     <SET STOP .STK>
+     <SET STK (0 !.STK)>
+     <SET F?
+      <DO-FIRST-SETUP
+       .FAP
+       .DEST
+       <COND (.GMF
+	      <SET FSYM <1 <BINDING-STRUCTURE .INRAP>>>
+	      <PUT .INRAP ,BINDING-STRUCTURE <REST <BINDING-STRUCTURE .INRAP>>>
+	      .FSYM)>
+       .CHF
+       <1? .NARG>
+       .FLS>>
+     <OR .F? <SET FF? <==? <NODE-TYPE .FAP> ,MFIRST-CODE>>>
+     <SET ANY? <PUSH-STRUCS .K T .GMF <BINDING-STRUCTURE .INRAP>>>
+     <DO-FIRST-SETUP-2 .FAP .DEST <COND (.GMF .FSYM)> .CHF <1? .NARG> .FLS>
+     <AND .GMF <NOT .FLS> <INACS .FSYM> <SET OUTD <INACS .FSYM>>>
+     <BEGIN-FRAME <TMPLS .INRAP> <ACTIVATED .INRAP> <PRE-ALLOC .INRAP>>
+     <SET TMPS <COND (.PRE .NTMPS) (ELSE <STACK:L .STK <2 .FRMS>>)>>
+     <SET STK (0 !.STK)>
+     <SET STB .STK>
+     <SET STK (0 !.STK)>
+     <COND (.F? <SET MAYBE-FALSE <DO-FINAL-SETUP .FAP .SUBRC>>)>
+     <PROG-START-AC .INRAP>
+     <LABEL:TAG .MAPLP>
+     <COND (<AND .F? <NOT .GMF>>
+	    <SET STKOFFS
+		 <FIND-FIRST-STRUC
+		  .DTEM .STB <AND <NOT .PRE> <NOT <ACTIVATED .INRAP>>>>>)>
+     <AND <ACTIVATED .INRAP> <ACT:INITIAL> <ADD:STACK 2>>
+     <SET STK (0 !.STK)>
+     <SET STRV .STK>
+     <OR .PRE
+	 <AND .GMF <1? .NARG>>
+	 <PROG ()
+	       <SALLOC:SLOTS <TMPLS .INRAP>>
+	       <ADD:STACK <TMPLS .INRAP>>
+	       <COND (<NOT .PRE>
+		      <SET NTSLOTS (<FORM GVAL <TMPLS .INRAP>> !.NTSLOTS)>)>
+	       <COND (.GMF <SET GSTK .STK> <SET STK (0 !.STK)>)>>>
+     <AND .PRE .GMF <NOT <1? .NARG>> <SET GSTK .STK> <SET STK (0 !.STK)>>
+     <SET POFF <COND (.MAYBE-FALSE -2) (.F? -1) (ELSE 0)>>
+     <COND (<AND .GMF <OR .CHF <NOT <1? .NARG>>> <NOT .FLS>> <LVAL-UP .FSYM>)>
+     <REPEAT ((KK .K) (BS <BINDING-STRUCTURE .INRAP>)
+	      (BST
+	       <COND
+		(<EMPTY? .BS> ())
+		(ELSE
+		 <MAPR <>
+		       <FUNCTION (S) 
+			       #DECL ((S) <LIST SYMTAB>)
+			       <COND (<N==? <NAME-SYM <1 .S>> DUMMY-MAPF>
+				      <MAPLEAVE .S>)
+				     (ELSE ())>>
+		       .BS>)>) (OFFSET (<- 1 <* .NARG 2>> ())) TEM
+	      (TOFF (0 ())) (GOFF '(0)))
+       #DECL ((BST) <LIST [REST SYMTAB]> (TOFF OFFSET) <LIST FIX LIST>
+	      (KK) <LIST [REST NODE]>)
+       <COND
+	(<EMPTY? .KK>
+	 <AND .GMF <NOT <1? .NARG>> <NOT .FF?> <NOT .FLS> <RET-TMP-AC .OUTD>>
+	 <COND (<AND .F? <NOT .STKOFFS>> <RET-TMP-AC .DTEM>)>
+	 <MAPF <>
+	       <FUNCTION (SYM) 
+		       #DECL ((SYM) SYMTAB)
+		       <APPLY <NTH ,MBINDERS <CODE-SYM .SYM>> .SYM>>
+	       .BST>
+	 <RETURN>)
+	(ELSE
+	 <SET RV <TYPE? <ADDR-SYM <1 .BST>> TEMPV>>
+	 <COND (.GMF)
+	       (.F?
+		<COND (.STKOFFS
+		       <SET TEM
+			    <ADDRESS:C .STKOFFS
+				       <COND (.AC-HACK `(FRM) ) (`(TB) )>
+				       <COND (.AC-HACK 1) (ELSE 0)>>>
+		       <OR .RV <SET STKOFFS <+ .STKOFFS 2>>>)
+		      (ELSE
+		       <SET TEM
+			    <SPEC-OFFPTR <1 .OFFSET>
+					 .DTEM
+					 VECTOR
+					 (!<2 .OFFSET>
+					  !<STACK:L .STK .STRV>)>>
+		       <OR .RV
+			   <SET OFFSET
+				<STFIXIT .OFFSET
+					 (2
+					  <- <1 .TOFF>>
+					  <FORM - 0 !<2 .TOFF>>)>>>)>)
+	       (ELSE
+		<SET TEM
+		     <ADDRESS:C <FORM - <1 .OFFSET> !<STACK:L .STK .STRV>>
+				'`(TP) 
+				!<2 .OFFSET>>>
+		<SET OFFSET <STFIXIT .OFFSET (2)>>)>
+	 <AND <==? <CODE-SYM <1 .BST>> 4>
+	     <MESSAGE ERROR "NOT IMPLEMENTED MAPF/R TUPLES ">>
+	 <SET OTAG
+	      ((<1 .MAPEND>
+		<COND (.GMF (<FORM + !.GOFF>))
+		      ((<FORM - 0 <1 .TOFF> !<2 .TOFF>>
+			<1 <SET TOFF <STFIXIT (0 ()) <STACK:L .STK .STRV>>>>
+			!<2 .TOFF>))>)
+	       !.OTAG)>
+	 <COND (.GMF
+		<ISET <RESULT-TYPE <1 .KK>>
+		      <1 .BS>
+		      <1 .BST>
+		      .R?
+		      <1 .MAPEND>
+		      .CHF
+		      .NARG
+		      .MAPL2>
+		<SET BS <REST .BS>>
+		<SET GOFF <STACK:L .STK .GSTK>>)
+	       (.RV
+		<RETURN-UP .INRAP .STK>
+		<IISET <RESULT-TYPE <1 .KK>>
+		       <1 .BST>
+		       <STACKM <1 .KK> <DATUM .TEM .TEM> .R? <1 .MAPEND> .POFF>
+		       .R?>)
+	       (ELSE
+		<BINDUP <1 .BST>
+			<STACKM <1 .KK>
+				<DATUM .TEM .TEM>
+				.R?
+				<1 .MAPEND>
+				.POFF>>)>
+	 <SET MAPEND <REST .MAPEND>>
+	 <SET KK <REST .KK>>
+	 <SET BST <REST .BST>>)>>
+     <COND
+      (<AND .GMF <OR .CHF <NOT <1? .NARG>>> <NOT .FLS> <NOT .FF?>>
+       <PROG ((S .FSYM))
+	     <PUT .S ,STORED T>
+	     <COND (<INACS .S>
+		    <COND (<TYPE? <DATTYP <INACS .S>> AC>
+			   <FLUSH-RESIDUE <DATTYP <INACS .S>> .S>)>
+		    <COND (<TYPE? <DATVAL <INACS .S>> AC>
+			   <FLUSH-RESIDUE <DATVAL <INACS .S>> .S>)>
+		    <PUT .S ,INACS <>>)>>)>
+     <COND (<AND .GMF <NOT .CHF> <1? .NARG> <NOT .FLS>> <LVAL-UP .FSYM>)>
+     <OR .PRE
+	 <0? <SET NSLOTS <SSLOTS .INRAP>>>
+	 <PROG ()
+	       <SALLOC:SLOTS .NSLOTS>
+	       <ADD:STACK .NSLOTS>
+	       <EMIT-PRE <SET PRE T>>>>
+     <AND <ACTIVATED .INRAP> <ACT:FINAL>>
+     <SET BTP .STK>
+     <OR .OPRE <SET BASEF .INRAP>>
+     <SET STK (0 !.STK)>
+     <AND .NEED-INT <CALL-INTERRUPT>>
+     <COND
+      (<AND .R?
+	    <NOT .F?>
+	    <NOT .FF?>
+	    .FLS
+	    <1? .NARG>
+	    <BLT-HACK <KIDS .INRAP>
+		      <BINDING-STRUCTURE .INRAP>
+		      <MINL <RESULT-TYPE <1 .K>>>>>
+       <SET DOIT <>>)
+      (<OR .F? .FF?>
+       <SET TEM <SEQ-GEN <KIDS .INRAP> <GOODACS .INRAP DONT-CARE> T>>)
+      (<NOT .FLS>
+       <SET TEM
+	<SEQ-GEN
+	 <KIDS .INRAP>
+	 <COND (.GMF .OUTD)
+	       (ELSE
+		<DATUM <SET TT
+			    <ADDRESS:C <FORM -
+					     -1
+					     <* 2 .NARG>
+					     !<STACK:L .STK .STRV>>
+				       '`(TP) >>
+		       .TT>)>
+	 T>>
+       <SET OUTD .TEM>)
+      (ELSE <RET-TMP-AC <SET TEM <SEQ-GEN <KIDS .INRAP> FLUSHED T>>>)>
+     <COND
+      (<AND .DOIT <N==? .TEM ,NO-DATUM>>
+       <COND (<ACTIVATED .INRAP> <PROG:END> <LABEL:OFF .MAP:OFF>)
+	     (<OR .OPRE .F?>
+	      <AND .SPECD
+		   <OR .OPRE <SET TEM <MOVE:ARG .TEM <DATUM ,AC-A ,AC-B>>>>>
+	      <POP:LOCS .STK .STRV>
+	      <UNBIND:FUNNY <SPECS-START .INRAP> !.NTSLOTS>)
+	     (ELSE <UNBIND:LOCS .STK .STB>)>
+       <COND
+	(.F? <DO-STACK-ARGS .MAYBE-FALSE .TEM>)
+	(<AND .GMF .FF?>
+	 <OR .PRE
+	     <PROG ()
+		   <SET NTSLOTS <REST <SET NS .NTSLOTS>>>
+		   <SET OS .STK>
+		   <SET STK .STB>>>
+	 <DO-EVEN-FUNNIER-HACK .TEM
+			       .FSYM
+			       .MNOD
+			       .FAP
+			       .INRAP
+			       <LOOP-VARS .INRAP>>)
+	(<AND .GMF <NOT .FLS>>
+	 <RET-TMP-AC .TEM>
+	 <PUT .FSYM ,INACS .TEM>
+	 <PUT .FSYM ,STORED <>>
+	 <COND (<TYPE? <DATTYP .TEM> AC>
+		<PUT <DATTYP .TEM>
+		     ,ACRESIDUE
+		     (.FSYM !<ACRESIDUE <DATTYP .TEM>>)>)>
+	 <PUT <DATVAL .TEM> ,ACRESIDUE (.FSYM !<ACRESIDUE <DATVAL .TEM>>)>
+	 <PUT .FSYM ,STORED <>>
+	 <COND
+	  (<NOT <MEMQ .FSYM <LOOP-VARS .INRAP>>>
+	   <REPEAT ((L <LOOP-VARS .INRAP>) LL)
+		   #DECL ((L) LIST (LL) DATUM)
+		   <COND (<EMPTY? .L> <RETURN>)>
+		   <COND (<TYPE? <DATVAL <SET LL <LINACS-SLOT .L>>> AC>
+			  <PUT <DATVAL .LL> ,ACPROT T>)>
+		   <COND (<TYPE? <DATTYP .LL> AC>
+			  <PUT <DATTYP .LL> ,ACPROT T>)>
+		   <SET L <REST .L ,LOOPVARS-LENGTH>>>
+	   <PUT
+	    .INRAP
+	    ,LOOP-VARS
+	    (.FSYM
+	     <PROG (R R2 D)
+		   <SET D
+			<DATUM
+			 <COND (<ISTYPE-GOOD? <RESULT-TYPE .MNOD>>)
+			       (<AND <TYPE? .WHERE DATUM>
+				     <TYPE? <SET R <DATTYP .WHERE>> AC>
+				     <NOT <ACPROT .R>>>
+				<PUT <SGETREG .R <>> ,ACPROT T>)
+			       (ELSE <PUT <SET R <GETREG <>>> ,ACPROT T>)>
+			 <COND (<AND <TYPE? .WHERE DATUM>
+				     <TYPE? <SET R2 <DATVAL .WHERE>> AC>
+				     <NOT <ACPROT .R2>>>
+				<SGETREG .R2 <>>)
+			       (ELSE <SET R2 <GETREG <>>>)>>>
+		   <COND (<AND <ASSIGNED? R>>
+			  <TYPE? .R AC>
+			  <PUT .R ,ACPROT <>>)>
+		   .D>
+	     !<LOOP-VARS .INRAP>)>
+	   <REPEAT ((L <LOOP-VARS .INRAP>) LL)
+		   #DECL ((L) LIST (LL) DATUM)
+		   <COND (<EMPTY? .L> <RETURN>)>
+		   <COND (<TYPE? <DATVAL <SET LL <LINACS-SLOT .L>>> AC>
+			  <PUT <DATVAL .LL> ,ACPROT <>>)>
+		   <COND (<TYPE? <DATTYP .LL> AC>
+			  <PUT <DATTYP .LL> ,ACPROT <>>)>
+		   <SET L <REST .L ,LOOPVARS-LENGTH>>>)>)
+	(.FF? <DO-FUNNY-HACK .TEM (<* .NARG -2> ()) .MNOD .FAP .INRAP>)>
+       <COND (.ANY? <EMIT <INSTRUCTION `SETZM  .POFF '`(P) >>)>
+       <OR .PRE
+	   <AND .GMF .FF?>
+	   <PROG ()
+		 <SET NTSLOTS <REST <SET NS .NTSLOTS>>>
+		 <SET STK .STB>>>)>
+     <COND
+      (.DOIT
+       <AGAIN-UP .INRAP <AND .GMF <1? .NARG>>>
+       <LABEL:TAG .RTAG>
+       <COND (.GMF
+	      <REST-STRUCS <BINDING-STRUCTURE .INRAP>
+			   .K
+			   <LOOP-VARS .INRAP>
+			   .NARG
+			   .MAPL2
+			   .R?>)>
+       <COND (<NOT <AND .GMF <1? .NARG>>> <BRANCH:TAG .MAPLP>)>
+       <GEN-TAGS .OTAG .SPECD>
+       <COND (<AND .GMF <NOT .PRE>> <SET STK .GSTK> <SET NTSLOTS .NS>)>
+       <COND (<AND .GMF <NOT <1? .NARG>>>
+	      <COND (<OR .OPRE .F?>
+		     <POP:LOCS .STK .STRV>
+		     <UNBIND:FUNNY <SPECS-START .INRAP> !.NTSLOTS>)
+		    (ELSE <UNBIND:LOCS .STK .STB>)>)>
+       <MAPF <>
+	<FUNCTION (N) 
+		#DECL ((N) NODE)
+		<COND (<NOT <ISTYPE? <STRUCTYP <RESULT-TYPE .N>>>>
+		       <EMIT '<`SETZM  |DSTORE >>
+		       <MAPLEAVE>)>>
+	.K>)
+      (ELSE <GEN-TAGS .OTAG .SPECD>)>
+     <CLEANUP-STATE .INRAP>
+     <LABEL:TAG .APPLTAG>
+     <COND
+      (<TYPE? .DEST DATUM>
+       <SET CD
+	    <COND (.F? <DO-LAST .SUBRC .MAYBE-FALSE <DATUM !.DEST>>)
+		  (<AND .FF? .GMF>
+		   <MOVE:ARG <LADDR .FSYM <> <>> <DATUM !.DEST>>)
+		  (.FF? <DO-FUNNY-LAST .FAP <- -1 <* 2 .NARG>> <DATUM !.DEST>>)
+		  (.GMF <MOVE:ARG .OUTD <DATUM !.DEST>>)
+		  (ELSE
+		   <MOVE:ARG
+		    <DATUM <SET TT <ADDRESS:C <- -1 <* 2 .NARG>> '`(TP) >> .TT>
+		    <DATUM !.DEST>>)>>
+       <ACFIX .DEST .CD>
+       <AND <ISTYPE? <DATTYP .DEST>>
+	    <TYPE? <DATTYP .CD> AC>
+	    <RET-TMP-AC <DATTYP .CD> .CD>>)
+      (.F? <DO-LAST .SUBRC .MAYBE-FALSE <FUNCTION:VALUE>>)
+      (<AND .FF? .GMF> <MOVE:ARG .OUTD <FUNCTION:VALUE>>)
+      (<AND .GMF .FF?> <MOVE:ARG .OUTD <FUNCTION:VALUE>>)
+      (.FF? <DO-FUNNY-LAST .FAP <- -1 <* 2 .NARG>> <FUNCTION:VALUE>>)>
+     <POP:LOCS .STB .STOP>
+     <LABEL:TAG .EXIT>>
+   <COND (<ASSIGNED? CD>
+	  <AND <TYPE? <DATTYP .DEST> AC> <FIX-ACLINK <DATTYP .DEST> .DEST .CD>>
+	  <AND <TYPE? <DATVAL .DEST> AC>
+	       <FIX-ACLINK <DATVAL .DEST> .DEST .CD>>)>
+   <SET STK .OSTK>
+   <SET XX <MOVE:ARG .DEST .WHERE>>
+   <END-FRAME>
+   .XX>
+
+	<TITLE HMAPFR>
+
+	<DECLARE ("VALUE" ANY NODE!-COMPDEC!-PACKAGE ANY <LIST [REST 
+NODE!-COMPDEC!-PACKAGE]>)>
+	<PUSH	TP* (AB) >
+	<PUSH	TP* (AB) 1>
+	<PUSH	TP* (AB) 2>
+	<PUSH	TP* (AB) 3>
+	<PUSH	TP* (AB) 4>
+	<PUSH	TP* (AB) 5>
+	<PUSHJ	P* TAG1>
+	<JRST	|FINIS >
+TAG1	<SUBM	M* (P) >				    ; 8
+	<PUSH	TP* [<(*35*) *10*>]>			    ; [6]
+	<PUSH	TP* FRM>				    ; [7]
+	<MOVE	FRM* TP>
+	<MOVEI	O* *20* >
+	<PUSHJ	P* |NTPALO >
+	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; [24]
+	<PUSH	TP* [0]>				    ; [25]
+	<PUSH	TP* [0]>				    ; [26]
+	<PUSH	TP* [0]>				    ; [27]
+	<PUSH	TP* [0]>				    ; [28]
+	<PUSH	TP* [0]>				    ; [29]
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [30]
+	<PUSH	TP* <MQUOTE MNOD!-IMAPGEN!-MAPGEN!-PACKAGE>>; [31]
+	<PUSH	TP* (FRM) -7>				    ; (-7) [32]
+	<PUSH	TP* (FRM) -6>				    ; (-6) [33]
+	<PUSH	TP* <MQUOTE (NODE!-COMPDEC!-PACKAGE)> -1>   ; [34]
+	<PUSH	TP* <MQUOTE (NODE!-COMPDEC!-PACKAGE)>>	    ; [35]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [36]
+	<PUSH	TP* <MQUOTE NTSLOTS!-IMAPGEN!-MAPGEN!-PACKAGE>>; [37]
+	<MOVE	B* <MQUOTE NTSLOTS!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<PUSH	TP* A>					    ; [38]
+	<PUSH	TP* B>					    ; [39]
+	<PUSH	TP* <MQUOTE (LIST)> -1>			    ; [40]
+	<PUSH	TP* <MQUOTE (LIST)>>			    ; [41]
+	<PUSHJ	P* |SPECBN >
+	<MOVE	B* <MQUOTE PRE!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<GETYP	O* A>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG2>
+	<MOVE	B* <MQUOTE TMPS!-COMPDEC!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<JRST	TAG3>
+TAG2	<MOVE	B* <MQUOTE STK!-IMAPGEN!-MAPGEN!-PACKAGE>>  ; 44
+	<PUSHJ	P* |CILVAL >
+	<PUSH	TP* A>					    ; [42]
+	<PUSH	TP* B>					    ; [43]
+	<MOVE	B* <MQUOTE BSTB!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<PUSH	TP* A>					    ; [44]
+	<PUSH	TP* B>					    ; [45]
+	<MCALL	2 STACK:L>
+	<GETYP	O* A>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG3>
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 0>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+TAG3	<PUSH	TP* A>					    ; 60 [42]
+	<PUSH	TP* B>					    ; [43]
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [44]
+	<PUSH	TP* <MQUOTE NSLOTS!-IMAPGEN!-MAPGEN!-PACKAGE>>; [45]
+	<PUSH	TP* <TYPE-WORD UNBOUND>>		    ; [46]
+	<PUSH	TP* [-1]>				    ; [47]
+	<PUSH	TP* <MQUOTE (FIX)> -1>			    ; [48]
+	<PUSH	TP* <MQUOTE (FIX)>>			    ; [49]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [50]
+	<PUSH	TP* <MQUOTE SPECD!-IMAPGEN!-MAPGEN!-PACKAGE>>; [51]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [52]
+	<PUSH	TP* [0]>				    ; [53]
+	<PUSH	TP* <MQUOTE (<OR FALSE ATOM>)> -1>	    ; [54]
+	<PUSH	TP* <MQUOTE (<OR FALSE ATOM>)>>		    ; [55]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [56]
+	<PUSH	TP* <MQUOTE STB!-IMAPGEN!-MAPGEN!-PACKAGE>> ; [57]
+	<PUSH	TP* <TYPE-WORD UNBOUND>>		    ; [58]
+	<PUSH	TP* [-1]>				    ; [59]
+	<PUSH	TP* <MQUOTE (LIST)> -1>			    ; [60]
+	<PUSH	TP* <MQUOTE (LIST)>>			    ; [61]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* <MQUOTE FIX> -1>			    ; [62]
+	<PUSH	TP* <MQUOTE FIX>>			    ; [63]
+	<PUSH	TP* <MQUOTE ANY-AC!-COMPDEC!-PACKAGE> -1>   ; [64]
+	<PUSH	TP* <MQUOTE ANY-AC!-COMPDEC!-PACKAGE>>	    ; [65]
+	<MCALL	2 DATUM>
+	<PUSH	TP* A>					    ; [62]
+	<PUSH	TP* B>					    ; [63]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [64]
+	<PUSH	TP* [0]>				    ; [65]
+	<MOVE	B* (FRM) -2>				    ; (-2)
+	<JUMPE	B* |CERR2 >
+	<PUSH	TP* <MQUOTE %<TYPE-W NODE!-COMPDEC!-PACKAGE VECTOR>>>; [66]
+	<PUSH	TP* (B) 1>				    ; [67]
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [68]
+	<PUSH	TP* <MQUOTE INRAP!-IMAPGEN!-MAPGEN!-PACKAGE>>; [69]
+	<JUMPE	B* |CERR2 >
+	<HRRZ	D* (B) >
+	<JUMPE	D* |CERR2 >
+	<PUSH	TP* <MQUOTE %<TYPE-W NODE!-COMPDEC!-PACKAGE VECTOR>>>; [70]
+	<PUSH	TP* (D) 1>				    ; [71]
+	<PUSH	TP* <MQUOTE (NODE!-COMPDEC!-PACKAGE)> -1>   ; [72]
+	<PUSH	TP* <MQUOTE (NODE!-COMPDEC!-PACKAGE)>>	    ; [73]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [74]
+	<PUSH	TP* <MQUOTE POFF!-IMAPGEN!-MAPGEN!-PACKAGE>>; [75]
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [76]
+	<PUSH	TP* [0]>				    ; [77]
+	<PUSH	TP* <MQUOTE (FIX)> -1>			    ; [78]
+	<PUSH	TP* <MQUOTE (FIX)>>			    ; [79]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [80]
+	<PUSH	TP* <MQUOTE ANY?!-IMAPGEN!-MAPGEN!-PACKAGE>>; [81]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [82]
+	<PUSH	TP* [0]>				    ; [83]
+	<PUSH	TP* <MQUOTE (ANY)> -1>			    ; [84]
+	<PUSH	TP* <MQUOTE (ANY)>>			    ; [85]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [86]
+	<PUSH	TP* <MQUOTE NARG!-IMAPGEN!-MAPGEN!-PACKAGE>>; [87]
+	<MOVE	B* (FRM) -2>				    ; (-2)
+	<JUMPE	B* |CERR2 >
+	<HRRZ	B* (B) >
+	<JUMPE	B* |CERR2 >
+	<HRRZ	B* (B) >
+	<MOVE	D* B>
+	<JRST	TAG4>
+TAG5	<HRR	D* (D) -1>				    ; 129
+TAG4	<TRNE	D* -1 >					    ; 130
+	<AOBJP	D* TAG5>
+	<HLRZS	D>
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [88]
+	<PUSH	TP* D>					    ; [89]
+	<PUSH	TP* <MQUOTE (FIX)> -1>			    ; [90]
+	<PUSH	TP* <MQUOTE (FIX)>>			    ; [91]
+	<MOVEM	B* (FRM) -2>				    ; (-2)
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [92]
+	<PUSH	TP* <MQUOTE START:TAG!-IMAPGEN!-MAPGEN!-PACKAGE>>; [93]
+	<PUSH	TP* <TYPE-WORD UNBOUND>>		    ; [94]
+	<PUSH	TP* [-1]>				    ; [95]
+	<PUSH	TP* <MQUOTE (ANY)> -1>			    ; [96]
+	<PUSH	TP* <MQUOTE (ANY)>>			    ; [97]
+	<PUSHJ	P* |SPECBN >
+	<MOVE	B* (FRM) 26>				    ; (26)
+	<ADD	B* [<(18) 18>]>
+	<JUMPGE	B* |CERR2 >
+	<MOVE	D* (B) >
+	<MOVE	PVP* (B) 1>
+	<MOVE	B* <MQUOTE %<RGLOC MAPR T>>>
+	<ADD	B* |GLOTOP 1>
+	<GETYP	O* (B) 0>
+	<GETYP	TVP* D>
+	<CAMN	PVP* (B) 1>
+	<CAIE	O* (TVP) 0>
+	<JRST	TAG6>
+	<MOVE	B* <MQUOTE T> -1>
+	<MOVE	TVP* <MQUOTE T>>
+	<JRST	TAG7>
+TAG6	<MOVE	B* <TYPE-WORD FALSE>>			    ; 161
+	<MOVEI	TVP* 0>
+TAG7	<PUSH	TP* B>					    ; 163 [98]
+	<PUSH	TP* TVP>				    ; [99]
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [100]
+	<PUSH	TP* <MQUOTE STRV!-IMAPGEN!-MAPGEN!-PACKAGE>>; [101]
+	<PUSH	TP* <TYPE-WORD UNBOUND>>		    ; [102]
+	<PUSH	TP* [-1]>				    ; [103]
+	<PUSH	TP* <MQUOTE (LIST)> -1>			    ; [104]
+	<PUSH	TP* <MQUOTE (LIST)>>			    ; [105]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [106]
+	<PUSH	TP* [0]>				    ; [107]
+	<PUSH	P* (FRM) 82>				    ; (82)
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [108]
+	<PUSH	TP* [0]>				    ; [109]
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [110]
+	<PUSH	TP* [0]>				    ; [111]
+TAG9	<SOSGE	(P) >					    ; 179
+	<JRST	TAG8>
+	<PUSH	TP* <MQUOTE "MAP"> -1>			    ; [112]
+	<PUSH	TP* <MQUOTE "MAP">>			    ; [113]
+	<MCALL	1 MAKE:TAG>
+	<MOVE	C* A>
+	<MOVE	D* B>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |CICONS >
+	<SKIPE	(TP) >					    ; (111)
+	<HRRM	B* @ (TP) >				    ; (111)
+	<MOVEM	B* (TP) >				    ; (111)
+	<SKIPN	(TP) -2>				    ; (109)
+	<MOVEM	B* (TP) -2>				    ; (109)
+	<JRST	TAG9>
+TAG8	<MOVE	B* (TP) -2>				    ; 194 (109)
+	<SUB	TP* [<(4) 4>]>
+	<SUB	P* [<(1) 1>]>
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [108]
+	<PUSH	TP* B>					    ; [109]
+	<MOVE	B* <MQUOTE STK!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<PUSH	TP* A>					    ; [110]
+	<PUSH	TP* B>					    ; [111]
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [112]
+	<PUSH	TP* <MQUOTE MAPLP!-IMAPGEN!-MAPGEN!-PACKAGE>>; [113]
+	<PUSH	TP* <MQUOTE "MAP"> -1>			    ; [114]
+	<PUSH	TP* <MQUOTE "MAP">>			    ; [115]
+	<MCALL	1 MAKE:TAG>
+	<PUSH	TP* A>					    ; [114]
+	<PUSH	TP* B>					    ; [115]
+	<PUSH	TP* <MQUOTE (ATOM)> -1>			    ; [116]
+	<PUSH	TP* <MQUOTE (ATOM)>>			    ; [117]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* <MQUOTE "MAP"> -1>			    ; [118]
+	<PUSH	TP* <MQUOTE "MAP">>			    ; [119]
+	<MCALL	1 MAKE:TAG>
+	<PUSH	TP* A>					    ; [118]
+	<PUSH	TP* B>					    ; [119]
+	<PUSH	TP* (FRM) 59>				    ; (59) [120]
+	<PUSH	TP* (FRM) 60>				    ; (60) [121]
+	<MCALL	1 AP?>
+	<PUSH	TP* A>					    ; [120]
+	<PUSH	TP* B>					    ; [121]
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [122]
+	<PUSH	TP* <MQUOTE STOP!-IMAPGEN!-MAPGEN!-PACKAGE>>; [123]
+	<PUSH	TP* <TYPE-WORD UNBOUND>>		    ; [124]
+	<PUSH	TP* [-1]>				    ; [125]
+	<PUSH	TP* <MQUOTE (LIST)> -1>			    ; [126]
+	<PUSH	TP* <MQUOTE (LIST)>>			    ; [127]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [128]
+	<PUSH	TP* <MQUOTE STK!-IMAPGEN!-MAPGEN!-PACKAGE>> ; [129]
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [130]
+	<PUSH	TP* [0]>				    ; [131]
+	<MOVE	B* <MQUOTE STK!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<PUSH	P* [1]>
+	<MOVEI	O* |SEGLST >
+	<PUSHJ	P* |RCALL >
+	<SUB	P* [<(1) 1>]>
+	<PUSH	TP* A>					    ; [130]
+	<PUSH	TP* B>					    ; [131]
+	<PUSH	TP* <MQUOTE (LIST)> -1>			    ; [132]
+	<PUSH	TP* <MQUOTE (LIST)>>			    ; [133]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [134]
+	<PUSH	TP* <MQUOTE TMPS!-COMPDEC!-PACKAGE>>	    ; [135]
+	<MOVE	B* <MQUOTE TMPS!-COMPDEC!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<PUSH	TP* A>					    ; [136]
+	<PUSH	TP* B>					    ; [137]
+	<PUSH	TP* <MQUOTE (LIST)> -1>			    ; [138]
+	<PUSH	TP* <MQUOTE (LIST)>>			    ; [139]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [140]
+	<PUSH	TP* <MQUOTE BTP!-IMAPGEN!-MAPGEN!-PACKAGE>> ; [141]
+	<PUSH	TP* <TYPE-WORD UNBOUND>>		    ; [142]
+	<PUSH	TP* [-1]>				    ; [143]
+	<PUSH	TP* <MQUOTE (LIST)> -1>			    ; [144]
+	<PUSH	TP* <MQUOTE (LIST)>>			    ; [145]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [146]
+	<PUSH	TP* <MQUOTE BASEF!-IMAPGEN!-MAPGEN!-PACKAGE>>; [147]
+	<MOVE	B* <MQUOTE BASEF!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<PUSH	TP* A>					    ; [148]
+	<PUSH	TP* B>					    ; [149]
+	<PUSH	TP* <MQUOTE (NODE!-COMPDEC!-PACKAGE)> -1>   ; [150]
+	<PUSH	TP* <MQUOTE (NODE!-COMPDEC!-PACKAGE)>>	    ; [151]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [152]
+	<PUSH	TP* <MQUOTE FRMS!-IMAPGEN!-MAPGEN!-PACKAGE>>; [153]
+	<MOVE	B* <MQUOTE FRMS!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<PUSH	TP* A>					    ; [154]
+	<PUSH	TP* B>					    ; [155]
+	<PUSH	TP* <MQUOTE (LIST)> -1>			    ; [156]
+	<PUSH	TP* <MQUOTE (LIST)>>			    ; [157]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [158]
+	<PUSH	TP* <MQUOTE MAYBE-FALSE!-IMAPGEN!-MAPGEN!-PACKAGE>>; [159]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [160]
+	<PUSH	TP* [0]>				    ; [161]
+	<PUSH	TP* <MQUOTE (ANY)> -1>			    ; [162]
+	<PUSH	TP* <MQUOTE (ANY)>>			    ; [163]
+	<PUSHJ	P* |SPECBN >
+	<MOVE	B* <MQUOTE PRE!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<PUSH	TP* A>					    ; [164]
+	<PUSH	TP* B>					    ; [165]
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [166]
+	<PUSH	TP* [0]>				    ; [167]
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [168]
+	<PUSH	TP* <MQUOTE DEST!-IMAPGEN!-MAPGEN!-PACKAGE>>; [169]
+	<PUSH	TP* <TYPE-WORD UNBOUND>>		    ; [170]
+	<PUSH	TP* [-1]>				    ; [171]
+	<PUSH	TP* <MQUOTE (<OR ATOM DATUM!-COMPDEC!-PACKAGE>)> -1>; [172]
+	<PUSH	TP* <MQUOTE (<OR ATOM DATUM!-COMPDEC!-PACKAGE>)>>; [173]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [174]
+	<PUSH	TP* <MQUOTE CD!-IMAPGEN!-MAPGEN!-PACKAGE>>  ; [175]
+	<PUSH	TP* <TYPE-WORD UNBOUND>>		    ; [176]
+	<PUSH	TP* [-1]>				    ; [177]
+	<PUSH	TP* <MQUOTE (<OR ATOM DATUM!-COMPDEC!-PACKAGE>)> -1>; [178]
+	<PUSH	TP* <MQUOTE (<OR ATOM DATUM!-COMPDEC!-PACKAGE>)>>; [179]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [180]
+	<PUSH	TP* <MQUOTE AC-HACK!-IMAPGEN!-MAPGEN!-PACKAGE>>; [181]
+	<MOVE	B* <MQUOTE AC-HACK!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<PUSH	TP* A>					    ; [182]
+	<PUSH	TP* B>					    ; [183]
+	<PUSH	TP* <MQUOTE (ANY)> -1>			    ; [184]
+	<PUSH	TP* <MQUOTE (ANY)>>			    ; [185]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [186]
+	<PUSH	TP* <MQUOTE EXIT!-IMAPGEN!-MAPGEN!-PACKAGE>>; [187]
+	<PUSH	TP* <MQUOTE "MAPEX"> -1>		    ; [188]
+	<PUSH	TP* <MQUOTE "MAPEX">>			    ; [189]
+	<MCALL	1 MAKE:TAG>
+	<PUSH	TP* A>					    ; [188]
+	<PUSH	TP* B>					    ; [189]
+	<PUSH	TP* <MQUOTE (ATOM)> -1>			    ; [190]
+	<PUSH	TP* <MQUOTE (ATOM)>>			    ; [191]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [192]
+	<PUSH	TP* <MQUOTE APPLTAG!-IMAPGEN!-MAPGEN!-PACKAGE>>; [193]
+	<PUSH	TP* <MQUOTE "MAPAP"> -1>		    ; [194]
+	<PUSH	TP* <MQUOTE "MAPAP">>			    ; [195]
+	<MCALL	1 MAKE:TAG>
+	<PUSH	TP* A>					    ; [194]
+	<PUSH	TP* B>					    ; [195]
+	<PUSH	TP* <MQUOTE (ATOM)> -1>			    ; [196]
+	<PUSH	TP* <MQUOTE (ATOM)>>			    ; [197]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [198]
+	<PUSH	TP* <MQUOTE GMF!-IMAPGEN!-MAPGEN!-PACKAGE>> ; [199]
+	<PUSH	TP* <TYPE-WORD UNBOUND>>		    ; [200]
+	<PUSH	TP* [-1]>				    ; [201]
+	<PUSH	TP* <MQUOTE (ANY)> -1>			    ; [202]
+	<PUSH	TP* <MQUOTE (ANY)>>			    ; [203]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* (FRM) -5>				    ; (-5) [204]
+	<PUSH	TP* (FRM) -4>				    ; (-4) [205]
+	<MOVE	B* (FRM) -5>				    ; (-5)
+	<MOVE	D* (FRM) -4>				    ; (-4)
+	<GETYP	O* B>
+	<CAMN	D* <MQUOTE FLUSHED!-COMPDEC!-PACKAGE>>
+	<CAIE	O* <TYPE-CODE ATOM>>
+	<JRST	TAG10>
+	<MOVE	PVP* <MQUOTE T> -1>
+	<MOVE	TVP* <MQUOTE T>>
+	<JRST	TAG11>
+TAG10	<MOVE	PVP* <TYPE-WORD FALSE>>			    ; 353
+	<MOVEI	TVP* 0>
+TAG11	<PUSH	TP* PVP>				    ; 355 [206]
+	<PUSH	TP* TVP>				    ; [207]
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [208]
+	<PUSH	TP* <MQUOTE RTAG!-COMPDEC!-PACKAGE>>	    ; [209]
+	<PUSH	TP* <MQUOTE "MAP"> -1>			    ; [210]
+	<PUSH	TP* <MQUOTE "MAP">>			    ; [211]
+	<MCALL	1 MAKE:TAG>
+	<PUSH	TP* A>					    ; [210]
+	<PUSH	TP* B>					    ; [211]
+	<PUSH	TP* <MQUOTE (ATOM)> -1>			    ; [212]
+	<PUSH	TP* <MQUOTE (ATOM)>>			    ; [213]
+	<PUSHJ	P* |SPECBN >
+	<PUSH	TP* <MQUOTE T> -1>			    ; [214]
+	<PUSH	TP* <MQUOTE T>>				    ; [215]
+	<PUSH	TP* <MQUOTE T> -1>			    ; [216]
+	<PUSH	TP* <MQUOTE T>>				    ; [217]
+	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; [218]
+	<PUSH	TP* <MQUOTE GSTK!-IMAPGEN!-MAPGEN!-PACKAGE>>; [219]
+	<PUSH	TP* <TYPE-WORD UNBOUND>>		    ; [220]
+	<PUSH	TP* [-1]>				    ; [221]
+	<PUSH	TP* <MQUOTE (LIST)> -1>			    ; [222]
+	<PUSH	TP* <MQUOTE (LIST)>>			    ; [223]
+	<PUSHJ	P* |SPECBN >
+	<MOVEI	O* *22* >
+	<PUSHJ	P* |NTPALO >
+	<INTGO>
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(22) 22>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [242]
+	<PUSH	TP* (B) 1>				    ; [243]
+	<MOVE	B* <MQUOTE TOT-SPEC!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<PUSH	TP* A>					    ; [244]
+	<PUSH	TP* B>					    ; [245]
+	<MOVEI	A* 2 >
+	<PUSHJ	P* |CMINUS >
+	<MOVE	D* (FRM) 64>				    ; (64)
+	<ADD	D* [<(22) 22>]>
+	<JUMPGE	D* |CERR2 >
+	<MOVEM	A* (D) >
+	<MOVEM	B* (D) 1>
+	<MOVE	B* <MQUOTE PRE!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<PUSHJ	P* |CILVAL >
+	<MOVEI	E* (FRM) 217>				    ; (217)
+	<MOVE	C* <MQUOTE PRE!-IMAPGEN!-MAPGEN!-PACKAGE>>
+	<MOVE	D* <MQUOTE (ANY)>>
+	<PUSHJ	P* |IBIND >
+	<MOVE	B* (FRM) -2>				    ; (-2)
+	<JUMPE	B* TAG12>
+	<MOVE	D* <TYPE-WORD FALSE>>
+	<MOVEI	PVP* 0>
+	<JUMPE	B* TAG13>
+TAG17	<MOVE	TVP* (B) 1>				    ; 409
+	<SKIPGE	|INTFLG >
+	<TAG14>
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 5>				    ; (5)
+	<MOVEM	B* (FRM) 6>				    ; (6)
+	<PUSH	TP* (TVP) 4>				    ; [242]
+	<PUSH	TP* (TVP) 5>				    ; [243]
+	<PUSH	TP* <MQUOTE <PRIMTYPE LIST>> -1>	    ; [244]
+	<PUSH	TP* <MQUOTE <PRIMTYPE LIST>>>		    ; [245]
+	<MCALL	2 TYPE-OK?>
+	<GETYP	O* A>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG15>
+	<MOVE	B* <TYPE-WORD FALSE>>
+	<MOVEI	D* 0>
+	<JRST	TAG16>
+TAG15	<MOVE	B* <MQUOTE T> -1>			    ; 426
+	<MOVE	D* <MQUOTE T>>
+	<MOVE	D* B>
+	<MOVE	PVP* D>
+	<MOVE	B* (FRM) 6>				    ; (6)
+	<HRRZ	B* (B) >
+	<JUMPN	B* TAG17>
+TAG13	<MOVE	B* PVP>					    ; 433
+TAG16	<JUMPGE	D* TAG12>				    ; 434
+	<MOVE	B* <TYPE-WORD FALSE>>
+	<MOVEI	D* 0>
+	<MOVEM	B* (FRM) 207>				    ; (207)
+	<MOVEM	D* (FRM) 208>				    ; (208)
+TAG12	<MOVE	B* (FRM) -2>				    ; 439 (-2)
+	<JUMPN	B* TAG18>
+	<MOVE	D* (FRM) 60>				    ; (60)
+	<GETYP	O* (D) 6>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG19>
+TAG18	<MOVE	D* (FRM) 60>				    ; 445 (60)
+	<MOVE	PVP* (D) 6>
+	<MOVE	TVP* (D) 7>
+	<GETYP	O* PVP>
+	<CAIN	TVP* 0>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<SKIPA	O>
+	<JRST	TAG20>
+	<MOVE	C* (D) 1>
+	<CAIE	C* *107* >
+	<JRST	TAG21>
+	<ADD	D* [<(18) 18>]>
+	<JUMPGE	D* |CERR2 >
+	<MOVE	E* (D) >
+	<MOVE	A* (D) 1>
+	<GETYP	O* E>
+	<CAIN	A* 5 >
+	<CAIE	O* <TYPE-CODE FIX>>
+	<JRST	TAG20>
+TAG21	<GETYP	O* (FRM) 113>				    ; 464 (113)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG19>
+TAG20	<JUMPE	B* TAG22>				    ; 467
+	<MOVE	D* (FRM) 64>				    ; (64)
+	<ADD	D* [<(20) 20>]>
+	<JUMPGE	D* |CERR2 >
+	<MOVE	C* (D) 1>
+	<JUMPE	C* |CERR2 >
+	<MOVE	E* (C) 1>
+	<MOVE	D* (E) 3>
+	<CAME	D* <MQUOTE DUMMY-MAPF!-COMPDEC!-PACKAGE>>
+	<JRST	TAG19>
+TAG22	<MOVE	D* <MQUOTE T> -1>			    ; 477
+	<MOVE	PVP* <MQUOTE T>>
+	<JRST	TAG23>
+TAG19	<MOVE	D* <TYPE-WORD FALSE>>			    ; 480
+	<MOVEI	PVP* 0>
+TAG23	<MOVEM	D* (FRM) 193>				    ; 482 (193)
+	<MOVEM	PVP* (FRM) 194>				    ; (194)
+	<JUMPE	B* TAG24>
+	<PUSH	P* [0]>
+	<JUMPE	B* TAG25>
+TAG27	<MOVE	TVP* (B) 1>				    ; 487
+	<SKIPGE	|INTFLG >
+	<TAG26>
+	<PUSH	TP* (TVP) 4>				    ; [242]
+	<PUSH	TP* (TVP) 5>				    ; [243]
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 3>				    ; (3)
+	<MOVEM	B* (FRM) 4>				    ; (4)
+	<MCALL	1 MINL>
+	<PUSH	TP* A>					    ; [242]
+	<PUSH	TP* B>					    ; [243]
+	<AOS	(P) >
+	<MOVE	B* (FRM) 4>				    ; (4)
+	<HRRZ	B* (B) >
+	<JUMPN	B* TAG27>
+TAG25	<POP	P* A>					    ; 502
+	<PUSHJ	P* |CMIN >
+	<JUMPG	B* TAG24>
+	<MOVE	B* <MQUOTE T> -1>
+	<MOVE	D* <MQUOTE T>>
+	<JRST	TAG28>
+TAG24	<MOVE	B* <TYPE-WORD FALSE>>			    ; 508
+	<MOVEI	D* 0>
+TAG28	<MOVEM	B* (FRM) 15>				    ; 510 (15)
+	<MOVEM	D* (FRM) 16>				    ; (16)
+	<GETYP	O* (FRM) 199>				    ; (199)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG29>
+	<MOVE	PVP* <MQUOTE FLUSHED!-COMPDEC!-PACKAGE> -1>
+	<MOVE	TVP* <MQUOTE FLUSHED!-COMPDEC!-PACKAGE>>
+	<JRST	TAG30>
+TAG29	<PUSH	TP* (FRM) 25>				    ; 518 (25) [238]
+	<PUSH	TP* (FRM) 26>				    ; (26) [239]
+	<PUSH	TP* (FRM) -5>				    ; (-5) [240]
+	<PUSH	TP* (FRM) -4>				    ; (-4) [241]
+	<MCALL	2 GOODACS>
+	<MOVE	PVP* A>
+	<MOVE	TVP* B>
+TAG30	<MOVEM	PVP* (FRM) 163>				    ; 525 (163)
+	<MOVEM	TVP* (FRM) 164>				    ; (164)
+	<MOVEM	PVP* (FRM) 197>				    ; (197)
+	<MOVEM	TVP* (FRM) 198>				    ; (198)
+	<GETYP	O* (FRM) 219>				    ; (219)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG31>
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(30) 30>]>
+	<JUMPGE	B* |CERR2 >
+	<SKIPGE	(B) 1>
+	<JRST	TAG32>
+	<MOVE	B* (FRM) 142>				    ; (142)
+	<ADD	B* [<(26) 26>]>
+	<JUMPGE	B* |CERR2 >
+	<SKIPE	(B) 1>
+	<JRST	TAG33>
+TAG32	<MOVE	B* <TYPE-WORD FALSE>>			    ; 542
+	<MOVEI	D* 0>
+	<JRST	TAG34>
+TAG33	<MOVE	B* <MQUOTE T> -1>			    ; 545
+	<MOVE	D* <MQUOTE T>>
+TAG34	<PUSH	TP* B>					    ; 547 [238]
+	<PUSH	TP* D>					    ; [239]
+	<MCALL	1 EMIT-PRE>
+TAG31	<MOVE	B* (FRM) 123>				    ; 550 (123)
+	<MOVE	D* (FRM) 124>				    ; (124)
+	<MOVE	E* D>
+	<MOVEM	B* (FRM) 117>				    ; (117)
+	<MOVEM	D* (FRM) 118>				    ; (118)
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 0>
+	<PUSHJ	P* |C1CONS >
+	<PUSH	TP* (FRM) 59>				    ; (59) [238]
+	<PUSH	TP* (FRM) 60>				    ; (60) [239]
+	<PUSH	TP* (FRM) 163>				    ; (163) [240]
+	<PUSH	TP* (FRM) 164>				    ; (164) [241]
+	<MOVE	D* (FRM) 193>				    ; (193)
+	<MOVE	PVP* (FRM) 194>				    ; (194)
+	<GETYP	O* D>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG35>
+	<MOVE	TVP* (FRM) 64>				    ; (64)
+	<ADD	TVP* [<(20) 20>]>
+	<JUMPGE	TVP* |CERR2 >
+	<MOVE	C* (TVP) 1>
+	<JUMPE	C* |CERR2 >
+	<MOVE	TVP* (C) 1>
+	<MOVE	C* (FRM) 64>				    ; (64)
+	<ADD	C* [<(20) 20>]>
+	<JUMPGE	C* |CERR2 >
+	<MOVE	E* (C) 1>
+	<JUMPE	E* |CERR2 >
+	<HRRZ	C* (E) >
+	<MOVE	SP* (FRM) 64>				    ; (64)
+	<ADD	SP* [<(20) 20>]>
+	<JUMPGE	SP* |CERR2 >
+	<MOVEM	C* (SP) 1>
+	<MOVE	D* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>
+	<MOVE	PVP* TVP>
+	<MOVEM	TVP* (FRM) 18>				    ; (18)
+TAG35	<PUSH	TP* D>					    ; 586 [242]
+	<PUSH	TP* PVP>				    ; [243]
+	<PUSH	TP* (FRM) 15>				    ; (15) [244]
+	<PUSH	TP* (FRM) 16>				    ; (16) [245]
+	<MOVE	D* (FRM) 82>				    ; (82)
+	<MOVEM	A* (FRM) 123>				    ; (123)
+	<MOVEM	B* (FRM) 124>				    ; (124)
+	<SOJN	D* TAG36>
+	<MOVE	D* <MQUOTE T> -1>
+	<MOVE	PVP* <MQUOTE T>>
+	<JRST	TAG37>
+TAG36	<MOVE	D* <TYPE-WORD FALSE>>			    ; 597
+	<MOVEI	PVP* 0>
+TAG37	<PUSH	TP* D>					    ; 599 [246]
+	<PUSH	TP* PVP>				    ; [247]
+	<PUSH	TP* (FRM) 199>				    ; (199) [248]
+	<PUSH	TP* (FRM) 200>				    ; (200) [249]
+	<MCALL	6 DO-FIRST-SETUP>
+	<GETYP	O* A>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG38>
+	<MOVE	D* (FRM) 60>				    ; (60)
+	<MOVE	PVP* (D) 1>
+	<CAIE	PVP* *107* >
+	<JRST	TAG39>
+	<MOVE	TVP* <MQUOTE T> -1>
+	<MOVE	C* <MQUOTE T>>
+	<JRST	TAG40>
+TAG39	<MOVE	TVP* <TYPE-WORD FALSE>>			    ; 614
+	<MOVEI	C* 0>
+TAG40	<MOVEM	TVP* (FRM) 99>				    ; 616 (99)
+	<MOVEM	C* (FRM) 100>				    ; (100)
+TAG38	<PUSH	TP* <TYPE-WORD LIST>>			    ; 618 [238]
+	<PUSH	TP* (FRM) -2>				    ; (-2) [239]
+	<PUSH	TP* <MQUOTE T> -1>			    ; [240]
+	<PUSH	TP* <MQUOTE T>>				    ; [241]
+	<PUSH	TP* (FRM) 193>				    ; (193) [242]
+	<PUSH	TP* (FRM) 194>				    ; (194) [243]
+	<MOVE	D* (FRM) 64>				    ; (64)
+	<ADD	D* [<(20) 20>]>
+	<JUMPGE	D* |CERR2 >
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [244]
+	<PUSH	TP* (D) 1>				    ; [245]
+	<MOVEM	A* (FRM) 13>				    ; (13)
+	<MOVEM	B* (FRM) 14>				    ; (14)
+	<MCALL	4 PUSH-STRUCS>
+	<PUSH	TP* (FRM) 59>				    ; (59) [238]
+	<PUSH	TP* (FRM) 60>				    ; (60) [239]
+	<PUSH	TP* (FRM) 163>				    ; (163) [240]
+	<PUSH	TP* (FRM) 164>				    ; (164) [241]
+	<MOVE	D* (FRM) 193>				    ; (193)
+	<MOVE	PVP* (FRM) 194>				    ; (194)
+	<GETYP	O* D>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG41>
+	<MOVE	D* (FRM) 17>				    ; (17)
+	<MOVE	PVP* (FRM) 18>				    ; (18)
+TAG41	<PUSH	TP* D>					    ; 643 [242]
+	<PUSH	TP* PVP>				    ; [243]
+	<PUSH	TP* (FRM) 15>				    ; (15) [244]
+	<PUSH	TP* (FRM) 16>				    ; (16) [245]
+	<MOVE	D* (FRM) 82>				    ; (82)
+	<MOVEM	A* (FRM) 75>				    ; (75)
+	<MOVEM	B* (FRM) 76>				    ; (76)
+	<SOJN	D* TAG42>
+	<MOVE	D* <MQUOTE T> -1>
+	<MOVE	PVP* <MQUOTE T>>
+	<JRST	TAG43>
+TAG42	<MOVE	D* <TYPE-WORD FALSE>>			    ; 654
+	<MOVEI	PVP* 0>
+TAG43	<PUSH	TP* D>					    ; 656 [246]
+	<PUSH	TP* PVP>				    ; [247]
+	<PUSH	TP* (FRM) 199>				    ; (199) [248]
+	<PUSH	TP* (FRM) 200>				    ; (200) [249]
+	<MCALL	6 DO-FIRST-SETUP-2>
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG44>
+	<GETYP	O* (FRM) 199>				    ; (199)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG44>
+	<MOVE	B* (FRM) 18>				    ; (18)
+	<GETYP	O* (B) 24>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG44>
+	<MOVE	D* (B) 24>
+	<MOVE	PVP* (B) 25>
+	<MOVEM	D* (FRM) 197>				    ; (197)
+	<MOVEM	PVP* (FRM) 198>				    ; (198)
+TAG44	<MOVE	B* (FRM) 64>				    ; 675 (64)
+	<ADD	B* [<(32) 32>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD ATOM>>			    ; [238]
+	<PUSH	TP* (B) 1>				    ; [239]
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(30) 30>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* (B) >				    ; [240]
+	<PUSH	TP* (B) 1>				    ; [241]
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(34) 34>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* (B) >				    ; [242]
+	<PUSH	TP* (B) 1>				    ; [243]
+	<MCALL	3 BEGIN-FRAME>
+	<GETYP	O* (FRM) 219>				    ; (219)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG45>
+	<MOVE	B* (FRM) 36>				    ; (36)
+	<JRST	TAG46>
+TAG45	<PUSH	TP* (FRM) 123>				    ; 696 (123) [238]
+	<PUSH	TP* (FRM) 124>				    ; (124) [239]
+	<MOVE	B* (FRM) 148>				    ; (148)
+	<JUMPE	B* |CERR2 >
+	<HRRZ	D* (B) >
+	<JUMPE	D* |CERR2 >
+	<GETYP	O* (D) 0>
+	<CAIN	O* <TYPE-CODE DEFER>>
+	<MOVE	D* (D) 1>
+	<PUSH	TP* (D) >				    ; [240]
+	<PUSH	TP* (D) 1>				    ; [241]
+	<MCALL	2 STACK:L>
+TAG46	<MOVE	E* (FRM) 124>				    ; 708 (124)
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 0>
+	<MOVEM	B* (FRM) 130>				    ; (130)
+	<PUSHJ	P* |C1CONS >
+	<MOVE	E* B>
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 0>
+	<MOVEM	A* (FRM) 51>				    ; (51)
+	<MOVEM	B* (FRM) 52>				    ; (52)
+	<MOVEM	A* (FRM) 123>				    ; (123)
+	<MOVEM	B* (FRM) 124>				    ; (124)
+	<PUSHJ	P* |C1CONS >
+	<MOVEM	A* (FRM) 123>				    ; (123)
+	<MOVEM	B* (FRM) 124>				    ; (124)
+	<GETYP	O* (FRM) 13>				    ; (13)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG47>
+	<PUSH	TP* (FRM) 59>				    ; (59) [238]
+	<PUSH	TP* (FRM) 60>				    ; (60) [239]
+	<PUSH	TP* (FRM) 113>				    ; (113) [240]
+	<PUSH	TP* (FRM) 114>				    ; (114) [241]
+	<MCALL	2 DO-FINAL-SETUP>
+	<MOVEM	A* (FRM) 153>				    ; (153)
+	<MOVEM	B* (FRM) 154>				    ; (154)
+TAG47	<PUSH	TP* (FRM) 63>				    ; 733 (63) [238]
+	<PUSH	TP* (FRM) 64>				    ; (64) [239]
+	<MCALL	1 PROG-START-AC>
+	<PUSH	TP* (FRM) 107>				    ; (107) [238]
+	<PUSH	TP* (FRM) 108>				    ; (108) [239]
+	<MCALL	1 LABEL:TAG>
+	<GETYP	O* (FRM) 13>				    ; (13)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG48>
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG48>
+	<PUSH	TP* (FRM) 55>				    ; (55) [238]
+	<PUSH	TP* (FRM) 56>				    ; (56) [239]
+	<PUSH	TP* (FRM) 51>				    ; (51) [240]
+	<PUSH	TP* (FRM) 52>				    ; (52) [241]
+	<GETYP	O* (FRM) 219>				    ; (219)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG49>
+TAG51	<MOVE	B* <TYPE-WORD FALSE>>			    ; 752
+	<MOVEI	D* 0>
+	<JRST	TAG50>
+TAG49	<MOVE	B* (FRM) 64>				    ; 755 (64)
+	<ADD	B* [<(30) 30>]>
+	<JUMPGE	B* |CERR2 >
+	<SKIPGE	(B) 1>
+	<JRST	TAG51>
+	<MOVE	B* <MQUOTE T> -1>
+	<MOVE	D* <MQUOTE T>>
+TAG50	<PUSH	TP* B>					    ; 762 [242]
+	<PUSH	TP* D>					    ; [243]
+	<MCALL	3 FIND-FIRST-STRUC>
+	<MOVEM	A* (FRM) 57>				    ; (57)
+	<MOVEM	B* (FRM) 58>				    ; (58)
+TAG48	<MOVE	B* (FRM) 64>				    ; 767 (64)
+	<ADD	B* [<(30) 30>]>
+	<JUMPGE	B* |CERR2 >
+	<SKIPL	(B) 1>
+	<JRST	TAG52>
+	<MCALL	0 ACT:INITIAL>
+	<GETYP	O* A>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG52>
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [238]
+	<PUSH	TP* [2]>				    ; [239]
+	<MCALL	1 ADD:STACK>
+TAG52	<MOVE	E* (FRM) 124>				    ; 779 (124)
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVEM	A* (FRM) 95>				    ; (95)
+	<MOVEM	B* (FRM) 96>				    ; (96)
+	<MOVEM	A* (FRM) 123>				    ; (123)
+	<MOVEM	B* (FRM) 124>				    ; (124)
+	<GETYP	O* (FRM) 219>				    ; (219)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG53>
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG54>
+	<MOVE	D* (FRM) 82>				    ; (82)
+	<SOJE	D* TAG53>
+TAG54	<MOVE	D* (FRM) 64>				    ; 795 (64)
+	<ADD	D* [<(32) 32>]>
+	<JUMPGE	D* |CERR2 >
+	<PUSH	TP* <TYPE-WORD ATOM>>			    ; [238]
+	<PUSH	TP* (D) 1>				    ; [239]
+	<MCALL	1 SALLOC:SLOTS>
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(32) 32>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD ATOM>>			    ; [238]
+	<PUSH	TP* (B) 1>				    ; [239]
+	<MCALL	1 ADD:STACK>
+	<GETYP	O* (FRM) 219>				    ; (219)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG55>
+	<PUSH	TP* <MQUOTE GVAL> -1>			    ; [238]
+	<PUSH	TP* <MQUOTE GVAL>>			    ; [239]
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(32) 32>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD ATOM>>			    ; [240]
+	<PUSH	TP* (B) 1>				    ; [241]
+	<MOVEI	A* 2 >
+	<PUSHJ	P* |IIFORM >
+	<MOVE	C* A>
+	<MOVE	D* B>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 1>				    ; (1)
+	<MOVEM	B* (FRM) 2>				    ; (2)
+	<MOVE	D* (FRM) 32>				    ; (32)
+	<HRRM	D* @ B>
+	<MOVE	B* (FRM) 2>				    ; (2)
+	<MOVEM	B* (FRM) 32>				    ; (32)
+TAG55	<GETYP	O* (FRM) 193>				    ; 830 (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG53>
+	<MOVE	B* (FRM) 123>				    ; (123)
+	<MOVE	D* (FRM) 124>				    ; (124)
+	<MOVE	E* D>
+	<MOVEM	B* (FRM) 213>				    ; (213)
+	<MOVEM	D* (FRM) 214>				    ; (214)
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVEM	A* (FRM) 123>				    ; (123)
+	<MOVEM	B* (FRM) 124>				    ; (124)
+TAG53	<GETYP	O* (FRM) 219>				    ; 843 (219)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG56>
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG56>
+	<MOVE	B* (FRM) 82>				    ; (82)
+	<SOJE	B* TAG56>
+	<MOVE	B* (FRM) 123>				    ; (123)
+	<MOVE	D* (FRM) 124>				    ; (124)
+	<MOVEM	B* (FRM) 213>				    ; (213)
+	<MOVEM	D* (FRM) 214>				    ; (214)
+	<MOVE	E* D>
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVEM	A* (FRM) 123>				    ; (123)
+	<MOVEM	B* (FRM) 124>				    ; (124)
+TAG56	<GETYP	O* (FRM) 153>				    ; 861 (153)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG57>
+	<MOVNI	B* 2 >
+	<JRST	TAG58>
+TAG57	<GETYP	O* (FRM) 13>				    ; 866 (13)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG59>
+	<MOVNI	B* 1 >
+	<JRST	TAG58>
+TAG59	<MOVEI	B* 0>					    ; 871
+TAG58	<MOVEM	B* (FRM) 70>				    ; 872 (70)
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG60>
+	<GETYP	O* (FRM) 15>				    ; (15)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG61>
+	<MOVE	D* (FRM) 82>				    ; (82)
+	<SOJE	D* TAG60>
+TAG61	<GETYP	O* (FRM) 199>				    ; 881 (199)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG60>
+	<PUSH	TP* (FRM) 17>				    ; (17) [238]
+	<PUSH	TP* (FRM) 18>				    ; (18) [239]
+	<MCALL	1 LVAL-UP>
+TAG60	<MOVE	O* <TYPE-WORD LIST>>			    ; 887
+	<MOVEM	O* (FRM) 223>				    ; (223)
+	<MOVE	O* (FRM) -2>				    ; (-2)
+	<MOVEM	O* (FRM) 224>				    ; (224)
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(20) 20>]>
+	<JUMPGE	B* |CERR2 >
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 225>				    ; (225)
+	<MOVE	O* (B) 1>
+	<MOVEM	O* (FRM) 226>				    ; (226)
+	<MOVE	A* (FRM) 225>				    ; (225)
+	<MOVE	B* (FRM) 226>				    ; (226)
+	<PUSHJ	P* |CEMPTY >
+	<JRST	TAG62>
+	<MOVEI	B* 0>
+	<JRST	TAG63>
+TAG62	<PUSH	TP* <TYPE-WORD FALSE>>			    ; 904 [238]
+	<PUSH	TP* [0]>				    ; [239]
+	<PUSH	TP* (FRM) 225>				    ; (225) [240]
+	<PUSH	TP* (FRM) 226>				    ; (226) [241]
+	<PUSH	P* [-1]>
+TAG66	<MOVE	A* (TP) -1>				    ; 909 (240)
+	<MOVE	B* (TP) >				    ; (241)
+	<PUSHJ	P* |TYPSEG >
+	<SKIPL	(P) >
+	<XCT	(C) |INCR1 >
+	<XCT	(C) |TESTR >
+	<JRST	TAG64>
+	<MOVE	A* |DSTORE >
+	<MOVE	B* D>
+	<MOVE	O* |DSTORE >
+	<MOVEM	O* (TP) -1>				    ; (240)
+	<MOVEM	D* (TP) >				    ; (241)
+	<SETZM	|DSTORE >
+	<SKIPGE	|INTFLG >
+	<SAVAC	O* [<(*100*) 0>]>
+	<MOVE	D* (B) 1>
+	<MOVE	PVP* (D) 3>
+	<CAME	PVP* <MQUOTE DUMMY-MAPF!-COMPDEC!-PACKAGE>>
+	<JRST	TAG65>
+	<MOVEI	TVP* 0>
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (TP) -3>				    ; (238)
+	<MOVEM	TVP* (TP) -2>				    ; (239)
+	<SETZM	(P) >
+	<JRST	TAG66>
+TAG64	<SETZM	|DSTORE >				    ; 934
+	<MOVE	B* (TP) -2>				    ; (239)
+TAG65	<SUB	TP* [<(4) 4>]>				    ; 936
+	<SUB	P* [<(1) 1>]>
+TAG63	<MOVE	O* <TYPE-WORD LIST>>			    ; 938
+	<MOVEM	O* (FRM) 227>				    ; (227)
+	<MOVEM	B* (FRM) 228>				    ; (228)
+	<MOVE	C* <TYPE-WORD LIST>>
+	<MOVEI	D* 0>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVEI	D* 1 >
+	<MOVE	PVP* (FRM) 82>				    ; (82)
+	<ASH	PVP* A>
+	<SUB	D* PVP>
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVE	E* B>
+	<PUSHJ	P* |C1CONS >
+	<MOVEM	A* (FRM) 229>				    ; (229)
+	<MOVEM	B* (FRM) 230>				    ; (230)
+	<MOVE	C* <TYPE-WORD LIST>>
+	<MOVEI	D* 0>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 0>
+	<MOVE	E* B>
+	<PUSHJ	P* |C1CONS >
+	<MOVEM	A* (FRM) 231>				    ; (231)
+	<MOVEM	B* (FRM) 232>				    ; (232)
+	<MOVE	O* <MQUOTE (0)> -1>
+	<MOVEM	O* (FRM) 233>				    ; (233)
+	<MOVE	O* <MQUOTE (0)>>
+	<MOVEM	O* (FRM) 234>				    ; (234)
+TAG88	<INTGO>						    ; 968
+	<MOVE	B* (FRM) 224>				    ; (224)
+	<JUMPN	B* TAG67>
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG68>
+	<MOVE	D* (FRM) 82>				    ; (82)
+	<SOJE	D* TAG68>
+	<GETYP	O* (FRM) 99>				    ; (99)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG68>
+	<GETYP	O* (FRM) 199>				    ; (199)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG68>
+	<PUSH	TP* (FRM) 197>				    ; (197) [238]
+	<PUSH	TP* (FRM) 198>				    ; (198) [239]
+	<MCALL	1 RET-TMP-AC>
+TAG68	<GETYP	O* (FRM) 13>				    ; 986 (13)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG69>
+	<GETYP	O* (FRM) 57>				    ; (57)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG69>
+	<PUSH	TP* (FRM) 55>				    ; (55) [238]
+	<PUSH	TP* (FRM) 56>				    ; (56) [239]
+	<MCALL	1 RET-TMP-AC>
+TAG69	<MOVE	B* (FRM) 228>				    ; 995 (228)
+	<JUMPE	B* TAG70>
+TAG71	<MOVE	D* (B) 1>				    ; 997
+	<SKIPGE	|INTFLG >
+	<SAVAC	O* [<(*1200*) *150000*>]>
+	<MOVE	PVP* <MQUOTE %<RGLOC MBINDERS!-MAPGEN!-PACKAGE T>>>
+	<ADD	PVP* |GLOTOP 1>
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 5>				    ; (5)
+	<MOVEM	B* (FRM) 6>				    ; (6)
+	<MOVE	A* (PVP) >
+	<MOVE	B* (PVP) 1>
+	<MOVE	C* (D) 7>
+	<MOVE	O* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>
+	<MOVEM	O* (FRM) 1>				    ; (1)
+	<MOVEM	D* (FRM) 2>				    ; (2)
+	<PUSHJ	P* |CINTH >
+	<PUSH	TP* A>					    ; [238]
+	<PUSH	TP* B>					    ; [239]
+	<PUSH	TP* (FRM) 1>				    ; (1) [240]
+	<PUSH	TP* (FRM) 2>				    ; (2) [241]
+	<MCALL	2 APPLY>
+	<MOVE	B* (FRM) 6>				    ; (6)
+	<HRRZ	B* (B) >
+	<JUMPN	B* TAG71>
+	<JRST	TAG70>
+TAG67	<MOVE	D* (FRM) 228>				    ; 1021 (228)
+	<JUMPE	D* |CERR2 >
+	<MOVE	PVP* (D) 1>
+	<GETYP	O* (PVP) 14>
+	<CAIE	O* <MQUOTE %<TYPE-C TEMPV!-COMPDEC!-PACKAGE LIST>>>
+	<JRST	TAG72>
+	<MOVE	TVP* <MQUOTE TEMPV!-COMPDEC!-PACKAGE>>
+	<MOVE	C* <TYPE-WORD ATOM>>
+	<JRST	TAG73>
+TAG72	<MOVE	C* <TYPE-WORD FALSE>>			    ; 1030
+	<MOVEI	TVP* 0>
+TAG73	<MOVEM	C* (FRM) 21>				    ; 1032 (21)
+	<MOVEM	TVP* (FRM) 22>				    ; (22)
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG74>
+	<GETYP	O* (FRM) 13>				    ; (13)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG75>
+	<GETYP	O* (FRM) 57>				    ; (57)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG76>
+	<PUSH	TP* (FRM) 57>				    ; (57) [238]
+	<PUSH	TP* (FRM) 58>				    ; (58) [239]
+	<GETYP	O* (FRM) 175>				    ; (175)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG77>
+	<MOVSI	E* <TYPE-CODE FORM>>
+	<JRST	TAG78>
+TAG77	<MOVSI	E* <TYPE-CODE TIME>>			    ; 1050
+TAG78	<PUSH	TP* <MQUOTE %<TYPE-W OPCODE!-OP!-PACKAGE WORD>>>; 1051 [240]
+	<PUSH	TP* E>					    ; [241]
+	<GETYP	O* (FRM) 175>				    ; (175)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG79>
+	<MOVEI	E* 1 >
+	<JRST	TAG80>
+TAG79	<MOVEI	E* 0>					    ; 1058
+TAG80	<PUSH	TP* <TYPE-WORD FIX>>			    ; 1059 [242]
+	<PUSH	TP* E>					    ; [243]
+	<MCALL	3 ADDRESS:C>
+	<MOVEM	A* (FRM) 3>				    ; (3)
+	<MOVEM	B* (FRM) 4>				    ; (4)
+	<GETYP	O* (FRM) 21>				    ; (21)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG74>
+	<PUSH	TP* (FRM) 57>				    ; (57) [238]
+	<PUSH	TP* (FRM) 58>				    ; (58) [239]
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [240]
+	<PUSH	TP* [2]>				    ; [241]
+	<MOVEI	A* 2 >
+	<PUSHJ	P* |CPLUS >
+	<MOVEM	A* (FRM) 57>				    ; (57)
+	<MOVEM	B* (FRM) 58>				    ; (58)
+	<JRST	TAG74>
+TAG76	<MOVE	E* (FRM) 230>				    ; 1076 (230)
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [238]
+	<PUSH	TP* (E) 1>				    ; [239]
+	<PUSH	TP* (FRM) 55>				    ; (55) [240]
+	<PUSH	TP* (FRM) 56>				    ; (56) [241]
+	<PUSH	TP* <MQUOTE VECTOR> -1>			    ; [242]
+	<PUSH	TP* <MQUOTE VECTOR>>			    ; [243]
+	<HRRZ	A* (E) >
+	<MOVE	B* (A) 1>
+	<MOVE	A* <TYPE-WORD LIST>>
+	<PUSH	P* [0]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<PUSH	TP* (FRM) 123>				    ; (123) [244]
+	<PUSH	TP* (FRM) 124>				    ; (124) [245]
+	<PUSH	TP* (FRM) 95>				    ; (95) [246]
+	<PUSH	TP* (FRM) 96>				    ; (96) [247]
+	<MCALL	2 STACK:L>
+	<MOVEI	O* |SEGLST >
+	<PUSHJ	P* |RCALL >
+	<SUB	P* [<(1) 1>]>
+	<PUSH	TP* A>					    ; [244]
+	<PUSH	TP* B>					    ; [245]
+	<MCALL	4 SPEC-OFFPTR>
+	<MOVEM	A* (FRM) 3>				    ; (3)
+	<MOVEM	B* (FRM) 4>				    ; (4)
+	<GETYP	O* (FRM) 21>				    ; (21)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG74>
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [238]
+	<PUSH	TP* (FRM) 230>				    ; (230) [239]
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 2 >
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 5>				    ; (5)
+	<MOVEM	B* (FRM) 6>				    ; (6)
+	<MOVE	D* (FRM) 232>				    ; (232)
+	<MOVN	D* (D) 1>
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	E* 0>
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 1>				    ; (1)
+	<MOVEM	B* (FRM) 2>				    ; (2)
+	<PUSHJ	P* |C1CONS >
+	<HRRM	B* @ (FRM) 2>				    ; (2)
+	<MOVEM	B* (FRM) 2>				    ; (2)
+	<PUSH	TP* <MQUOTE -> -1>			    ; [240]
+	<PUSH	TP* <MQUOTE ->>				    ; [241]
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [242]
+	<PUSH	TP* [0]>				    ; [243]
+	<MOVE	B* (FRM) 232>				    ; (232)
+	<HRRZ	D* (B) >
+	<MOVE	A* <TYPE-WORD LIST>>
+	<MOVE	B* (D) 1>
+	<PUSH	P* [2]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<PUSHJ	P* |IIFORM >
+	<MOVE	C* A>
+	<MOVE	D* B>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+	<HRRM	B* @ (FRM) 2>				    ; (2)
+	<MOVEM	B* (FRM) 2>				    ; (2)
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [240]
+	<PUSH	TP* (FRM) 6>				    ; (6) [241]
+	<JRST	TAG81>
+TAG75	<PUSH	TP* <MQUOTE -> -1>			    ; 1146 [238]
+	<PUSH	TP* <MQUOTE ->>				    ; [239]
+	<MOVE	E* (FRM) 230>				    ; (230)
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [240]
+	<PUSH	TP* (E) 1>				    ; [241]
+	<PUSH	TP* (FRM) 123>				    ; (123) [242]
+	<PUSH	TP* (FRM) 124>				    ; (124) [243]
+	<PUSH	TP* (FRM) 95>				    ; (95) [244]
+	<PUSH	TP* (FRM) 96>				    ; (96) [245]
+	<MCALL	2 STACK:L>
+	<PUSH	P* [2]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<PUSHJ	P* |IIFORM >
+	<PUSH	TP* A>					    ; [238]
+	<PUSH	TP* B>					    ; [239]
+	<PUSH	TP* <MQUOTE %<TYPE-W OPCODE!-OP!-PACKAGE WORD>>>; [240]
+	<PUSH	TP* [<(*13*) 0>]>			    ; [241]
+	<MOVE	B* (FRM) 230>				    ; (230)
+	<HRRZ	D* (B) >
+	<MOVE	A* <TYPE-WORD LIST>>
+	<MOVE	B* (D) 1>
+	<PUSH	P* [2]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<ACALL	A* ADDRESS:C>
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [238]
+	<PUSH	TP* (FRM) 230>				    ; (230) [239]
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 2 >
+	<MOVEI	E* 0>
+	<MOVEM	A* (FRM) 3>				    ; (3)
+	<MOVEM	B* (FRM) 4>				    ; (4)
+	<PUSHJ	P* |C1CONS >
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+TAG81	<MCALL	2 STFIXIT>				    ; 1184
+	<MOVEM	B* (FRM) 230>				    ; (230)
+TAG74	<MOVE	B* (FRM) 228>				    ; 1186 (228)
+	<JUMPE	B* |CERR2 >
+	<MOVE	D* (B) 1>
+	<MOVE	PVP* (D) 7>
+	<CAIE	PVP* 4 >
+	<JRST	TAG82>
+	<PUSH	TP* <MQUOTE ERROR> -1>			    ; [238]
+	<PUSH	TP* <MQUOTE ERROR>>			    ; [239]
+	<PUSH	TP* <MQUOTE "NOT IMPLEMENTED MAPF/R TUPLES "> -1>; [240]
+	<PUSH	TP* <MQUOTE "NOT IMPLEMENTED MAPF/R TUPLES ">>; [241]
+	<MCALL	2 MESSAGE>
+TAG82	<GETYP	O* (FRM) 193>				    ; 1197 (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG83>
+	<PUSH	TP* <MQUOTE +> -1>			    ; [238]
+	<PUSH	TP* <MQUOTE +>>				    ; [239]
+	<MOVE	A* (FRM) 233>				    ; (233)
+	<MOVE	B* (FRM) 234>				    ; (234)
+	<PUSH	P* [1]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<PUSHJ	P* |IIFORM >
+	<MOVE	C* A>
+	<MOVE	D* B>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 5>				    ; (5)
+	<MOVEM	B* (FRM) 6>				    ; (6)
+	<JRST	TAG84>
+TAG83	<PUSH	TP* <MQUOTE -> -1>			    ; 1217 [238]
+	<PUSH	TP* <MQUOTE ->>				    ; [239]
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [240]
+	<PUSH	TP* [0]>				    ; [241]
+	<MOVE	B* (FRM) 232>				    ; (232)
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [242]
+	<PUSH	TP* (B) 1>				    ; [243]
+	<HRRZ	B* (B) >
+	<MOVE	A* <TYPE-WORD LIST>>
+	<MOVE	B* (B) 1>
+	<PUSH	P* [3]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<PUSHJ	P* |IIFORM >
+	<MOVE	C* A>
+	<MOVE	D* B>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 5>				    ; (5)
+	<MOVEM	B* (FRM) 6>				    ; (6)
+	<MOVE	C* <TYPE-WORD LIST>>
+	<MOVEI	D* 0>
+	<MOVEI	E* 0>
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 1>				    ; (1)
+	<MOVEM	B* (FRM) 2>				    ; (2)
+	<PUSHJ	P* |C1CONS >
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 0>
+	<MOVE	E* B>
+	<PUSHJ	P* |C1CONS >
+	<PUSH	TP* A>					    ; [238]
+	<PUSH	TP* B>					    ; [239]
+	<PUSH	TP* (FRM) 123>				    ; (123) [240]
+	<PUSH	TP* (FRM) 124>				    ; (124) [241]
+	<PUSH	TP* (FRM) 95>				    ; (95) [242]
+	<PUSH	TP* (FRM) 96>				    ; (96) [243]
+	<MCALL	2 STACK:L>
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MCALL	2 STFIXIT>
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVE	D* (B) 1>
+	<MOVEI	E* 0>
+	<MOVEM	B* (FRM) 232>				    ; (232)
+	<PUSHJ	P* |C1CONS >
+	<HRRM	B* @ (FRM) 2>				    ; (2)
+	<MOVEM	B* (FRM) 2>				    ; (2)
+	<MOVE	B* (FRM) 232>				    ; (232)
+	<HRRZ	D* (B) >
+	<MOVE	PVP* (D) 1>
+	<HRRM	PVP* @ (FRM) 2>				    ; (2)
+TAG84	<MOVE	D* (FRM) 6>				    ; 1271 (6)
+	<MOVE	C* <TYPE-WORD LIST>>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVE	D* (FRM) 102>				    ; (102)
+	<JUMPE	D* |CERR2 >
+	<MOVE	C* <TYPE-WORD ATOM>>
+	<MOVE	D* (D) 1>
+	<MOVE	E* B>
+	<PUSHJ	P* |C1CONS >
+	<PUSH	TP* A>					    ; [238]
+	<PUSH	TP* B>					    ; [239]
+	<MOVE	A* (FRM) 159>				    ; (159)
+	<MOVE	B* (FRM) 160>				    ; (160)
+	<PUSH	P* [1]>
+	<MOVEI	O* |SEGLST >
+	<PUSHJ	P* |RCALL >
+	<SUB	P* [<(1) 1>]>
+	<MOVEM	A* (FRM) 159>				    ; (159)
+	<MOVEM	B* (FRM) 160>				    ; (160)
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG85>
+	<MOVE	D* (FRM) 224>				    ; (224)
+	<JUMPE	D* |CERR2 >
+	<MOVE	PVP* (D) 1>
+	<PUSH	TP* (PVP) 4>				    ; [238]
+	<PUSH	TP* (PVP) 5>				    ; [239]
+	<MOVE	A* (FRM) 225>				    ; (225)
+	<MOVE	B* (FRM) 226>				    ; (226)
+	<MOVEI	C* 1 >
+	<PUSHJ	P* |CINTH >
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MOVE	B* (FRM) 228>				    ; (228)
+	<JUMPE	B* |CERR2 >
+	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; [242]
+	<PUSH	TP* (B) 1>				    ; [243]
+	<PUSH	TP* (FRM) 91>				    ; (91) [244]
+	<PUSH	TP* (FRM) 92>				    ; (92) [245]
+	<MOVE	D* (FRM) 102>				    ; (102)
+	<JUMPE	D* |CERR2 >
+	<PUSH	TP* <TYPE-WORD ATOM>>			    ; [246]
+	<PUSH	TP* (D) 1>				    ; [247]
+	<PUSH	TP* (FRM) 15>				    ; (15) [248]
+	<PUSH	TP* (FRM) 16>				    ; (16) [249]
+	<PUSH	TP* (FRM) 81>				    ; (81) [250]
+	<PUSH	TP* (FRM) 82>				    ; (82) [251]
+	<PUSH	TP* (FRM) 111>				    ; (111) [252]
+	<PUSH	TP* (FRM) 112>				    ; (112) [253]
+	<MCALL	*10* ISET>
+	<MOVE	A* (FRM) 225>				    ; (225)
+	<MOVE	B* (FRM) 226>				    ; (226)
+	<MOVEI	C* 1 >
+	<PUSHJ	P* |CIREST >
+	<PUSH	TP* (FRM) 123>				    ; (123) [238]
+	<PUSH	TP* (FRM) 124>				    ; (124) [239]
+	<PUSH	TP* (FRM) 213>				    ; (213) [240]
+	<PUSH	TP* (FRM) 214>				    ; (214) [241]
+	<MOVEM	A* (FRM) 225>				    ; (225)
+	<MOVEM	B* (FRM) 226>				    ; (226)
+	<MCALL	2 STACK:L>
+	<MOVEM	A* (FRM) 233>				    ; (233)
+	<MOVEM	B* (FRM) 234>				    ; (234)
+	<JRST	TAG86>
+TAG85	<GETYP	O* (FRM) 21>				    ; 1336 (21)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG87>
+	<PUSH	TP* (FRM) 63>				    ; (63) [238]
+	<PUSH	TP* (FRM) 64>				    ; (64) [239]
+	<PUSH	TP* (FRM) 123>				    ; (123) [240]
+	<PUSH	TP* (FRM) 124>				    ; (124) [241]
+	<MCALL	2 RETURN-UP>
+	<MOVE	B* (FRM) 224>				    ; (224)
+	<JUMPE	B* |CERR2 >
+	<MOVE	D* (B) 1>
+	<PUSH	TP* (D) 4>				    ; [238]
+	<PUSH	TP* (D) 5>				    ; [239]
+	<MOVE	PVP* (FRM) 228>				    ; (228)
+	<JUMPE	PVP* |CERR2 >
+	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; [240]
+	<PUSH	TP* (PVP) 1>				    ; [241]
+	<PUSH	TP* <MQUOTE %<TYPE-W NODE!-COMPDEC!-PACKAGE VECTOR>>>; [242]
+	<PUSH	TP* D>					    ; [243]
+	<PUSH	TP* (FRM) 3>				    ; (3) [244]
+	<PUSH	TP* (FRM) 4>				    ; (4) [245]
+	<PUSH	TP* (FRM) 3>				    ; (3) [246]
+	<PUSH	TP* (FRM) 4>				    ; (4) [247]
+	<MCALL	2 DATUM>
+	<PUSH	TP* A>					    ; [244]
+	<PUSH	TP* B>					    ; [245]
+	<PUSH	TP* (FRM) 91>				    ; (91) [246]
+	<PUSH	TP* (FRM) 92>				    ; (92) [247]
+	<MOVE	B* (FRM) 102>				    ; (102)
+	<JUMPE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD ATOM>>			    ; [248]
+	<PUSH	TP* (B) 1>				    ; [249]
+	<PUSH	TP* (FRM) 69>				    ; (69) [250]
+	<PUSH	TP* (FRM) 70>				    ; (70) [251]
+	<MCALL	5 STACKM>
+	<PUSH	TP* A>					    ; [242]
+	<PUSH	TP* B>					    ; [243]
+	<PUSH	TP* (FRM) 91>				    ; (91) [244]
+	<PUSH	TP* (FRM) 92>				    ; (92) [245]
+	<MCALL	4 IISET>
+	<JRST	TAG86>
+TAG87	<MOVE	D* (FRM) 228>				    ; 1377 (228)
+	<JUMPE	D* |CERR2 >
+	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; [238]
+	<PUSH	TP* (D) 1>				    ; [239]
+	<MOVE	PVP* (FRM) 224>				    ; (224)
+	<JUMPE	PVP* |CERR2 >
+	<PUSH	TP* <MQUOTE %<TYPE-W NODE!-COMPDEC!-PACKAGE VECTOR>>>; [240]
+	<PUSH	TP* (PVP) 1>				    ; [241]
+	<PUSH	TP* (FRM) 3>				    ; (3) [242]
+	<PUSH	TP* (FRM) 4>				    ; (4) [243]
+	<PUSH	TP* (FRM) 3>				    ; (3) [244]
+	<PUSH	TP* (FRM) 4>				    ; (4) [245]
+	<MCALL	2 DATUM>
+	<PUSH	TP* A>					    ; [242]
+	<PUSH	TP* B>					    ; [243]
+	<PUSH	TP* (FRM) 91>				    ; (91) [244]
+	<PUSH	TP* (FRM) 92>				    ; (92) [245]
+	<MOVE	B* (FRM) 102>				    ; (102)
+	<JUMPE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD ATOM>>			    ; [246]
+	<PUSH	TP* (B) 1>				    ; [247]
+	<PUSH	TP* (FRM) 69>				    ; (69) [248]
+	<PUSH	TP* (FRM) 70>				    ; (70) [249]
+	<MCALL	5 STACKM>
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MCALL	2 BINDUP>
+TAG86	<MOVE	B* (FRM) 102>				    ; 1404 (102)
+	<JUMPE	B* |CERR2 >
+	<HRRZ	B* (B) >
+	<MOVE	D* (FRM) 224>				    ; (224)
+	<JUMPE	D* |CERR2 >
+	<HRRZ	D* (D) >
+	<MOVE	PVP* (FRM) 228>				    ; (228)
+	<JUMPE	PVP* |CERR2 >
+	<HRRZ	PVP* (PVP) >
+	<MOVEM	B* (FRM) 102>				    ; (102)
+	<MOVEM	D* (FRM) 224>				    ; (224)
+	<MOVEM	PVP* (FRM) 228>				    ; (228)
+	<JRST	TAG88>
+TAG70	<GETYP	O* (FRM) 193>				    ; 1417 (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG89>
+	<GETYP	O* (FRM) 15>				    ; (15)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG90>
+	<MOVE	B* (FRM) 82>				    ; (82)
+	<SOJE	B* TAG89>
+TAG90	<GETYP	O* (FRM) 199>				    ; 1425 (199)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG89>
+	<GETYP	O* (FRM) 99>				    ; (99)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG89>
+	<MOVE	O* (FRM) 17>				    ; (17)
+	<MOVEM	O* (FRM) 223>				    ; (223)
+	<MOVE	O* (FRM) 18>				    ; (18)
+	<MOVEM	O* (FRM) 224>				    ; (224)
+	<MOVE	B* (FRM) 224>				    ; (224)
+	<MOVE	O* <MQUOTE T> -1>
+	<MOVEM	O* (B) 26>
+	<MOVE	O* <MQUOTE T>>
+	<MOVEM	O* (B) 27>
+	<GETYP	O* (B) 24>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG89>
+	<MOVE	D* (B) 25>
+	<GETYP	O* (D) 0>
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG91>
+	<PUSH	TP* (D) >				    ; [238]
+	<PUSH	TP* (D) 1>				    ; [239]
+	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MCALL	2 FLUSH-RESIDUE>
+TAG91	<MOVE	B* (FRM) 224>				    ; 1452 (224)
+	<MOVE	D* (B) 25>
+	<HRRZ	PVP* (D) >
+	<GETYP	O* (PVP) 0>
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG92>
+	<HRRZ	PVP* (D) >
+	<PUSH	TP* (PVP) >				    ; [238]
+	<PUSH	TP* (PVP) 1>				    ; [239]
+	<PUSH	TP* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MCALL	2 FLUSH-RESIDUE>
+TAG92	<MOVE	B* (FRM) 224>				    ; 1464 (224)
+	<MOVE	O* <TYPE-WORD FALSE>>
+	<MOVEM	O* (B) 24>
+	<SETZM	(B) 25>
+TAG89	<GETYP	O* (FRM) 193>				    ; 1468 (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG93>
+	<GETYP	O* (FRM) 15>				    ; (15)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG93>
+	<MOVE	B* (FRM) 82>				    ; (82)
+	<SOJN	B* TAG93>
+	<GETYP	O* (FRM) 199>				    ; (199)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG93>
+	<PUSH	TP* (FRM) 17>				    ; (17) [238]
+	<PUSH	TP* (FRM) 18>				    ; (18) [239]
+	<MCALL	1 LVAL-UP>
+TAG93	<GETYP	O* (FRM) 219>				    ; 1482 (219)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG94>
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(26) 26>]>
+	<JUMPGE	B* |CERR2 >
+	<MOVE	D* <TYPE-WORD FIX>>
+	<MOVE	PVP* (B) 1>
+	<MOVEM	D* (FRM) 39>				    ; (39)
+	<MOVEM	PVP* (FRM) 40>				    ; (40)
+	<JUMPE	PVP* TAG94>
+	<PUSH	TP* D>					    ; [238]
+	<PUSH	TP* PVP>				    ; [239]
+	<MCALL	1 SALLOC:SLOTS>
+	<PUSH	TP* (FRM) 39>				    ; (39) [238]
+	<PUSH	TP* (FRM) 40>				    ; (40) [239]
+	<MCALL	1 ADD:STACK>
+	<MOVE	B* <MQUOTE T> -1>
+	<MOVE	D* <MQUOTE T>>
+	<PUSH	TP* B>					    ; [238]
+	<PUSH	TP* D>					    ; [239]
+	<MOVEM	B* (FRM) 219>				    ; (219)
+	<MOVEM	D* (FRM) 220>				    ; (220)
+	<MCALL	1 EMIT-PRE>
+TAG94	<MOVE	B* (FRM) 64>				    ; 1506 (64)
+	<ADD	B* [<(30) 30>]>
+	<JUMPGE	B* |CERR2 >
+	<SKIPGE	(B) 1>
+	<MCALL	0 ACT:FINAL>
+	<MOVE	B* (FRM) 123>				    ; (123)
+	<MOVE	D* (FRM) 124>				    ; (124)
+	<MOVEM	B* (FRM) 135>				    ; (135)
+	<MOVEM	D* (FRM) 136>				    ; (136)
+	<GETYP	O* (FRM) 157>				    ; (157)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG95>
+	<MOVE	PVP* (FRM) 64>				    ; (64)
+	<MOVEM	PVP* (FRM) 142>				    ; (142)
+TAG95	<MOVE	E* (FRM) 124>				    ; 1520 (124)
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVEI	D* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVEM	A* (FRM) 123>				    ; (123)
+	<MOVEM	B* (FRM) 124>				    ; (124)
+	<GETYP	O* (FRM) 207>				    ; (207)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<MCALL	0 CALL-INTERRUPT>
+	<GETYP	O* (FRM) 91>				    ; (91)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG96>
+	<GETYP	O* (FRM) 13>				    ; (13)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG96>
+	<GETYP	O* (FRM) 99>				    ; (99)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG96>
+	<GETYP	O* (FRM) 199>				    ; (199)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG96>
+	<MOVE	B* (FRM) 82>				    ; (82)
+	<SOJN	B* TAG96>
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [238]
+	<PUSH	TP* (B) 9>				    ; [239]
+	<ADD	B* [<(20) 20>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [240]
+	<PUSH	TP* (B) 1>				    ; [241]
+	<MOVE	B* (FRM) -2>				    ; (-2)
+	<JUMPE	B* |CERR2 >
+	<MOVE	D* (B) 1>
+	<PUSH	TP* (D) 4>				    ; [242]
+	<PUSH	TP* (D) 5>				    ; [243]
+	<MCALL	1 MINL>
+	<PUSH	TP* A>					    ; [242]
+	<PUSH	TP* B>					    ; [243]
+	<MCALL	3 BLT-HACK>
+	<JUMPGE	B* TAG96>
+	<MOVE	B* <TYPE-WORD FALSE>>
+	<MOVEI	D* 0>
+	<MOVEM	B* (FRM) 209>				    ; (209)
+	<MOVEM	D* (FRM) 210>				    ; (210)
+	<JRST	TAG97>
+TAG96	<GETYP	O* (FRM) 13>				    ; 1565 (13)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG98>
+	<GETYP	O* (FRM) 99>				    ; (99)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG99>
+TAG98	<MOVE	B* (FRM) 64>				    ; 1571 (64)
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [238]
+	<PUSH	TP* (B) 9>				    ; [239]
+	<PUSH	TP* <MQUOTE %<TYPE-W NODE!-COMPDEC!-PACKAGE VECTOR>>>; [240]
+	<PUSH	TP* B>					    ; [241]
+	<PUSH	TP* <MQUOTE DONT-CARE!-COMPDEC!-PACKAGE> -1>; [242]
+	<PUSH	TP* <MQUOTE DONT-CARE!-COMPDEC!-PACKAGE>>   ; [243]
+	<MCALL	2 GOODACS>
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<PUSH	TP* <MQUOTE T> -1>			    ; [242]
+	<PUSH	TP* <MQUOTE T>>				    ; [243]
+	<MCALL	3 SEQ-GEN>
+TAG103	<MOVEM	A* (FRM) 11>				    ; 1584 (11)
+	<MOVEM	B* (FRM) 12>				    ; (12)
+	<JRST	TAG97>
+TAG99	<GETYP	O* (FRM) 199>				    ; 1587 (199)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG100>
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [238]
+	<PUSH	TP* (B) 9>				    ; [239]
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG101>
+	<MOVE	D* (FRM) 197>				    ; (197)
+	<MOVE	PVP* (FRM) 198>				    ; (198)
+	<JRST	TAG102>
+TAG101	<PUSH	TP* <MQUOTE -> -1>			    ; 1599 [240]
+	<PUSH	TP* <MQUOTE ->>				    ; [241]
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [242]
+	<PUSH	TP* [-1]>				    ; [243]
+	<MOVE	D* (FRM) 82>				    ; (82)
+	<ASH	D* A>
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [244]
+	<PUSH	TP* D>					    ; [245]
+	<PUSH	TP* (FRM) 123>				    ; (123) [246]
+	<PUSH	TP* (FRM) 124>				    ; (124) [247]
+	<PUSH	TP* (FRM) 95>				    ; (95) [248]
+	<PUSH	TP* (FRM) 96>				    ; (96) [249]
+	<MCALL	2 STACK:L>
+	<PUSH	P* [3]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<PUSHJ	P* |IIFORM >
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<PUSH	TP* <MQUOTE %<TYPE-W OPCODE!-OP!-PACKAGE WORD>>>; [242]
+	<PUSH	TP* [<(*13*) 0>]>			    ; [243]
+	<MCALL	2 ADDRESS:C>
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<PUSH	TP* A>					    ; [242]
+	<PUSH	TP* B>					    ; [243]
+	<MCALL	2 DATUM>
+	<MOVE	D* A>
+	<MOVE	PVP* B>
+TAG102	<PUSH	TP* D>					    ; 1629 [240]
+	<PUSH	TP* PVP>				    ; [241]
+	<PUSH	TP* <MQUOTE T> -1>			    ; [242]
+	<PUSH	TP* <MQUOTE T>>				    ; [243]
+	<MCALL	3 SEQ-GEN>
+	<MOVEM	A* (FRM) 197>				    ; (197)
+	<MOVEM	B* (FRM) 198>				    ; (198)
+	<JRST	TAG103>
+TAG100	<MOVE	B* (FRM) 64>				    ; 1637 (64)
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [238]
+	<PUSH	TP* (B) 9>				    ; [239]
+	<PUSH	TP* <MQUOTE FLUSHED!-COMPDEC!-PACKAGE> -1>  ; [240]
+	<PUSH	TP* <MQUOTE FLUSHED!-COMPDEC!-PACKAGE>>	    ; [241]
+	<PUSH	TP* <MQUOTE T> -1>			    ; [242]
+	<PUSH	TP* <MQUOTE T>>				    ; [243]
+	<MCALL	3 SEQ-GEN>
+	<PUSH	TP* A>					    ; [238]
+	<PUSH	TP* B>					    ; [239]
+	<MOVEM	A* (FRM) 11>				    ; (11)
+	<MOVEM	B* (FRM) 12>				    ; (12)
+	<MCALL	1 RET-TMP-AC>
+TAG97	<GETYP	O* (FRM) 209>				    ; 1650 (209)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG104>
+	<MOVE	B* <MQUOTE %<RGLOC NO-DATUM!-COMPDEC!-PACKAGE T>>>
+	<ADD	B* |GLOTOP 1>
+	<MOVE	D* (B) >
+	<MOVE	PVP* (B) 1>
+	<GETYP	O* (FRM) 11>				    ; (11)
+	<GETYP	B* D>
+	<CAMN	PVP* (FRM) 12>				    ; (12)
+	<CAIE	O* (B) 0>
+	<SKIPA	O>
+	<JRST	TAG104>
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(30) 30>]>
+	<JUMPGE	B* |CERR2 >
+	<SKIPL	(B) 1>
+	<JRST	TAG105>
+	<MCALL	0 PROG:END>
+	<PUSH	TP* (FRM) 7>				    ; (7) [238]
+	<PUSH	TP* (FRM) 8>				    ; (8) [239]
+	<MCALL	1 LABEL:OFF>
+	<JRST	TAG106>
+TAG105	<GETYP	O* (FRM) 157>				    ; 1673 (157)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG107>
+	<GETYP	O* (FRM) 13>				    ; (13)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG108>
+TAG107	<SKIPL	(FRM) 46>				    ; 1679 (46)
+	<JRST	TAG109>
+	<GETYP	O* (FRM) 157>				    ; (157)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG109>
+	<PUSH	TP* (FRM) 11>				    ; (11) [238]
+	<PUSH	TP* (FRM) 12>				    ; (12) [239]
+	<MOVE	B* <MQUOTE %<RGLOC AC-A!-COMPDEC!-PACKAGE T>>>
+	<ADD	B* |GLOTOP 1>
+	<PUSH	TP* <MQUOTE %<TYPE-W AC!-COMPDEC!-PACKAGE VECTOR>>>; [240]
+	<PUSH	TP* (B) 1>				    ; [241]
+	<MOVE	B* <MQUOTE %<RGLOC AC-B!-COMPDEC!-PACKAGE T>>>
+	<ADD	B* |GLOTOP 1>
+	<PUSH	TP* <MQUOTE %<TYPE-W AC!-COMPDEC!-PACKAGE VECTOR>>>; [242]
+	<PUSH	TP* (B) 1>				    ; [243]
+	<MCALL	2 DATUM>
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MCALL	2 MOVE:ARG>
+	<MOVEM	A* (FRM) 11>				    ; (11)
+	<MOVEM	B* (FRM) 12>				    ; (12)
+TAG109	<PUSH	TP* (FRM) 123>				    ; 1700 (123) [238]
+	<PUSH	TP* (FRM) 124>				    ; (124) [239]
+	<PUSH	TP* (FRM) 95>				    ; (95) [240]
+	<PUSH	TP* (FRM) 96>				    ; (96) [241]
+	<MCALL	2 POP:LOCS>
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(22) 22>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [238]
+	<PUSH	TP* (B) 1>				    ; [239]
+	<MOVE	A* (FRM) 31>				    ; (31)
+	<MOVE	B* (FRM) 32>				    ; (32)
+	<PUSH	P* [1]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<ACALL	A* UNBIND:FUNNY>
+	<JRST	TAG106>
+TAG108	<PUSH	TP* (FRM) 123>				    ; 1718 (123) [238]
+	<PUSH	TP* (FRM) 124>				    ; (124) [239]
+	<PUSH	TP* (FRM) 51>				    ; (51) [240]
+	<PUSH	TP* (FRM) 52>				    ; (52) [241]
+	<MCALL	2 UNBIND:LOCS>
+TAG106	<GETYP	O* (FRM) 13>				    ; 1723 (13)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG110>
+	<PUSH	TP* (FRM) 153>				    ; (153) [238]
+	<PUSH	TP* (FRM) 154>				    ; (154) [239]
+	<PUSH	TP* (FRM) 11>				    ; (11) [240]
+	<PUSH	TP* (FRM) 12>				    ; (12) [241]
+	<MCALL	2 DO-STACK-ARGS>
+	<JRST	TAG111>
+TAG110	<GETYP	O* (FRM) 193>				    ; 1732 (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG112>
+	<GETYP	O* (FRM) 99>				    ; (99)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG112>
+	<GETYP	O* (FRM) 219>				    ; (219)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG113>
+	<MOVE	B* (FRM) 31>				    ; (31)
+	<MOVE	D* (FRM) 32>				    ; (32)
+	<JUMPE	D* |CERR2 >
+	<HRRZ	PVP* (D) >
+	<MOVE	TVP* (FRM) 123>				    ; (123)
+	<MOVE	C* (FRM) 124>				    ; (124)
+	<MOVE	E* (FRM) 52>				    ; (52)
+	<MOVEM	B* (FRM) 19>				    ; (19)
+	<MOVEM	D* (FRM) 20>				    ; (20)
+	<MOVEM	E* (FRM) 102>				    ; (102)
+	<MOVEM	PVP* (FRM) 10>				    ; (10)
+TAG113	<PUSH	TP* (FRM) 11>				    ; 1752 (11) [238]
+	<PUSH	TP* (FRM) 12>				    ; (12) [239]
+	<PUSH	TP* (FRM) 17>				    ; (17) [240]
+	<PUSH	TP* (FRM) 18>				    ; (18) [241]
+	<PUSH	TP* (FRM) 25>				    ; (25) [242]
+	<PUSH	TP* (FRM) 26>				    ; (26) [243]
+	<PUSH	TP* (FRM) 59>				    ; (59) [244]
+	<PUSH	TP* (FRM) 60>				    ; (60) [245]
+	<PUSH	TP* (FRM) 63>				    ; (63) [246]
+	<PUSH	TP* (FRM) 64>				    ; (64) [247]
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(60) 60>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [248]
+	<PUSH	TP* (B) 1>				    ; [249]
+	<MCALL	6 DO-EVEN-FUNNIER-HACK>
+	<JRST	TAG111>
+TAG112	<GETYP	O* (FRM) 193>				    ; 1769 (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG114>
+	<GETYP	O* (FRM) 199>				    ; (199)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG114>
+	<PUSH	TP* (FRM) 11>				    ; (11) [238]
+	<PUSH	TP* (FRM) 12>				    ; (12) [239]
+	<MCALL	1 RET-TMP-AC>
+	<MOVE	B* (FRM) 18>				    ; (18)
+	<MOVE	O* (FRM) 11>				    ; (11)
+	<MOVEM	O* (B) 24>
+	<MOVE	O* (FRM) 12>				    ; (12)
+	<MOVEM	O* (B) 25>
+	<MOVE	O* <TYPE-WORD FALSE>>
+	<MOVEM	O* (B) 26>
+	<SETZM	(B) 27>
+	<MOVE	D* (FRM) 12>				    ; (12)
+	<GETYP	O* (D) 0>
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG115>
+	<MOVE	PVP* (D) 1>
+	<MOVE	E* (PVP) 15>
+	<MOVE	C* <MQUOTE %<TYPE-W SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>
+	<MOVE	D* B>
+	<MOVE	O* <MQUOTE %<TYPE-W AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<MOVEM	O* (FRM) 3>				    ; (3)
+	<MOVEM	PVP* (FRM) 4>				    ; (4)
+	<PUSHJ	P* |C1CONS >
+	<MOVE	D* (FRM) 4>				    ; (4)
+	<MOVEM	A* (D) 14>
+	<MOVEM	B* (D) 15>
+TAG115	<MOVE	B* (FRM) 12>				    ; 1801 (12)
+	<HRRZ	D* (B) >
+	<MOVE	PVP* (D) 1>
+	<MOVE	E* (PVP) 15>
+	<MOVE	C* (FRM) 17>				    ; (17)
+	<MOVE	D* (FRM) 18>				    ; (18)
+	<MOVE	O* <MQUOTE %<TYPE-W AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<MOVEM	O* (FRM) 3>				    ; (3)
+	<MOVEM	PVP* (FRM) 4>				    ; (4)
+	<PUSHJ	P* |C1CONS >
+	<MOVE	D* (FRM) 4>				    ; (4)
+	<MOVEM	A* (D) 14>
+	<MOVEM	B* (D) 15>
+	<MOVE	B* (FRM) 18>				    ; (18)
+	<MOVE	O* <TYPE-WORD FALSE>>
+	<MOVEM	O* (B) 26>
+	<SETZM	(B) 27>
+	<MOVE	D* (FRM) 64>				    ; (64)
+	<ADD	D* [<(60) 60>]>
+	<JUMPGE	D* |CERR2 >
+	<MOVE	PVP* (D) 1>
+	<JUMPE	PVP* TAG116>
+TAG117	<GETYP	O* (PVP) 0>				    ; 1823
+	<CAIN	O* <MQUOTE %<TYPE-C SYMTAB!-COMPDEC!-PACKAGE VECTOR>>>
+	<CAME	B* (PVP) 1>
+	<SKIPA	O>
+	<JRST	TAG111>
+	<HRRZ	PVP* (PVP) >
+	<JUMPN	PVP* TAG117>
+TAG116	<MOVE	D* (FRM) 64>				    ; 1830 (64)
+	<ADD	D* [<(60) 60>]>
+	<JUMPGE	D* |CERR2 >
+	<MOVE	PVP* (D) 1>
+TAG121	<SKIPGE	|INTFLG >				    ; 1834
+	<SAVAC	O* [<(*1500*) *12*>]>
+	<JUMPE	PVP* TAG118>
+	<JUMPE	PVP* |CERR2 >
+	<HRRZ	D* (PVP) >
+	<JUMPE	D* |CERR2 >
+	<MOVE	TVP* (D) 1>
+	<HRRZ	D* (TVP) >
+	<GETYP	O* (D) 0>
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG119>
+	<HRRZ	D* (TVP) >
+	<MOVE	C* (D) 1>
+	<MOVE	O* <MQUOTE T> -1>
+	<MOVEM	O* (C) 10>
+	<MOVE	O* <MQUOTE T>>
+	<MOVEM	O* (C) 11>
+TAG119	<GETYP	O* (TVP) 0>				    ; 1851
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG120>
+	<MOVE	D* (TVP) 1>
+	<MOVE	O* <MQUOTE T> -1>
+	<MOVEM	O* (D) 10>
+	<MOVE	O* <MQUOTE T>>
+	<MOVEM	O* (D) 11>
+TAG120	<JUMPE	PVP* |CERR2 >				    ; 1859
+	<HRRZ	PVP* (PVP) >
+	<JUMPE	PVP* |CERR2 >
+	<HRRZ	PVP* (PVP) >
+	<JRST	TAG121>
+TAG118	<MOVE	B* (FRM) 64>				    ; 1864 (64)
+	<MOVE	C* (FRM) 17>				    ; (17)
+	<MOVE	D* (FRM) 18>				    ; (18)
+	<MOVEI	E* 0>
+	<MOVE	O* <MQUOTE %<TYPE-W NODE!-COMPDEC!-PACKAGE VECTOR>>>
+	<MOVEM	O* (FRM) 3>				    ; (3)
+	<MOVEM	B* (FRM) 4>				    ; (4)
+	<PUSHJ	P* |C1CONS >
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 1>				    ; (1)
+	<MOVEM	B* (FRM) 2>				    ; (2)
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 7>				    ; (7)
+	<MOVEM	B* (FRM) 8>				    ; (8)
+	<MOVE	O* <TYPE-WORD UNBOUND>>
+	<MOVEM	O* (FRM) 223>				    ; (223)
+	<SETOM	(FRM) 224>				    ; (224)
+	<MOVE	D* (FRM) 26>				    ; (26)
+	<PUSH	TP* (D) 4>				    ; [238]
+	<PUSH	TP* (D) 5>				    ; [239]
+	<MCALL	1 ISTYPE-GOOD?>
+	<GETYP	O* A>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG122>
+	<GETYP	O* (FRM) -5>				    ; (-5)
+	<CAIE	O* <MQUOTE %<TYPE-C DATUM!-COMPDEC!-PACKAGE LIST>>>
+	<JRST	TAG123>
+	<MOVE	B* (FRM) -4>				    ; (-4)
+	<MOVE	D* (B) >
+	<MOVE	PVP* (B) 1>
+	<MOVEM	D* (FRM) 223>				    ; (223)
+	<MOVEM	PVP* (FRM) 224>				    ; (224)
+	<GETYP	O* D>
+	<CAIN	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<SKIPGE	(PVP) 11>
+	<JRST	TAG123>
+	<PUSH	TP* (FRM) 223>				    ; (223) [238]
+	<PUSH	TP* (FRM) 224>				    ; (224) [239]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [240]
+	<PUSH	TP* [0]>				    ; [241]
+	<MCALL	2 SGETREG>
+	<MOVE	O* <MQUOTE T> -1>
+	<MOVEM	O* (B) 10>
+	<MOVE	O* <MQUOTE T>>
+	<MOVEM	O* (B) 11>
+	<JRST	TAG122>
+TAG123	<PUSH	TP* <TYPE-WORD FALSE>>			    ; 1910 [238]
+	<PUSH	TP* [0]>				    ; [239]
+	<MCALL	1 GETREG>
+	<MOVE	O* <MQUOTE T> -1>
+	<MOVEM	O* (B) 10>
+	<MOVE	O* <MQUOTE T>>
+	<MOVEM	O* (B) 11>
+	<MOVEM	A* (FRM) 223>				    ; (223)
+	<MOVEM	B* (FRM) 224>				    ; (224)
+TAG122	<PUSH	TP* A>					    ; 1919 [238]
+	<PUSH	TP* B>					    ; [239]
+	<GETYP	O* (FRM) -5>				    ; (-5)
+	<CAIE	O* <MQUOTE %<TYPE-C DATUM!-COMPDEC!-PACKAGE LIST>>>
+	<JRST	TAG124>
+	<MOVE	B* (FRM) -4>				    ; (-4)
+	<HRRZ	D* (B) >
+	<MOVE	PVP* (D) >
+	<MOVE	TVP* (D) 1>
+	<MOVEM	PVP* (FRM) 5>				    ; (5)
+	<MOVEM	TVP* (FRM) 6>				    ; (6)
+	<GETYP	O* PVP>
+	<CAIN	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<SKIPGE	(TVP) 11>
+	<JRST	TAG124>
+	<PUSH	TP* (FRM) 5>				    ; (5) [240]
+	<PUSH	TP* (FRM) 6>				    ; (6) [241]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [242]
+	<PUSH	TP* [0]>				    ; [243]
+	<MCALL	2 SGETREG>
+	<JRST	TAG125>
+TAG124	<PUSH	TP* <TYPE-WORD FALSE>>			    ; 1940 [240]
+	<PUSH	TP* [0]>				    ; [241]
+	<MCALL	1 GETREG>
+	<MOVEM	A* (FRM) 5>				    ; (5)
+	<MOVEM	B* (FRM) 6>				    ; (6)
+TAG125	<PUSH	TP* A>					    ; 1945 [240]
+	<PUSH	TP* B>					    ; [241]
+	<MCALL	2 DATUM>
+	<GETYP	O* (FRM) 223>				    ; (223)
+	<CAIN	O* <TYPE-CODE UNBOUND>>
+	<JRST	TAG126>
+	<GETYP	O* (FRM) 223>				    ; (223)
+	<CAIN	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<MOVE	D* <MQUOTE AC!-COMPDEC!-PACKAGE>>
+	<MOVE	D* (FRM) 224>				    ; (224)
+	<MOVE	O* <TYPE-WORD FALSE>>
+	<MOVEM	O* (D) 10>
+	<SETZM	(D) 11>
+TAG126	<MOVE	C* A>					    ; 1958
+	<MOVE	D* B>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |CICONS >
+	<HRRM	B* @ (FRM) 8>				    ; (8)
+	<MOVEM	B* (FRM) 8>				    ; (8)
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(60) 60>]>
+	<JUMPGE	B* |CERR2 >
+	<MOVE	D* (B) 1>
+	<HRRM	D* @ (FRM) 8>				    ; (8)
+	<MOVE	B* (FRM) 4>				    ; (4)
+	<ADD	B* [<(60) 60>]>
+	<JUMPGE	B* |CERR2 >
+	<MOVE	O* (FRM) 2>				    ; (2)
+	<MOVEM	O* (B) 1>
+TAG129	<SKIPGE	|INTFLG >				    ; 1974
+	<SAVAC	O* [*120000*]>
+	<JUMPE	D* TAG111>
+	<JUMPE	D* |CERR2 >
+	<HRRZ	B* (D) >
+	<JUMPE	B* |CERR2 >
+	<MOVE	PVP* (B) 1>
+	<HRRZ	B* (PVP) >
+	<GETYP	O* (B) 0>
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG127>
+	<HRRZ	B* (PVP) >
+	<MOVE	TVP* (B) 1>
+	<MOVE	O* <TYPE-WORD FALSE>>
+	<MOVEM	O* (TVP) 10>
+	<SETZM	(TVP) 11>
+TAG127	<GETYP	O* (PVP) 0>				    ; 1990
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG128>
+	<MOVE	B* (PVP) 1>
+	<MOVE	O* <TYPE-WORD FALSE>>
+	<MOVEM	O* (B) 10>
+	<SETZM	(B) 11>
+TAG128	<JUMPE	D* |CERR2 >				    ; 1997
+	<HRRZ	D* (D) >
+	<JUMPE	D* |CERR2 >
+	<HRRZ	D* (D) >
+	<JRST	TAG129>
+TAG114	<GETYP	O* (FRM) 99>				    ; 2002 (99)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG111>
+	<PUSH	TP* (FRM) 11>				    ; (11) [238]
+	<PUSH	TP* (FRM) 12>				    ; (12) [239]
+	<MOVE	C* <TYPE-WORD LIST>>
+	<MOVEI	D* 0>
+	<MOVEI	E* 0>
+	<PUSHJ	P* |C1CONS >
+	<MOVE	D* (FRM) 82>				    ; (82)
+	<IMUL	D* [-2]>
+	<MOVE	C* <TYPE-WORD FIX>>
+	<MOVE	E* B>
+	<PUSHJ	P* |C1CONS >
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<PUSH	TP* (FRM) 25>				    ; (25) [242]
+	<PUSH	TP* (FRM) 26>				    ; (26) [243]
+	<PUSH	TP* (FRM) 59>				    ; (59) [244]
+	<PUSH	TP* (FRM) 60>				    ; (60) [245]
+	<PUSH	TP* (FRM) 63>				    ; (63) [246]
+	<PUSH	TP* (FRM) 64>				    ; (64) [247]
+	<MCALL	5 DO-FUNNY-HACK>
+TAG111	<GETYP	O* (FRM) 75>				    ; 2025 (75)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG130>
+	<PUSH	TP* <MQUOTE %<TYPE-W OPCODE!-OP!-PACKAGE WORD>>>; [238]
+	<PUSH	TP* [<(*402000*) 0>]>			    ; [239]
+	<PUSH	TP* (FRM) 69>				    ; (69) [240]
+	<PUSH	TP* (FRM) 70>				    ; (70) [241]
+	<PUSH	TP* <MQUOTE %<TYPE-W OPCODE!-OP!-PACKAGE WORD>>>; [242]
+	<PUSH	TP* [<(*17*) 0>]>			    ; [243]
+	<MOVEI	A* 3 >
+	<PUSHJ	P* |IIFORM >
+	<PUSH	TP* A>					    ; [238]
+	<PUSH	TP* B>					    ; [239]
+	<MCALL	1 EMIT>
+TAG130	<GETYP	O* (FRM) 219>				    ; 2039 (219)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG104>
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG131>
+	<GETYP	O* (FRM) 99>				    ; (99)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG104>
+TAG131	<MOVE	B* (FRM) 31>				    ; 2048 (31)
+	<MOVE	D* (FRM) 32>				    ; (32)
+	<JUMPE	D* |CERR2 >
+	<HRRZ	PVP* (D) >
+	<MOVE	TVP* (FRM) 52>				    ; (52)
+	<MOVEM	B* (FRM) 19>				    ; (19)
+	<MOVEM	D* (FRM) 20>				    ; (20)
+	<MOVEM	PVP* (FRM) 10>				    ; (10)
+	<MOVEM	TVP* (FRM) 102>				    ; (102)
+TAG104	<GETYP	O* (FRM) 209>				    ; 2057 (209)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG132>
+	<PUSH	TP* (FRM) 63>				    ; (63) [238]
+	<PUSH	TP* (FRM) 64>				    ; (64) [239]
+	<MOVE	B* (FRM) 193>				    ; (193)
+	<MOVE	D* (FRM) 194>				    ; (194)
+	<GETYP	O* B>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG133>
+	<MOVE	PVP* (FRM) 82>				    ; (82)
+	<SOJN	PVP* TAG134>
+	<MOVE	B* <MQUOTE T> -1>
+	<MOVE	D* <MQUOTE T>>
+	<JRST	TAG133>
+TAG134	<MOVE	B* <TYPE-WORD FALSE>>			    ; 2072
+	<MOVEI	D* 0>
+TAG133	<PUSH	TP* B>					    ; 2074 [240]
+	<PUSH	TP* D>					    ; [241]
+	<MCALL	2 AGAIN-UP>
+	<PUSH	TP* (FRM) 203>				    ; (203) [238]
+	<PUSH	TP* (FRM) 204>				    ; (204) [239]
+	<MCALL	1 LABEL:TAG>
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG135>
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(20) 20>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [238]
+	<PUSH	TP* (B) 1>				    ; [239]
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [240]
+	<PUSH	TP* (FRM) -2>				    ; (-2) [241]
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(60) 60>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [242]
+	<PUSH	TP* (B) 1>				    ; [243]
+	<PUSH	TP* (FRM) 81>				    ; (81) [244]
+	<PUSH	TP* (FRM) 82>				    ; (82) [245]
+	<PUSH	TP* (FRM) 111>				    ; (111) [246]
+	<PUSH	TP* (FRM) 112>				    ; (112) [247]
+	<PUSH	TP* (FRM) 91>				    ; (91) [248]
+	<PUSH	TP* (FRM) 92>				    ; (92) [249]
+	<MCALL	6 REST-STRUCS>
+TAG135	<GETYP	O* (FRM) 193>				    ; 2102 (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG136>
+	<MOVE	B* (FRM) 82>				    ; (82)
+	<SOJE	B* TAG137>
+TAG136	<PUSH	TP* (FRM) 107>				    ; 2107 (107) [238]
+	<PUSH	TP* (FRM) 108>				    ; (108) [239]
+	<MCALL	1 BRANCH:TAG>
+TAG137	<PUSH	TP* (FRM) 159>				    ; 2110 (159) [238]
+	<PUSH	TP* (FRM) 160>				    ; (160) [239]
+	<PUSH	TP* (FRM) 45>				    ; (45) [240]
+	<PUSH	TP* (FRM) 46>				    ; (46) [241]
+	<MCALL	2 GEN-TAGS>
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG138>
+	<GETYP	O* (FRM) 219>				    ; (219)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG138>
+	<MOVE	B* (FRM) 214>				    ; (214)
+	<MOVE	D* (FRM) 20>				    ; (20)
+	<MOVEM	B* (FRM) 124>				    ; (124)
+	<MOVEM	D* (FRM) 32>				    ; (32)
+TAG138	<GETYP	O* (FRM) 193>				    ; 2125 (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG139>
+	<MOVE	B* (FRM) 82>				    ; (82)
+	<SOJE	B* TAG139>
+	<GETYP	O* (FRM) 157>				    ; (157)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG140>
+	<GETYP	O* (FRM) 13>				    ; (13)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG141>
+TAG140	<PUSH	TP* (FRM) 123>				    ; 2136 (123) [238]
+	<PUSH	TP* (FRM) 124>				    ; (124) [239]
+	<PUSH	TP* (FRM) 95>				    ; (95) [240]
+	<PUSH	TP* (FRM) 96>				    ; (96) [241]
+	<MCALL	2 POP:LOCS>
+	<MOVE	B* (FRM) 64>				    ; (64)
+	<ADD	B* [<(22) 22>]>
+	<JUMPGE	B* |CERR2 >
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [238]
+	<PUSH	TP* (B) 1>				    ; [239]
+	<MOVE	A* (FRM) 31>				    ; (31)
+	<MOVE	B* (FRM) 32>				    ; (32)
+	<PUSH	P* [1]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<ACALL	A* UNBIND:FUNNY>
+	<JRST	TAG139>
+TAG141	<PUSH	TP* (FRM) 123>				    ; 2154 (123) [238]
+	<PUSH	TP* (FRM) 124>				    ; (124) [239]
+	<PUSH	TP* (FRM) 51>				    ; (51) [240]
+	<PUSH	TP* (FRM) 52>				    ; (52) [241]
+	<MCALL	2 UNBIND:LOCS>
+TAG139	<MOVE	B* (FRM) -2>				    ; 2159 (-2)
+	<JUMPE	B* TAG142>
+TAG144	<MOVE	D* (B) 1>				    ; 2161
+	<SKIPGE	|INTFLG >
+	<SAVAC	O* [<(*1200*) *150000*>]>
+	<MOVE	O* <TYPE-WORD LIST>>
+	<MOVEM	O* (FRM) 7>				    ; (7)
+	<MOVEM	B* (FRM) 8>				    ; (8)
+	<PUSH	TP* (D) 4>				    ; [238]
+	<PUSH	TP* (D) 5>				    ; [239]
+	<MCALL	1 STRUCTYP>
+	<PUSH	TP* A>					    ; [238]
+	<PUSH	TP* B>					    ; [239]
+	<MCALL	1 ISTYPE?>
+	<GETYP	O* A>
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG143>
+	<PUSH	TP* <MQUOTE <`SETZM  |DSTORE >> -1>	    ; [238]
+	<PUSH	TP* <MQUOTE <`SETZM  |DSTORE >>>	    ; [239]
+	<MCALL	1 EMIT>
+	<JRST	TAG142>
+TAG143	<MOVE	B* (FRM) 8>				    ; 2180 (8)
+	<HRRZ	B* (B) >
+	<JUMPN	B* TAG144>
+	<JRST	TAG142>
+TAG132	<PUSH	TP* (FRM) 159>				    ; 2184 (159) [238]
+	<PUSH	TP* (FRM) 160>				    ; (160) [239]
+	<PUSH	TP* (FRM) 45>				    ; (45) [240]
+	<PUSH	TP* (FRM) 46>				    ; (46) [241]
+	<MCALL	2 GEN-TAGS>
+TAG142	<PUSH	TP* (FRM) 63>				    ; 2189 (63) [238]
+	<PUSH	TP* (FRM) 64>				    ; (64) [239]
+	<MCALL	1 CLEANUP-STATE>
+	<PUSH	TP* (FRM) 187>				    ; (187) [238]
+	<PUSH	TP* (FRM) 188>				    ; (188) [239]
+	<MCALL	1 LABEL:TAG>
+	<GETYP	O* (FRM) 163>				    ; (163)
+	<CAIE	O* <MQUOTE %<TYPE-C DATUM!-COMPDEC!-PACKAGE LIST>>>
+	<JRST	TAG145>
+	<GETYP	O* (FRM) 13>				    ; (13)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG146>
+	<PUSH	TP* (FRM) 113>				    ; (113) [238]
+	<PUSH	TP* (FRM) 114>				    ; (114) [239]
+	<PUSH	TP* (FRM) 153>				    ; (153) [240]
+	<PUSH	TP* (FRM) 154>				    ; (154) [241]
+	<MOVE	A* (FRM) 163>				    ; (163)
+	<MOVE	B* (FRM) 164>				    ; (164)
+	<PUSH	P* [0]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<ACALL	A* DATUM>
+	<PUSH	TP* A>					    ; [242]
+	<PUSH	TP* B>					    ; [243]
+	<MCALL	3 DO-LAST>
+	<JRST	TAG147>
+TAG146	<GETYP	O* (FRM) 99>				    ; 2216 (99)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG148>
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG148>
+	<PUSH	TP* (FRM) 17>				    ; (17) [238]
+	<PUSH	TP* (FRM) 18>				    ; (18) [239]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [240]
+	<PUSH	TP* [0]>				    ; [241]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [242]
+	<PUSH	TP* [0]>				    ; [243]
+	<MCALL	3 LADDR>
+	<PUSH	TP* A>					    ; [238]
+	<PUSH	TP* B>					    ; [239]
+	<MOVE	A* (FRM) 163>				    ; (163)
+	<MOVE	B* (FRM) 164>				    ; (164)
+	<PUSH	P* [0]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<JRST	TAG149>
+TAG148	<GETYP	O* (FRM) 99>				    ; 2238 (99)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG150>
+	<PUSH	TP* (FRM) 59>				    ; (59) [238]
+	<PUSH	TP* (FRM) 60>				    ; (60) [239]
+	<MOVNI	B* 1 >
+	<MOVE	D* (FRM) 82>				    ; (82)
+	<ASH	D* A>
+	<SUB	B* D>
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MOVE	A* (FRM) 163>				    ; (163)
+	<MOVE	B* (FRM) 164>				    ; (164)
+	<PUSH	P* [0]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<ACALL	A* DATUM>
+	<PUSH	TP* A>					    ; [242]
+	<PUSH	TP* B>					    ; [243]
+	<MCALL	3 DO-FUNNY-LAST>
+	<JRST	TAG147>
+TAG150	<GETYP	O* (FRM) 193>				    ; 2260 (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG151>
+	<PUSH	TP* (FRM) 197>				    ; (197) [238]
+	<PUSH	TP* (FRM) 198>				    ; (198) [239]
+	<MOVE	A* (FRM) 163>				    ; (163)
+	<MOVE	B* (FRM) 164>				    ; (164)
+	<PUSH	P* [0]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+	<JRST	TAG149>
+TAG151	<MOVNI	B* 1 >					    ; 2272
+	<MOVE	D* (FRM) 82>				    ; (82)
+	<ASH	D* A>
+	<SUB	B* D>
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [238]
+	<PUSH	TP* B>					    ; [239]
+	<PUSH	TP* <MQUOTE %<TYPE-W OPCODE!-OP!-PACKAGE WORD>>>; [240]
+	<PUSH	TP* [<(*13*) 0>]>			    ; [241]
+	<MCALL	2 ADDRESS:C>
+	<PUSH	TP* A>					    ; [238]
+	<PUSH	TP* B>					    ; [239]
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MCALL	2 DATUM>
+	<PUSH	TP* A>					    ; [238]
+	<PUSH	TP* B>					    ; [239]
+	<MOVE	A* (FRM) 163>				    ; (163)
+	<MOVE	B* (FRM) 164>				    ; (164)
+	<PUSH	P* [0]>
+	<MOVEI	O* |SEGMNT >
+	<PUSHJ	P* |RCALL >
+	<POP	P* A>
+TAG149	<ACALL	A* DATUM>				    ; 2294
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MCALL	2 MOVE:ARG>
+TAG147	<PUSH	TP* (FRM) 163>				    ; 2298 (163) [238]
+	<PUSH	TP* (FRM) 164>				    ; (164) [239]
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MOVEM	A* (FRM) 169>				    ; (169)
+	<MOVEM	B* (FRM) 170>				    ; (170)
+	<MCALL	2 ACFIX>
+	<MOVE	B* (FRM) 164>				    ; (164)
+	<PUSH	TP* (B) >				    ; [238]
+	<PUSH	TP* (B) 1>				    ; [239]
+	<MCALL	1 ISTYPE?>
+	<GETYP	O* A>
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG152>
+	<MOVE	B* (FRM) 170>				    ; (170)
+	<GETYP	O* (B) 0>
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG152>
+	<PUSH	TP* (B) >				    ; [238]
+	<PUSH	TP* (B) 1>				    ; [239]
+	<PUSH	TP* <MQUOTE %<TYPE-W DATUM!-COMPDEC!-PACKAGE LIST>>>; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MCALL	2 RET-TMP-AC>
+	<JRST	TAG152>
+TAG145	<GETYP	O* (FRM) 13>				    ; 2322 (13)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG153>
+	<PUSH	TP* (FRM) 113>				    ; (113) [238]
+	<PUSH	TP* (FRM) 114>				    ; (114) [239]
+	<PUSH	TP* (FRM) 153>				    ; (153) [240]
+	<PUSH	TP* (FRM) 154>				    ; (154) [241]
+	<MCALL	0 FUNCTION:VALUE>
+	<PUSH	TP* A>					    ; [242]
+	<PUSH	TP* B>					    ; [243]
+	<MCALL	3 DO-LAST>
+	<JRST	TAG152>
+TAG153	<GETYP	O* (FRM) 99>				    ; 2334 (99)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG154>
+	<GETYP	O* (FRM) 193>				    ; (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG154>
+TAG156	<PUSH	TP* (FRM) 197>				    ; 2340 (197) [238]
+	<PUSH	TP* (FRM) 198>				    ; (198) [239]
+	<MCALL	0 FUNCTION:VALUE>
+	<PUSH	TP* A>					    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MCALL	2 MOVE:ARG>
+	<JRST	TAG152>
+TAG154	<GETYP	O* (FRM) 193>				    ; 2347 (193)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG155>
+	<GETYP	O* (FRM) 99>				    ; (99)
+	<CAIE	O* <TYPE-CODE FALSE>>
+	<JRST	TAG156>
+TAG155	<GETYP	O* (FRM) 99>				    ; 2353 (99)
+	<CAIN	O* <TYPE-CODE FALSE>>
+	<JRST	TAG152>
+	<PUSH	TP* (FRM) 59>				    ; (59) [238]
+	<PUSH	TP* (FRM) 60>				    ; (60) [239]
+	<MOVNI	B* 1 >
+	<MOVE	D* (FRM) 82>				    ; (82)
+	<ASH	D* A>
+	<SUB	B* D>
+	<PUSH	TP* <TYPE-WORD FIX>>			    ; [240]
+	<PUSH	TP* B>					    ; [241]
+	<MCALL	0 FUNCTION:VALUE>
+	<PUSH	TP* A>					    ; [242]
+	<PUSH	TP* B>					    ; [243]
+	<MCALL	3 DO-FUNNY-LAST>
+TAG152	<PUSH	TP* (FRM) 51>				    ; 2368 (51) [238]
+	<PUSH	TP* (FRM) 52>				    ; (52) [239]
+	<PUSH	TP* (FRM) 117>				    ; (117) [240]
+	<PUSH	TP* (FRM) 118>				    ; (118) [241]
+	<MCALL	2 POP:LOCS>
+	<PUSH	TP* (FRM) 181>				    ; (181) [238]
+	<PUSH	TP* (FRM) 182>				    ; (182) [239]
+	<MCALL	1 LABEL:TAG>
+	<MOVEI	E* (FRM) 217>				    ; (217)
+	<PUSHJ	P* |SSPEC1 >
+	<GETYP	O* (FRM) 169>				    ; (169)
+	<CAIN	O* <TYPE-CODE UNBOUND>>
+	<JRST	TAG157>
+	<MOVE	B* (FRM) 164>				    ; (164)
+	<GETYP	O* (B) 0>
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG158>
+	<PUSH	TP* (B) >				    ; [238]
+	<PUSH	TP* (B) 1>				    ; [239]
+	<PUSH	TP* <MQUOTE %<TYPE-W DATUM!-COMPDEC!-PACKAGE LIST>>>; [240]
+	<PUSH	TP* B>					    ; [241]
+	<PUSH	TP* (FRM) 169>				    ; (169) [242]
+	<PUSH	TP* (FRM) 170>				    ; (170) [243]
+	<MCALL	3 FIX-ACLINK>
+TAG158	<MOVE	B* (FRM) 164>				    ; 2392 (164)
+	<HRRZ	D* (B) >
+	<GETYP	O* (D) 0>
+	<CAIE	O* <MQUOTE %<TYPE-C AC!-COMPDEC!-PACKAGE VECTOR>>>
+	<JRST	TAG157>
+	<HRRZ	D* (B) >
+	<PUSH	TP* (D) >				    ; [238]
+	<PUSH	TP* (D) 1>				    ; [239]
+	<PUSH	TP* <MQUOTE %<TYPE-W DATUM!-COMPDEC!-PACKAGE LIST>>>; [240]
+	<PUSH	TP* B>					    ; [241]
+	<PUSH	TP* (FRM) 169>				    ; (169) [242]
+	<PUSH	TP* (FRM) 170>				    ; (170) [243]
+	<MCALL	3 FIX-ACLINK>
+TAG157	<MOVE	B* (FRM) 104>				    ; 2405 (104)
+	<PUSH	TP* (FRM) 163>				    ; (163) [238]
+	<PUSH	TP* (FRM) 164>				    ; (164) [239]
+	<PUSH	TP* (FRM) -5>				    ; (-5) [240]
+	<PUSH	TP* (FRM) -4>				    ; (-4) [241]
+	<MOVEM	B* (FRM) 124>				    ; (124)
+	<MCALL	2 MOVE:ARG>
+	<MOVEM	A* (FRM) 9>				    ; (9)
+	<MOVEM	B* (FRM) 10>				    ; (10)
+	<MCALL	0 END-FRAME>
+	<MOVE	A* (FRM) 9>				    ; (9)
+	<MOVE	B* (FRM) 10>				    ; (10)
+	<MOVE	TP* FRM>
+	<PUSHJ	P* |SSPECS >
+	<JRST	|FMPOPJ >
+	<TAG1>
+	<0>
+	<(*47*) -1>
+	<IMULI	TB* 1 >
+	<-1>
+	<(18) 18>
+	<IMULI	TB* (B) 0>
+	<IMULI	TB* 4 >
+	<(4) 4>
+	<(1) 1>
+	<1>
+	<IMULI	TB* 2 >
+	<(22) 22>
+	<(22) 22>
+TAG14	<(*1200*) 0>					    ; 2434
+	<FSB	O* O>
+	<IMULI	TB* (D) 6>
+	<IMULI	TB* 6 >
+	<IMULI	TB* 5 >
+	<IMULI	TB* (FRM) 113>				    ; (113)
+	<(20) 20>
+TAG26	<(*1200*) 4>					    ; 2441
+	<FSB	O* O>
+	<IMULI	TB* (FRM) 199>				    ; (199)
+	<IMULI	TB* (FRM) 219>				    ; (219)
+	<(30) 30>
+	<(26) 26>
+	<(20) 20>
+	<IMULI	TB* (FRM) 193>				    ; (193)
+	<IMULI	TB* (B) 24>
+	<(32) 32>
+	<(34) 34>
+	<IMULI	TB* (D) 0>
+	<IMULI	TB* (FRM) 13>				    ; (13)
+	<2>
+	<IMULI	TB* (FRM) 153>				    ; (153)
+	<IMULI	TB* (FRM) 15>				    ; (15)
+	<(*100*) 0>
+	<(4) 4>
+	<IMULI	TB* (FRM) 99>				    ; (99)
+	<IMULI	TB* (FRM) 57>				    ; (57)
+	<(*1200*) *150000*>
+	<IMULI	TB* (PVP) 14>
+	<IMULI	TB* (FRM) 175>				    ; (175)
+	<IMULI	TB* (FRM) 21>				    ; (21)
+	<(*13*) 0>
+	<3>
+	<IMULI	TB* (D) 0>
+	<IMULI	TB* (PVP) 0>
+	<IMULI	TB* (FRM) 157>				    ; (157)
+	<IMULI	TB* (FRM) 207>				    ; (207)
+	<IMULI	TB* (FRM) 91>				    ; (91)
+	<IMULI	TB* (FRM) 209>				    ; (209)
+	<IMULI	TB* (FRM) 11>				    ; (11)
+	<(60) 60>
+	<IMULI	TB* (PVP) 0>
+	<(*1500*) *12*>
+	<IMULI	TB* (TVP) 0>
+	<IMULI	TB* (FRM) -5>				    ; (-5)
+	<IMULI	TB* (FRM) 223>				    ; (223)
+	<(60) 60>
+	<*120000*>
+	<-2>
+	<IMULI	TB* (FRM) 75>				    ; (75)
+	<SETZM	O>
+	<(*17*) 0>
+	<IMULI	TB* (FRM) 163>				    ; (163)
+	<IMULI	TB* (FRM) 169>				    ; (169)
+	<(3) *10*>
+	<(*56132*) *551434*>
+	<0>
+	<(1) 2>
+

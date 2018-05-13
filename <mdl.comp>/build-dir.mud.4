@@ -1,0 +1,2278 @@
+;"Build GDM Schema Directory
+
+	Contains directory related parser action routines and
+	the routines that create the schema directory.  Directory
+	data structure definitions are contained in GDM-DIR.MUD
+"
+
+<PACKAGE "BUILD-DIR">
+
+<ENTRY
+	DIR-AC
+	DIR-ACCESS-ENT
+	DIR-ACCESS-FCN
+	DIR-ACCESS-PATH
+	DIR-ACCESS-UNIQUE
+	DIR-AP-OPTIONS
+	DIR-AYREA
+	DIR-BIT
+	DIR-CHR-BITS
+	DIR-CHR-REP
+	DIR-CONTEXT
+	DIR-CONTEXT-DBA
+	DIR-COTYPE
+	DIR-DATABASE-ID
+	DIR-DB-DEF
+	DIR-DB-MAPPING
+	DIR-DBMS-DEF
+	DIR-DBMS-OPTIONS
+	DIR-DBMS-TABLE
+	DIR-DELETE-DB
+	DIR-DELETE-DBMS
+	DIR-DELETE-DIR
+	DIR-DEMO-CMD
+	DIR-DEMO-OFF
+	DIR-DEMO-ON
+	DIR-DIR-CMD
+	DIR-ENTITY-EXTENT
+	DIR-ENTITY-FUNC-EXTENT
+	DIR-ENTITY-PRED-OPTN
+	DIR-ENTITY-TYPE
+	DIR-ENTITY-TYPE-EMPTY
+	DIR-FCN-DEF
+	DIR-FLUSH-DIR
+	DIR-FOP-CALC
+	DIR-FOP-CUR
+	DIR-FOP-KEY
+	DIR-FOP-OWN
+	DIR-FOP-POS
+	DIR-FOP-USE-CUR
+	DIR-FOP-USE-NCUR
+	DIR-FUNC-AOPS
+	DIR-FUNC-EXTENT
+	DIR-FUNC-ROPS
+	DIR-INT-BITS
+	DIR-INT-REP
+	DIR-INT-STR
+	DIR-KEY
+	DIR-LOCAL-LDI
+	DIR-MAX-ONLY
+	DIR-MAX-PRED
+	DIR-MAX-QPRED
+	DIR-MAX-QREL
+	DIR-MIN-MAX
+	DIR-NO-AOPS
+	DIR-NO-QUANT
+	DIR-NO-ROPS
+	DIR-OPTIONAL
+	DIR-OWNER
+	DIR-PRED-ITER
+	DIR-PRED-OPTN
+	DIR-PRED-QUANT
+	DIR-PRINT-CH
+	DIR-PRINT-DB
+	DIR-PRINT-DBMS
+	DIR-PRINT-DIR
+	DIR-PRINT-ET
+	DIR-QPRED-OPTN
+	DIR-RANGE-ENTITY
+	DIR-RANGE-INTEGER
+	DIR-RANGE-STR
+	DIR-READ-DIR
+	DIR-READ-DIR-FILE
+	DIR-REMOTE-LDI
+	DIR-REPEAT-GRP
+	DIR-SET
+	DIR-SET-OF
+	DIR-SPELLED
+	DIR-SPELLED-2
+	DIR-SUPERTYPE
+	DIR-SUPPORTED-AOPS
+	DIR-SUPPORTED-COPS
+	DIR-SUPPORTED-DOPS
+	DIR-SUPPORTED-EOPS
+	DIR-SUPPORTED-FOPS
+	DIR-SUPPORTED-GOPS
+	DIR-SUPPORTED-LOPS
+	DIR-SUPPORTED-QOPS
+	DIR-SUPPORTED-QNTS
+	DIR-SUPPORTED-ROPS
+	DIR-SYS-EP
+	DIR-SYS-EP-ACCESS
+	DIR-SYS-EP-KEYS
+	DIR-SYS-EP-OPTN
+	DIR-SYS-EP-SET
+	DIR-VIEW-DEF
+	DIR-VISIBLE
+	DIR-VISIBLE-CONSTRAINTS
+	DIR-WRITE-DIR
+	DIR-WRITE-DIR-FILE
+	PP-DIR
+
+;"The following atoms are tokens that are referenced in here.  They
+  must be included here so ==? comparisons will work. They were moved from gdm-parser"
+	AC
+;"	ACCESS"
+	ALL
+;"	ASCII"
+	BCD
+	BIT
+	CHR-BIT
+	CHR-REP
+	CONSTANT
+	CREATE
+	DEMO-OFF
+	DEMO-ON
+	EQUALITY
+	EXPRESSION
+	FIELD
+	FOUND
+	INEQUALITY
+	INT-BIT
+	INT-REP
+	INT-STR
+	MULTIPLE
+	NESTED
+	NON_QUANTIFIED
+	ONES
+	OWNED
+	PARALLEL
+	PRINTING
+	PROPAGATE
+	QUANTIFIED
+	RANGE
+	REFERENCE
+	REPEATING
+	RESTRICTED
+;"	SET"
+	SPELLED
+	STRICT
+	SYS-EP
+	TWOS
+	UNIQUE
+>
+
+<USE "GDM-DIR" "GDM-UTIL" "PARSE-DEFINITIONS"  "DEMO">
+<USE "EM" "BUILD-VIEW" "BUILD-CONSTRAINTS">
+
+
+;""
+;"CREATE-DB performs context analysis of a data base schema definition
+  command.  If no errors are detected, the new entity types defined
+  in the schema are added to the ENTITY-TYPE-TABLE."
+
+<DEFINE CREATE-DB (DB "AUX" (VID <+ 1 <LENGTH ,VIEW-TAB>>)
+			    (EV <IVECTOR <LENGTH <3 .DB>><>>)
+			    (EID-BASE <LENGTH ,ET-TABLE>)
+			    I
+			    DBMS-ID
+			    FV
+		      "ACT" ACT)
+	#DECL ((DB EV FV) VECTOR
+		(I VID EID-BASE DBMS-ID) FIX)
+
+;"Check that database name matches name on END statement"
+
+	<COND (<2 .DB>
+		<COND (<NOT <==? <1 .DB> <2 .DB>>>
+			<ERR "Name on END statement does not match database name">
+			<RETURN <> .ACT>)>)>
+
+;"Check that database name is unique"
+
+	<MAPF	<>
+		<FUNCTION (V)
+			#DECL ((V) VIEW)
+			<COND (<==? <1 .DB> <V-NAME .V>>
+				<ERR <STRING "Database name "
+					     <SPNAME <1 .DB>>
+					     " is already defined.">>
+				<RETURN <> .ACT>)>>
+		,VIEW-TAB>
+
+;"Check that database name matches an existing DBMS name and save its
+  DBMS id."
+
+	<SET I 0>
+	<COND (<NOT <MAPF <>
+			  <FUNCTION (D)
+				#DECL ((D) DBMS)
+				<SET I <+ .I 1>>
+				<COND (<==? <DB-SCHEMA-NAME .D> <1 .DB>>
+					<SET DBMS-ID .I>
+					<MAPLEAVE>)>>
+			  ,DBMS-TAB>>
+		<ERR <STRING "No local DBMS defined for "
+			     <SPNAME <1 .DB>> ".">>
+		<RETURN <> .ACT>)>
+
+;"Build entity type table for database"
+
+	<SET I 0>
+	<MAPF	<>
+		<FUNCTION (E)
+			#DECL ((E) LIST)
+			<COND (<FIND-ETID .EV <1 .E>>
+				<ERR <STRING "Entity type "
+					     <SPNAME <1 .E>>
+					     " is defined more than once.">>
+				<RETURN <> .ACT>)>
+			<SET I <+ .I 1>>
+			<PUT .EV .I <CHTYPE [<1 .E>
+					<+ .I .EID-BASE>
+					.VID
+					<CHTYPE () ETID-LIST>
+					<CHTYPE () ETID-LIST>
+					<CHTYPE () ETID-LIST>
+					<CREATE-FUNCTIONS <1 .E> 
+							  <2 .E> .DBMS-ID .ACT>
+					<CREATE-DEFAULT-EREP .DBMS-ID>
+					ET-LOCAL-SCHEMA] ENTITY-TYPE>>>
+		<3 .DB>>
+
+;"Make a pass through all functions of type F-ENTITY and replace
+  entity type name with ETID.  Also set '# chars to print' default
+  for all functions of type F-STRING."
+
+	<MAPF	<>
+		<FUNCTION (E "AUX" (FL <ET-FUNCTIONS .E>))
+		  #DECL ((E) ENTITY-TYPE (FL) VECTOR)
+		  <PUT <ET-MAP-INFO .E> ,E-SPELLING <SPNAME <ET-NAME .E>>>
+		  <MAPF	<>
+			<FUNCTION (F "AUX" X)
+			  #DECL ((F) ENTITY-FUNC (X) <OR FIX FALSE>)
+			  <PUT <F-MAP-INFO .F> ,F-SPELLING <SPNAME <F-NAME .F>>>
+			  <COND (<==? <F-TYPE .F> F-ENTITY>
+				 <SET X <FIND-ETID .EV <F-ETID .F>>>
+				 <COND (.X
+					<PUT .F ,F-ETID .X>)
+				       (ELSE
+					<ERR <STRING "Entity type "
+						     <SPNAME <F-ETID .F>>
+						     " is undefined.">>)>)>
+			  <COND (<==? <F-TYPE .F> F-STRING>
+				 <PUT <F-MAP-INFO .F> ,F-MIN-CHR <F-MIN .F>>
+				 <PUT <F-MAP-INFO .F> ,F-MAX-CHR <F-MAX .F>>
+				 <PUT <F-MAP-INFO .F> ,F-CONV-CHARS <F-MAX .F>>)>>
+			.FL>>
+		.EV>
+
+;"Process mapping information"
+
+	<MAPF <>
+	      <FUNCTION (E "AUX" ETID EMAP)
+		#DECL ((E) LIST (ETID) <OR FIX FALSE> (EMAP) E-PHY-REP)
+		<COND (<NOT <SET ETID <FIND-ETID .EV <1 .E>>>>
+			<ERR <STRING "Entity name " <SPNAME <1 .E>>
+				     " is undefined.">>
+			<RETURN <> .ACT>)>
+		<SET ETID <- .ETID .EID-BASE>> ;"Setup index into EV"
+		<SET EMAP <ET-MAP-INFO <.ETID .EV>>>
+		<SET FV <ET-FUNCTIONS <.ETID .EV>>>
+		<COND (	<NOT <FIND KEY <2 .E> 1>>
+			<ERR "Entity " <SPNAME <ET-NAME <.ETID .EV>>> " does not have any keys.">
+			<RETURN <> .ACT>)>
+		<MAPF <>
+		      <FUNCTION (M)
+			#DECL ((M) LIST)
+			<COND (<==? <1 .M> FOUND>
+				<PUT .EMAP ,E-CONTEXT <2 .M>>)>
+			<COND (<==? <1 .M> SYS-EP>
+				<MAPF <>
+				      <FUNCTION (OPTN)
+					#DECL ((OPTN) LIST)
+					<COND (	<==? <1 .OPTN> SETNAME>
+						<PUT .EMAP ,E-SYS-SET <2 .OPTN>>)
+					      (	<==? <1 .OPTN> ACCESS>
+						<PUT .EMAP ,E-SYS-EP-AP-ONLY T>)
+					      (	<==? <1 .OPTN> KEYS>
+						<PUT .EMAP ,E-SYS-EP-KEYS <2 .OPTN>>)>
+					>
+					<2 .M>
+				>
+				<PUT .EMAP ,E-SYS-EP T>)>
+			<COND (<==? <1 .M> SPELLED>
+				<PUT .EMAP ,E-SPELLING <2 .M>>)>
+			<COND (<==? <1 .M> AREA>
+				<PUT .EMAP ,E-AREAS <2 .M>>)>
+			<COND (<==? <1 .M> OWNED>
+				<MAPF <>
+				      <FUNCTION (OWNER "AUX" X)
+					#DECL ((OWNER) IDENTIFIER (X) <OR FALSE FIX>)
+					<COND (<SET X <FIND-ETID .EV <ID-NAME .OWNER>>>
+						<PUT .EMAP ,E-OWNERS <CHTYPE (.X !<E-OWNERS .EMAP>) ETID-LIST>>)
+					      (ELSE
+						<ERR <STRING "Entity type "
+							<SPNAME <ID-NAME .OWNER>>
+							" is undefined.">>
+						<RETURN <> .ACT>)>>
+			      <2 .M>>)>
+			<COND (<==? <1 .M> PRED-OPTN>
+				<MAPF <>
+				      <FUNCTION (M)
+					#DECL ((M) LIST)
+					<COND (<==? <1 .M> ITER-DOMAIN>
+						<PUT .EMAP ,E-ITER-PRED <2 .M>>)>
+					<COND (<==? <1 .M> QUANT-DOMAIN>
+						<PUT .EMAP ,E-QUANT-PRED <2 .M>>)>
+					<COND (<==? <1 .M> NO-QUANT>
+						<PUT .EMAP ,E-NO-QUANT T>)>
+				      >
+				      <2 .M>>)>
+			<COND (	<==? <1 .M> KEY>
+				<MAPR <>
+				      <FUNCTION (ID "AUX" X)
+					#DECL((ID) LIST (X) <OR FIX FALSE>)
+					<COND (<SET X <FIND-FID .FV <ID-NAME <1 .ID>>>>
+						<PUT .ID 1 .X>)
+					      (ELSE
+						<ERR "Function "
+						     <SPNAME <ID-NAME <1 .ID>>>
+						     " is not defined in entity type "
+						     <SPNAME <ET-NAME <.ETID .EV>>>>
+						<RETURN <> .ACT>)>>
+				      <2 .M>>
+				<PUT .EMAP ,E-KEY <CHTYPE <2 .M> FCNID-LIST>>)>
+		     >
+		     <2 .E>>
+		<MAPF <>
+		      <FUNCTION (F "AUX" FID FMAP)
+			#DECL ((F) LIST (FID) <OR FIX FALSE> (FMAP) F-PHY-REP)
+			<COND (<NOT <SET FID <FIND-FID .FV <1 .F>>>>
+				<ERR <STRING "Function " <SPNAME <1 .F>>
+					     " is not defined in entity type "
+					     <SPNAME <ET-NAME <.ETID .EV>>>>>
+				<RETURN <> .ACT>)>
+			<SET FMAP <F-MAP-INFO <.FID .FV>>>
+
+;"If this is really an integer string then setup correct defaults."
+
+			<MAPF <>
+			      <FUNCTION (FM)
+				#DECL ((FM) LIST)
+				<COND (<==? <1 .FM> INT-STR>
+					<PUT .FMAP ,F-REP
+					     <DB-DEF-STR-REP <DB-OPTIONS <.DBMS-ID ,DBMS-TAB>>>>
+					<PUT .FMAP ,F-BITS
+					     <DB-DEF-STR-BITS <DB-OPTIONS <.DBMS-ID ,DBMS-TAB>>>>
+					<PUT .FMAP ,F-CONV-CHARS
+					     <3 .FM>>)>>
+			      <2 .F>>
+
+			<MAPF <>
+			      <FUNCTION (FM)
+				#DECL ((FM) LIST)
+				<COND (<==? <1 .FM> ACCESS>
+					<PUT .FMAP ,F-AP-SPELLING <F-SPELLING .FMAP>>
+					<MAPF <>
+					      <FUNCTION (OPTN "AUX" X)
+						#DECL ((OPTN) LIST (X) <OR FIX FALSE>)
+						<COND (<==? <1 .OPTN> UNIQUE>
+							<PUT .FMAP ,F-AP-UNIQUE T>)
+						      (<==? <1 .OPTN> SPELLED>
+							<PUT .FMAP ,F-AP-SPELLING <2 .OPTN>>)
+						      (<==? <1 .OPTN> SELECTS>
+							<COND (<SET X <FIND-ETID .EV <ID-NAME <2 .OPTN>>>>
+								<PUT .FMAP ,F-AP-SELECTS .X>)
+							      (ELSE
+								<ERR "Entity type "
+								     <SPNAME <ID-NAME <2 .OPTN>>>
+								     " is undefined.">
+								<RETURN <> .ACT>)>)
+						      (<==? <1 .OPTN> WITH>
+							<MAPR <>
+							      <FUNCTION (ID "AUX" X)
+								#DECL((ID) LIST (X) <OR FIX FALSE>)
+								<COND (<SET X <FIND-FID .FV <ID-NAME <1 .ID>>>>
+									<PUT .ID 1 .X>)
+								      (ELSE
+									<ERR "Function "
+									     <SPNAME <ID-NAME <1 .ID>>>
+									     " is not defined in entity type "
+									     <SPNAME <ET-NAME <.ETID .EV>>>>
+									<RETURN <> .ACT>)>>
+							      <2 .OPTN>>
+							<PUT .FMAP ,F-AP-CO-FCNS <CHTYPE <2 .OPTN> FCNID-LIST>>)>
+					      >
+					      <3 .FM>>
+					<COND (<==? <2 .FM> EQUALITY>
+						<PUT .EMAP ,E-AP-EQ-COUNT
+						  <+ <E-AP-EQ-COUNT .EMAP> 1>>
+						<PUT .FMAP ,F-AP-EQ T>)>
+					<COND (<==? <2 .FM> INEQUALITY>
+						<PUT .FMAP ,F-AP-NQ T>)>
+					<COND (<==? <2 .FM> RANGE>
+						<PUT .FMAP ,F-AP-RANGE T>)>)>
+				<COND (<==? <1 .FM> SPELLED>
+					<PUT .FMAP ,F-SPELLING <2 .FM>>)>
+				<COND (<==? <1 .FM> SET>
+					<PUT .FMAP ,F-SET T>)>
+				<COND (<==? <1 .FM> REPEAT>
+					<PUT .FMAP ,F-REPEAT-GRP T>)>
+				<COND (<==? <1 .FM> INT-STR>
+					<PUT .FMAP ,F-INT-STR T>
+					<PUT .FMAP ,F-MIN-CHR <2 .FM>>
+					<PUT .FMAP ,F-MAX-CHR <3 .FM>>)>
+				<COND (<==? <1 .FM> PRINTING>
+					<PUT .FMAP ,F-CONV-CHARS <2 .FM>>)>
+				<COND (<==? <1 .FM> BIT>
+					<PUT .FMAP ,F-BITS <2 .FM>>
+					<COND (<==? <3 .FM> ASCII>
+						<PUT .FMAP ,F-REP DB-ASCII>)>
+					<COND (<==? <3 .FM> BCD>
+						<PUT .FMAP ,F-REP DB-BCD>)>
+					<COND (<==? <3 .FM> ONES>
+						<PUT .FMAP ,F-REP DB-ONES-COMP>)>
+					<COND (<==? <3 .FM> TWOS>
+						<PUT .FMAP ,F-REP DB-TWOS-COMP>)>)>
+				<COND (<==? <1 .FM> AOPS>
+					<PUT .FMAP ,F-ARITH-OPS <2 .FM>>)>
+				<COND (<==? <1 .FM> ROPS>
+					<PUT .FMAP ,F-REL-OPS <2 .FM>>)>
+			      >
+			      <2 .F>>>
+		<3 .E>>>
+	      <4 .DB>>
+
+;"Add entity type constraints"
+
+	<COND (	<NOT <BUILD-CONSTRAINTS .EV <5 .DB>>>
+		<RETURN <> .ACT>)>
+
+;"Now add structures to schema directory"
+
+	<PUT ,SCHEMA-DIR ,VIEW-TABLE 
+		[!<VIEW-TABLE ,SCHEMA-DIR> <CHTYPE [<1 .DB>] VIEW>]>
+	<SETG VIEW-TAB <VIEW-TABLE ,SCHEMA-DIR>>
+	<PUT ,SCHEMA-DIR ,ENTITY-TYPE-TABLE
+		[!<ENTITY-TYPE-TABLE ,SCHEMA-DIR> !.EV]>
+	<SETG ET-TABLE <ENTITY-TYPE-TABLE ,SCHEMA-DIR>>
+	<SETG LEN-ET-TABLE <LENGTH ,ET-TABLE>>
+	<MSG <STRING "Database " <SPNAME <1 .DB>> " added to global schema.">>
+	
+> ;"CREATE-DB"
+""
+;"CREATE-DBMS performs context analysis of the local DBMS specification
+  command.  If no errors are found a new entry will be created in the
+  DBMS-TABLE."
+
+<DEFINE CREATE-DBMS (DBMS-ENTRY)
+	#DECL ((DBMS-ENTRY) DBMS)
+	<COND (<NOT <MAPF <>	;"Make one pass to insure unique DBMS name"
+			  <FUNCTION (E)
+			    <COND (.E
+				    <COND (<==? <DB-SCHEMA-NAME .DBMS-ENTRY>
+					    <DB-SCHEMA-NAME .E>>
+					<ERR <STRING "Local DBMS " <SPNAME <DB-SCHEMA-NAME .E>> " is already defined.">>
+					<MAPLEAVE>)>)>>
+			  <DBMS-TABLE ,SCHEMA-DIR>>>
+		<PUT ,SCHEMA-DIR ,DBMS-TABLE [!<DBMS-TABLE ,SCHEMA-DIR>
+							.DBMS-ENTRY]>
+		<SETG DBMS-TAB <DBMS-TABLE ,SCHEMA-DIR>>
+		<MSG <STRING "DBMS " <SPNAME <DB-SCHEMA-NAME .DBMS-ENTRY>>
+				" added to global schema.">>)>>
+;""
+;"CREATE-DEFAULT-EREP creates a default physical entity type 
+  representation.  DBMS-ID is the index into the DBMS-TABLE."
+
+<DEFINE CREATE-DEFAULT-EREP (DBMS-ID)
+	#DECL ((DBMS-ID) FIX)
+	<CHTYPE [.DBMS-ID <> <> <CHTYPE () ETID-LIST> <> 0 <> <>
+		 <> <> <> <> <> <> <>] E-PHY-REP>>
+
+
+
+
+
+;"CREATE-DEFAULT-FREP creates a default physical function
+  representation.  FUNC-TYPE is the function type (string, integer...)
+  and DBMS-ID is the index into the DBMS-TABLE"
+
+<DEFINE CREATE-DEFAULT-FREP (FUNC-TYPE DBMS-ID
+				"AUX" (O <DB-OPTIONS <.DBMS-ID ,DBMS-TAB>>))
+	#DECL ((FUNC-TYPE) ATOM (DBMS-ID) FIX (O) DBMS-OPTIONS)
+	<COND (<==? .FUNC-TYPE F-STRING>
+		<CHTYPE [<> <> <> <DB-DEF-STR-BITS .O>
+				  <DB-DEF-STR-REP .O>
+				  <> <> <> 
+				  ,SYS-DEF-INT-BITS
+				  0 0 0 <> <> <> <> <>
+				  <DB-REL-OPS .O>
+				  <DB-ARITH-OPS .O>] F-PHY-REP>)
+	      (ELSE
+		<CHTYPE [<> <> <> <DB-DEF-INT-BITS .O>
+				  <DB-DEF-INT-REP .O>
+				  <> <> <>
+				  ,SYS-DEF-INT-BITS
+				  ,SYS-DEF-PRINT-INT
+				  0 0 <> <> <> <> <>
+				  <DB-REL-OPS .O>
+				  <DB-ARITH-OPS .O>] F-PHY-REP>)>>
+;""
+;"CREATE-FUNCTIONS creates a vector of entity function specifications."
+
+<DEFINE CREATE-FUNCTIONS (ENAME FL DBMS-ID ERROR-EXIT "AUX" (V []))
+	#DECL ((FL) LIST (DBMS-ID) FIX (V) VECTOR
+		(ENAME) ATOM
+		(ERROR-EXIT) ACTIVATION)
+	<MAPF <>
+	      <FUNCTION (F)
+		#DECL ((F) ENTITY-FUNC)
+		<MAPF <>
+		      <FUNCTION (VF)
+			#DECL ((VF) ENTITY-FUNC)
+			<COND (<==? <F-NAME .VF> <F-NAME .F>>
+				<ERR <STRING "Function name "
+					     <SPNAME <F-NAME .F>>
+					     " in entity type "
+					     <SPNAME .ENAME>
+					     " defined more than once.">>
+				<RETURN <> .ERROR-EXIT>)>>
+		      .V>
+		<PUT .F ,F-MAP-TYPE F-LOCAL-SCHEMA>
+		<PUT .F ,F-MAP-INFO <CREATE-DEFAULT-FREP <F-TYPE .F> .DBMS-ID>>
+		<SET V [!.V .F]>>
+		.FL>>
+;""
+
+;"DEMO-COMMAND processes various demo commands."
+
+<DEFINE DEMO-COMMAND (CMD)
+	#DECL ((CMD) ATOM)
+	<COND (<==? .CMD DEMO-ON>
+		<SETG DEMO T>
+		<DEMO-INIT >
+	      	<CALL-ALL-LDIS-SIMPLE "DEMO-CMD" ON>)
+	      (<==? .CMD DEMO-OFF>
+		<SETG DEMO <>>
+	      	<CALL-ALL-LDIS-SIMPLE "DEMO-CMD" <>>)
+	      (ELSE
+		<ERR "Unknown demo command.">)>
+	<RESERVE-SPACE>	;"tries to make sure there is enough garbage collection room"
+	<>>
+;""
+;"All routines beginning with DIR- are DBA command action routines."
+
+;"DIR-AC returns the keyword AC
+  Production: ALPHA_COLLATING  "
+
+<DEFINE DIR-AC (X)
+	AC>
+
+
+;"DIR-ACCESS-ENT returns a list which indicates the entity
+  selected by an access path.
+  Production: SELECTS entity-name ; "
+
+<DEFINE DIR-ACCESS-ENT (X ENTITY Y)
+	#DECL (	(ENTITY) IDENTIFIER)
+	(SELECTS .ENTITY)>
+
+
+
+;"DIR-ACCESS-FCN returns a list which indicates other functions
+  which must be present to make a complete access path.
+  Production: WITH functin_list ; "
+
+<DEFINE DIR-ACCESS-FCN (X FCN-LIST Y)
+	#DECL (	(FCN-LIST) LIST)
+	(WITH .FCN-LIST)>
+
+
+
+;"DIR-ACCESS-PATH returns a list containing the keyword ACCESS and
+  the type of comparison that can be done.
+  Production: ACCESS PATH VIA compare_type ;  "
+
+<DEFINE DIR-ACCESS-PATH (W X Y CTYPE Z)
+	#DECL ((CTYPE) ATOM)
+	(ACCESS .CTYPE ())>
+
+
+
+
+;"DIR-ACCESS-UNIQUE returns a list indicating that the access path is unique.
+  Production: UNIQUE ;  "
+
+<DEFINE DIR-ACCESS-UNIQUE (X Y)
+	(UNIQUE)>
+
+
+;"DIR-AP-OPTIONS returns a list containing the keyword ACCESS and the
+  list of options specified for the access path.
+  Production: ACCESS PATH VIA compare_type access_paht_list   "
+
+<DEFINE DIR-AP-OPTIONS (V W X CTYPE OPTN)
+	#DECL ((CTYPE) ATOM (OPTN) LIST)
+	(ACCESS .CTYPE .OPTN)>
+
+
+
+
+;"DIR-AYREA creates a list containing the keyword AREA and a list
+  area names.
+  Production: AREAS area_list  "
+
+<DEFINE DIR-AYREA (X AREA-LIST Y)
+	#DECL ((AREA-LIST) LIST)
+	(AREA <CHTYPE .AREA-LIST AREAS>)>
+;""
+;"DIR-BIT returns a list containing the keyword BIT and the bit size
+  of the function value and its representation.
+  Production: number BIT representation  "
+
+<DEFINE DIR-BIT (NUM X VREP)
+	#DECL ((NUM) FIX (VREP) ATOM)
+	(BIT .NUM .VREP)>
+
+
+
+
+
+;"DIR-CHR-BITS returns a list containing the keyword CHR-BIT and
+  the character size in bits.
+  Production: DEFAULT CHAR BIT SIZE IS number  "
+
+<DEFINE DIR-CHR-BITS (V W X Y Z BIT-SIZE)
+	#DECL ((BIT-SIZE) FIX)
+	(CHR-BIT .BIT-SIZE)>
+
+
+
+
+;"DIR-CHR-REP returns a list containing the keyword CHR-REP and
+  the character representation.
+  Production: DEFAULT CHAR REP IS representation  "
+
+<DEFINE DIR-CHR-REP (W X Y Z VREP)
+	#DECL ((VREP) ATOM)
+	(CHR-REP .VREP)>
+
+
+
+
+;""
+;"DIR-CONTEXT returns a list containing the keyword FOUND and a string
+  representing the context in which the entity type is found.
+  Production: FOUND UNDER character_string ;  "
+
+<DEFINE DIR-CONTEXT (X Y CONTEXT Z)
+	#DECL ((CONTEXT) STRING)
+	(FOUND .CONTEXT)>
+
+
+
+
+
+;"DIR-CONTEXT-DBA is the main entry point for context analysis.  Determines
+  the DBA command type and invokes the appropriate routine."
+
+<DEFINE DIR-CONTEXT-DBA (COMMAND "ACT" ACT)
+	#DECL ((COMMAND) <OR DBMS-DEF DB-DEF VIEW-DEF DIR-CMD DEMO-CMD>
+		(ACT) ACTIVATION)
+	<COND (<TYPE? .COMMAND DBMS-DEF>
+		<CREATE-DBMS <1 .COMMAND>>)
+	      (<TYPE? .COMMAND DIR-CMD>
+		<RETURN <> .ACT>)
+	      (<TYPE? .COMMAND DB-DEF>
+		<CREATE-DB <1 .COMMAND>>)
+	      (<TYPE? .COMMAND VIEW-DEF>
+		<CREATE-VIEW  .COMMAND>)
+	      (<TYPE? .COMMAND DEMO-CMD>
+		<DEMO-COMMAND <1 .COMMAND>>)>>
+;""
+
+  ;"Production: SHARE entity_name WITH entity_list ; "
+
+<DEFINE DIR-COTYPE (X ID Y EL Z)
+	#DECL ((EL) LIST (ID) IDENTIFIER)
+	<ERR "Share statement not implemented">
+	<CHTYPE [.ID .EL] SHARE>
+>
+
+
+
+
+
+;"DIR-DATABASE-ID is called when a database definition containing a
+  database name on its END statement is recognized.  The name is saved
+  and later checked against the database name for consistency.
+  Production: basic_database database_name ;  "
+
+<DEFINE DIR-DATABASE-ID (BASIC-DB DB-NAME X)
+	#DECL ((BASIC-DB) VECTOR (DB-NAME) IDENTIFIER)
+	<PUT .BASIC-DB 2 <ID-NAME .DB-NAME>>>
+
+
+
+
+
+;"DIR-DB-DEF changes the structure built while parsing a data base
+  definition command to be a vector of type DB-DEF.
+  Production: database_definition  "
+
+<DEFINE DIR-DB-DEF (STRUCT)
+	#DECL ((STRUCT) VECTOR)
+	<CHTYPE [.STRUCT] DB-DEF>>
+
+
+
+
+
+;"DIR-DB-MAPPING inserts the list containing entity mapping information
+  into the vector describing the database.
+  Production: DATABASE db_visible_part db_map_part END "
+
+<DEFINE DIR-DB-MAPPING (X VP MP Y)
+	#DECL ((VP) VECTOR (MP) LIST)
+	<PUT .VP 4 .MP>>
+
+
+
+
+
+;"DIR-DBMS-DEF changes the structure built while parsing a local
+  DBMS specification command to be a vector of type DBMS-DEF.
+  Production: dbms_definition  "
+
+<DEFINE DIR-DBMS-DEF (STRUCT)
+	#DECL ((STRUCT) DBMS)
+	<CHTYPE [.STRUCT] DBMS-DEF>>
+;""
+;"DIR-DBMS-OPTIONS builds a complete DBMS-TABLE entry by formating
+  a DBMS options list and adding it to the fixed portion of a
+  DBMS-TABLE entry.  The DBMS options list contains information
+  describing which operations are supported on a local DBMS.
+  Production: basic_dbms_definition dbms_option_list ;  "
+
+<DEFINE DIR-DBMS-OPTIONS (DBMS-ENTRY OPTION-LIST X
+	"AUX"	(OPT <CHTYPE <VECTOR   	,SYS-DEF-INT-BITS
+				     	,SYS-DEF-INT-REP
+				     	,SYS-DEF-STR-BITS
+				     	,SYS-DEF-STR-REP
+					<> <> <>
+					,SYS-INFINITY
+					,SYS-INFINITY
+					,SYS-INFINITY
+					,SYS-INFINITY
+					<> <> <> <>  <> <> <> <>
+					<> <> <> <>  <> <> <> <>
+					<> <> <> <>
+			> DBMS-OPTIONS>))
+	#DECL ((DBMS-ENTRY) DBMS (OPTION-LIST) LIST (OPT) DBMS-OPTIONS)
+	<MAPF	<>
+		<FUNCTION (O)
+		  <COND (<TYPE? .O GLOBAL-OPS>
+			 <PUT .OPT ,DB-GLOBAL-OPS .O>)
+			(<TYPE? .O DISPLAY-OPS>
+			 <PUT .OPT ,DB-DISPLAY-OPS .O>)
+			(<TYPE? .O FIND-OPS>
+			 <PUT .OPT ,DB-FIND-OPS .O>)
+		        (<TYPE? .O QUANTIFIERS-OPS>
+			 <PUT .OPT ,DB-QUANTIFIERS .O>)
+			(<TYPE? .O LIST>
+			 <COND (<==? <1 .O> INT-BIT>
+				<PUT .OPT ,DB-DEF-INT-BITS <2 .O>>)
+			       (<==? <1 .O> INT-REP>
+				<COND (<==? <2 .O> ONES>
+					<PUT .OPT ,DB-DEF-INT-REP DB-ONES-COMP>)
+				      (<==? <2 .O> TWOS>
+					<PUT .OPT ,DB-DEF-INT-REP DB-TWOS-COMP>)>)
+			       (<==? <1 .O> CHR-BIT>
+				<PUT .OPT ,DB-DEF-STR-BITS <2 .O>>)
+			       (<==? <1 .O> CHR-REP>
+				<COND (<==? <2 .O> ASCII>
+					<PUT .OPT ,DB-DEF-STR-REP DB-ASCII>)
+				      (<==? <2 .O> BCD>
+					<PUT .OPT ,DB-DEF-STR-REP DB-BCD>)>)
+			       (<==? <1 .O> MAX-PRED>
+				<PUT .OPT ,DB-MAX-NON-QUANT-ITER <2 .O>>)
+			       (<==? <1 .O> MAX-QPRED>
+				<PUT .OPT ,DB-MAX-QUANT-ITER <2 .O>>)
+			       (<==? <1 .O> MAX-QREL>
+				<PUT .OPT ,DB-MAX-QUANT-REL <2 .O>>)
+			       (<==? <1 .O> PRED-OPTN>
+				<MAPF <>
+				 <FUNCTION (O)
+				  <COND(<TYPE? .O ARITHMETIC-OPS>
+					<PUT .OPT ,DB-ARITH-OPS .O>)
+				       (<TYPE? .O COMPARE-OPS>
+					<PUT .OPT ,DB-COMPARE-OPS .O>)
+				       (<TYPE? .O LOGICAL-OPS>
+					<PUT .OPT ,DB-LOG-OPS .O>)
+				       (<TYPE? .O QUANTIFIED-OPS>
+					<PUT .OPT ,DB-QUANT-REL .O>)
+				       (<TYPE? .O RELATIONAL-OPS>
+					<PUT .OPT ,DB-REL-OPS .O>)
+				       (<AND <TYPE? .O LIST>
+					     <==? <1 .O> EXIST-OPS>>
+					<PUT .OPT ,DB-EXIST-OPS <2 .O>>)
+				       (<==? .O ACCESS>
+					<PUT .OPT ,DB-AP-REQUIRED T>)
+				       (<==? .O RESTRICTED>
+					<PUT .OPT ,DB-AP-ONLY T>)
+			               (<FATAL-ERROR "DIR-DBMS-OPTIONS: Unknown option" .O>)>>
+				<2 .O>>)
+			       (<==? <1 .O> QPRED-OPTN>
+				<MAPF <>
+				 <FUNCTION (O)
+				  <COND(<TYPE? .O ARITHMETIC-OPS>
+					<PUT .OPT ,DB-QP-ARITH-OPS .O>)
+				       (<TYPE? .O COMPARE-OPS>
+					<PUT .OPT ,DB-QP-COMPARE-OPS .O>)
+				       (<TYPE? .O LOGICAL-OPS>
+					<PUT .OPT ,DB-QP-LOG-OPS .O>)
+				       (<TYPE? .O QUANTIFIED-OPS>
+					<PUT .OPT ,DB-QP-QUANT-REL .O>)
+				       (<TYPE? .O RELATIONAL-OPS>
+					<PUT .OPT ,DB-QP-REL-OPS .O>)
+				       (<AND <TYPE? .O LIST>
+					     <==? <1 .O> EXIST-OPS>>
+					<PUT .OPT ,DB-QP-EXIST-OPS <2 .O>>)
+				       (<==? .O ACCESS>
+					<PUT .OPT ,DB-QP-AP-REQUIRED T>)
+				       (<==? .O RESTRICTED>
+					<PUT .OPT ,DB-QP-AP-ONLY T>)
+			               (<FATAL-ERROR "DIR-DBMS-OPTIONS: Unknown option" .O>)>>
+				<2 .O>>)
+			       (<FATAL-ERROR "DIR-DBMS-OPTIONS: Unknown option" .O>)>)
+			(<==? .O MULTIPLE>
+			 <PUT .OPT ,DB-MULTIPLE-ITER T>)
+			(<==? .O PROPAGATE>
+			 <PUT .OPT ,DB-RESTRICT-PROP T>)
+			(<==? .O STRICT>
+			 <PUT .OPT ,DB-STRICT-NESTING-ONLY T>)
+			(<FATAL-ERROR "DIR-DBMS-OPTIONS: Unknown option" .O>)>>
+		.OPTION-LIST>
+	<PUT .DBMS-ENTRY ,DB-OPTIONS .OPT>>
+;""
+;"DIR-DBMS-TABLE builds the fixed portion of a DBMS-TABLE entry.
+  Production: LOCAL NODE IS 
+		LOCAL SCHEMA IS identifier
+		DBMS IS identifier
+		HOST IS identifier
+		LDI IS procedure_name ldi_choice  "
+
+<DEFINE DIR-DBMS-TABLE (A B C D E F SCHEMA-NAME H I SYS-NAME K L M SYS-TYPE
+		        O P HOST R S PROC-NAME LDI)
+	#DECL ((SCHEMA-NAME SYS-NAME HOST) IDENTIFIER (SYS-TYPE) ATOM
+	       (PROC-NAME) STRING (LDI) LDI-DATA)
+	<PUT .LDI ,LDI-PROC-NAME .PROC-NAME>
+	<CHTYPE [ <ID-NAME .SCHEMA-NAME>
+		  <ID-NAME .SYS-NAME>
+		  .SYS-TYPE
+		  <ID-NAME .HOST>
+		  .LDI
+		  <> ] DBMS>>
+
+
+
+
+;"DIR-DELETE-DB deletes a database specification from the schema directory.
+  Production: DELETE DATABASE identifier ;  "
+
+<DEFINE DIR-DELETE-DB (X Y ID Z)
+	#DECL ((ID) IDENTIFIER)
+	<ERR "Not implemented yet">
+	<>>
+
+
+
+
+;"DIR-DELETE-DBMS deletes a DBMS specification from the schema directory.
+  Production: DELETE DBMS identifier ;  "
+
+<DEFINE DIR-DELETE-DBMS (X Y ID Z)
+	#DECL ((ID) IDENTIFIER)
+	<ERR "Not implemented yet">
+	<>>
+;""
+;"DIR-DELETE-DIR deletes the schema directory.
+  Production: DELETE DIRECTORY ;  "
+
+<DEFINE DIR-DELETE-DIR (X Y Z)
+	<SETG SCHEMA-DIR <CHTYPE <IVECTOR 3 '<VECTOR>> DIRECTORY>> ;"poof"
+	<RENAME ,DIRECTORY-FILE-NAME> ;"Delete the disk file, too"
+	<WRITE-DIRECTORY>
+	<INITIALIZE-DIRECTORY>> ;"Read it back in and init various ptrs"
+
+
+
+
+
+;"DIR-DEMO-CMD is called when a demo command is recognized
+  Production:  demo_command  "
+
+<DEFINE DIR-DEMO-CMD (STRUCT)
+	#DECL ((STRUCT) ATOM)
+	<CHTYPE [.STRUCT] DEMO-CMD>>
+
+
+
+
+;"DIR-DEMO-OFF returns the keyword DEMO-OFF
+  Production: DEMO OFF ;  "
+
+<DEFINE DIR-DEMO-OFF (X Y Z)
+	DEMO-OFF>
+
+
+
+
+;"DIR-DEMO-ON returns the keyword DEMO-ON
+  Production: DEMO ON ;  "
+
+<DEFINE DIR-DEMO-ON (X Y Z)
+	DEMO-ON>
+
+
+
+
+;"DIR-DIR-CMD changes the structure built while parsing a directory
+  command to be a vector of type DIR-CMD.
+  Production: directory_command  "
+
+<DEFINE DIR-DIR-CMD (STRUCT)
+	#DECL ((STRUCT) ANY)
+	<CHTYPE [.STRUCT] DIR-CMD>>
+
+
+
+
+
+;"DIR-ENTITY-EXTENT creates a list containing an entity name and its
+  associated mapping information plus and empty list since no function
+  mapping was supplied.
+  Production: EXTENT identifier IS db_entity_map db_extent_end "
+
+<DEFINE DIR-ENTITY-EXTENT (X ENAME Y EMAP Z)
+	#DECL ((ENAME) IDENTIFIER (EMAP) LIST)
+	(<ID-NAME .ENAME> .EMAP ())>
+
+
+
+
+;""
+;"DIR-ENTITY-FUNC-EXTENT creates a list containing an entity name its
+  associated mapping info and its function mapping info.
+  Production: EXTENT identifier IS db_entity_map db_func_map db_extent_end "
+
+<DEFINE DIR-ENTITY-FUNC-EXTENT (X ENAME Y EMAP FMAP Z)
+	#DECL ((ENAME) IDENTIFIER (EMAP FMAP) LIST)
+	(<ID-NAME .ENAME> .EMAP .FMAP)>
+
+
+
+
+
+;"DIR-ENTITY-PRED-OPTN returns the predicate options of the entity
+  Production: RESTRICTED predicate_option_list  "
+
+<DEFINE DIR-ENTITY-PRED-OPTN (X OPTN)
+	#DECL (	(OPTN) LIST)
+	(PRED-OPTN .OPTN)>
+
+
+
+
+;"DIR-ENTITY-TYPE creates a two element list containing the entity
+  name and a list describing its functions.
+  Production: TYPE entity_name IS ENTITY entity_body entity_end ;  "
+
+<DEFINE DIR-ENTITY-TYPE (W ENAME X Y EBODY Z V)
+	#DECL ((ENAME) IDENTIFIER (EBODY) LIST)
+	(<ID-NAME .ENAME> .EBODY)>
+
+
+;"Production: TYPE entity_name IS ENTITY entity_end ; "
+<DEFINE DIR-ENTITY-TYPE-EMPTY(W ENAME X Y Z V)
+	#DECL((ENAME) IDENTIFIER)
+	(<ID-NAME .ENAME> () )
+>
+
+
+;"DIR-FCN-DEF adds the function name to an ENTITY-FUNC vector
+  Production: function_name : value_format ;  "
+
+<DEFINE DIR-FCN-DEF (ID X F Y)
+	#DECL ((ID) IDENTIFIER (F) ENTITY-FUNC)
+	<PUT .F ,F-NAME <ID-NAME .ID>>>
+
+
+
+
+;"DIR-FLUSH-DIR deletes the schema directory in memory only.
+  Production:	FLUSH DIRECTORY ;  or
+		FLUSH ;		"
+
+<DEFINE DIR-FLUSH-DIR (X Y "OPT" Z "AUX" FOO)
+	#DECL ((FOO) <OR ATOM FALSE>)
+	<SET FOO ,DONT-RELOAD-DIR>
+	<SETG DONT-RELOAD-DIR T>
+	<SETG SCHEMA-DIR <CHTYPE <IVECTOR 3 '<VECTOR>> DIRECTORY>> ;"poof"
+	<INITIALIZE-DIRECTORY>
+	<SETG DONT-RELOAD-DIR .FOO>
+>
+
+
+
+
+;"DIR-FOP-CALC returns the keyword FIND-CALC.
+  Production: CALC  "
+
+<DEFINE DIR-FOP-CALC (X)
+	FIND-CALC>
+
+;"DIR-FOP-CUR returns the keyword FIND-CUR.
+  Production: CURRENT  "
+
+<DEFINE DIR-FOP-CUR (X)
+	FIND-CUR>
+
+;"DIR-FOP-KEY returns the keyword FIND-KEY.
+  Production: DATABASE_KEY  "
+
+<DEFINE DIR-FOP-KEY (X)
+	FIND-KEY>
+
+;"DIR-FOP-OWN returns the keyword FIND-OWN.
+  Production: OWNER  "
+
+<DEFINE DIR-FOP-OWN (X)
+	FIND-OWN>
+
+;"DIR-FOP-POS returns the keyword FIND-POS.
+  Production: POSITIONAL  "
+
+<DEFINE DIR-FOP-POS (X)
+	FIND-POS>
+
+;"DIR-FOP-USE-CUR returns the keyword FIND-USE-CUR.
+  Production: USING_CURRENT  "
+
+<DEFINE DIR-FOP-USE-CUR (X)
+	FIND-USE-CUR>
+
+;"DIR-FOP-USE-NCUR returns the keyword FIND-USE-NCUR.
+  Production: USING_NON_CURRENT  "
+
+<DEFINE DIR-FOP-USE-NCUR (X)
+	FIND-USE-NCUR>
+
+
+;"DIR-FUNC-AOPS returns a list containing the arithmetic operators
+  supported for the specific function.
+  Production: RESTRICTED TO ARITHMETIC OPERATIONS supported_arith_list ;  "
+
+<DEFINE DIR-FUNC-AOPS (V W X Y OPS Z)
+	#DECL ((OPS) LIST)
+	(AOPS <DIR-SUPPORTED-AOPS X Y Z .OPS>)>
+
+
+
+
+;"DIR-FUNC-EXTENT creates a list containing the function name and its
+  associated mapping information.
+  Production: identifier IS db_func_map  "
+
+<DEFINE DIR-FUNC-EXTENT (FNAME X MAPPING)
+	#DECL ((FNAME) IDENTIFIER (MAPPING) LIST)
+	(<ID-NAME .FNAME> .MAPPING)>
+
+
+
+
+;"DIR-FUNC-ROPS returns a list containing the relational operators
+  supported for the specific function.
+  Production: RESTRICTED TO RELATIONAL OPERATIONS supported_rel_list ;  "
+
+<DEFINE DIR-FUNC-ROPS (V W X Y OPS Z)
+	#DECL ((OPS) LIST)
+	(ROPS <DIR-SUPPORTED-ROPS X Y Z .OPS>)>
+;""
+
+
+
+
+;"DIR-INT-BITS returns a list containing the keyword INT-BIT and
+  the default bit size for integers.
+  Production: DEFAULT INTEGER BIT SIZE IS number  "
+
+<DEFINE DIR-INT-BITS (V W X Y Z BIT-SIZE)
+	#DECL ((BIT-SIZE) FIX)
+	(INT-BIT .BIT-SIZE)>
+
+
+
+
+
+;"DIR-INT-REP returns a list containing the keyword INT-REP and
+  the default representation for integers.
+  Production: DEFAULT INTEGER REP IS representation  "
+
+<DEFINE DIR-INT-REP (W X Y Z VREP)
+	#DECL ((VREP) ATOM)
+	(INT-REP .VREP)>
+
+
+
+
+;"DIR-INT-STR creates a list containing the keyword INT-STR and
+  the min/max number of characters in the integer string.
+  Production: STORED AS STRING ( number_characters )  "
+
+<DEFINE DIR-INT-STR (X Y Z V MIN-MAX W)
+	#DECL ((MIN-MAX) LIST)
+	(INT-STR <1 .MIN-MAX> <2 .MIN-MAX>)>
+
+
+
+
+;"DIR-KEY returns the key specification for the entity.
+  Production: KEY key_spec ;  "
+
+<DEFINE DIR-KEY (Y KEY-SPEC Z)
+	#DECL (	(KEY-SPEC) <OR ATOM LIST>)
+	<COND (<TYPE? .KEY-SPEC ATOM>
+		(KEY ()) ) ;"DATABASE_KEY"
+	      (ELSE
+		(KEY .KEY-SPEC) )>>
+
+
+
+;"DIR-LOCAL-LDI builds an LDI-DATA vector containing information
+  about a local LDI.
+  Production: LOCAL  "
+
+<DEFINE DIR-LOCAL-LDI (X)
+	<CHTYPE <VECTOR T
+		  	<>
+		  	<>
+		  	<>> LDI-DATA>>
+
+
+
+
+;"DIR-MAX-ONLY creates a list containing the range of a STRING.
+  Production: number  "
+
+<DEFINE DIR-MAX-ONLY (VMAX)
+	#DECL ((VMAX) FIX)
+	(.VMAX .VMAX)>
+
+
+
+;"DIR-MAX-PRED returns the non-quantified iteration predicate limit.
+  Production: MAXIMUM OF number NON_QUANTIFIED ITERATION PREDICATES "
+
+<DEFINE DIR-MAX-PRED (V W NUM X Y Z)
+	#DECL (	(NUM) FIX)
+	(MAX-PRED .NUM)>
+
+
+
+
+;"DIR-MAX-QPRED returns the quantified iteration predicate limit.
+  Production: MAXIMUM OF number QUANTIFIED ITERATION PREDICATES "
+
+<DEFINE DIR-MAX-QPRED (V W NUM X Y Z)
+	#DECL (	(NUM) FIX)
+	(MAX-QPRED .NUM)>
+
+
+
+
+;"DIR-MAX-QREL returns the quantified relation within a predicate limit.
+  Production: MAXIMUM OF number QUANTIFIED RELATIONS PER ITERATION "
+
+<DEFINE DIR-MAX-QREL (V W NUM X Y Z U)
+	#DECL (	(NUM) FIX)
+	(MAX-QREL .NUM)>
+
+
+
+
+;"DIR-MIN-MAX creates a list containing the range of a STRING.
+  Production: number .. number  "
+
+<DEFINE DIR-MIN-MAX (VMIN X VMAX)
+	#DECL ((VMIN VMAX) FIX)
+	(.VMIN .VMAX)>
+
+
+
+
+;"DIR-NO-AOPS is called to process a declaration of no arithmetic ops.
+  Production: RESTRICTED TO NO ARITHMETIC OPERATINS ;  "
+
+<DEFINE DIR-NO-AOPS (U V W X Y Z)
+	(AOPS <DIR-SUPPORTED-AOPS X Y Z '()>) >
+
+
+
+
+;"DIR-NO-QUANT is called for an entity which cannot be the domain
+  of a quantification.
+  Production: TO NO QUANTIFICATION ;  "
+
+<DEFINE DIR-NO-QUANT (W X Y Z)
+	(NO-QUANT)>
+
+
+
+
+;"DIR-NO-ROPS is called to process a declaration of no relational ops.
+  Production: RESTRICTED TO NO RELATIONAL OPERATINS ;  "
+
+<DEFINE DIR-NO-ROPS (U V W X Y Z)
+	(ROPS <DIR-SUPPORTED-ROPS X Y Z '()>) >
+
+
+
+
+;"DIR-OPTIONAL is called when a partial function is recognized.
+  Production: range_type PARTIAL  "
+
+<DEFINE DIR-OPTIONAL (F)
+	#DECL ((F) ENTITY-FUNC)
+	.F>	;"No-op for now"
+
+
+
+
+
+;"DIR-OWNER creates a list containing the keyword OWNED and a list
+  of entity types that are owners.
+  Production: OWNED BY entity_list ;  "
+
+<DEFINE DIR-OWNER (X Y EL Z)
+	#DECL ((EL) LIST)
+	(OWNED .EL)>
+
+
+
+
+;""
+;"DIR-PRED-ITER returns information on the type of predicates
+  permitted when an entity is the domain of an iteration.
+  Production: WHEN DOMAIN OF ITERATION TO type PREDICATES ;  "
+
+<DEFINE DIR-PRED-ITER (S U V W X TYP Y Z)
+	#DECL (	(TYP) LIST)
+	(ITER-DOMAIN <DIR-SUPPORTED-PRED-TYPES .TYP>)>
+
+
+
+
+;"DIR-PRED-OPTN returns the predicate options of the dbms
+  Production: WITHIN NON_QUANTIFIED PREDICATES predicate_option_list  "
+
+<DEFINE DIR-PRED-OPTN (X Y Z OPTN)
+	#DECL (	(OPTN) LIST)
+	(PRED-OPTN .OPTN)>
+
+
+
+
+;"DIR-PRED-QUANT returns information on the type of predicates
+  permitted when an entity is the domain of a quantification.
+  Production: WHEN DOMAIN OF QUANTIFICATION TO type PREDICATES ;  "
+
+<DEFINE DIR-PRED-QUANT (S U V W X TYP Y Z)
+	#DECL (	(TYP) LIST)
+	(QUANT-DOMAIN <DIR-SUPPORTED-PRED-TYPES .TYP>)>
+
+
+
+
+;"DIR-PRINT-CH creates a list containing the keyword PRINTING and
+  the max number of characters required to print a function value.
+  Production: number PRINTING CHARS  "
+
+<DEFINE DIR-PRINT-CH (NUM X Y)
+	#DECL ((NUM) FIX)
+	(PRINTING .NUM)>
+
+
+
+
+
+;"DIR-PRINT-DB pretty prints a database or view.
+  Production: PRINT DATABASE identifier ;  "
+
+<DEFINE DIR-PRINT-DB (X Y DNAME Z "AUX" (I 0))
+	#DECL ((DNAME) IDENTIFIER (I) FIX)
+	<COND (<MAPF <>
+		     <FUNCTION (V)
+			#DECL ((V) VIEW)
+			<SET I <+ .I 1>>
+			<COND (<==? <V-NAME .V> <ID-NAME .DNAME>>
+				<PP-DATABASE .I>
+				<MAPLEAVE>)>>
+		     ,VIEW-TAB>)
+	      (<ERR <STRING "Database or view " <SPNAME <ID-NAME .DNAME>>
+				" is undefined.">>)>>
+
+
+
+
+
+;"DIR-PRINT-DBMS pretty prints a DBMS table entry.
+  Production: PRINT DBMS identifier ;  "
+
+<DEFINE DIR-PRINT-DBMS (X Y SYS-NAME Z)
+	#DECL ((SYS-NAME) IDENTIFIER)
+	<COND (<MAPF <>
+		     <FUNCTION (D)
+			#DECL ((D) DBMS)
+			<COND (<==? <DB-SCHEMA-NAME .D> <ID-NAME .SYS-NAME>>
+				<PP-DBMS .D>
+				<MAPLEAVE>)>>
+		     ,DBMS-TAB>)
+	      (<ERR <STRING "DBMS " <SPNAME <ID-NAME .SYS-NAME>> 
+				" is undefined.">>)>>
+
+
+
+
+;""
+;"DIR-PRINT-DIR pretty prints the schema directory.
+  Production: PRINT DIRECTORY ;  "
+
+<DEFINE DIR-PRINT-DIR (X Y Z)
+	<PP-DIR>
+	<>>	;"Return false to skip context analysis"
+
+
+
+
+
+;"DIR-PRINT-ET prints an entity type table entry.  Note that only
+  the current view context is searched.
+  Production: PRINT ENTITY TYPE identifier ;  "
+
+<DEFINE DIR-PRINT-ET (W X Y ENAME Z)
+	#DECL ((ENAME) IDENTIFIER)
+	<COND (<FIND-ENTITY-TYPE .ENAME>
+		<PP-ENTITY-TYPE <<ID-ETID .ENAME> ,ET-TABLE>>)>>
+
+
+
+
+;""
+;"DIR-QPRED-OPTN returns the quantified predicate optins.
+  Production: WITHIN QUANTIFIED PREDICATES predicate_option_list  "
+
+<DEFINE DIR-QPRED-OPTN (X Y Z OPTN)
+	#DECL (	(OPTN) LIST)
+	(QPRED-OPTN .OPTN)>
+;""
+;"DIR-RANGE-ENTITY creates a default ENTITY-FUNC vector for a
+  function whose range is entity.  Elements in the vector may
+  be changed as more is learned about the function.
+  Production: entity_name  "
+
+<DEFINE DIR-RANGE-ENTITY (E)
+	#DECL ((E) IDENTIFIER)
+	<CHTYPE [<> F-ENTITY F-SV <ID-NAME .E> <> <> <>] ENTITY-FUNC>>
+
+
+
+
+;"DIR-RANGE-INTEGER creates a default ENTITY-FUNC vector for a
+  function whose range is integer.  Elements in the vector may 
+  be changed as more is learned about the function.
+  Production: INTEGER  "
+
+<DEFINE DIR-RANGE-INTEGER (X)
+	<CHTYPE <VECTOR <> F-INTEGER F-SV -34359738366 34359738367 <> <>>
+		 ENTITY-FUNC>>
+
+
+
+;"DIR-RANGE-STR creates a default ENTITY-FUNC vector for a
+  function whose range is string.  Elements in the vector may
+  be changed as more is learned about the function.
+  Production: STRING ( number_characters )  "
+
+<DEFINE DIR-RANGE-STR (X Y MIN-MAX Z)
+	#DECL ((MIN-MAX) LIST)
+	<CHTYPE [<> F-STRING F-SV <1 .MIN-MAX> <2 .MIN-MAX> <> <>]
+		ENTITY-FUNC>>
+
+
+
+
+;"DIR-READ-DIR reads the schema directory from disk.
+  (24-jun-81) Note that reading the directory with READ-DIRECTORY
+  is, in fact, useless because the atoms ET-TABLE, etc. which all
+  of Multibase uses are not rebound.  The directory must be read
+  using INITIALIZE-DIRECTORY, which not only reads the directory,
+  but also rebinds these atoms.
+  Production: READ DIRECTORY ;  "
+
+<DEFINE DIR-READ-DIR (X Y Z) <INITIALIZE-DIRECTORY>>
+<DEFINE DIR-READ-DIR-FILE (X Y FILE Z "AUX" ANS)
+	#DECL ((FILE) STRING (ANS) <OR ATOM FALSE>)
+	<COND (<SET ANS <FILE-EXISTS? .FILE>>
+		<SETG DIRECTORY-FILE-NAME .FILE>
+		<INITIALIZE-DIRECTORY>)
+	      (ELSE
+		<ERR "File does not exist: " <1 .ANS>>
+		<>)>
+>
+
+
+
+
+;"DIR-REMOTE-LDI builds an LDI-DATA vector containing information
+  about a remote LDI.
+  Production: REMOTE host socket  "
+
+<DEFINE DIR-REMOTE-LDI (X HOST SOCKET)
+	#DECL ((HOST) IDENTIFIER (SOCKET) FIX)
+	<CHTYPE [ <>
+		  <>
+		  <ID-NAME .HOST>
+		  .SOCKET ] LDI-DATA>>
+
+
+
+
+;"DIR-REPEAT-GRP creates a list containing the keyword REPEAT.
+  Production: REPEATING GROUP  "
+
+<DEFINE DIR-REPEAT-GRP (X Y)
+	'(REPEAT)>
+
+
+
+;""
+
+
+;"DIR-SET creates a list containing the keyword SET.
+  Production: SET  "
+
+<DEFINE DIR-SET (X)
+	'(SET)>
+
+
+
+
+;"DIR-SET-OF changes the range of a function to be multi-valued.
+  Production: SET OF range_type  "
+
+<DEFINE DIR-SET-OF (X Y F)
+	#DECL ((F) ENTITY-FUNC)
+	<PUT .F ,F-RANGE F-MV>>
+
+
+
+;"DIR-SPELLED creates a list with the keyword SPELLED and a
+  string.
+  Production: SPELLED character_string ;  "
+
+<DEFINE DIR-SPELLED (X STR "OPT" (Z <>))
+	#DECL ((STR) STRING)
+	(SPELLED .STR)>
+
+
+;"Production: WHEN SPELLED string ; "
+
+<DEFINE DIR-SPELLED-2 (X Y STR "OPT" (Z <>))
+	#DECL ((STR) STRING)
+	(SPELLED .STR)>
+
+
+
+
+
+  ;"Production: CONTAIN entity_name IN entity-list ;  "
+
+<DEFINE DIR-SUPERTYPE (X ID Y EL Z)
+	#DECL ((EL) LIST (ID) IDENTIFIER)
+	<CHTYPE [.ID .EL] CONTAIN>
+>
+
+
+
+;""
+;"DIR-SUPPORTED-AOPS creates a vector describing the arithmetic operations
+  supported by a dbms.
+  Production: SUPPORTED ARITHMETIC OPERATIONS supported_arith_list ;  "
+
+<DEFINE DIR-SUPPORTED-AOPS (X Y Z AOP-LIST "OPT" S)
+	#DECL (	(AOP-LIST) LIST)
+	<CHTYPE [	<IN-LIST? '(ALL)	.AOP-LIST>
+			<IN-LIST? '(+)		.AOP-LIST>
+			<IN-LIST? '(-)		.AOP-LIST>
+			<IN-LIST? '(*)		.AOP-LIST>
+			<IN-LIST? '(/)		.AOP-LIST>
+			<IN-LIST? '(&)		.AOP-LIST>
+		] ARITHMETIC-OPS>
+>
+
+
+;"DIR-SUPPORTED-COPS creates a vector describing compare operations
+  supported by a DBMS.
+  Production: SUPPORTED COMPARE OPERATIONS supported_comp_list ;  "
+
+<DEFINE DIR-SUPPORTED-COPS (X Y Z COP-LIST)
+	#DECL ((COP-LIST) LIST)
+	<CHTYPE [ <IN-LIST? '(ALL)		.COP-LIST>
+		  <IN-LIST? '(CONSTANT)		.COP-LIST>
+		  <IN-LIST? '(FIELD)		.COP-LIST>
+		  <IN-LIST? '(EXPRESSION)	.COP-LIST> ] COMPARE-OPS>>
+
+
+
+
+;"DIR-SUPPORTED-DOPS creates a vector describing display operations
+  supported by a DBMS.
+  Production: SUPPORTED DISPLAY OPERATIONS supported_comp_list ;  "
+
+<DEFINE DIR-SUPPORTED-DOPS (X Y Z COP-LIST)
+	#DECL ((COP-LIST) LIST)
+	<CHTYPE [ <IN-LIST? '(ALL)		.COP-LIST>
+		  <IN-LIST? '(CONSTANT)		.COP-LIST>
+		  <IN-LIST? '(FIELD)		.COP-LIST>
+		  <IN-LIST? '(EXPRESSION)	.COP-LIST> ] DISPLAY-OPS>>
+
+
+
+
+;"DIR-SUPPORTED-EOPS creates a description of the existential logical
+  operations supported by a dbms.
+  Production: SUPPORTED EXISTENTIAL OPERATIONS supported_log_list  "
+
+<DEFINE DIR-SUPPORTED-EOPS (X Y Z LOP-LIST)
+	#DECL (	(LOP-LIST) LIST)
+	(EXIST-OPS <DIR-SUPPORTED-LOPS X Y Z .LOP-LIST>)>
+
+
+
+
+;"DIR-SUPPORTED-FOPS creates a vector describing FIND verbs supported
+  by a CODASYL DBMS.
+  Production: SUPPORTED FIND VERBS supported_find_list  "
+
+<DEFINE DIR-SUPPORTED-FOPS (X Y Z FOP-LIST)
+	#DECL ((FOP-LIST) LIST)
+	<CHTYPE [ <IN-LIST? '(FIND-KEY)		.FOP-LIST>
+		  <IN-LIST? '(FIND-CUR)		.FOP-LIST>
+		  <IN-LIST? '(FIND-POS)		.FOP-LIST>
+		  <IN-LIST? '(FIND-OWN)		.FOP-LIST>
+		  <IN-LIST? '(FIND-CALC)	.FOP-LIST>
+		  <IN-LIST? '(FIND-USE-CUR)	.FOP-LIST>
+		  <IN-LIST? '(FIND-USE-NCUR)	.FOP-LIST>
+		] FIND-OPS>>
+
+
+
+
+;"DIR-SUPPORTED-GOPS creates a vector describing global
+  optimizations supported by a DBMS.
+  Production: SUPPORTED GLOBAL OPTIMIZATIONS global_optimization_list  "
+
+<DEFINE DIR-SUPPORTED-GOPS (X Y Z GOP-LIST)
+	#DECL ((GOP-LIST) LIST)
+	<CHTYPE [ <IN-LIST? '(ALL)	.GOP-LIST>
+		  <IN-LIST? '(CREATE)	.GOP-LIST>
+		  <IN-LIST? '(REFERENCE) .GOP-LIST> ] GLOBAL-OPS>>
+
+
+
+
+;"DIR-SUPPORTED-LOPS creates a vector describing logical
+  operations supported by a DBMS.
+  Production: SUPPORTED LOGICAL OPERATIONS supported_log_list  "
+
+<DEFINE DIR-SUPPORTED-LOPS (X Y Z LOP-LIST)
+	#DECL ((LOP-LIST) LIST)
+	<CHTYPE [ <IN-LIST? '(ALL)	.LOP-LIST>
+		  <IN-LIST? '(AND)	.LOP-LIST>
+		  <IN-LIST? '(NOT)	.LOP-LIST> 
+		  <IN-LIST? '(OR)	.LOP-LIST>
+		] LOGICAL-OPS>>
+
+
+
+
+;"DIR-SUPPORTED-PRED-TYPES is an internal entry to decode allowable
+  predicate types."
+
+<DEFINE DIR-SUPPORTED-PRED-TYPES (TYP)
+	#DECL ((TYP) LIST)
+	<CHTYPE [	<IN-LIST? '(ALL)	.TYP>
+			<IN-LIST? '(NO)		.TYP>
+			<IN-LIST? '(QUANTIFIED)	.TYP>
+			<IN-LIST? '(NON_QUANTIFIED) .TYP>
+		] PREDICATE-TYPES>>
+
+
+
+
+;"DIR-SUPPORTED-QOPS creates a vector describing the quantificatin operations
+  supported by the dbms.
+  Productin: SUPPORTED QUANTIFIED RELATIONS supported_quant_list  "
+
+<DEFINE DIR-SUPPORTED-QOPS (X Y Z QOP-LIST)
+	#DECL (	(QOP-LIST) LIST)
+	<CHTYPE [	<IN-LIST? '(ALL)	.QOP-LIST>
+			<IN-LIST? '(NESTED)	.QOP-LIST>
+			<IN-LIST? '(PARALLEL)	.QOP-LIST>
+		] QUANTIFIED-OPS>
+>
+
+
+
+
+;"DIR-SUPPORTED-QNTS creates a vector describing the quantificatin operations
+  supported by the dbms.
+  Productin: SUPPORTED QUANTIFIERS supported_qnt_list  "
+
+<DEFINE DIR-SUPPORTED-QNTS (X Y QOP-LIST)
+	#DECL (	(QOP-LIST) LIST)
+	<CHTYPE [	<IN-LIST? '(ALL)	.QOP-LIST>
+			<IN-LIST? '(SOME)	.QOP-LIST>
+			<IN-LIST? '(EVERY)	.QOP-LIST>
+			<IN-LIST? '(NO)		.QOP-LIST>
+		] QUANTIFIERS-OPS>
+>
+
+
+
+
+;"DIR-SUPPORTED-ROPS creates a vector describing relational
+  operations supported by a DBMS.
+  Production: SUPPORTED RELATIONAL OPERATIONS supported_rel_list  "
+
+<DEFINE DIR-SUPPORTED-ROPS (X Y Z ROP-LIST "OPT" S)
+	#DECL ((ROP-LIST) LIST)
+	<CHTYPE [ <IN-LIST? '(ALL)	.ROP-LIST>
+		  <IN-LIST? '(\>)	.ROP-LIST>
+		  <IN-LIST? '(\<)	.ROP-LIST>
+		  <IN-LIST? '(\<=)	.ROP-LIST>
+		  <IN-LIST? '(\>=)	.ROP-LIST>
+		  <IN-LIST? '(/=)	.ROP-LIST>
+		  <IN-LIST? '(=)	.ROP-LIST>
+		  <IN-LIST? '(AC)	.ROP-LIST> 
+		  <IN-LIST? '(ISIN)	.ROP-LIST>
+		] RELATIONAL-OPS>>
+
+
+
+
+;""
+;"DIR-SYS-EP creates a list containing the keyword SYS-EP.
+  Production: SYSTEM ENTRY POINT ;  "
+
+<DEFINE DIR-SYS-EP (W X Y Z)
+	(SYS-EP ())>
+
+
+
+
+;"DIR-SYS-EP-ACCESS creates a list containing the keyword ACCESS.
+  Productin: BY ACCESS PATH ONLY ;  "
+
+<DEFINE DIR-SYS-EP-ACCESS (V W X Y Z)
+	(ACCESS)>
+
+
+
+;"DIR-SYS-EP-KEYS returns a list of key values to be used in
+  iterating over a system-entry point.
+  Productin: ITERATE USING KEYS key_list ;  "
+
+<DEFINE DIR-SYS-EP-KEYS (W X Y KEYLIST Z)
+	#DECL (	(KEYLIST) LIST)
+	(KEYS <CHTYPE .KEYLIST KEY-LIST>)>
+
+
+
+
+;"DIR-SYS-EP-OPTN creates a list containing the keyword SYS-EP and
+  a list of options describing the system entry point.
+  Production: SYSTEM ENTRY POINT sys_ep_clause  "
+
+<DEFINE DIR-SYS-EP-OPTN (W X Y OPTN)
+	#DECL ((OPTN) LIST)
+	(SYS-EP .OPTN)>
+
+
+
+
+;"DIR-SYS-EP-SET passes the system set name for a system entry point
+  Productin:  VIA character_string ;  "
+
+<DEFINE DIR-SYS-EP-SET (Y SET-NAME Z)
+	#DECL (	(SET-NAME) STRING)
+	(SETNAME .SET-NAME)>
+
+
+
+
+;""
+;"DIR-VIEW-DEF changes the structure created by parsing a view
+  definition command into a vector of type VIEW-DEF.
+  Production: view_definition  "
+
+<DEFINE DIR-VIEW-DEF (STRUCT)
+	#DECL ((STRUCT) VECTOR)
+	<CHTYPE [.STRUCT] VIEW-DEF>>
+
+
+
+
+
+;"DIR-VISIBLE processes the visible part of a view or database definition.
+  A vector is created containing the view/db name, a slot that will be
+  filled in later with the name specified on the END statement, the
+  list of entity definitions, no constraints and a slot that may be 
+  filled in later with mapping info.
+  Production: identifier IS group_of_entities  "
+
+<DEFINE DIR-VISIBLE (DB-NAME X EL)
+	#DECL ((DB-NAME) IDENTIFIER (EL) LIST)
+	[<ID-NAME .DB-NAME> <> .EL <> <>]>
+
+
+
+;"DIR-VISIBLE-CONSTRAINTS is just like DIR-VISIBLE except that a
+  list of constraints is added to the vector.
+  Production: identifier IS group_of_entities constraint_list  "
+
+<DEFINE DIR-VISIBLE-CONSTRAINTS (DB-NAME X EL CL)
+	#DECL ((DB-NAME) IDENTIFIER (EL CL) LIST)
+	[<ID-NAME .DB-NAME> <> .EL <> .CL]>
+
+
+
+
+
+;"DIR-WRITE-DIR copies the schema directory to disk.
+  Production: WRITE DIRECTORY ;  "
+
+<DEFINE DIR-WRITE-DIR (X Y Z) <WRITE-DIRECTORY>>
+
+
+<DEFINE DIR-WRITE-DIR-FILE (X Y FILE Z)
+	#DECL ((FILE) STRING)
+	<SETG DIRECTORY-FILE-NAME .FILE>
+	<WRITE-DIRECTORY>>
+""
+;"FIND-ETID is used to lookup a given entity type name in a vector
+  of ENTITY-TYPEs.  Returns the entity types ETID or false."
+
+<DEFINE FIND-ETID (EV ENAME)
+	#DECL ((EV) VECTOR (ENAME) ATOM)
+	<MAPF	<>
+		<FUNCTION (E)
+			#DECL ((E) <OR FALSE ENTITY-TYPE>)
+			<COND (.E
+				<COND (<==? <ET-NAME .E> .ENAME>
+					<MAPLEAVE <ET-ETID .E>>)>)>>
+		.EV>>
+
+
+
+
+;"FIND-FID is used to lookup a given function name in a vector
+  of ENTITY-FUNCs.  Returns the function's FID or false."
+
+<DEFINE FIND-FID (FV FNAME "AUX" (I 0))
+	#DECL ((FV) VECTOR (FNAME) ATOM (I) FIX)
+	<MAPF	<>
+		<FUNCTION (F)
+			#DECL ((F) ENTITY-FUNC)
+			<SET I <+ .I 1>>
+			<COND (<==? <F-NAME .F> .FNAME>
+				<MAPLEAVE .I>)>>
+		.FV>>
+""
+;"Pretty print routines for directory data structures"
+
+;"PP-DATABASE pretty prints all entity types in a database or view."
+
+<DEFINE PP-DATABASE (VID)
+	#DECL ((VID) FIX)
+	<MAPF	<>
+		<FUNCTION (E)
+			#DECL ((E) ENTITY-TYPE)
+			<COND (<==? <ET-VID .E> .VID>
+				<PP-ENTITY-TYPE .E>)>>
+		,ET-TABLE>>
+;""
+;"PP-DBMS prints one entry in the DBMS-TABLE."
+
+<DEFINE PP-DBMS (D "AUX" GOP DOP FOP (L <DB-LDI-DATA .D>)
+				     	     (O <DB-OPTIONS .D>))
+	#DECL ((D) DBMS (L) LDI-DATA (O) <OR DBMS-OPTIONS FALSE>
+		(GOP) <OR GLOBAL-OPS FALSE>
+		(DOP) <OR DISPLAY-OPS FALSE>
+		(FOP) <OR FIND-OPS FALSE>)
+	<TPRINC "Schema name: "> <PRINC <DB-SCHEMA-NAME .D>> <CRLF>
+	<TPRINC "DB system name: "> <PRINC <DB-SYS-NAME .D>> <CRLF>
+	<TPRINC "DB type: "> <PRINC <DB-SYS-TYPE .D>> <CRLF>
+	<TPRINC "Host: "> <PRINC <DB-HOST .D>> <CRLF>
+	<TPRINC "LDI procedure name: ">
+	<PRIN1 <LDI-PROC-NAME .L>>
+	<CRLF>
+	<COND (<LDI-LOCAL .L>
+		<TTPRINC "LDI is local">
+		<CRLF>)
+	      (ELSE 
+		<TTPRINC "LDI is remote host/socket: ">
+		<PRINC <LDI-HOST-NAME .L>>
+		<PRINC " ">
+		<PRINC <LDI-SOCKET .L>>
+		<CRLF>)>
+	<COND (.O
+		<SET GOP <DB-GLOBAL-OPS .O>>
+		<SET FOP <DB-FIND-OPS .O>>
+		<SET DOP <DB-DISPLAY-OPS .O>>
+	<COND (.DOP
+		<TPRINC "Supported display operations: ">
+		<COND (<DOP-ALL .DOP>
+			<PRINC "ALL ">)>
+		<COND (<DOP-CONSTANT .DOP>
+			<PRINC "CONSTANT ">)>
+		<COND (<DOP-FIELD .DOP>
+			<PRINC "FIELD ">)>
+		<COND (<DOP-EXP .DOP>
+			<PRINC "EXP">)>
+		<CRLF>)>
+		<COND (.GOP
+			<TPRINC "Supported global optimizations: ">
+			<COND (<GOP-ALL .GOP>
+				<PRINC "ALL ">)>
+			<COND (<GOP-TEMP-FILE .GOP>
+				<PRINC "TEMPORARY-FILES ">)>
+			<COND (<GOP-EXTERN-FILE .GOP>
+				<PRINC "EXTERNAL-FILES ">)>
+			<CRLF>)>
+		<COND (.FOP
+			<TPRINC "Supported find verbs: ">
+			<COND (<FOP-KEY .FOP>
+				<PRINC "DB_KEY ">)>
+			<COND (<FOP-CURRENT .FOP>
+				<PRINC "CURRENT ">)>
+			<COND (<FOP-POSITIONAL .FOP>
+				<PRINC "POSITIONAL ">)>
+			<COND (<FOP-OWNER .FOP>
+				<PRINC "OWNER ">)>
+			<COND (<FOP-CALC .FOP>
+				<PRINC "CALC ">)>
+			<COND (<FOP-USE-CUR .FOP>
+				<PRINC "USING_CURRENT ">)>
+			<COND (<FOP-USE-NON-CUR .FOP>
+				<PRINC "USING_NON_CURRENT ">)>
+			<CRLF>)>
+		<TPRINC "Max quantified predicates: ">
+			<PRINC <DB-MAX-QUANT-ITER .O>> <CRLF>
+		<TPRINC "Max non-quantified predicates: ">
+			<PRINC <DB-MAX-NON-QUANT-ITER .O>> <CRLF>
+		<TPRINC "Max quantified relations: ">
+			<PRINC <DB-MAX-QUANT-REL .O>> <CRLF>
+		<COND (<DB-STRICT-NESTING-ONLY .O>
+			<TPRINC "Strict nesting of entities required">
+			<CRLF>)>
+		<COND (<DB-MULTIPLE-ITER .O>
+			<TPRINC "Multiple iterations over entity supported">
+			<CRLF>)>
+		<COND (<DB-RESTRICT-PROP .O>
+			<TPRINC "Restrictions propagate to all occurrences">
+			<CRLF>)>
+		<TPRINC "In non-quantified predicates --"> <CRLF>
+		<PP-DBMS-PRED
+			<DB-ARITH-OPS .O>	<DB-COMPARE-OPS .O>
+			<DB-EXIST-OPS .O>	<DB-LOG-OPS .O>
+			<DB-QUANT-REL .O>	<DB-REL-OPS .O>
+			<DB-AP-REQUIRED .O>	<DB-AP-ONLY .O>
+			>
+		<CRLF>
+		<TPRINC "In quantified predicates --"> <CRLF>
+		<PP-DBMS-PRED
+			<DB-QP-ARITH-OPS .O>	<DB-QP-COMPARE-OPS .O>
+			<DB-QP-EXIST-OPS .O>	<DB-QP-LOG-OPS .O>
+			<DB-QP-QUANT-REL .O>	<DB-QP-REL-OPS .O>
+			<DB-QP-AP-REQUIRED .O>	<DB-QP-AP-ONLY .O>
+			>
+		<CRLF>
+		<TPRINC "Default integer bit size: ">
+			<PRINC <DB-DEF-INT-BITS .O>> <CRLF>
+		<TPRINC "Default integer representation: ">
+			<PRINC <DB-DEF-INT-REP .O>> <CRLF>
+		<TPRINC "Default character bit size: ">
+			<PRINC <DB-DEF-STR-BITS .O>> <CRLF>
+		<TPRINC "Default character representation: ">
+			<PRINC <DB-DEF-STR-REP .O>> <CRLF>)>>
+;""
+<DEFINE PP-DBMS-PRED (AOP COP EOP LOP QUAN ROP AP-R AP-O)
+	#DECL (	(AOP)	<OR ARITHMETIC-OPS FALSE>
+		(COP)	<OR COMPARE-OPS FALSE>
+		(EOP LOP) <OR LOGICAL-OPS FALSE>
+		(QUAN)	<OR QUANTIFIED-OPS FALSE>
+		(REL)	<OR RELATIONAL-OPS FALSE>
+		(AP-R AP-O) <OR ATOM FALSE>
+	      )
+	<COND (.AP-R
+		<TPRINC "Access path usage required"> <CRLF>)>
+	<COND (.AP-O
+		<TPRINC "Use access paths only"> <CRLF>)>
+	<COND (.AOP
+		<TPRINC "Supported arithmetic operations: ">
+		<COND (<AOP-ALL .AOP>
+			<PRINC "ALL ">)>
+		<COND (<AOP-PLUS .AOP>
+			<PRINC "PLUS ">)>
+		<COND (<AOP-MINUS .AOP>
+			<PRINC "MINUS ">)>
+		<COND (<AOP-MULTIPLY .AOP>
+			<PRINC "MULTIPLY ">)>
+		<COND (<AOP-DIVIDE .AOP>
+			<PRINC "DIVIDE ">)>
+		<COND (<AOP-CONCAT .AOP>
+			<PRINC "CONCATENATE ">)>
+		<CRLF>)>
+	<COND (.ROP
+		<TPRINC "Supported relational operations: ">
+		<COND (<ROP-ALL .ROP>
+			<PRINC "ALL ">)>
+		<COND (<ROP-GT .ROP>
+			<PRINC "GT ">)>
+		<COND (<ROP-LT .ROP>
+			<PRINC "LT ">)>
+		<COND (<ROP-LE .ROP>
+			<PRINC "LE ">)>
+		<COND (<ROP-GE .ROP>
+			<PRINC "GE ">)>
+		<COND (<ROP-NE .ROP>
+			<PRINC "NE ">)>
+		<COND (<ROP-EQ .ROP>
+			<PRINC "EQ ">)>
+		<COND (<ROP-AC .ROP>
+			<PRINC "ALPHA-COLLATE ">)>
+		<COND (<ROP-ISIN .ROP>
+			<PRINC "ISIN ">)>
+		<CRLF>)>
+	<COND (.LOP
+		<TPRINC "Supported logical operations: ">
+		<COND (<LOP-ALL .LOP>
+			<PRINC "ALL ">)>
+		<COND (<LOP-AND .LOP>
+			<PRINC "AND ">)>
+		<COND (<LOP-NOT .LOP>
+			<PRINC "NOT ">)>
+		<COND (<LOP-OR .LOP>
+			<PRINC "OR ">)>
+		<CRLF>)>
+	<COND (.EOP
+		<TPRINC "Supported existential logical operations: ">
+		<COND (<LOP-ALL .EOP>
+			<PRINC "ALL ">)>
+		<COND (<LOP-AND .EOP>
+			<PRINC "AND ">)>
+		<COND (<LOP-NOT .EOP>
+			<PRINC "NOT ">)>
+		<COND (<LOP-OR .EOP>
+			<PRINC "OR ">)>
+		<CRLF>)>
+	<COND (.COP
+		<TPRINC "Supported compare operations: ">
+		<COND (<COP-ALL .COP>
+			<PRINC "ALL ">)>
+		<COND (<COP-CONSTANT .COP>
+			<PRINC "CONSTANT ">)>
+		<COND (<COP-FIELD .COP>
+			<PRINC "FIELD ">)>
+		<COND (<COP-EXP .COP>
+			<PRINC "EXP">)>
+		<CRLF>)>
+	<COND (.QUAN
+		<TPRINC "Supported quantified relations: ">
+		<COND (<QOP-ALL .QUAN>
+			<PRINC "ALL ">)>
+		<COND (<QOP-NESTED .QUAN>
+			<PRINC "NESTED ">)>
+		<COND (<QOP-PARALLEL .QUAN>
+			<PRINC "PARALLEL ">)>
+		<CRLF>)>
+>
+;""
+;"PP-DBMS-TABLE pretty prints the DBMS-TABLE."
+
+<DEFINE PP-DBMS-TABLE (DT "AUX" (I 0))
+	#DECL ((DT) VECTOR (I) FIX)
+	<CRLF> <PRINC "DBMS Table: "> <CRLF>
+	<MAPF   <>
+		<FUNCTION (D)
+			<SET I <+ .I 1>>
+			<COND (.D
+				<PRINC "  (">
+				<PRINC .I>
+				<PRINC ")">
+				<PP-DBMS .D>
+				<CRLF>)>>
+		.DT>>
+;""
+;"PP-DIR pretty prints the entire schema directory."
+
+<DEFINE PP-DIR ("AUX" V E D)
+	#DECL ((V E D) <OR VECTOR FALSE>)
+	<COND (<NOT <GASSIGNED? SCHEMA-DIR>>
+		<INITIALIZE-DIRECTORY>)>
+	<SET V <VIEW-TABLE ,SCHEMA-DIR>>
+	<SET E <ENTITY-TYPE-TABLE ,SCHEMA-DIR>>
+	<SET D <DBMS-TABLE ,SCHEMA-DIR>>
+	<CRLF> <PRINC "     *** Schema Directory ***"> <CRLF>
+	<COND (<AND .V
+		    <NOT <EMPTY? .V>>>
+		<PP-VIEW-TABLE .V> <CRLF>)
+	      (ELSE
+		<PRINC "View table is empty"> <CRLF>)>
+	<COND (<AND .E
+		    <NOT <EMPTY? .E>>>
+		<PP-ENTITY-TYPE-TABLE .E> <CRLF>)
+	      (ELSE
+		<PRINC "Entity Type table is empty"> <CRLF>)>
+	<COND (<AND .D
+		    <NOT <EMPTY? .D>>>
+		<PP-DBMS-TABLE .D> <CRLF>)
+	      (ELSE
+		<PRINC "DBMS table is empty"> <CRLF>)>>
+;""
+<DEFINE PP-ENTITY-PRED (TYP)
+	#DECL (	(TYP)	PREDICATE-TYPES)
+	<COND (<PT-ALL .TYP>
+		<PRINC "ALL ">)>
+	<COND (<PT-NO .TYP>
+		<PRINC "NO ">)>
+	<COND (<PT-QUANT .TYP>
+		<PRINC "QUANTIFIED ">)>
+	<COND (<PT-NON-QUANT .TYP>
+		<PRINC "NON-QUANTIFIED ">)>
+>
+;""
+;"PP-ENTITY-TYPE pretty prints an entry in the ENTITY-TYPE-TABLE."
+
+<DEFINE PP-ENTITY-TYPE (E "AUX" (F <ET-FUNCTIONS .E>) M)
+	#DECL ((E) ENTITY-TYPE (F) VECTOR (M) <OR E-PHY-REP FALSE>)
+	<TPRINC "Entity type name: "> <PRINC <ET-NAME .E>> <CRLF>
+	<TPRINC "ETID: "> <PRINC <ET-ETID .E>> <CRLF>
+	<TPRINC "VID: "> <PRINC <ET-VID .E>> <CRLF>
+	<TPRINC "Supertypes: ">
+		<PLIST <CHTYPE <ET-SUPERTYPES .E> LIST>>
+		<CRLF>
+	<TPRINC "Subtypes: ">
+		<PLIST <CHTYPE <ET-SUBTYPES .E> LIST>>
+		<CRLF>
+	<TPRINC "Cotypes: ">
+		<PLIST <CHTYPE <ET-COTYPES .E> LIST>>
+		<CRLF>
+	<TPRINC "Map type: "> <PRINC <ET-MAP-TYPE .E>> <CRLF>
+	<TPRINC "Map info: "> <CRLF>
+	<SET M <ET-MAP-INFO .E>>
+	<COND (<TYPE? .M E-PHY-REP>
+		<TTPRINC "Spelled: "> <PRIN1 <E-SPELLING .M>> <CRLF>
+		<TTPRINC "DBMS id: "> <PRINC <E-DBMS-ID .M>> <CRLF>
+		<TTPRINC "System entry point: "> <PRINC <E-SYS-EP .M>> <CRLF>
+		<COND (<E-SYS-EP-AP-ONLY .M>
+			<TTPRINC "System entry point by access path only">
+			<CRLF>)>
+		<TTPRINC "Context: "> <PRIN1 <E-CONTEXT .M>> <CRLF>
+		<TTPRINC "Owners: "> <PLIST <CHTYPE <E-OWNERS .M> LIST>> <CRLF>
+		<TTPRINC "# Fast access paths via equality: ">
+			<PRINC <E-AP-EQ-COUNT .M>> <CRLF>
+		<COND (<E-AREAS .M>
+			<TTPRINC "Areas: "> <PLIST <CHTYPE <E-AREAS .M> LIST>>
+			<CRLF>)>
+		<COND (<E-SYS-SET .M>
+			<TTPRINC "System owned set: "> <PRIN1 <E-SYS-SET .M>>
+			<CRLF>)>
+		<COND (<E-SYS-EP-KEYS .M>
+			<TTPRINC "Iterate using keys: ">
+			<PLIST <CHTYPE <E-SYS-EP-KEYS .M> LIST>>
+			<CRLF>)>
+		<COND (<E-ITER-PRED .M>
+			<TTPRINC "When domain of iteration, may use ">
+			<PP-ENTITY-PRED <E-ITER-PRED .M>>
+			<PRINC "predicates">
+			<CRLF>)>
+		<COND (<E-QUANT-PRED .M>
+			<TTPRINC "When domain of quantification, may use ">
+			<PP-ENTITY-PRED <E-QUANT-PRED .M>>
+			<PRINC "predicates">
+			<CRLF>)>
+		<COND (<E-NO-QUANT .M>
+			<TTPRINC "May not be domain of quantified expression">
+			<CRLF>)>
+		<COND (<E-KEY .M>
+			<COND (<EMPTY? <E-KEY .M>>
+				<TTPRINC "Entity key is database_key.">)
+			      (ELSE
+				<TTPRINC "Entity key uses functions: ">
+				<PLIST <CHTYPE <E-KEY .M> LIST>>)>)
+		      (ELSE
+			<TTPRINC "Entity key is undefined.">)>
+		<CRLF>
+		)>
+	<TPRINC "Functions:"> <CRLF> <PP-FUNC-TABLE .F>>
+;""
+;"PP-ENTITY-TYPE-TABLE pretty prints the ENTITY-TYPE-TABLE."
+
+<DEFINE PP-ENTITY-TYPE-TABLE (ET "AUX" (I 0))
+	#DECL ((ET) VECTOR (I) FIX)
+	<PRINC "Entity Type Table:"> <CRLF>
+	<MAPF	<>
+		<FUNCTION (E)
+			<SET I <+ .I 1>>
+			<COND (.E
+				<PRINC "  (">
+				<PRINC .I>
+				<PRINC ")">
+				<PP-ENTITY-TYPE .E>)>>
+		.ET>>
+;""
+;"PP-FUNC-TABLE pretty prints an entity type's functions."
+
+<DEFINE PP-FUNC-TABLE (FT "AUX" (I 0) M)
+	#DECL ((FT) VECTOR (I) FIX (M) <OR F-PHY-REP FALSE>)
+	<MAPF	<>
+		<FUNCTION (F)
+			<SET I <+ .I 1>>
+			<COND (.F
+				<TPRINC "(">
+				<PRINC .I>
+				<PRINC ")">
+				<TPRINC "Name: "> <PRINC <F-NAME .F>> <CRLF>
+				<TTPRINC "Type: "> <PRINC <F-TYPE .F>> <CRLF>
+				<TTPRINC "Range: "> <PRINC <F-RANGE .F>> <CRLF>
+				<TTPRINC "Min or ETID: ">
+						<PRINC <F-MIN .F>> <CRLF>
+				<TTPRINC "Max: "> <PRINC <F-MAX .F>> <CRLF>
+				<TTPRINC "Map type: "> <PRINC <F-MAP-TYPE .F>>
+						<CRLF>
+				<TTPRINC "Map info:"> <CRLF>
+				<SET M <F-MAP-INFO .F>>
+				<COND (<TYPE? .M F-PHY-REP>
+					<TTTPRINC "Spelled: ">
+					<PRIN1 <F-SPELLING .M>> <CRLF>
+					<COND (<OR <F-AP-EQ .M>
+						   <F-AP-NQ .M>
+						   <F-AP-RANGE .M>>
+						<TTTPRINC "Access path: ">
+						<COND (<F-AP-EQ .M>
+							<PRINC "EQ ">)>
+						<COND (<F-AP-NQ .M>
+							<PRINC "NQ ">)>
+						<COND (<F-AP-RANGE .M>
+							<PRINC "RANGE ">)>
+						<PRINC " when spelled ">
+						<PRIN1 <F-AP-SPELLING .M>>
+						<CRLF>
+					      )>
+					<COND (<F-AP-UNIQUE .M>
+						<TTTPRINC "CALC keys are unique">
+						<CRLF>)>
+					<COND (<F-AP-CO-FCNS .M>
+						<TTTPRINC "Access path co-functions: ">
+						<PLIST <CHTYPE <F-AP-CO-FCNS .M> LIST>>
+						<CRLF>)>
+					<COND (<F-AP-SELECTS .M>
+						<TTTPRINC "Access path selects entity: ">
+						<PRINC <F-AP-SELECTS .M>>
+						<CRLF>)>
+					<COND (<OR <==? <F-TYPE .F> F-INTEGER>
+						   <==? <F-TYPE .F> F-STRING>>
+						<COND (<F-INT-STR .M>
+							<TTTPRINC "Stored as character string"> <CRLF>)>
+						<TTTPRINC "Characters to print: ">
+						<PRINC <F-CONV-CHARS .M>> <CRLF>)>
+					<COND (<OR <==? <F-TYPE .F> F-STRING>
+						   <F-INT-STR .M>>
+						<TTTPRINC "Min chars: ">
+						<PRINC <F-MIN-CHR .M>> <CRLF>
+						<TTTPRINC "Max chars: ">
+						<PRINC <F-MAX-CHR .M>> <CRLF>)>
+					<COND (<OR <==? <F-TYPE .F> F-INTEGER>
+						   <F-INT-STR .M>>
+						<TTTPRINC "Size in bits at GDM: ">
+						<PRINC <F-CONV-BITS .M>> <CRLF>)>
+					<COND (<OR <F-SET .M>
+						   <F-REPEAT-GRP .M>>
+						<COND (<F-SET .M>
+						  <TTTPRINC "Implemented as: SET">
+						  <CRLF>)>
+						<COND (<F-REPEAT-GRP .M>
+						  <TTTPRINC "Implemented as: REPEATING GROUP">
+						  <CRLF>)>)
+					      (ELSE
+						<COND (<NOT <==? <F-TYPE .F>
+								 F-ENTITY>>
+						<TTTPRINC "Size in bits at DBMS: ">
+						<PRINC <F-BITS .M>> <CRLF>
+						<TTTPRINC "Representation: ">
+						<PRINC <F-REP .M>> <CRLF>)>)>
+					<COND (<SET AOP <F-ARITH-OPS .M>>
+						<TTTPRINC "Restricted to arithmetic operations: ">
+						<COND (<AOP-ALL .AOP>
+							<PRINC "ALL ">)>
+						<COND (<AOP-PLUS .AOP>
+							<PRINC "PLUS ">)>
+						<COND (<AOP-MINUS .AOP>
+							<PRINC "MINUS ">)>
+						<COND (<AOP-MULTIPLY .AOP>
+							<PRINC "MULTIPLY ">)>
+						<COND (<AOP-DIVIDE .AOP>
+							<PRINC "DIVIDE ">)>
+						<COND (<AOP-CONCAT .AOP>
+							<PRINC "CONCATENATE ">)>
+						<CRLF>)>
+					<COND (<SET ROP <F-REL-OPS .M>>
+						<TTTPRINC "Restricted to relational operations: ">
+						<COND (<ROP-ALL .ROP>
+							<PRINC "ALL ">)>
+						<COND (<ROP-GT .ROP>
+							<PRINC "GT ">)>
+						<COND (<ROP-LT .ROP>
+							<PRINC "LT ">)>
+						<COND (<ROP-LE .ROP>
+							<PRINC "LE ">)>
+						<COND (<ROP-GE .ROP>
+							<PRINC "GE ">)>
+						<COND (<ROP-NE .ROP>
+							<PRINC "NE ">)>
+						<COND (<ROP-EQ .ROP>
+							<PRINC "EQ ">)>
+						<COND (<ROP-AC .ROP>
+							<PRINC "ALPHA-COLLATE ">)>
+						<COND (<ROP-ISIN .ROP>
+							<PRINC "ISIN ">)>
+						<CRLF>)>
+				)>)>>
+		.FT>>
+;""
+;"PP-VIEW-TABLE pretty prints the VIEW-TABLE."
+
+<DEFINE PP-VIEW-TABLE (VT "AUX" (I 0))
+	#DECL ((VT) VECTOR (I) FIX)
+	<CRLF> <PRINC "View Table:"> <CRLF>
+	<MAPF	<>
+		<FUNCTION (V)
+			<SET I <+ .I 1>>
+			<COND (.V
+				<PRINC "  (">
+				<PRINC .I>
+				<PRINC ")">
+				<TPRINC "View name: ">
+				<PRINC <V-NAME .V>>
+				<CRLF>)>>
+		.VT>>
+
+
+<ENDPACKAGE>	;"BUILD-DIR"
+
+
+ 

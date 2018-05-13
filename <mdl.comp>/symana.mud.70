@@ -1,0 +1,1835 @@
+<PACKAGE "SYMANA">
+
+
+<ENTRY ANA EANA SET-CURRENT-TYPE  TYPE-NTH-REST WHO TMPS GET-TMP TRUTH UNTRUTH SEGFLUSH
+	KILL-REM BUILD-TYPE-LIST ANALYSIS GET-CURRENT-TYPE ADD-TYPE-LIST PUT-FLUSH WHON
+	SAVE-SURVIVORS SEQ-AN ARGCHK ASSUM-OK? FREST-L-D-STATE HTMPS ORUPC APPLTYP
+	MSAVE-L-D-STATE  SHTMPS RESET-VARS STMPS ASSERT-TYPES SAVE-L-D-STATE
+	MUNG-L-D-STATE NORM-BAN SUBR-C-AN ENTROPY NAUX-BAN TUP-BAN ARGS-BAN
+	SPEC-FLUSH LIFE MANIFESTQ>
+
+<USE "CHKDCL" "SUBRTY" "COMPDEC" "STRANA" "CARANA" "BITANA" "NOTANA" "ADVMESS" "MAPANA">
+
+"	This is the main file associated with the type analysis phase of
+the compilation.  It is called by calling FUNC-ANA with the main data structure
+pointer.   ANA is the FUNCTION that dispatches to the various special handlers
+and the SUBR call analyzer further dispatches for specific functions."
+
+"	Many analyzers for specific SUBRs appear in their own files
+(CARITH, STRUCT etc.).  Currently no special hacks are done for TYPE?, EMPTY? etc.
+in COND, ANDS and ORS."
+
+"	All analysis functions are called with 2 args, a NODE and a desired
+type specification.  These args are usually called NOD and RTYP or
+N and R."
+
+" ANA is the main analysis dispatcher (see ANALYZERS at the end of
+  this file for its dispatch table."
+
+<GDECL (TEMPLATES SUBRS) UVECTOR>
+
+<DEFINE ANA (NOD RTYP "AUX" (P <PARENT .NOD>) TT TEM) 
+	#DECL ((NOD) NODE (P) ANY (TEM TT) <OR FALSE LIST>)
+	<COND (<G=? <LENGTH .NOD> <INDEX ,SIDE-EFFECTS>>
+	       <PUT .NOD ,SIDE-EFFECTS <>>)>
+	<PUT .NOD
+	     ,RESULT-TYPE
+	     <APPLY <NTH ,ANALYZERS <NODE-TYPE .NOD>> .NOD .RTYP>>
+	<AND <N==? <NODE-TYPE .NOD> ,QUOTE-CODE>
+	     <SET TEM <SIDE-EFFECTS .NOD>>
+	     <TYPE? .P NODE>
+	     <PUT .P
+		  ,SIDE-EFFECTS
+		  <COND (<EMPTY? .TEM> <SIDE-EFFECTS .P>)
+			(<EMPTY? <SET TT <SIDE-EFFECTS .P>>> .TEM)
+			(<OR <AND <TYPE? .TEM LIST>
+				  <NOT <EMPTY? .TEM>>
+				  <==? <1 .TEM> ALL>>
+			     <AND <TYPE? .TT LIST>
+				  <NOT <EMPTY? .TT>>
+				  <==? <1 .TT> ALL>>>
+			 (ALL))
+			(ELSE
+			 <PUTREST <REST .TEM <- <LENGTH .TEM> 1>> .TT>
+			 .TEM)>>>
+	<RESULT-TYPE .NOD>>
+
+<DEFINE ARGCHK (GIV REQ NAME "AUX" (HI .REQ) (LO .REQ))
+	#DECL ((GIV) FIX (REQ HI LO) <OR <LIST FIX FIX> FIX>)
+	<COND (<TYPE? .REQ LIST>
+	       <SET HI <2 .REQ>>
+	       <SET LO <1 .REQ>>)>
+	<COND (<L? .GIV .LO>
+	       <MESSAGE ERROR "TOO FEW ARGS TO " .NAME>)
+	      (<G? .GIV .HI>
+	       <MESSAGE ERROR "TOO MANY ARGS TO " .NAME>)> T>
+
+<DEFINE EANA (NOD RTYP NAME)
+	#DECL ((NOD) NODE)
+	<OR <ANA .NOD .RTYP>
+		<MESSAGE ERROR "BAD ARGUMENT TO " .NAME .NOD>>>
+
+" FUNC-ANA main entry to analysis phase.  Analyzes bindings then body."
+
+<DEFINE FUNC-ANA ANA-ACT (N R
+			  "AUX" (ANALY-OK
+				 <COND (<ASSIGNED? ANALY-OK> .ANALY-OK)
+				       (ELSE T)>) (OV .VERBOSE))
+	#DECL ((ANA-ACT) <SPECIAL ACTIVATION> (ANALY-OK) <SPECIAL ANY>)
+	<COND (.VERBOSE <PUTREST <SET VERBOSE .OV> ()>)>
+	<FUNC-AN1 .N .R>>
+
+<DEFINE FUNC-AN1 (FCN RTYP
+		  "AUX" (VARTBL <SYMTAB .FCN>) (TMPS 0) (HTMPS 0) (TRUTH ())
+			(UNTRUTH ()) (WHO ()) (WHON <>) (PRED <>) TEM (LIFE ())
+			(USE-COUNT 0) (BACKTRACK 0))
+	#DECL ((FCN) <SPECIAL NODE> (VARTBL) <SPECIAL SYMTAB>
+	       (TMPS BACKTRACK USE-COUNT HTMPS) <SPECIAL FIX>
+	       (LIFE TRUTH UNTRUTH) <SPECIAL LIST>
+	       (WHO PRED WHON) <SPECIAL ANY>)
+	<RESET-VARS .VARTBL>
+	<BIND-AN <BINDING-STRUCTURE .FCN>>
+	<OR <SET RTYP <TYPE-OK? .RTYP <INIT-DECL-TYPE .FCN>>>
+		<MESSAGE ERROR "FUNCTION RETURNS WRONG TYPE " <NODE-NAME .FCN>>>
+	<PROG ((ACT? <ACTIV? <BINDING-STRUCTURE .FCN> T>) (OV .VERBOSE))
+	      <COND (.VERBOSE <PUTREST <SET VERBOSE .OV> ()>)>
+	      <PUT .FCN ,AGND <>>
+	      <PUT .FCN ,LIVE-VARS ()>
+	      <SET LIFE ()>
+	      <PUT .FCN ,ASSUM <BUILD-TYPE-LIST .VARTBL>>
+	      <PUT .FCN ,ACCUM-TYPE <COND (.ACT? .RTYP) (ELSE NO-RETURN)>>
+	      <SET TEM <SEQ-AN <KIDS .FCN> <INIT-DECL-TYPE .FCN>>>
+	      <COND (.ACT? <SPEC-FLUSH> <PUT-FLUSH ALL>)>
+	      <OR <NOT <AGND .FCN>>
+		  <ASSUM-OK? <ASSUM .FCN> <AGND .FCN>>
+		  <AGAIN>>>
+	<PUT .FCN ,ASSUM ()>
+	<PUT .FCN ,DEAD-VARS ()>
+	<OR .TEM
+	    <MESSAGE ERROR " RETURNED VALUE VIOLATES VALUE DECL  OF " .RTYP>>
+	<PUT .FCN ,RESULT-TYPE <TYPE-MERGE <ACCUM-TYPE .FCN> .TEM>>
+	<PUT <RSUBR-DECLS .FCN> 2 <TASTEFUL-DECL <RESULT-TYPE .FCN>>>
+	<RESULT-TYPE .FCN>>
+
+" BIND-AN analyze binding structure for PROGs, FUNCTIONs etc."
+
+<DEFINE BIND-AN (BNDS "AUX" COD) 
+	#DECL ((BNDS) <LIST [REST SYMTAB]> (COD) FIX)
+	<REPEAT (SYM)
+		#DECL ((SYM) SYMTAB)
+		<AND <EMPTY? .BNDS> <RETURN>>
+		<PUT <SET SYM <1 .BNDS>> ,COMPOSIT-TYPE ANY>
+		<PUT .SYM ,CURRENT-TYPE <>>
+		<APPLY <NTH ,BANALS <SET COD <CODE-SYM .SYM>>> .SYM>
+		<SET BNDS <REST .BNDS>>>>
+
+" ENTROPY ignore call and return."
+
+<DEFINE ENTROPY (SYM) T>
+
+<DEFINE TUP-BAN (SYM) #DECL ((SYM) SYMTAB)
+	<COND (<NOT .ANALY-OK>
+	       <PUT .SYM ,COMPOSIT-TYPE <1 <DECL-SYM .SYM>>>
+	       <PUT .SYM ,CURRENT-TYPE ANY>)
+	      (<N==? <ISTYPE? <1 <DECL-SYM .SYM>>> TUPLE>
+	       <PUT .SYM ,COMPOSIT-TYPE TUPLE>
+	       <PUT .SYM ,CURRENT-TYPE TUPLE>)
+	      (ELSE
+	       <PUT .SYM ,CURRENT-TYPE <1 <DECL-SYM .SYM>>>
+	       <PUT .SYM ,COMPOSIT-TYPE <1 <DECL-SYM .SYM>>>)>>
+
+" Analyze AUX and OPTIONAL intializations."
+
+<DEFINE NORM-BAN (SYM "AUX" (VARTBL <NEXT-SYM .SYM>) TEM COD)
+	#DECL ((VARTBL) <SPECIAL SYMTAB> (SYM) SYMTAB (COD) FIX)
+	<OR <SET TEM <ANA <INIT-SYM .SYM> <1 <DECL-SYM .SYM>>>>
+		<MESSAGE ERROR "BAD AUX/OPT INIT " <NAME-SYM .SYM>
+			 <INIT-SYM .SYM>
+			 "DECL MISMATCH"
+			 <RESULT-TYPE <INIT-SYM .SYM>>
+			 <1 <DECL-SYM .SYM>>>>
+	<COND (<AND .ANALY-OK
+		    <OR <G? <SET COD <CODE-SYM .SYM>> 9>
+			<L? .COD 6>>>
+	       <COND (<NOT <SAME-DECL? .TEM <1 <DECL-SYM .SYM>>>>
+		      <PUT .SYM ,CURRENT-TYPE .TEM>)>
+	       <PUT .SYM ,COMPOSIT-TYPE .TEM>)
+	      (ELSE
+	       <PUT .SYM ,COMPOSIT-TYPE <1 <DECL-SYM .SYM>>>
+	       <PUT .SYM ,CURRENT-TYPE <1 <DECL-SYM .SYM>>>)>>
+
+" ARGS-BAN analyze ARGS decl (change to OPTIONAL in some cases)."
+
+<DEFINE ARGS-BAN (SYM)
+	#DECL ((SYM) SYMTAB)
+	<PUT .SYM ,INIT-SYM <NODE1 ,QUOTE-CODE () LIST () ()>>
+	<PUT .SYM ,CODE-SYM 7>
+	<COND (.ANALY-OK <PUT .SYM ,COMPOSIT-TYPE LIST>)
+	      (ELSE <PUT .SYM ,COMPOSIT-TYPE <1 <DECL-SYM .SYM>>>)>
+	<COND (<AND .ANALY-OK <NOT <SAME-DECL? LIST <1 <DECL-SYM .SYM>>>>>
+	       <PUT .SYM ,CURRENT-TYPE LIST>)
+	      (<NOT .ANALY-OK> <PUT .SYM ,CURRENT-TYPE ANY>)>>
+
+<DEFINE NAUX-BAN (SYM) 
+	#DECL ((SYM) SYMTAB)
+	<PUT .SYM ,COMPOSIT-TYPE
+	     <COND (.ANALY-OK NO-RETURN) (ELSE <1 <DECL-SYM .SYM>>)>>
+	<PUT .SYM ,CURRENT-TYPE <COND (.ANALY-OK NO-RETURN)(ELSE ANY)>>>
+
+" VECTOR of binding analyzers."
+
+<SETG BANALS
+      ![,ENTROPY
+	,NORM-BAN
+	,NAUX-BAN
+	,TUP-BAN
+	,ARGS-BAN
+	,NORM-BAN
+	,NORM-BAN
+	,ENTROPY
+	,ENTROPY
+	,ENTROPY
+	,ENTROPY
+	,ENTROPY
+	,ENTROPY!]>
+
+" SEQ-AN analyze a sequence of NODES discarding values until the last."
+
+<DEFINE SEQ-AN (L FTYP "OPTIONAL" (INP <>)) 
+   #DECL ((L) <LIST [REST NODE]> (FTYP) ANY)
+   <COND (<EMPTY? .L> <MESSAGE INCONSISTENCY "EMPTY KIDS LIST ">)
+	 (ELSE
+	  <REPEAT (TT N)
+		  <AND .INP
+		       <==? <NODE-TYPE <1 .L>> ,QUOTE-CODE>
+		       <==? <RESULT-TYPE <1 .L>> ATOM>
+		       <RESET-VARS .VARTBL>>
+		  <OR <SET TT
+			   <ANA <SET N <1 .L>>
+				<COND (<EMPTY? <SET L <REST .L>>> .FTYP)
+				      (ELSE ANY)>>>
+		      <RETURN <>>>
+		  <COND (<==? .TT NO-RETURN>
+			 <COND (<AND .VERBOSE <NOT <EMPTY? .L>>>
+				<ADDVMESS <PARENT .N>
+				 ("This object ends a sequence of forms"
+				  .N " because it never returns")>)>
+			 <RETURN NO-RETURN>)>
+		  <AND <EMPTY? .L> <RETURN .TT>>>)>>
+
+" ANALYZE ASSIGNED? usage."
+
+<DEFINE ASSIGNED?-ANA (NOD RTYP "AUX" (TEM <KIDS .NOD>) TT T1 T2)
+	#DECL ((TT NOD) NODE (T1) SYMTAB (TEM) <LIST [REST NODE]>)
+	<COND (<EMPTY? .TEM> <MESSAGE ERROR "NO ARGS ASSIGNED? " .NOD>)
+	      (<SEGFLUSH .NOD .RTYP>)
+	      (ELSE
+	       <EANA <SET TT <1 .TEM>> ATOM ASSIGNED?>
+	       <COND (<AND <EMPTY? <REST .TEM>>
+			   <==? <NODE-TYPE .TT> ,QUOTE-CODE>
+			   <SET T2 <SRCH-SYM <NODE-NAME .TT>>>
+			   <NOT <==? <CODE-SYM <SET T1 .T2>> -1>>>
+		      <PUT .NOD ,NODE-TYPE ,ASSIGNED?-CODE>
+		      <PUT .NOD ,NODE-NAME .T1>
+		      <PUT .T1 ,ASS? T>
+		      <PUT .T1 ,USED-AT-ALL T>
+		      <REVIVE .NOD .T1>)
+		     (<==? <LENGTH .TEM> 2>
+		      <EANA <2 .TEM> '<OR <PRIMTYPE FRAME> PROCESS> ASSIGNED?>)
+		     (<EMPTY? <REST .TEM>>
+		      <COND (<AND .VERBOSE <==? <NODE-TYPE .TT> ,QUOTE-CODE>>
+			     <ADDVMESS .NOD
+				      ("External reference to LVAL:  "
+				       <NODE-NAME .TT>)>)>
+		      <PUT .NOD ,NODE-TYPE ,ISUBR-CODE>)
+		     (ELSE <MESSAGE ERROR "TOO MANY ARGS TO ASSIGNED?" .NOD>)>)>
+	<TYPE-OK? '<OR ATOM FALSE> .RTYP>>
+
+<PUT ,ASSIGNED? ANALYSIS ,ASSIGNED?-ANA>
+
+" ANALYZE LVAL usage.  Become either direct reference or PUSHJ"
+
+<DEFINE LVAL-ANA (NOD RTYP "AUX" TEM ITYP (TT <>) T1 T2 T3) 
+   #DECL ((NOD) NODE (TEM) <LIST [REST NODE]> (T1) SYMTAB (WHO) LIST
+	  (USE-COUNT) FIX)
+   <COND
+    (<EMPTY? <SET TEM <KIDS .NOD>>> <MESSAGE ERROR "NO ARGS TO LVAL " .NOD>)
+    (<SEGFLUSH .NOD .RTYP>)
+    (<AND <OR <AND <TYPE? <NODE-NAME .NOD> SYMTAB> <SET TT <NODE-NAME .NOD>>>
+	      <AND <EANA <1 .TEM> ATOM LVAL>
+		   <EMPTY? <REST .TEM>>
+		   <==? <NODE-TYPE <1 .TEM>> ,QUOTE-CODE>
+		   <==? <RESULT-TYPE <1 .TEM>> ATOM>
+		   <SET TT <SRCH-SYM <NODE-NAME <1 .TEM>>>>>>
+	  <COND (<==? .WHON <PARENT .NOD>> <SET WHO ((<> .TT) !.WHO)>) (ELSE T)>
+	  <PROG ()
+		<SET ITYP <GET-CURRENT-TYPE .TT>>
+		T>
+	  <COND (<AND <==? .PRED <PARENT .NOD>>
+		      <SET T2 <TYPE-OK? .ITYP FALSE>>
+		      <SET T3 <TYPE-OK? .ITYP '<NOT FALSE>>>>
+		 <SET TRUTH <ADD-TYPE-LIST .TT .T3 .TRUTH <>>>
+		 <SET UNTRUTH <ADD-TYPE-LIST .TT .T2 .UNTRUTH <>>>)
+		(ELSE T)>
+	  <NOT <==? <CODE-SYM <SET T1 .TT>> -1>>>
+     <PUT .NOD ,NODE-TYPE ,LVAL-CODE>
+     <COND (<==? <USAGE-SYM .T1> 0>
+	    <PUT .T1 ,USAGE-SYM <SET USE-COUNT <+ .USE-COUNT 1>>>)>
+     <REVIVE .NOD .T1>
+     <PUT .T1 ,RET-AGAIN-ONLY <>>
+     <PUT .T1 ,USED-AT-ALL T>
+     <PUT .NOD ,NODE-NAME .T1>
+     <SET ITYP <TYPE-OK? .ITYP .RTYP>>
+     <AND .ITYP <SET-CURRENT-TYPE .T1 .ITYP>>
+     .ITYP)
+    (<EMPTY? <REST .TEM>>
+     <COND
+      (<AND .VERBOSE <==? <NODE-TYPE <1 .TEM>> ,QUOTE-CODE>>
+       <ADDVMESS .NOD
+		 ("External variable being referenced:  " <NODE-NAME <1 .TEM>>)>)>
+     <PUT .NOD ,NODE-TYPE ,FLVAL-CODE>
+     <AND .TT <PUT .NOD ,NODE-NAME <SET T1 .TT>>>
+     <COND (.TT <TYPE-OK? <1 <DECL-SYM .T1>> .RTYP>)
+	   (.CAREFUL ANY)
+	   (ELSE .RTYP)>)
+    (<AND <==? <LENGTH .TEM> 2>
+	  <EANA <2 .TEM> '<OR <PRIMTYPE FRAME> PROCESS> LVAL>>
+     ANY)
+    (ELSE <MESSAGE ERROR "BAD CALL TO LVAL " .NOD>)>>
+
+<PUT ,LVAL ANALYSIS ,LVAL-ANA>
+
+" SET-ANA analyze uses of SET."
+
+<DEFINE SET-ANA (NOD RTYP
+		 "AUX" (TEM <KIDS .NOD>) (LN <LENGTH .TEM>) T1 T2 T11
+		       (WHON .WHON) (PRED .PRED) OTYP T3 XX)
+   #DECL ((NOD) NODE (TEM) <LIST [REST NODE]> (LN) FIX (T1) SYMTAB
+	  (WHON PRED) <SPECIAL ANY> (WHO) LIST)
+   <PUT .NOD ,SIDE-EFFECTS (.NOD !<SIDE-EFFECTS .NOD>)>
+   <COND
+    (<SEGFLUSH .NOD .RTYP>)
+    (<L? .LN 2> <MESSAGE ERROR "TOO FEW ARGS TO SET " .NOD>)
+    (<AND <OR <AND <TYPE? <NODE-NAME .NOD> SYMTAB> <SET T11 <NODE-NAME .NOD>>>
+	      <AND <EANA <1 .TEM> ATOM SET>
+		   <==? .LN 2>
+		   <==? <NODE-TYPE <1 .TEM>> ,QUOTE-CODE>
+		   <==? <RESULT-TYPE <1 .TEM>> ATOM>
+		   <SET T11 <SRCH-SYM <NODE-NAME <1 .TEM>>>>>>
+	  <COND (<==? .WHON <PARENT .NOD>>
+		 <SET WHON .NOD>
+		 <SET WHO ((T .T11) !.WHO)>)
+		(ELSE T)>
+	  <COND (<==? .PRED <PARENT .NOD>> <SET PRED .NOD>) (ELSE T)>
+	  <OR <SET T2 <ANA <2 .TEM> <1 <DECL-SYM <SET T1 .T11>>>>>
+		  <MESSAGE ERROR "DECL VIOLATION " <NAME-SYM .T1> .NOD>>>
+     <PUT .T1 ,PURE-SYM <>>
+     <SET XX <1 <DECL-SYM .T1>>>
+     <SET OTYP <OR <CURRENT-TYPE .T1> ANY>>
+     <COND (<AND <==? <CODE-SYM .T1> -1> .VERBOSE>
+	    <ADDVMESS .NOD ("External variable being SET:  " <NAME-SYM .T1>)>)>
+     <COND (<SET OTYP <TYPESAME .OTYP .T2>> <PUT .NOD ,TYPE-INFO (.OTYP <>)>)
+	   (ELSE <PUT .NOD ,TYPE-INFO (<> <>)>)>
+     <PUT .NOD
+	  ,NODE-TYPE
+	  <COND (<==? <CODE-SYM .T1> -1> ,FSET-CODE) (ELSE ,SET-CODE)>>
+     <PUT .NOD ,NODE-NAME .T1>
+     <MAKE-DEAD .NOD .T1>
+     <SET-CURRENT-TYPE .T1 .T2>
+     <PUT .T1 ,USED-AT-ALL T>
+     <COND (<AND <==? .PRED .NOD>
+		 <SET OTYP <TYPE-OK? .T2 '<NOT FALSE>>>
+		 <SET T3 <TYPE-OK? .T2 FALSE>>>
+	    <SET TRUTH <ADD-TYPE-LIST .T1 .OTYP .TRUTH T>>
+	    <SET UNTRUTH <ADD-TYPE-LIST .T1 .T3 .UNTRUTH T>>)>
+     <TYPE-OK? .T2 .RTYP>)
+    (<L? .LN 4>
+     <SET T11 <ANA <2 .TEM> ANY>>
+     <COND (<==? .LN 2>
+	    <COND (<AND .VERBOSE <==? <NODE-TYPE <1 .TEM>> ,QUOTE-CODE>>
+		   <ADDVMESS .NOD
+			     ("External variable being SET: "
+			      <NODE-NAME <1 .TEM>>)>)>
+	    <PUT .NOD ,NODE-TYPE ,FSET-CODE>)
+	   (ELSE <EANA <3 .TEM> '<OR <PRIMTYPE FRAME> PROCESS> SET>)>
+     <TYPE-OK? .T11 .RTYP>)
+    (ELSE <MESSAGE ERROR "BAD CALL TO SET " <NODE-NAME <1 .TEM>> .NOD>)>>
+
+<PUT ,SET ANALYSIS ,SET-ANA>
+
+<DEFINE MUNG-L-D-STATE (V) #DECL ((V) <OR VECTOR SYMTAB>)
+	<REPEAT () <COND (<TYPE? .V VECTOR> <RETURN>)>
+		<PUT .V ,DEATH-LIST ()>
+		<SET V <NEXT-SYM .V>>>>
+
+<DEFINE MRESTORE-L-D-STATE (L1 L2 V) 
+	<RESTORE-L-D-STATE .L1 .V>
+	<RESTORE-L-D-STATE .L2 .V T>>
+
+<DEFINE FREST-L-D-STATE (L) 
+	#DECL ((L) LIST)
+	<MAPF <>
+	      <FUNCTION (LL) 
+		      #DECL ((LL) <LIST SYMTAB <LIST [REST NODE]>>)
+		      <COND (<NOT <2 <TYPE-INFO <1 <2 .LL>>>>>
+			     <PUT <1 .LL> ,DEATH-LIST <2 .LL>>)>>
+	      .L>>
+
+<DEFINE RESTORE-L-D-STATE (L V "OPTIONAL" (FLG <>)) 
+   #DECL ((L) <LIST [REST <LIST SYMTAB LIST>]> (V) <OR SYMTAB VECTOR>)
+   <OR .FLG
+       <REPEAT (DL)
+	       #DECL ((DL) <LIST [REST NODE]>)
+	       <COND (<TYPE? .V VECTOR> <RETURN>)>
+	       <COND (<AND <NOT <EMPTY? <SET DL <DEATH-LIST .V>>>>
+			   <NOT <2 <TYPE-INFO <1 .DL>>>>>
+		      <PUT .V ,DEATH-LIST ()>)>
+	       <SET V <NEXT-SYM .V>>>>
+   <REPEAT (S DL)
+     #DECL ((DL) <LIST NODE> (S) SYMTAB)
+     <COND (<EMPTY? .L> <RETURN>)>
+     <SET S <1 <1 .L>>>
+     <AND .FLG
+	  <REPEAT ()
+		  <COND (<==? .S .V> <RETURN>) (<TYPE? .V VECTOR> <RETURN>)>
+		  <PUT .V
+		       ,DEATH-LIST
+		       <MAPF ,LIST
+			     <FUNCTION (N) 
+				     #DECL ((N) NODE)
+				     <COND (<==? <NODE-TYPE .N> ,SET-CODE>
+					    <MAPRET>)
+					   (ELSE .N)>>
+			     <DEATH-LIST .V>>>
+		  <SET V <NEXT-SYM .V>>>>
+     <COND (<NOT <2 <TYPE-INFO <1 <SET DL <2 <1 .L>>>>>>>
+	    <PUT .S
+		 ,DEATH-LIST
+		 <COND (.FLG <LMERGE <DEATH-LIST .S> .DL>) (ELSE .DL)>>)>
+     <SET L <REST .L>>>>
+
+<DEFINE SAVE-L-D-STATE (V) 
+	#DECL ((V) <OR VECTOR SYMTAB>)
+	<REPEAT ((L (())) (LP .L) DL)
+		#DECL ((L LP) LIST (DL) <LIST [REST NODE]>)
+		<COND (<TYPE? .V VECTOR> <RETURN <REST .L>>)>
+		<COND (<AND <NOT <EMPTY? <SET DL <DEATH-LIST .V>>>>
+			    <NOT <2 <CHTYPE <TYPE-INFO <1 .DL>> LIST>>>>
+		       <SET LP <REST <PUTREST .LP ((.V .DL))>>>)>
+		<SET V <NEXT-SYM .V>>>>
+
+<DEFINE MSAVE-L-D-STATE (L V) 
+	#DECL ((V) <OR VECTOR SYMTAB> (L) LIST)
+	<REPEAT ((L (() !.L)) (LR .L) (LP <REST .L>) DL S TEM)
+		#DECL ((L LP LR TEM) LIST (S) SYMTAB (DL) <LIST [REST NODE]>)
+		<COND (<EMPTY? .LP>
+		       <PUTREST .L <SAVE-L-D-STATE .V>>
+		       <RETURN <REST .LR>>)
+		      (<TYPE? .V VECTOR> <RETURN <REST .LR>>)
+		      (<AND <NOT <EMPTY? <SET DL <DEATH-LIST .V>>>>
+			    <NOT <2 <TYPE-INFO <1 .DL>>>>>
+		       <COND (<==? <SET S <1 <1 .LP>>> .V>
+			      <SET TEM <LMERGE <2 <1 .LP>> .DL>>
+			      <COND (<EMPTY? .TEM>
+				     <PUTREST .L <SET LP <REST .LP>>>)
+				    (ELSE
+				     <PUT <1 .LP> 2 .TEM>
+				     <SET LP <REST <SET L .LP>>>)>)
+			     (ELSE
+			      <PUTREST .L <SET L ((.V .DL))>>
+			      <PUTREST .L .LP>)>)
+		      (<==? .V <1 <1 .LP>>> <SET LP <REST <SET L .LP>>>)>
+		<SET V <NEXT-SYM .V>>>>
+
+<DEFINE LMERGE (L1 L2) 
+	#DECL ((L1 L2) <LIST [REST NODE]>)
+	<SET L1
+	     <MAPF ,LIST
+		   <FUNCTION (N) 
+			   <COND (<OR <2 <TYPE-INFO .N>>
+				      <AND <==? <NODE-TYPE .N> ,SET-CODE>
+					   <NOT <MEMQ .N .L2>>>>
+				  <MAPRET>)>
+			   .N>
+		   .L1>>
+	<SET L2
+	     <MAPF ,LIST
+		   <FUNCTION (N) 
+			   <COND (<OR <2 <TYPE-INFO .N>>
+				      <==? <NODE-TYPE .N> ,SET-CODE>
+				      <MEMQ .N .L1>>
+				  <MAPRET>)>
+			   .N>
+		   .L2>>
+	<COND (<EMPTY? .L1> .L2)
+	      (ELSE <PUTREST <REST .L1 <- <LENGTH .L1> 1>> .L2> .L1)>>
+
+<DEFINE MAKE-DEAD (N SYM) #DECL ((N) NODE (SYM) SYMTAB)
+	<PUT .SYM ,DEATH-LIST (.N)>>
+
+<DEFINE KILL-REM (L V) 
+	#DECL ((L) <LIST [REST SYMTAB]> (V) <OR SYMTAB VECTOR>)
+	<REPEAT ((L1 ()))
+		#DECL ((L1) LIST)
+		<COND (<TYPE? .V VECTOR> <RETURN .L1>)>
+		<COND (<AND <NOT <SPEC-SYM .V>>
+			    <N==? <CODE-SYM .V> -1>
+			    <MEMQ .V .L>>
+		       <SET L1 (.V !.L1)>)>
+		<SET V <NEXT-SYM .V>>>>
+
+<DEFINE SAVE-SURVIVORS (LS LI "OPTIONAL" (FLG <>)) 
+	#DECL ((LS) <LIST [REST <LIST SYMTAB LIST>]> (LI) <LIST [REST SYMTAB]>)
+	<MAPF <>
+	      <FUNCTION (LL) 
+		      <COND (<MEMQ <1 .LL> .LI>
+			     <MAPF <>
+				   <FUNCTION (N) 
+					   #DECL ((N) NODE)
+					   <PUT <TYPE-INFO .N> 2 T>>
+				   <2 .LL>>)
+			    (.FLG <PUT <1 .LL> ,DEATH-LIST <2 .LL>>)>>
+	      .LS>>
+
+<DEFINE REVIVE (NOD SYM "AUX" (L <DEATH-LIST .SYM>)) 
+	#DECL ((L) <LIST [REST NODE]> (SYM) SYMTAB (NOD) NODE)
+	<COND (<AND <NOT <SPEC-SYM .SYM>> <N==? <CODE-SYM .SYM> -1>>
+	       <COND (<EMPTY? .L> <SET LIFE (.SYM !.LIFE)>)
+		     (ELSE
+		      <MAPF <> <FUNCTION (N) #DECL ((N) NODE) <PUT <TYPE-INFO .N> 2 T>>
+							    ;"Temporary kludge."
+			    .L>)>
+	       <PUT .SYM ,DEATH-LIST (.NOD)>
+	       <PUT .NOD ,TYPE-INFO (<> <>)>)>>
+
+" Ananlyze a FORM that could really be an NTH."
+
+<DEFINE FORM-F-ANA (NOD RTYP "AUX" (K <KIDS .NOD>) (OBJ <NODE-NAME .NOD>) TYP)
+	#DECL ((NOD) NODE (K) <LIST [REST NODE]>)
+	<COND (<==? <ISTYPE? <SET TYP <ANA <1 .K> APPLICABLE>>> FIX>
+	       <PUT .NOD ,KIDS (<2 .K> <1 .K> !<REST .K 2>)>
+	       <COND (<==? <LENGTH .K> 2>
+		      <SET RTYP <NTH-REST-ANA .NOD .RTYP ,NTH-CODE .TYP>>)
+		     (ELSE
+		      <SET RTYP <PUT-ANA .NOD .RTYP ,PUT-CODE .TYP>>)>
+	       <PUT .NOD ,NODE-SUBR <NODE-TYPE .NOD>>
+	       <PUT .NOD ,KIDS .K>
+	       <PUT .NOD ,NODE-NAME .OBJ>
+	       <PUT .NOD ,NODE-TYPE ,FORM-F-CODE>
+	       .RTYP)
+	      (ELSE
+	       <SPECIALIZE <NODE-NAME .NOD>>
+	       <SPEC-FLUSH>
+	       <PUT-FLUSH ALL>
+	       <PUT .NOD ,SIDE-EFFECTS (ALL)>
+	       <TYPE-OK? <RESULT-TYPE .NOD> .RTYP>)>>
+
+" Further analyze a FORM."
+
+<DEFINE FORM-AN (NOD RTYP) 
+	#DECL ((NOD) NODE)
+	<APPLY <OR <GET <NODE-SUBR .NOD> ANALYSIS>
+		   <GET <TYPE <NODE-SUBR .NOD>> TANALYSIS>
+		   <FUNCTION (N R) 
+			   #DECL ((N) NODE)
+			   <SPEC-FLUSH>
+			   <PUT-FLUSH ALL>
+			   <PUT .N ,SIDE-EFFECTS (ALL)>
+			   <TYPE-OK? <RESULT-TYPE .N> .R>>>
+	       .NOD
+	       .RTYP>>
+
+"Determine if an ATOM is mainfest."
+
+<DEFINE MANIFESTQ (ATM)
+	#DECL ((ATM) ATOM)
+	<AND <MANIFEST? .ATM>
+	     <GASSIGNED? .ATM>
+	     <NOT <TYPE? ,.ATM SUBR>>
+	     <NOT <TYPE? ,.ATM RSUBR>>>>
+
+" Search for a decl associated with a local value."
+
+<DEFINE SRCH-SYM (ATM "AUX" (TB .VARTBL))
+	#DECL ((ATM) ATOM (TB) <PRIMTYPE VECTOR>)
+	<REPEAT ()
+		<AND <EMPTY? .TB> <RETURN <>>>
+		<AND <==? .ATM <NAME-SYM .TB>> <RETURN .TB>>
+		<SET TB <NEXT-SYM .TB>>>>
+
+" Here to flush decls of specials for an external function call."
+
+<DEFINE SPEC-FLUSH () <FLUSHER <>>>
+
+" Here to flush decls when a PUT, PUTREST or external call happens."
+
+<DEFINE PUT-FLUSH (TYP) <FLUSHER .TYP>>
+
+<DEFINE FLUSHER (FLSFLG "AUX" (V .VARTBL)) 
+   #DECL ((SYM) SYMTAB (V) <OR SYMTAB VECTOR>)
+   <COND
+    (.ANALY-OK
+     <REPEAT (SYM TEM)
+       #DECL ((SYM) SYMTAB)
+       <COND
+	(<AND <CURRENT-TYPE <SET SYM .V>>
+	      <OR <AND <SPEC-SYM .SYM> <NOT .FLSFLG>>
+		  <AND .FLSFLG
+		       <N==? <CURRENT-TYPE .V> NO-RETURN>
+		       <TYPE-OK? <CURRENT-TYPE .V> STRUCTURED>
+		       <OR <==? .FLSFLG ALL>
+			   <NOT <SET TEM <STRUCTYP <CURRENT-TYPE .V>>>>
+			   <==? .TEM .FLSFLG>>>>>
+	 <SET-CURRENT-TYPE
+	  .SYM <FLUSH-FIX-TYPE .SYM <CURRENT-TYPE .SYM> .FLSFLG>>)>
+       <COND (<==? <USAGE-SYM .SYM> 0> <PUT .SYM ,USAGE-SYM <>>)>
+       <COND (<EMPTY? <SET V <NEXT-SYM .V>>> <RETURN>)>>)
+    (ELSE
+     <REPEAT (SYM)
+	     #DECL ((SYM) SYMTAB)
+	     <COND (<==? <USAGE-SYM <SET SYM .V>> 0> <PUT .SYM ,USAGE-SYM <>>)>
+	     <COND (<EMPTY? <SET V <NEXT-SYM .V>>> <RETURN>)>>)>>
+
+<DEFINE FLUSH-FIX-TYPE (SYM TY FLG "AUX" TEM) 
+	#DECL ((SYM) SYMTAB)
+	<OR <AND .FLG
+		 <SET TEM <TOP-TYPE <TYPE-OK? .TY STRUCTURED>>>
+		 <TYPE-OK? <COND (<SET TY <TYPE-OK? .TY '<NOT STRUCTURED>>>
+				  <TYPE-MERGE .TEM .TY>)
+				 (ELSE .TEM)>
+			   <1 <DECL-SYM .SYM>>>>
+	    <1 <DECL-SYM .SYM>>>>
+
+
+" Punt forms with segments in them."
+
+<DEFINE SEGFLUSH (NOD RTYP)
+	#DECL ((NOD) NODE (L) <LIST [REST NODE]>)
+	<COND (<REPEAT ((L <KIDS .NOD>))
+		       <AND <EMPTY? .L> <RETURN <>>>
+		       <AND <==? <NODE-TYPE <1 .L>> ,SEGMENT-CODE> <RETURN T>>
+		       <SET L <REST .L>>>
+	       <COND (.VERBOSE
+		      <ADDVMESS .NOD
+				("Not open compiled due to SEGMENT.")>)>
+	       <SUBR-C-AN .NOD .RTYP>)>>
+
+" STACKFORM analyzer."
+
+<DEFINE STACKFORM-ANA (NOD RTYP "AUX" (K <KIDS .NOD>) TEM STFTYP TT) 
+	#DECL ((NOD TT) NODE (K) <LIST [REST NODE]>)
+	<MESSAGE WARNING "STACKFORM IS HAZARDOUS TO YOUR CODE!">
+	<PUT .NOD ,NODE-TYPE ,STACKFORM-CODE>
+	<ARGCHK <LENGTH .K> 3 STACKFORM>
+	<ANA <SET TT <1 .K>> ANY>
+	<SET STFTYP <APPLTYP .TT>>
+	<ANA <2 .K> ANY>
+	<SET TEM <ANA <3 .K> ANY>>
+	<OR <TYPE-OK? .TEM FALSE>
+		<MESSAGE WARNING " STACKFORM CAN'T STOP " .NOD>>
+	<PUT .NOD ,SIDE-EFFECTS (ALL)>
+	<PUT-FLUSH ALL>
+	<SPEC-FLUSH>
+	<TYPE-OK? .STFTYP .RTYP>>
+
+<PUT ,STACKFORM ANALYSIS ,STACKFORM-ANA>
+
+" Determine if the arg to STACKFORM is a SUBR."
+
+<DEFINE APPLTYP (NOD "AUX" (NT <NODE-TYPE .NOD>) ATM TT)
+	#DECL ((ATM) ATOM (NOD TT) NODE (NT) FIX)
+	<COND (<==? .NT ,GVAL-CODE>			  ;"<STACKFORM ,FOO ..."
+	       <COND (<AND <==? <NODE-TYPE <SET TT <1 <KIDS .NOD>>>>
+				,QUOTE-CODE>
+			   <GASSIGNED? <SET ATM <NODE-NAME .TT>>>
+			   <TYPE? ,.ATM SUBR>>
+		      <SUBR-TYPE ,.ATM>)
+		     (ELSE ANY)>)
+	      (ELSE ANY)			      ;"MAY TRY OTHERS LATER ">>
+
+" Return type returned by a SUBR."
+
+<DEFINE SUBR-TYPE (SUB "AUX" TMP)
+	#DECL ((SUB) SUBR)
+	<SET TMP <2 <GET-TMP .SUB>>>
+	<COND (<TYPE? .TMP ATOM FORM> .TMP) (ELSE ANY)>>
+
+" Access the SUBR data base for return type."
+
+<DEFINE GET-TMP (SUB "AUX" (LS <MEMQ .SUB ,SUBRS>))
+	#DECL ((VALUE) <LIST ANY ANY>)
+	<COND (.LS <NTH ,TEMPLATES <LENGTH .LS>>)
+	      (ELSE '(ANY ANY))>>
+
+" GVAL analyzer."
+
+<DEFINE GVAL-ANA (NOD RTYP "AUX" (K <KIDS .NOD>) (LN <LENGTH .K>) TEM TT TEM1)
+	#DECL ((NOD TEM) NODE (TT) <VECTOR VECTOR ATOM ANY> (LN) FIX)
+	<COND (<SEGFLUSH .NOD .RTYP>)
+	      (ELSE
+	       <ARGCHK .LN 1 GVAL>
+	       <PUT .NOD ,NODE-TYPE ,FGVAL-CODE>
+	       <EANA <1 .K> ATOM GVAL>
+	       <COND (<AND <==? <NODE-TYPE <SET TEM <1 .K>>> ,QUOTE-CODE>
+			   <==? <RESULT-TYPE .TEM> ATOM>>
+		      <PUT .NOD ,NODE-TYPE ,GVAL-CODE>
+		      <COND (<MANIFEST? <SET TEM1 <NODE-NAME .TEM>>>
+			     <PUT .NOD ,NODE-TYPE ,QUOTE-CODE>
+			     <PUT .NOD ,NODE-NAME ,.TEM1>
+			     <PUT .NOD ,KIDS ()>
+			     <TYPE-OK? <GEN-DECL ,.TEM1> .RTYP>)
+			    (<AND <GBOUND? .TEM1> <SET TEM1 <GET-DECL <GLOC .TEM1>>>>
+			     <TYPE-OK? .TEM .RTYP>)
+			    (ELSE <TYPE-OK? ANY .RTYP>)>)
+		     (ELSE <TYPE-OK? ANY .RTYP>)>)>>
+
+<PUT ,GVAL ANALYSIS ,GVAL-ANA>
+
+" Analyze SETG usage."
+
+<DEFINE SETG-ANA (NOD RTYP "AUX" (K <KIDS .NOD>) (LN <LENGTH .K>) TEM TT T1 TTT)
+	#DECL ((NOD TEM) NODE (K) <LIST [REST NODE]> (LN) FIX (TT) VECTOR)
+	<COND (<SEGFLUSH .NOD .RTYP>)
+	      (ELSE
+	       <ARGCHK .LN 2 SETG>
+	       <PUT .NOD ,NODE-TYPE ,FSETG-CODE>
+	       <EANA <SET TEM <1 .K>> ATOM SETG>
+	       <PUT .NOD ,SIDE-EFFECTS (.NOD !<SIDE-EFFECTS .NOD>)>
+	       <COND (<==? <NODE-TYPE .TEM> ,QUOTE-CODE>
+		      <AND <MANIFEST? <SET TTT <NODE-NAME .TEM>>>
+			  <MESSAGE WARNING
+				   "ATTEMPT TO SETG MANIFEST VARIABLE "
+				   .TTT .NOD>>
+		      <PUT .NOD ,NODE-TYPE ,SETG-CODE>
+		      <COND (<AND <GBOUND? .TTT>
+				  <SET T1 <GET-DECL <GLOC .TTT>>>>
+			     <OR <ANA <2 .K> .T1>
+				     <MESSAGE ERROR
+					      " GLOBAL DECL VIOLATION "
+					      .TTT .NOD>>
+			     <TYPE-OK? .T1 .RTYP>)
+			    (ELSE
+			     <SET TTT <ANA <2 .K> ANY>>
+			     <TYPE-OK? .TTT .RTYP>)>)
+		     (ELSE
+		      <SET TTT <ANA <2 .K> ANY>>
+		      <TYPE-OK? .TTT .RTYP>)>)>>>
+
+<PUT ,SETG ANALYSIS ,SETG-ANA>
+
+<DEFINE BUILD-TYPE-LIST (V) 
+	#DECL ((V) <OR VECTOR SYMTAB> (VALUE) LIST)
+	<COND (.ANALY-OK
+	       <REPEAT ((L (())) (LP .L) TEM)
+		       #DECL ((L LP) LIST)
+		       <COND (<EMPTY? .V> <RETURN <REST .L>>)
+			     (<N==? <CODE-SYM .V> -1>
+			      <SET TEM <GET-CURRENT-TYPE .V>>
+			      <SET LP <REST <PUTREST .LP ((.V .TEM T))>>>)>
+		       <SET V <NEXT-SYM .V>>>) (ELSE ())>>
+
+<DEFINE RESET-VARS (V "OPTIONAL" (VL '[]) (FLG <>)) 
+	#DECL ((V VL) <OR SYMTAB VECTOR>)
+	<REPEAT ()
+		<COND (<==? .V .VL> <SET FLG T>)>
+		<COND (<EMPTY? .V> <RETURN>)
+		      (<NOT .FLG>
+		       <PUT .V ,CURRENT-TYPE <>>
+		       <PUT .V ,COMPOSIT-TYPE ANY>)>
+		<PUT .V ,USAGE-SYM 0>
+		<PUT .V ,DEATH-LIST ()>
+		<SET V <NEXT-SYM .V>>>>
+
+<DEFINE GET-CURRENT-TYPE (SYM) 
+	#DECL ((SYM) SYMTAB)
+	<OR <AND .ANALY-OK <CURRENT-TYPE .SYM>> <1 <DECL-SYM .SYM>>>>
+
+<DEFINE SET-CURRENT-TYPE (SYM ITYP "AUX" (OTYP <1 <DECL-SYM .SYM>>)) 
+	#DECL ((SYM) SYMTAB)
+	<COND (<AND .ANALY-OK
+		    <N==? <CODE-SYM .SYM> -1>
+		    <NOT <SAME-DECL? <TYPE-AND .ITYP .OTYP> .OTYP>>>
+	       <PUT .SYM ,CURRENT-TYPE .ITYP>
+	       <PUT .SYM
+		    ,COMPOSIT-TYPE
+		    <TYPE-MERGE .ITYP <COMPOSIT-TYPE .SYM>>>)
+	      (ELSE
+	       <PUT .SYM ,CURRENT-TYPE <>>
+	       <PUT .SYM ,COMPOSIT-TYPE .OTYP>)>>
+
+<DEFINE ANDUPC (V L)
+	#DECL ((V) <OR VECTOR SYMTAB> (L) <LIST [REST <LIST SYMTAB ANY ANY>]>)
+	<REPEAT ()
+		<COND (<EMPTY? .V> <RETURN>)>
+		<COND (<CURRENT-TYPE .V>
+		       <SET L <ADD-TYPE-LIST .V <CURRENT-TYPE .V> .L T>>)>
+		<SET V <NEXT-SYM .V>>>
+	.L>
+
+<DEFINE ANDUP (FROM TO) 
+	#DECL ((TO FROM) <LIST [REST <LIST SYMTAB ANY ANY>]>)
+	<MAPF <>
+	      <FUNCTION (L) <SET TO <ADD-TYPE-LIST <1 .L> <2 .L> .TO T>>>
+	      .FROM>
+	.TO>
+
+<DEFINE ORUPC (V L "AUX" WIN) 
+   #DECL ((V) <OR VECTOR SYMTAB> (L) <LIST [REST <LIST SYMTAB ANY ANY>]>)
+   <COND
+    (.ANALY-OK
+     <REPEAT ()
+       <COND (<TYPE? .V VECTOR> <RETURN>)>
+       <SET WIN <>>
+       <MAPF <>
+	  <FUNCTION (LL) #DECL ((LL) <LIST SYMTAB <OR ATOM FORM SEGMENT> ANY>) 
+		  <COND (<==? <1 .LL> .V>
+			 <PUT .LL 2 <TYPE-MERGE <2 .LL> <GET-CURRENT-TYPE .V>>>
+			 <PUT .LL 3 T>
+			 <MAPLEAVE <SET WIN T>>)>>
+	  .L>
+       <COND (<AND <NOT .WIN>
+		   <CURRENT-TYPE .V>>
+	      <SET L ((.V <1 <DECL-SYM .V>> T) !.L)>)>
+       <SET V <NEXT-SYM .V>>>)>
+   .L>
+
+<DEFINE ORUP (FROM TO "AUX" NDECL) 
+   #DECL ((TO FROM) <LIST [REST <LIST SYMTAB <OR ATOM FORM SEGMENT> <OR ATOM FALSE>>]>
+	  (NDECL) <OR ATOM FORM SEGMENT>)
+   <MAPF <>
+    <FUNCTION (L "AUX" (SYM <1 .L>) (WIN <>)) 
+	    <MAPF <>
+		  <FUNCTION (LL) 
+			  <COND (<==? <1 .LL> .SYM>
+				 <SET NDECL <TYPE-MERGE <2 .LL> <2 .L>>>
+				 <PUT .LL 2 .NDECL>
+				 <PUT .LL 3 <3 .LL>>
+				 <MAPLEAVE <SET WIN T>>)>>
+		  .TO>
+	    <COND (<NOT .WIN>
+		   <SET TO
+			((.SYM
+			  <TYPE-MERGE <GET-CURRENT-TYPE .SYM> <2 .L>>
+			  <3 .L>)
+			 !.TO)>)>>
+    .FROM>
+   .TO>
+
+<DEFINE ASSERT-TYPES (L) 
+	#DECL ((L) <LIST [REST <LIST SYMTAB ANY ANY>]>)
+	<MAPF <>
+	      <FUNCTION (LL) <SET-CURRENT-TYPE <1 .LL> <2 .LL>>>
+	      .L>>
+
+<DEFINE ADD-TYPE-LIST (SYM NDECL INF MUNG
+		       "OPTIONAL" (NTH-REST ())
+		       "AUX" (WIN <>) (OD <GET-CURRENT-TYPE .SYM>))
+   #DECL ((SYM) SYMTAB (INF) LIST (NTH-REST) <LIST [REST ATOM FIX]>
+	  (NDECL) <OR ATOM FALSE FORM SEGMENT> (MUNG) <OR ATOM FALSE>)
+   <COND (.ANALY-OK
+	  <SET NDECL <TYPE-NTH-REST .NDECL .NTH-REST>>
+	  <MAPF <>
+		<FUNCTION (L) 
+			#DECL ((L) <LIST SYMTAB ANY>)
+			<COND (<==? <1 .L> .SYM>
+			       <SET NDECL
+				    <COND (.MUNG <TYPE-AND .NDECL .OD>)
+					  (ELSE <TYPE-AND .NDECL <2 .L>>)>>
+			       <PUT .L 2 .NDECL>
+			       <PUT .L 3 .MUNG>
+			       <MAPLEAVE <SET WIN T>>)>>
+		.INF>
+	  <COND (<NOT .WIN>
+		 <SET NDECL <TYPE-AND .NDECL .OD>>
+		 <SET INF ((.SYM .NDECL .MUNG) !.INF)>)>)>
+   .INF>
+
+<DEFINE TYPE-NTH-REST (NDECL NTH-REST) #DECL ((NTH-REST) <LIST [REST ATOM FIX]>)
+       <REPEAT ((FIRST T) (NUM 0))
+	       #DECL ((NUM) FIX)
+	       <COND (<EMPTY? .NTH-REST> <RETURN .NDECL>)>
+	       <COND (<==? <1 .NTH-REST> NTH>
+		      <SET NDECL
+			   <FORM STRUCTURED
+				 !<COND (<0? <SET NUM
+						  <+ .NUM <2 .NTH-REST> -1>>>
+					 ())
+					(<1? .NUM> (ANY))
+					(ELSE ([.NUM ANY]))>
+				 .NDECL>>
+		      <SET NUM 0>
+		      <SET FIRST <>>)
+		     (.FIRST <SET NDECL <REST-DECL .NDECL <2 .NTH-REST>>>)
+		     (ELSE <SET NUM <+ .NUM <2 .NTH-REST>>>)>
+	       <SET NTH-REST <REST .NTH-REST 2>>>>
+
+" AND/OR analyzer.  Called from AND-ANA and OR-ANA."
+
+<DEFINE BOOL-AN (NOD RTYP ORER
+		 "AUX" (L <KIDS .NOD>) FTYP FTY
+		       (RTY
+			<COND (<TYPE-OK? .RTYP FALSE> .RTYP)
+			      (ELSE <FORM OR .RTYP FALSE>)>)
+		       (FLG <==? .PRED <PARENT .NOD>>) (SINF ()) STR SUNT
+		       (FIRST T) FNOK NFNOK PASS)
+   #DECL ((NOD) NODE (L) <LIST [REST NODE]> (ORER RTYP) ANY (FTYP) FORM
+	  (STR SINF SUNT) LIST)
+   <PROG ((TRUTH ()) (UNTRUTH ()) (PRED .NOD) L-D)
+     #DECL ((TRUTH UNTRUTH) <SPECIAL LIST> (PRED) <SPECIAL ANY> (L-D) LIST)
+     <COND
+      (<EMPTY? .L> <SET FTYP <TYPE-OK? FALSE .RTYP>>)
+      (ELSE
+       <SET FTY
+	<MAPR ,TYPE-MERGE
+	 <FUNCTION (N
+		    "AUX" (LAST <EMPTY? <REST .N>>) TY)
+	    #DECL ((N) <LIST NODE>)
+	    <COND (<AND .LAST <NOT .FLG>> <SET PRED <>>)>
+	    <SET TY <ANA <1 .N>	<COND (.LAST .RTYP) (.ORER .RTY) (ELSE ANY)>>>
+	    <SET FNOK
+		 <OR <==? .TY NO-RETURN> <NOT <TYPE-OK? .TY FALSE>>>>
+	    <SET NFNOK <==? FALSE <ISTYPE? .TY>>>
+	    <SET PASS <COND (.ORER .NFNOK) (ELSE .FNOK)>>
+	    <COND (<NOT .TY>
+		   <SET TY ANY>
+		   <MESSAGE WARNING " OR/AND MAY RETURN WRONG TYPE " <1 .N>>)>
+	    <COND (<COND (.ORER .FNOK) (ELSE .NFNOK)>
+						     ;"This must end the AND/OR"
+		   <COND (<AND .VERBOSE <NOT .LAST>>
+			  <ADDVMESS .NOD
+				    ("This object prematurely ends AND/OR:  "
+				     <1 .N> " its type is:  " .TY)>)>
+		   <SET LAST T>)>
+	    <COND (<AND <N==? .TY NO-RETURN> <OR .LAST <NOT .PASS>>>
+		   <COND (.FIRST
+			  <SET L-D <SAVE-L-D-STATE .VARTBL>>
+			  <SET SINF
+			       <ANDUP <COND (.ORER .TRUTH) (ELSE .UNTRUTH)>
+				      <BUILD-TYPE-LIST .VARTBL>>>)
+			 (ELSE
+			  <SET L-D <MSAVE-L-D-STATE .L-D .VARTBL>>
+			  <SET SINF
+			       <ORUP <COND (.ORER .TRUTH) (ELSE .UNTRUTH)>
+				     <ORUPC .VARTBL .SINF>>>)>
+		   <SET FIRST <>>)>
+	    <ASSERT-TYPES <COND (.ORER .UNTRUTH) (ELSE .TRUTH)>>
+	    <SET TRUTH <SET UNTRUTH ()>>
+	    <OR .FIRST <RESTORE-L-D-STATE .L-D .VARTBL>>
+	    <COND (<==? .TY NO-RETURN>
+		   <OR .LAST
+			   <MESSAGE WARNING
+				    "UNREACHABLE AND/OR CLAUSE "
+				    <1 .N>>>
+		   <SET FLG <>>
+		   <ASSERT-TYPES .SINF>
+		   <MAPSTOP NO-RETURN>)
+		  (.LAST
+		   <COND (.FLG
+			  <SET STR
+			       <COND (.ORER .SINF)
+				     (ELSE <BUILD-TYPE-LIST .VARTBL>)>>
+			  <SET SUNT
+			       <COND (.ORER <BUILD-TYPE-LIST .VARTBL>)
+				     (ELSE .SINF)>>)>
+		   <ASSERT-TYPES <ORUPC .VARTBL .SINF>>
+		   <MAPSTOP .TY>)
+		  (<AND .ORER .NFNOK> <MAPRET>)
+		  (.ORER .TY)
+		  (.FNOK <MAPRET>)
+		  (ELSE FALSE)>>
+	 .L>>
+       <COND (<AND .FNOK .ORER> <SET FTY <TYPE-OK? .FTY '<NOT FALSE>>>)>)>>
+   <COND (.FLG <SET TRUTH .STR> <SET UNTRUTH .SUNT>)>
+   .FTY>
+
+<DEFINE AND-ANA (NOD RTYP)
+	#DECL ((NOD) NODE)
+	<PUT .NOD ,NODE-TYPE ,AND-CODE>
+	<BOOL-AN .NOD .RTYP <>>>
+
+<PUT ,AND ANALYSIS ,AND-ANA>
+
+<DEFINE OR-ANA (NOD RTYP)
+	#DECL ((NOD) NODE)
+	<PUT .NOD ,NODE-TYPE ,OR-CODE>
+	<BOOL-AN .NOD .RTYP T>>
+
+<PUT ,OR ANALYSIS ,OR-ANA>
+
+" COND analyzer."
+
+<DEFINE CASE-ANA (N R) <COND-CASE .N .R T>>
+
+<DEFINE COND-ANA (N R) <COND-CASE .N .R <>>>
+
+<DEFINE COND-CASE (NOD RTYP CASE?
+		   "AUX" (L <KIDS .NOD>) (FIRST T) (LAST <>) TT FNOK NFNOK STR
+			 SUNT (FIRST1 T) PRAT (DFLG <>) TST-TYP SVWHO)
+   #DECL ((NOD) NODE (L) <LIST [REST NODE]> (RTYP) ANY)
+   <PROG ((TRUTH ()) (UNTRUTH ()) (TINF1 ()) (TINF ()) L-D L-D1)
+     #DECL ((TRUTH UNTRUTH) <SPECIAL LIST> (TINF1 TINF L-D L-D1) LIST)
+     <COND
+      (<EMPTY? .L> <TYPE-OK? FALSE .RTYP>)
+      (ELSE
+       <COND (.CASE?
+	      <SET PRAT <NODE-NAME <1 <KIDS <1 .L>>>>>
+	      <PROG ((WHON .NOD) (WHO ()))
+		    #DECL ((WHO) <SPECIAL LIST> (WHON) <SPECIAL NODE>)
+		    <SET TST-TYP <EANA <2 .L> ANY CASE>>
+		    <SET SVWHO .WHO>>
+	      <SET L <REST .L 2>>)>
+       <SET TT
+	<MAPR ,TYPE-MERGE
+	 <FUNCTION (BRN "AUX" (BR <1 .BRN>) (PRED .BR) (EC T)) 
+	    #DECL ((BRN) <LIST NODE> (BR) NODE (PRED) <SPECIAL
+						       <OR NODE FALSE>>)
+	    <COND (<AND .CASE? <==? <NODE-TYPE .BR> ,QUOTE-CODE> <SET DFLG T>>
+		   <MAPRET>)>
+	    <OR <PREDIC .BR> <MESSAGE ERROR "EMPTY COND CLAUSE " .BR>>
+	    <SET UNTRUTH <SET TRUTH ()>>
+	    <SET LAST <EMPTY? <REST .BRN>>>
+	    <SET TT
+		 <COND (<NOT <EMPTY? <CLAUSES .BR>>> <SET EC <>> ANY)
+		       (.LAST .RTYP)
+		       (ELSE <TYPE-MERGE .RTYP FALSE>)>>
+	    <SET TT
+		 <COND (.CASE?
+			<SPEC-ANA <NODE-NAME <CHTYPE <PREDIC .BR> NODE>>
+				  .PRAT
+				  .TST-TYP
+				  .TT
+				  .DFLG
+				  .BR
+				  .SVWHO>)
+		       (ELSE <ANA <PREDIC .BR> .TT>)>>
+	    <SET DFLG <SET PRED <>>>
+	    <SET FNOK <OR <==? .TT NO-RETURN> <NOT <TYPE-OK? .TT FALSE>>>>
+	    <SET NFNOK <==? <ISTYPE? .TT> FALSE>>
+	    <COND
+	     (.VERBOSE
+	      <COND
+	       (.NFNOK
+		<ADDVMESS
+		 .NOD
+		 ("Cond predicate always FALSE:  "
+		  <PREDIC .BR>
+		  !<COND (<EMPTY? <CLAUSES .BR>> ())
+			 (ELSE (" and non-reachable code in clause."))>)>)>
+	      <COND
+	       (<AND .FNOK <NOT .LAST>>
+		<ADDVMESS
+		 .NOD
+		 ("Cond ended prematurely because predicate always true:  "
+		  <PREDIC .BR>
+		  " type of value:  "
+		  .TT)>)>)>
+	    <COND (<NOT <OR .FNOK <AND <NOT .LAST> .NFNOK>>>
+		   <SET L-D <SAVE-L-D-STATE .VARTBL>>
+		   <COND (.FIRST
+			  <SET TINF <ANDUP .UNTRUTH <BUILD-TYPE-LIST .VARTBL>>>)
+			 (ELSE
+			  <SET TINF <ANDUP .UNTRUTH <ORUPC .VARTBL .TINF>>>)>
+		   <ASSERT-TYPES .TRUTH>
+		   <SET FIRST <>>)>
+	    <COND (<NOT .NFNOK>
+		   <OR .EC <SET TT <SEQ-AN <CLAUSES .BR> .RTYP>>>
+		   <COND (<N==? .TT NO-RETURN>
+			  <COND (.FIRST1
+				 <SET TINF1 <BUILD-TYPE-LIST .VARTBL>>
+				 <SET L-D1 <SAVE-L-D-STATE .VARTBL>>)
+				(ELSE
+				 <SET TINF1 <ORUPC .VARTBL .TINF1>>
+				 <SET L-D1 <MSAVE-L-D-STATE .L-D1 .VARTBL>>)>
+			  <SET FIRST1 <>>)>
+		   <OR .FIRST <RESTORE-L-D-STATE .L-D .VARTBL>>
+		   <COND (.LAST
+			  <AND <NOT .FNOK> <SET TT <TYPE-MERGE .TT FALSE>>>)
+			 (.EC <SET TT <TYPE-OK? .TT '<NOT FALSE>>>)>)
+		  (.NFNOK <SET TT FALSE>)>
+	    <COND (<OR .LAST .FNOK>
+		   <COND (.FNOK
+			  <ASSERT-TYPES .TINF1>
+			  <OR .FIRST1 <RESTORE-L-D-STATE .L-D1 .VARTBL>>)
+			 (ELSE
+			  <COND (.FIRST1
+				 <ASSERT-TYPES .TINF>
+				 <OR .FIRST <RESTORE-L-D-STATE .L-D .VARTBL>>)
+				(ELSE
+				 <ASSERT-TYPES <ORUP .TINF .TINF1>>
+				 <MRESTORE-L-D-STATE .L-D1 .L-D .VARTBL>)>)>
+		   <MAPSTOP .TT>)
+		  (ELSE <ASSERT-TYPES .TINF> .TT)>>
+	 .L>>)>>
+   .TT>
+
+
+<DEFINE SPEC-ANA (CONST PRED-NAME OTYPE RTYP DFLG NOD WHO "AUX" TEM PAT) 
+	#DECL ((NOD) NODE)
+	<SET PAT
+	     <COND (<TYPE? .CONST LIST>
+		    <COND (<==? .PRED-NAME ==?> <GEN-DECL <1 .CONST>>)
+			  (<==? .PRED-NAME TYPE?> <TYPE-MERGE !.CONST>)
+			  (ELSE
+			   <MAPF ,TYPE-MERGE
+				 <FUNCTION (X) <FORM PRIMTYPE .X>>
+				 .CONST>)>)
+		   (ELSE
+		    <COND (<==? .PRED-NAME ==?> <GEN-DECL .CONST>)
+			  (<==? .PRED-NAME TYPE?> .CONST)
+			  (ELSE <FORM PRIMTYPE .CONST>)>)>>
+	<COND (.DFLG
+	       <PUT .NOD ,RESULT-TYPE <SET TEM <TYPE-OK? ATOM .RTYP>>>
+	       .TEM)
+	      (ELSE
+	       <COND (<AND <N==? .PRED-NAME ==?>
+			   <N==? .OTYPE ANY>
+			   <NOT <TYPE-OK? <FORM NOT .PAT> .OTYPE>>>
+		      <SET TEM ATOM>)
+		     (<TYPE-OK? .OTYPE .PAT> <SET TEM '<OR FALSE ATOM>>)
+		     (ELSE <SET TEM FALSE>)>
+	       <MAPF <>
+		     <FUNCTION (L "AUX" (FLG <1 .L>) (SYM <2 .L>)) 
+			     #DECL ((L) <LIST <OR ATOM FALSE> SYMTAB>
+				    (SYM) SYMTAB)
+			     <SET TRUTH
+				  <ADD-TYPE-LIST .SYM
+						 .PAT
+						 .TRUTH
+						 .FLG
+						 <REST .L 2>>>
+			     <OR <==? .TEM ATOM>
+				 <SET UNTRUTH
+				      <ADD-TYPE-LIST
+				       .SYM
+				       <FORM NOT .PAT>
+				       .UNTRUTH
+				       .FLG
+				       <REST .L 2>>>>>
+		     .WHO>
+	       <PUT .NOD ,RESULT-TYPE <SET TEM <TYPE-OK? .TEM .RTYP>>>
+	       .TEM)>>
+
+" PROG/REPEAT analyzer.  Hacks bindings and sets up info for GO/RETURN/AGAIN
+  analyzers."
+
+<DEFINE PRG-REP-ANA (PPNOD PRTYP
+		     "AUX" (OV .VARTBL) (VARTBL <SYMTAB .PPNOD>) TT L-D
+			   (OPN <AND <ASSIGNED? PNOD> .PNOD>) PNOD)
+   #DECL ((PNOD) <SPECIAL NODE> (VARTBL) <SPECIAL SYMTAB> (OV) SYMTAB (L-D) LIST
+	  (PPNOD) NODE)
+   <COND (<N==? <NODE-SUBR .PPNOD> ,BIND> <SET PNOD .PPNOD>)
+	 (.OPN <SET PNOD .OPN>)>
+   <PROG ((TMPS 0) (HTMPS 0) (ACT? <ACTIV? <BINDING-STRUCTURE .PPNOD> T>))
+	 #DECL ((TMPS HTMPS) <SPECIAL FIX>)
+	 <BIND-AN <BINDING-STRUCTURE .PPNOD>>
+	 <SET L-D <SAVE-L-D-STATE .VARTBL>>
+	 <RESET-VARS .VARTBL .OV T>
+	 <OR <SET PRTYP <TYPE-OK? .PRTYP <INIT-DECL-TYPE .PPNOD>>>
+		 <MESSAGE ERROR "PROG RETURNS WRONG TYPE ">>
+	 <PUT .PPNOD ,RESULT-TYPE .PRTYP>
+	 <PROG ((STMPS .TMPS) (SHTMPS .HTMPS) (LL .LIFE) (OV .VERBOSE))
+	       #DECL ((STMPS SHTMPS) FIX (LL LIFE) LIST)
+	       <COND (.VERBOSE <PUTREST <SET VERBOSE .OV> ()>)>
+	       <MUNG-L-D-STATE .VARTBL>
+	       <SET LIFE .LL>
+	       <PUT .PPNOD ,AGND <>>
+	       <PUT .PPNOD ,DEAD-VARS ()>
+	       <PUT .PPNOD ,VSPCD ()>
+	       <PUT .PPNOD ,LIVE-VARS ()>
+	       <SET TMPS .STMPS>
+	       <SET HTMPS .SHTMPS>
+	       <PUT .PPNOD ,ASSUM <BUILD-TYPE-LIST .VARTBL>>
+	       <PUT .PPNOD ,ACCUM-TYPE NO-RETURN>
+	       <SET TT
+		    <SEQ-AN <KIDS .PPNOD>
+			    <COND (<N==? <NODE-SUBR .PPNOD> ,REPEAT> .PRTYP)
+				  (ELSE ANY)>>>
+	       <AND .ACT? <PROG ()
+				<SPEC-FLUSH>
+				<PUT-FLUSH ALL>>>
+	       <OR <AND <N==? <NODE-SUBR .PPNOD> ,REPEAT> <NOT <AGND .PPNOD>>>
+		   <ASSUM-OK?
+		    <ASSUM .PPNOD>
+		    <COND (<N==? <NODE-SUBR .PPNOD> ,REPEAT> <AGND .PPNOD>)
+			  (<AGND .PPNOD>
+			   <ORUPC .VARTBL <CHTYPE <AGND .PPNOD> LIST>>)
+			  (ELSE <BUILD-TYPE-LIST .VARTBL>)>>
+		   <AGAIN>>>
+	 <COND (<==? <NODE-SUBR .PPNOD> ,REPEAT>
+		<COND (<AGND .PPNOD>
+		       <PUT .PPNOD
+			    ,LIVE-VARS
+			    <MSAVE-L-D-STATE <LIVE-VARS .PPNOD> .VARTBL>>)
+		      (ELSE <PUT .PPNOD ,LIVE-VARS <SAVE-L-D-STATE .VARTBL>>)>)>
+	 <SAVE-SURVIVORS .L-D .LIFE T>
+	 <SAVE-SURVIVORS <LIVE-VARS .PPNOD> .LIFE>
+	 <OR .TT
+	     <MESSAGE " ERROR PROG VALUE VIOLATES VALUE DECL OF "
+		      .PRTYP
+		      .PPNOD>>
+	 <COND (<NOT <OR <==? .TT NO-RETURN> <==? <NODE-SUBR .PPNOD> ,REPEAT>>>
+		<PUT .PPNOD
+		     ,DEAD-VARS
+		     <MSAVE-L-D-STATE <DEAD-VARS .PPNOD> .VARTBL>>
+		<COND (<N==? <ACCUM-TYPE .PPNOD> NO-RETURN>
+		       <ASSERT-TYPES <ORUPC .VARTBL <VSPCD .PPNOD>>>)>)
+	       (<N==? <ACCUM-TYPE .PPNOD> NO-RETURN>
+		<ASSERT-TYPES <VSPCD .PPNOD>>)>
+	 <FREST-L-D-STATE <DEAD-VARS .PPNOD>>
+	 <SET LIFE <KILL-REM .LIFE .OV>>
+	 <PUT .PPNOD
+	      ,ACCUM-TYPE
+	      <COND (.ACT? <PUT .PPNOD ,SIDE-EFFECTS (ALL)> .PRTYP)
+		    (<==? <NODE-SUBR .PPNOD> ,REPEAT> <ACCUM-TYPE .PPNOD>)
+		    (ELSE <TYPE-MERGE .TT <ACCUM-TYPE .PPNOD>>)>>>
+   <ACCUM-TYPE .PPNOD>>
+
+" Determine if assumptions made for this loop are still valid."
+
+<DEFINE ASSUM-OK? (AS TY "AUX" (OK? T)) 
+   #DECL ((TY AS) <LIST [REST <LIST SYMTAB ANY ANY>]>)
+   <COND
+    (.ANALY-OK
+     <MAPF <>
+      <FUNCTION (L "AUX" (SYM <1 .L>) (TT <>)) 
+	 #DECL ((L) <LIST SYMTAB <OR ATOM FORM SEGMENT>>)
+	 <COND
+	  (<N==? <2 .L> ANY>
+	   <MAPF <>
+		 <FUNCTION (LL) 
+			 <COND (<AND <SET TT <==? <1 .LL> .SYM>>
+				     <N=? <2 .L> <2 .LL>>
+				     <OR <==? <2 .L> NO-RETURN>
+					 <TYPE-OK? <2 .LL> <NOTIFY <2 .L>>>>>
+				<COND (.OK? <SET BACKTRACK <+ .BACKTRACK 1>>)>
+				<SET OK? <>>
+				<AND <GASSIGNED? DEBUGSW>
+				     ,DEBUGSW
+				     <PRIN1 <NAME-SYM .SYM>>
+				     <PRINC " NOT OK current type:  ">
+				     <PRIN1 <2 .LL>>
+				     <PRINC " assumed type:  ">
+				     <PRIN1 <2 .L>>
+				     <TERPRI>>)>
+			 <AND .TT
+			      <PUT .L 2 <TYPE-MERGE <2 .LL> <2 .L>>>
+			      <MAPLEAVE>>>
+		 .TY>)>>
+      .AS>
+     <COND (<NOT .OK?> <ASSERT-TYPES .AS>)>)>
+   .OK?>
+
+<DEFINE NOTIFY (D) 
+	<COND (<AND <TYPE? .D FORM> <==? <LENGTH .D> 2> <==? <1 .D> NOT>>
+	       <2 .D>)
+	      (ELSE <FORM NOT .D>)>>
+
+" Analyze RETURN from a PROG/REPEAT.  Check with PROGs final type."
+
+<DEFINE RETURN-ANA (NOD RTYP "AUX" (TT <KIDS .NOD>) N (LN <LENGTH .TT>) TEM) 
+	#DECL ((NOD) NODE (TT) <LIST [REST NODE]> (LN) FIX (N) <OR NODE FALSE>)
+	<COND (<G? .LN 2>
+	       <MESSAGE ERROR "TOO MANY ARGS TO RETURN " .NOD>)
+	      (<OR <AND <==? .LN 2> <SET N <ACT-CHECK <2 .TT>>>>
+		   <AND <L=? .LN 1> <SET N <PROGCHK RETURN>>>>
+	       <SET N <CHTYPE .N NODE>>
+	       <AND <0? .LN>
+		    <PUT .NOD
+			 ,KIDS
+			 <SET TT (<NODE1 ,QUOTE-CODE .NOD ATOM T ()>)>>>
+	       <SET TEM <EANA <1 .TT> <INIT-DECL-TYPE .N> RETURN>>
+	       <COND (<==? <ACCUM-TYPE .N> NO-RETURN>
+		      <PUT .N ,VSPCD <BUILD-TYPE-LIST <SYMTAB .N>>>
+		      <PUT .N ,DEAD-VARS <SAVE-L-D-STATE .VARTBL>>)
+		     (ELSE
+		      <PUT .N ,VSPCD <ORUPC <SYMTAB .N> <VSPCD .N>>>
+		      <PUT .N
+			   ,DEAD-VARS
+			   <MSAVE-L-D-STATE <DEAD-VARS .N> .VARTBL>>)>
+	       <PUT .N ,ACCUM-TYPE <TYPE-MERGE .TEM <ACCUM-TYPE .N>>>
+	       <PUT .NOD ,NODE-TYPE ,RETURN-CODE>
+	       NO-RETURN)
+	      (ELSE <SUBR-C-AN .NOD ANY>)>>
+
+<PUT ,RETURN ANALYSIS ,RETURN-ANA>
+
+<DEFINE ACT-CHECK (N "AUX" SYM RAO N1) 
+	#DECL ((N N1) NODE (SYM) <OR SYMTAB FALSE> (RAO VALUE) <OR FALSE NODE>)
+	<COND (<OR <AND <==? <NODE-TYPE .N> ,LVAL-CODE>
+			<TYPE? <NODE-NAME .N> SYMTAB>
+			<PURE-SYM <SET SYM <NODE-NAME .N>>>
+			<==? <CODE-SYM .SYM> 1>>
+		   <AND <==? <NODE-TYPE .N> ,SUBR-CODE>
+			<==? <NODE-SUBR .N> ,LVAL>
+			<==? <LENGTH <KIDS .N>> 1>
+			<==? <NODE-TYPE <SET N1 <1 <KIDS .N>>>> ,QUOTE-CODE>
+			<TYPE? <NODE-NAME .N1> ATOM>
+			<SET SYM <SRCH-SYM <NODE-NAME .N1>>>
+			<PURE-SYM .SYM>
+			<==? <CODE-SYM .SYM> 1>>>
+	       <SET RAO <RET-AGAIN-ONLY <CHTYPE .SYM SYMTAB>>>
+	       <EANA .N ACTIVATION AGAIN-RETURN>
+	       <PUT <CHTYPE .SYM SYMTAB> ,RET-AGAIN-ONLY .RAO>
+	       .RAO)>>
+
+" AGAIN analyzer."
+
+<DEFINE AGAIN-ANA (NOD RTYP "AUX" (TEM <KIDS .NOD>) N) 
+	#DECL ((NOD) NODE (TEM) <LIST [REST NODE]> (N) <OR FALSE NODE>)
+	<COND (<OR <AND <EMPTY? .TEM> <SET N <PROGCHK AGAIN>>>
+		   <AND <EMPTY? <REST .TEM>> <SET N <ACT-CHECK <1 .TEM>>>>>
+	       <PUT .NOD ,NODE-TYPE ,AGAIN-CODE>
+	       <SET N <CHTYPE .N NODE>>
+	       <COND (<AGND .N>
+		      <PUT .N ,LIVE-VARS
+			   <MSAVE-L-D-STATE <LIVE-VARS .N> .VARTBL>>)
+		     (ELSE <PUT .N ,LIVE-VARS <SAVE-L-D-STATE .VARTBL>>)>
+	       <PUT .N
+		    ,AGND
+		    <COND (<NOT <AGND .N>> <BUILD-TYPE-LIST <SYMTAB .N>>)
+			  (ELSE <ORUPC <SYMTAB .N> <AGND .N>>)>>
+	       NO-RETURN)
+	      (<EMPTY? <REST .TEM>>
+	       <OR <ANA <1 .TEM> ACTIVATION>
+		       <MESSAGE ERROR "WRONG TYPE FOR AGAIN " .NOD>>
+	       ANY)
+	      (ELSE <MESSAGE ERROR "TOO MANY ARGS TO AGAIN " .NOD>)>>
+
+<PUT ,AGAIN ANALYSIS ,AGAIN-ANA>
+
+" Analyze losing GOs."
+
+<DEFINE GO-ANA (NOD RTYP "AUX" (TEM <KIDS .NOD>) N RT)
+     #DECL ((NOD N) NODE (TEM) <LIST [REST NODE]>)
+     <MESSAGE WARGINING "GO/TAG NOT REALLY SUPPORTED.">
+     <COND (<1? <LENGTH .TEM>>
+	    <SET RT <EANA <SET N <1 .TEM>> '<OR TAG ATOM> GO>>
+            <COND (<OR <AND <==? <NODE-TYPE .N> ,QUOTE-CODE>
+			    <==? .RT ATOM>
+			    <PROGCHK GO>>
+		       <==? .RT TAG>>
+		   <AND <==? .RT ATOM> .ANALY-OK
+			<PROG () <SET ANALY-OK <>> <AGAIN .ANA-ACT>>>
+		   <PUT .NOD ,NODE-TYPE ,GO-CODE> NO-RETURN)
+		  (ELSE <MESSAGE ERROR "BAD ARG TO GO " .NOD>)>)
+           (ELSE <MESSAGE ERROR "WRONG NO. OF ARGS TO GO " .NOD>)>>
+
+<PUT ,GO ANALYSIS ,GO-ANA>
+
+<DEFINE TAG-ANA (NOD RTYP "AUX" (K <KIDS .NOD>) N)
+	#DECL ((PNOD N NOD) NODE (K) <LIST [REST NODE]>)
+	<MESSAGE WARGINING "GO/TAG NOT REALLY SUPPORTED.">
+	<COND (<1? <LENGTH .K>>
+	       <PROGCHK TAG>
+	       <AND .ANALY-OK <PROG () <SET ANALY-OK <>> <AGAIN .ANA-ACT>>>
+	       <PUT .PNOD ,ACTIVATED T>
+	       <EANA <SET N <1 .K>> ATOM TAG>
+	       <COND (<AND <==? <NODE-TYPE .N> ,QUOTE-CODE>
+			   <==? <RESULT-TYPE .N> ATOM>>
+		      <PUT .NOD ,NODE-TYPE ,TAG-CODE> TAG)
+		     (ELSE <MESSAGE ERROR "BAD ARG TO TAG " .NOD>)>)>>
+
+<PUT ,TAG ANALYSIS ,TAG-ANA>
+
+" If not in PROG/REPEAT complain about NAME."
+
+<DEFINE PROGCHK (NAME)
+	<OR <ASSIGNED? PNOD>
+		<MESSAGE ERROR "NOT IN PROG/REPEAT " .NAME>>
+	.PNOD>
+
+" Dispatch to special handlers for SUBRs.  Or use standard."
+
+<DEFINE SUBR-ANA (NOD RTYP)
+	#DECL ((NOD) NODE)
+	<APPLY <GET <NODE-SUBR .NOD> ANALYSIS ',SUBR-C-AN>
+	       .NOD
+	       .RTYP>>
+
+" Hairy SUBR call analyzer.  Also looks for internal calls."
+
+<DEFINE SUBR-C-AN (NOD RTYP
+		   "AUX" (ARGS 0) (TYP ANY)
+			 (TMPL <GET-TMP <NODE-SUBR .NOD>>) (NRGS1 <1 .TMPL>)
+			 (ARGACS
+			  <COND (<AND <G? <LENGTH .TMPL> 4>
+				      <NOT <==? <4 .TMPL> STACK>>>
+				 <4 .TMPL>)>))
+   #DECL ((NOD) <SPECIAL NODE> (ARGS) <SPECIAL FIX>
+	  (TYP NRGS1 ARGACS) <SPECIAL ANY> (TMPL) <SPECIAL LIST>)
+   <MAPF
+    <FUNCTION ("TUPLE" T "AUX" NARGS (TL <LENGTH .TMPL>) TEM (NARGS1 .NRGS1) (N .NOD)
+			       (TPL .TMPL) (RGS .ARGS)) 
+       #DECL ((T) TUPLE (ARGS  RGS TL) FIX
+	      (TMPL TPL) <LIST ANY ANY [REST LIST ANY ANY ANY]> (N NOD) NODE
+	      (NARGS) <LIST FIX FIX>)
+       <SET TYP <2 .TPL>>
+       <SPEC-FLUSH>
+       <PUT-FLUSH ALL>
+       <COND
+	(<SEGS .N>
+	 <COND (<TYPE? .TYP ATOM FORM>) (ELSE <SET TYP ANY>)>
+	 <COND (<AND <G? .TL 2> <NOT .ARGACS>>
+		<PUT .N ,NODE-TYPE ,ISUBR-CODE>)>)
+	(ELSE
+	 <COND
+	  (<TYPE? .NARGS1 FIX>
+	   <ARGCHK .RGS .NARGS1 <NODE-NAME .N>>)
+	  (<TYPE? .NARGS1 LIST>
+	   <AND <G? .RGS <2 <SET NARGS .NARGS1>>>
+	       <MESSAGE ERROR " TOO MANY ARGS TO " <NODE-NAME .N> .N>>
+	   <AND <L? .RGS <1 .NARGS>>
+	       <MESSAGE ERROR " TOO FEW ARGS TO " <NODE-NAME .N> .N>>
+	   <AND <G? .TL 2>
+		<G? .RGS <+ <1 .NARGS> <LENGTH <3 .TPL>>>>
+		<SET TL 0>>	 ;"Dont handle funny calls to things like LLOC."
+	   <COND (<AND <L? .RGS <2 .NARGS>> <G? .TL 2>>
+						   ;"For funny cases like LLOC."
+		  <SET TEM
+		       <MAPF ,LIST
+			     <FUNCTION (DEF) 
+				     <NODE1 ,QUOTE-CODE
+					    .NOD
+					    <TYPE .DEF>
+					    .DEF
+					    ()>>
+			     <REST <3 .TPL> <- .RGS <1 .NARGS>>>>>
+		  <SET RGS <2 .NARGS>>
+		  <COND (<EMPTY? <KIDS .N>> <PUT .N ,KIDS .TEM>)
+			(ELSE
+			 <PUTREST <REST <KIDS .N> <- <LENGTH <KIDS .N>> 1>>
+				  .TEM>)>)>)>
+	 <COND (<TYPE? .TYP ATOM FORM>)
+	       (ELSE <SET TYP <APPLY .TYP !.T>>)>
+	 <COND (<G? .TL 2>				  ;"Short call exists?."
+		<OR <==? <4 .TPL> STACK> <SET RGS 0>>
+		<PUT .NOD ,NODE-TYPE ,ISUBR-CODE>)>
+	 <SET ARGS .RGS>)>>
+    <FUNCTION (N "AUX" TYP) 
+	    #DECL ((N NOD) NODE (ARGS) FIX (ARGACS) <PRIMTYPE LIST>)
+	    <COND (<==? <NODE-TYPE .N> ,SEGMENT-CODE>
+		   <EANA <1 <KIDS .N>> STRUCTURED SEGMENT>
+		   <PUT .NOD ,SEGS T>
+		   ANY)
+		  (ELSE
+		   <SET ARGS <+ .ARGS 1>>
+		   <SET TYP <ANA .N ANY>>
+		   <COND (<AND <NOT <SEGS .NOD>> .ARGACS <NOT <EMPTY? .ARGACS>>>
+			  <SET ARGACS <REST .ARGACS>>)>
+		   .TYP)>>
+    <KIDS .NOD>>
+   <PUT .NOD ,SIDE-EFFECTS (ALL)>
+   <PUT .NOD ,STACKS <* .ARGS 2>>
+   <TYPE-OK? .TYP .RTYP>>
+
+<DEFINE SEGMENT-ANA (NOD RTYP) <MESSAGE ERROR "ILLEGAL SEGMENT " .NOD>>
+
+" Analyze VECTOR, UVECTOR and LIST builders."
+
+<DEFINE COPY-AN (NOD RTYP
+		 "AUX" (ARGS 0) (RT <ISTYPE? <RESULT-TYPE .NOD>>) (K <KIDS .NOD>) N
+		       (LWIN <==? .RT LIST>) NN COD) 
+   #DECL ((NOD N) NODE (ARGS) FIX (K) <LIST [REST NODE]>)
+   <COND
+    (<NOT <EMPTY? .K>>
+     <REPEAT (DC STY PTY TEM TT (SG <>) (FRM <FORM .RT>)
+	      (FRME <CHTYPE .FRM LIST>) (GOTDC <>))
+	     #DECL ((FRM) FORM (FRME) <LIST ANY>)
+	     <COND (<EMPTY? .K>
+		    <COND (<==? .RT LIST>
+			   <RETURN <SET RT
+					<COND (<EMPTY? <REST .FRM>> <1 .FRM>)
+					      (ELSE .FRM)>>>)>
+		    <COND (.DC <PUTREST .FRME ([REST .DC])>)
+			  (.STY <PUTREST .FRME ([REST .STY])>)
+			  (.PTY <PUTREST .FRME ([REST <FORM PRIMTYPE .PTY>])>)>
+		    <RETURN <SET RT .FRM>>)
+		   (<OR <==? <SET COD <NODE-TYPE <SET N <1 .K>>>> ,SEGMENT-CODE>
+			<==? .COD ,SEG-CODE>>
+		    <SET TEM
+			 <GET-ELE-TYPE <EANA <1 <KIDS .N>> STRUCTURED SEGMENT>
+				       ALL>>
+		    <PUT .NOD ,SEGS T>
+		    <COND (<NOT .SG> <SET GOTDC <>>)>
+		    <SET SG T>
+		    <COND (<AND .LWIN
+				<MEMQ <STRUCTYP <RESULT-TYPE <1 <KIDS .N>>>>
+				      '![LIST VECTOR UVECTOR TUPLE!]>>)
+			  (ELSE <SET LWIN <>>)>)
+		   (ELSE <SET ARGS <+ .ARGS 2>> <SET TEM <ANA .N ANY>>)>
+	     <COND (<NOT .GOTDC>
+		    <SET GOTDC T>
+		    <SET PTY
+			 <COND (<SET STY <ISTYPE? <SET DC .TEM>>>
+				<TYPEPRIM .STY>)>>)
+		   (<OR <NOT .DC> <N==? .DC .TEM>>
+		    <SET DC <>>
+		    <COND (<OR <N==? <SET TT <ISTYPE? .TEM>> .STY> <NOT .STY>>
+			   <SET STY <>>
+			   <COND (<AND .PTY
+				       <==? .PTY <AND .TT <TYPEPRIM .TT>>>>)
+				 (ELSE <SET PTY <>>)>)>)>
+	     <COND (<NOT .SG> <SET FRME <REST <PUTREST .FRME (.TEM)>>>)>
+	     <SET K <REST .K>>>)>
+   <PUT .NOD ,RESULT-TYPE .RT>
+   <PUT .NOD ,STACKS .ARGS>
+   <COND
+    (<AND <GASSIGNED? COPY-LIST-CODE> .LWIN>
+     <MAPF <>
+	   <FUNCTION (N) 
+		   #DECL ((N) NODE)
+		   <COND (<==? <NODE-TYPE .N> ,SEGMENT-CODE>
+			  <PUT .N ,NODE-TYPE ,SEG-CODE>)>>
+	   <KIDS .NOD>>
+     <COND (<AND <==? <LENGTH <SET K <KIDS .NOD>>> 1>
+		 <==? <NODE-TYPE <1 .K>> ,SEG-CODE>
+		 <==? <STRUCTYP <RESULT-TYPE <SET NN <1 <KIDS <1 .K>>>>>> LIST>>
+	    <COND (<NOT <EMPTY? <PARENT .NOD>>>
+		   <MAPR <>
+			 <FUNCTION (L "AUX" (N <1 .L>)) 
+				 #DECL ((N) NODE (L) <LIST [REST NODE]>)
+				 <COND (<==? .NOD .N>
+					<PUT .L 1 .NN>
+					<MAPLEAVE>)>>
+			 <KIDS <CHTYPE <PARENT .NOD> NODE>>>)>
+	    <PUT .NN ,PARENT <CHTYPE <PARENT .NOD> NODE>>
+	    <SET RT <RESULT-TYPE .NN>>)
+	   (ELSE <PUT .NOD ,NODE-TYPE ,COPY-LIST-CODE>)>)
+    (ELSE
+     <MAPF <>
+	   <FUNCTION (N) 
+		   #DECL ((N) NODE)
+		   <COND (<==? <NODE-TYPE .N> ,SEG-CODE>
+			  <PUT .N ,NODE-TYPE ,SEGMENT-CODE>)>>
+	   <KIDS .NOD>>
+    <PUT .NOD ,NODE-TYPE ,COPY-CODE>)>
+   <TYPE-OK? .RT .RTYP>>
+
+" Analyze quoted objects, for structures hack type specs."
+
+<DEFINE QUOTE-ANA (NOD RTYP)
+	#DECL ((NOD) NODE)
+	<TYPE-OK? <GEN-DECL <NODE-NAME .NOD>> .RTYP>>
+
+<DEFINE QUOTE-ANA2 (NOD RTYP)
+	#DECL ((NOD) NODE)
+	<COND (<1? <LENGTH <KIDS .NOD>>>
+	       <PUT .NOD ,NODE-TYPE ,QUOTE-CODE>
+	       <PUT .NOD ,NODE-NAME <1 <KIDS .NOD>>>
+	       <PUT .NOD ,KIDS ()>
+	       <TYPE-OK? <RESULT-TYPE .NOD> .RTYP>)
+	      (ELSE <MESSAGE ERROR "BAD CALL TO QUOTE ">)>>
+
+<PUT ,QUOTE ANALYSIS ,QUOTE-ANA2>
+
+<DEFINE IRSUBR-ANA (NOD RTYP)
+	<RSUBRC-ANA .NOD .RTYP <>>>
+
+" Analyze a call to an RSUBR."
+
+<DEFINE RSUBR-ANA (NOD RTYP "AUX" ACST RN)
+	#DECL ((NOD RN FCN) NODE)
+	<COND (<AND <TYPE? <NODE-SUBR .NOD> FUNCTION>
+		    <SET ACST <ACS <SET RN <GET <NODE-NAME .NOD> .IND>>>>
+		    <OR <ASSIGNED? GROUP-NAME> <==? .FCN .RN>>>
+	       <RSUBRC-ANA .NOD .RTYP .ACST>)
+	      (ELSE <RSUBRC-ANA .NOD .RTYP <>>)>>
+
+<DEFINE RSUBRC-ANA (NOD RTYP ACST "AUX" (ARGS 0))
+	#DECL ((NOD N) NODE (ACST) <PRIMTYPE LIST> (ARGS) FIX)
+	<AND <=? .ACST '(STACK)> <SET ACST <>>>
+	<MAPF <>
+	      <FUNCTION (ARG RT)
+		      #DECL ((ARG NOD) NODE)
+		      <COND (<==? <NODE-TYPE .ARG> ,SEGMENT-CODE>
+			     <EANA <1 <KIDS .ARG>> .RT SEGMENT>
+			     <PUT .NOD ,SEGS T>)
+			    (ELSE
+			     <EANA .ARG .RT <NODE-NAME .NOD>>
+			     <COND (<AND <NOT <SEGS .NOD>> .ACST>
+				    <SET ACST <REST .ACST>>)>
+			     <SET ARGS <+ .ARGS 1>>)>>
+	      <KIDS .NOD> <TYPE-INFO .NOD>>
+	<SPEC-FLUSH>
+	<PUT-FLUSH ALL>
+	<OR .ACST <PUT .NOD ,STACKS <* .ARGS 2>>>
+	<PUT .NOD ,SIDE-EFFECTS (ALL)>
+	<TYPE-OK? <RESULT-TYPE .NOD> .RTYP>>
+
+" Analyze CHTYPE, in some cases do it at compile time."
+
+<DEFINE CHTYPE-ANA (NOD RTYP "AUX" (K <KIDS .NOD>) NTN NT OBN OB)
+	#DECL ((NOD OBN NTN) NODE (K) <LIST [REST NODE]> (NT) ATOM)
+	<COND (<SEGFLUSH .NOD .RTYP>)
+	      (ELSE
+	       <ARGCHK <LENGTH .K> 2 CHTYPE>
+	       <SET OB <ANA <SET OBN <1 .K>> ANY>>
+	       <EANA <SET NTN <2 .K>> ATOM CHTYPE>
+	       <COND (<==? <NODE-TYPE .NTN> ,QUOTE-CODE>
+		      <OR <MEMQ <SET NT <NODE-NAME .NTN>> <ALLTYPES>>
+			      <MESSAGE ERROR " 2D ARG CHTYPE NOT A TYPE " .NT .NOD>>
+		      <OR <TYPE-OK? .OB <FORM PRIMTYPE <TYPEPRIM .NT>>>
+			      <MESSAGE ERROR
+				       " PRIMTYPES DIFFER CHTYPE"
+				       .OB
+				       .NT .NOD>>
+		      <COND (<==? <NODE-TYPE .OBN> ,QUOTE-CODE>
+			     <PUT .NOD ,NODE-TYPE ,QUOTE-CODE>
+			     <PUT .NOD ,KIDS ()>
+			     <PUT .NOD
+				  ,NODE-NAME
+				  <CHTYPE <NODE-NAME .OBN> .NT>>)
+			    (ELSE <PUT .NOD ,NODE-TYPE ,CHTYPE-CODE>)>
+		      <PUT .NOD ,RESULT-TYPE .NT>
+		      <TYPE-OK? .NT .RTYP>)
+		     (ELSE
+		      <COND (.VERBOSE
+			     <ADDVMESS .NOD
+				       ("Can't open compile CHTYPE.")>)>
+		      <TYPE-OK? ANY .RTYP>)>)>>
+
+<PUT ,CHTYPE ANALYSIS ,CHTYPE-ANA>
+
+" Analyze use of ASCII sometimes do at compile time."
+
+<DEFINE ASCII-ANA (NOD RTYP "AUX" (K <KIDS .NOD>) ITM TYP TEM)
+	#DECL ((NOD ITM) NODE (K) <LIST [REST NODE]>)
+	<COND (<SEGFLUSH .NOD .RTYP>)
+	      (ELSE
+	       <ARGCHK <LENGTH .K> 1 ASCII>
+	       <SET TYP <EANA <SET ITM <1 .K>> '<OR FIX CHARACTER> ASCII>>
+	       <COND (<==? <NODE-TYPE .ITM> ,QUOTE-CODE>
+		      <PUT .NOD ,NODE-TYPE ,QUOTE-CODE>
+		      <PUT .NOD ,NODE-NAME <SET TEM <ASCII <NODE-NAME .ITM>>>>
+		      <PUT .NOD ,RESULT-TYPE <TYPE .TEM>>
+		      <PUT .NOD ,KIDS ()>)
+		     (<==? <ISTYPE? .TYP> FIX>
+		      <PUT .NOD ,NODE-TYPE ,CHTYPE-CODE>
+		      <PUT .NOD ,RESULT-TYPE CHARACTER>)
+		     (<==? .TYP CHARACTER>
+		      <PUT .NOD ,NODE-TYPE ,CHTYPE-CODE>
+		      <PUT .NOD ,RESULT-TYPE FIX>)
+		     (ELSE
+		      <PUT .NOD ,RESULT-TYPE '<OR FIX CHARACTER>>)>
+	       <TYPE-OK? <RESULT-TYPE .NOD> .RTYP>)>>
+
+<PUT ,ASCII ANALYSIS ,ASCII-ANA>
+
+<DEFINE UNWIND-ANA (NOD RTYP"AUX" (K <KIDS .NOD>) ITYP)
+	#DECL ((NOD) NODE (K) <LIST [REST NODE]>)
+	<SET ITYP <EANA <1 .K> ANY UNWIND>>
+	<EANA <2 .K> ANY UNWIND>
+	<TYPE-OK? .ITYP .RTYP>>
+
+" Analyze ISTRING/ILIST/IVECTOR/IUVECTOR in cases of known and unknown last arg."
+
+<DEFINE ISTRUC-ANA (N R "AUX" (K <KIDS .N>) FM NUM TY (NEL REST) SIZ) 
+	#DECL ((N FM NUM) NODE)
+	<COND (<==? <NODE-SUBR .N> ,IBYTES>
+	       <EANA <1 .K> FIX <NODE-NAME .N>>
+	       <COND (<==? <NODE-TYPE <1 .K>> ,QUOTE-CODE>
+		      <SET SIZ <NODE-NAME <1 .K>>>)>
+	       <SET K <REST .K>>)>
+	<EANA <SET NUM <1 .K>> FIX <NODE-NAME .N>>
+	<SET TY
+	     <EANA <SET FM <2 .K>>
+		   <COND (<==? <NODE-NAME .FM> ISTRING> CHARACTER)
+			 (<==? <NODE-NAME .FM> IBYTES> FIX)
+			 (ELSE ANY)>
+		   <NODE-NAME .N>>>
+	<COND (<TYPE-OK? .TY '<OR FORM LIST VECTOR UVECTOR>>
+	       <MESSAGE WARNING "UNCERTAIN USE OF " <NODE-NAME .N> .N>
+	       <SPEC-FLUSH>
+	       <PUT-FLUSH ALL>)
+	      (ELSE <PUT .N ,NODE-TYPE ,ISTRUC2-CODE>)>
+	<COND (<==? <NODE-TYPE .NUM> ,QUOTE-CODE> <SET NEL <NODE-NAME .NUM>>)>
+	<AND <TYPE-OK? .TY FORM> <SET TY ANY>>
+	<TYPE-OK? <COND (<==? <NODE-SUBR .N> ,IBYTES>
+			 <COND (<ASSIGNED? SIZ>
+				<COND (<TYPE? .NEL FIX> <FORM BYTES .SIZ .NEL>)
+				      (ELSE <FORM BYTES .SIZ>)>)
+			       (ELSE BYTES)>)
+			(ELSE
+			 <FORM <ISTYPE? <RESULT-TYPE .N>>
+			       [.NEL .TY]
+			       !<COND (<==? .TY ANY> ())
+				      (ELSE ([REST .TY]))>>)>
+		  .R>>
+
+<DEFINE ISTRUC2-ANA (N R "AUX" (K <KIDS .N>) GD NUM TY (NEL REST) SIZ) 
+	#DECL ((N NUM GD) NODE)
+	<COND (<==? <NODE-SUBR .N> ,IBYTES>
+	       <EANA <1 .K> FIX <NODE-NAME .N>>
+	       <COND (<==? <NODE-TYPE <1 .K>> ,QUOTE-CODE>
+		      <SET SIZ <NODE-NAME <1 .K>>>)>
+	       <SET K <REST .K>>)>
+	<EANA <SET NUM <1 .K>> FIX <NODE-NAME .N>>
+	<SET TY
+	     <EANA <SET GD <2 .K>>
+		   <COND (<==? <NODE-SUBR .N> ,ISTRING> CHARACTER)
+			 (<==? <NODE-SUBR .N> ,IBYTES> FIX)
+			 (ELSE ANY)>
+		   <NODE-NAME .N>>>
+	<COND (<==? <NODE-TYPE .NUM> ,QUOTE-CODE> <SET NEL <NODE-NAME .NUM>>)>
+	<TYPE-OK? <COND (<==? <NODE-SUBR .N> ,IBYTES>
+			 <COND (<ASSIGNED? SIZ>
+				<COND (<TYPE? .NEL FIX> <FORM BYTES .SIZ .NEL>)
+				      (ELSE <FORM BYTES .SIZ>)>)
+			       (ELSE BYTES)>)
+			(ELSE
+			 <FORM <ISTYPE? <RESULT-TYPE .N>>
+			       [.NEL .TY]
+			       !<COND (<==? .TY ANY> ())
+				      (ELSE ([REST .TY]))>>)>
+		  .R>>
+
+" Analyze READ type SUBRS in two cases (print uncertain usage message maybe?)"
+
+<DEFINE READ-ANA (N R)
+	#DECL ((N) NODE)
+	<MAPF <>
+	      <FUNCTION (NN "AUX" TY)
+		      #DECL ((NN N) NODE)
+		      <COND (<==? <NODE-TYPE .NN> ,EOF-CODE>
+			     <SPEC-FLUSH> <PUT-FLUSH ALL>
+			     <SET TY <EANAQ <1 <KIDS .NN>> ANY <NODE-NAME .N> .N>>
+			     <COND (<TYPE-OK? .TY
+					      '<OR FORM LIST VECTOR UVECTOR>>
+				    <MESSAGE WARNING
+					     " UNCERTAIN USE OF "
+					     <NODE-NAME .N> .N>)
+				   (ELSE <PUT .N ,NODE-TYPE ,READ-EOF2-CODE>)>)
+			    (ELSE <EANA .NN ANY <NODE-NAME .N>>)>>
+	      <KIDS .N>>
+	<SPEC-FLUSH><PUT-FLUSH ALL>
+	<TYPE-OK? ANY .R>>
+
+<DEFINE READ2-ANA (N R)
+	#DECL ((N) NODE)
+	<MAPF <>
+	      <FUNCTION (NN)
+		      #DECL ((NN N) NODE)
+		      <COND (<==? <NODE-TYPE .NN> ,EOF-CODE>
+			     <EANAQ <1 <KIDS .NN>> ANY <NODE-NAME .N> .N>)
+			    (ELSE <EANA .NN ANY <NODE-NAME .N>>)>>
+	      <KIDS .N>>
+	<SPEC-FLUSH><PUT-FLUSH ALL>
+	<TYPE-OK? ANY .R>>
+
+<DEFINE GET-ANA (N R "AUX" TY (K <KIDS .N>) (NAM <NODE-NAME .N>))
+	#DECL ((N) NODE (K) <LIST NODE NODE NODE>)
+	<EANA <1 .K> ANY .NAM>
+	<EANA <2 .K> ANY .NAM>
+	<SET TY <EANAQ <3 .K> ANY .NAM .N>>
+	<COND (<TYPE-OK? .TY '<OR LIST VECTOR UVECTOR FORM>>
+	       <MESSAGE WARNING "UNCERTAIN USE OF " .NAM .N>
+	       <SPEC-FLUSH> <PUT-FLUSH ALL>)
+	      (ELSE <PUT .N ,NODE-TYPE ,GET2-CODE>)>
+	<TYPE-OK? ANY .R>>
+
+<DEFINE GET2-ANA (N R "AUX" (K <KIDS .N>) (NAM <NODE-NAME .N>) (LN <LENGTH .K>))
+	#DECL ((N) NODE (K) <LIST NODE NODE [REST NODE]> (LN) FIX)
+	<EANA <1 .K> ANY .NAM>
+	<EANA <2 .K> ANY .NAM>
+	<COND (<==? .LN 3> <EANAQ <3 .K> ANY .NAM .N>)>
+	<TYPE-OK? ANY .R>>
+
+<DEFINE EANAQ (N R NAM INOD "AUX" SPCD) 
+	#DECL ((N) NODE (SPCD) LIST)
+	<SET SPCD <BUILD-TYPE-LIST .VARTBL>>
+	<SET R <EANA .N .R .NAM>>
+	<ASSERT-TYPES <ORUPC .VARTBL .SPCD>>
+	.R>
+
+<DEFINE USE-REG () 
+	#DECL ((TMPS HTMPS) FIX)
+	<COND (<0? ,REGS>
+	       <AND <G? <SET TMPS <+ .TMPS 2>> .HTMPS> <SET HTMPS .TMPS>>)
+	      (ELSE <SETG REGS <- ,REGS 1>>)>>
+ 
+<DEFINE UNUSE-REG () 
+	#DECL ((TMPS) FIX)
+	<COND (<==? ,REGS 5> <SET TMPS <- .TMPS 2>>)
+	      (ELSE <SETG REGS <+ ,REGS 1>>)>>
+ 
+<DEFINE REGFLS () 
+	#DECL ((TMPS HTMPS) FIX)
+	<AND <G? <SET TMPS <+ .TMPS <* <- 5 ,REGS> 2>>> .HTMPS>
+	    <SET HTMPS .TMPS>>
+	<SETG REGS 5>> 
+
+<DEFINE ACTIV? (BST NOACT) 
+	#DECL ((BST) <LIST [REST SYMTAB]>)
+	<REPEAT ()
+		<AND <EMPTY? .BST> <RETURN <>>>
+		<AND <==? <CODE-SYM <1 .BST>> 1>
+		     <OR <NOT .NOACT>
+			 <NOT <RET-AGAIN-ONLY <1 .BST>>>
+			 <SPEC-SYM <1 .BST>>>
+		     <RETURN T>>
+		<SET BST <REST .BST>>>>
+
+<DEFINE SAME-DECL? (D1 D2) <OR <=? .D1 .D2> <NOT <TYPE-OK? .D2 <NOTIFY .D1>>>>>
+
+<DEFINE SPECIALIZE (OBJ "AUX" T1 T2 SYM OB)
+	#DECL ((T1) FIX (OB) FORM (T2) <OR FALSE SYMTAB>)
+	<COND (<AND <TYPE? .OBJ FORM SEGMENT>
+		    <SET OB <CHTYPE .OBJ FORM>>
+		    <OR <AND <==? <SET T1 <LENGTH .OB>> 2>
+			     <==? <1 .OB> LVAL>
+			     <TYPE? <SET SYM <2 .OB>> ATOM>>
+			<AND <==? .T1 3>
+			     <==? <1 .OB> SET>
+			     <TYPE? <SET SYM <2 .OB>> ATOM>>>
+		    <SET T2 <SRCH-SYM .SYM>>>
+	       <COND (<NOT <SPEC-SYM .T2>>
+		      <MESSAGE NOTE " REDCLARED SPECIAL " .SYM>
+		      <PUT .T2 ,SPEC-SYM T>)>)>
+	<COND (<MEMQ <PRIMTYPE .OBJ> '![FORM LIST UVECTOR VECTOR!]>
+	       <MAPF <> ,SPECIALIZE .OBJ>)>>
+
+<COND (<GASSIGNED? ARITH-ANA>
+       <SETG ANALYZERS
+	     <DISPATCH ,SUBR-ANA
+		(,QUOTE-CODE ,QUOTE-ANA)
+		(,FUNCTION-CODE ,FUNC-ANA)
+		(,SEGMENT-CODE ,SEGMENT-ANA)
+		(,FORM-CODE ,FORM-AN)
+		(,PROG-CODE ,PRG-REP-ANA)
+		(,SUBR-CODE ,SUBR-ANA)
+		(,COND-CODE ,COND-ANA)
+		(,COPY-CODE ,COPY-AN)
+		(,RSUBR-CODE ,RSUBR-ANA)
+		(,ISTRUC-CODE ,ISTRUC-ANA)
+		(,ISTRUC2-CODE ,ISTRUC2-ANA)
+		(,READ-EOF-CODE ,READ-ANA)
+		(,READ-EOF2-CODE ,READ2-ANA)
+		(,GET-CODE ,GET-ANA)
+		(,GET2-CODE ,GET2-ANA)
+		(,MAP-CODE ,MAPPER-AN)
+		(,MARGS-CODE ,MARGS-ANA)
+		(,ARITH-CODE ,ARITH-ANA)
+		(,TEST-CODE ,ARITHP-ANA)
+		(,0-TST-CODE ,ARITHP-ANA)
+		(,1?-CODE ,ARITHP-ANA)
+		(,MIN-MAX-CODE ,ARITH-ANA)
+		(,ABS-CODE ,ABS-ANA)
+		(,FIX-CODE ,FIX-ANA)
+		(,FLOAT-CODE ,FLOAT-ANA)
+		(,MOD-CODE ,MOD-ANA)
+		(,LNTH-CODE ,LENGTH-ANA)
+		(,MT-CODE ,EMPTY?-ANA)
+		(,NTH-CODE ,NTH-ANA)
+		(,REST-CODE ,REST-ANA)
+		(,PUT-CODE ,PUT-ANA)
+		(,PUTR-CODE ,PUTREST-ANA)
+		(,UNWIND-CODE ,UNWIND-ANA)
+		(,FORM-F-CODE ,FORM-F-ANA)
+		(,IRSUBR-CODE ,IRSUBR-ANA)
+		(,ROT-CODE ,ROT-ANA)
+		(,LSH-CODE ,LSH-ANA)
+		(,BIT-TEST-CODE ,BIT-TEST-ANA)
+		(,CASE-CODE ,CASE-ANA)
+		(,COPY-LIST-CODE ,COPY-AN)>>)>
+
+<ENDPACKAGE>

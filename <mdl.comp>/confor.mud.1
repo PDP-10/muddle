@@ -1,0 +1,88 @@
+
+<DEFINE CONFORM (R1 R2 T1 T2
+		 "AUX" (X <3 .T1>) (Y <3 .T2>) (AR1 <TYPE? <DATVAL .R1> AC>) M1
+		       M2 (AR2 <TYPE? <DATVAL .R2> AC>) AC (VAL <>))
+	#DECL ((T1 T2) TRANS (X Y) <UVECTOR [7 FIX]> (R1 R2) DATUM (AC) AC
+	       (M1 M2) FIX)
+	<SET AC <COND (.AR1 <DATVAL .R1>) (ELSE <DATVAL .R2>)>>
+	<COND (<N==? <7 .X> <7 .Y>>
+	       <COND (<0? <7 .X>> <HWSH .R2 .R1 <6 .X>>)
+		     (ELSE <HWSH .R1 .R2 <6 .Y>>)>)
+	      (<N==? <6 .X> <6 .Y>>
+	       <COND (<0? <6 .X>> <HWH .R2 .R1>) (ELSE <HWH .R1 .R2>)>)>
+	<COND (<N==? <1 .X> <1 .Y>>
+	       <AND <NOT <0? <1 .Y>>> <SET VAL T>>
+	       <MUNG-AC .AC <COND (.AR1 .R1)(ELSE .R2)>>
+	       <EMIT <INSTRUCTION `MOVNS  <ADDRSYM .AC>>>)
+	      (<NOT <0? <1 .X>>> <SET VAL T>)>
+	<COND (<OR <NOT <0? <4 .X>>> <NOT <0? <4 .Y>>>>
+	       <SET M1 <M* <4 .X> <4 .Y> <5 .X> <5 .Y>>>
+	       <SET M2 <M* <4 .Y> <4 .X> <5 .Y> <5 .X>>>
+	       <COND (<AND <G=? .M1 .M2> <0? <MOD .M1 .M2>>>
+		      <SET M1 </ .M1 .M2>>
+		      <SET M2 1>)
+		     (<AND <G? .M2 .M1> <0? <MOD .M2 .M1>>>
+		      <SET M2 </ .M2 .M1>>
+		      <SET M1 1>)>
+	       <COND (<NOT <1? .M1>>
+		      <TOACV .R2>
+		      <MUNG-AC <DATVAL .R2> .R2>
+		      <IMCHK '(`IMUL  `IMULI )
+			     <ACSYM <DATVAL .R2>>
+			     <REFERENCE:ADR .M1>>)>
+	       <COND (<NOT <1? .M2>>
+		      <TOACV .R1>
+		      <MUNG-AC <DATVAL .R1> .R1>
+		      <IMCHK '(`IMUL  `IMULI )
+			     <ACSYM <DATVAL .R1>>
+			     <REFERENCE:ADR .M2>>)>)>
+	<COND (<AND <OR <NOT <0? <2 .X>>> <NOT <0? <2 .Y>>>>
+		    <NOT <0? <SET M1 <- <3 .X> <3 .Y>>>>>>
+	       <COND (<TYPE? <DATVAL .R2> AC>
+		      <MUNG-AC <DATVAL .R2> .R2>
+		      <IMCHK <COND (<L? .M1 0> <SET M1 <- .M1>> '(`SUB 
+								  `SUBI ))
+				   (ELSE '(`ADD  `ADDI ))>
+			     <ACSYM <DATVAL .R2>>
+			     <REFERENCE:ADR .M1>>)
+		     (ELSE
+		      <TOACV .R1>
+		      <MUNG-AC <DATVAL .R1> .R1>
+		      <IMCHK <COND (<L? .M1 0> <SET M1 <- .M1>> '(`ADD 
+								  `ADDI ))
+				   (ELSE '(`SUB  `SUBI ))>
+			     <ACSYM <DATVAL .R1>>
+			     <REFERENCE:ADR .M1>>)>)>
+	.VAL>
+
+<DEFINE M* (A B C D) 
+	#DECL ((A B C D) FIX)
+	<* <COND (<OR <==? .A 1> <==? .A 2>> .C) (ELSE 1)>
+	   <COND (<OR <==? .B 3> <==? .B 4>> .D) (ELSE 1)>>>
+
+<DEFINE HWSH (R1 R2 HW) 
+	#DECL ((R1 R2) DATUM (HW) FIX)
+	<COND (<NOT <0? .HW>>
+	       <COND (<TYPE? <DATVAL .R1> AC>
+		      <MUNG-AC <DATVAL .R1> .R1>
+		      <EMIT <INSTRUCTION `HLRZS  <ADDRSYM <DATVAL .R1>>>>)
+		     (ELSE
+		      <MUNG-AC <DATVAL .R2> .R2>
+		      <EMIT <INSTRUCTION `MOVSS  <ADDRSYM <DATVAL .R2>>>>)>)
+	      (ELSE
+	       <COND (<TYPE? <DATVAL .R1> AC>
+		      <MUNG-AC <DATVAL .R1> .R1>
+		      <EMIT <INSTRUCTION `HLRES  <ADDRSYM <DATVAL .R1>>>>)
+		     (ELSE
+		      <MUNG-AC <DATVAL .R2> .R2>
+		      <EMIT <INSTRUCTION `MOVSS  <ADDRSYM <DATVAL .R2>>>>)>)>>
+
+<DEFINE HWH (R1 R2) 
+	#DECL ((R1 R2) DATUM)
+	<COND (<TYPE? <DATVAL .R1> AC>
+	       <MUNG-AC <DATVAL .R1> .R1>
+	       <EMIT <INSTRUCTION `HRRES  <ADDRSYM <DATVAL .R1>>>>)
+	      (ELSE
+	       <MUNG-AC <DATVAL .R2> .R2>
+	       <EMIT <INSTRUCTION `ANDI  <ACSYM <DATVAL .R2>> 262143>>)>>
+

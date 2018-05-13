@@ -1,0 +1,380 @@
+<PACKAGE "CASE">
+
+<ENTRY CASE-FCN CASE-GEN>
+
+<USE "PASS1" "CODGEN" "CHKDCL" "CACS" "COMPDEC" "COMCOD">
+
+<SETG PMAX ,NUMPRI!-MUDDLE>
+
+<SETG MAX-DENSE 2>
+
+<NEWTYPE OR LIST>
+
+<FLOAD "PRCOD.NBIN">
+
+<DEFINE CASE-FCN (OBJ AP
+		  "AUX" (OP!-PACKAGE .PARENT) (PARENT .PARENT) (FLG T) (WIN T)
+			TYP (DF <>) P TEM X)
+   #DECL ((PARENT) <SPECIAL NODE> (OBJ) <FORM ANY> (VALUE) NODE)
+   <COND
+    (<AND
+      <G? <LENGTH .OBJ> 3>
+      <PROG ()
+	    <COND (<AND <TYPE? <SET X <2 .OBJ>> FORM>
+			<==? <LENGTH .X> 2>
+			<==? <1 .X> GVAL>
+			<MEMQ <SET P <2 .X>> '![==? TYPE? PRIMTYPE?!]>>)
+		  (ELSE <SET WIN <>>)>
+	    1>
+      <MAPF <>
+       <FUNCTION (O) 
+	  <COND
+	   (<AND .FLG <==? .O DEFAULT>> <SET DF T>)
+	   (<AND .DF <TYPE? .O LIST>> <SET DF <>> <SET FLG <>>)
+	   (<AND <NOT .DF> <TYPE? .O LIST> <NOT <EMPTY? .O>>>
+	    <COND
+	     (<SET TEM <VAL-CHK <1 .O>>>
+	      <COND (<ASSIGNED? TYP> <OR <==? .TYP <TYPE .TEM>> <SET WIN <>>>)
+		    (ELSE <SET TYP <TYPE .TEM>>)>)
+	     (<OR <TYPE? <SET TEM <1 .O>> OR>
+		  <AND <N==? .P ==?>
+		       <TYPE? .TEM SEGMENT>
+		       <==? <LENGTH .TEM> 2>
+		       <==? <1 .TEM> QUOTE>
+		       <NOT <MONAD? <SET TEM <2 .TEM>>>>>>
+	      <MAPF <>
+		    <FUNCTION (TY) 
+			    <COND (<NOT <SET TY <VAL-CHK .TY>>> <SET WIN <>>)
+				  (ELSE
+				   <COND (<ASSIGNED? TYP>
+					  <OR <==? .TYP <TYPE .TY>>
+					      <SET WIN <>>>)
+					 (ELSE <SET TYP <TYPE .TY>>)>)>>
+		    .TEM>)
+	     (ELSE <SET WIN <>>)>)
+	   (ELSE <MAPLEAVE <>>)>
+	  T>
+       <REST .OBJ 3>>
+      <NOT .DF>>
+     <COND (<AND .WIN
+		 <NOT <OR <AND <==? <TYPEPRIM .TYP> WORD> <==? .P ==?>>
+			  <AND <N==? .P ==?> <==? .TYP ATOM>>>>>
+	    <SET WIN <>>)>
+     <COND
+      (.WIN
+       <SET PARENT <NODECOND ,CASE-CODE .OP!-PACKAGE <> CASE ()>>
+       <PUT
+	.PARENT
+	,KIDS
+	(<PCOMP <2 .OBJ> .PARENT>
+	 <PCOMP <3 .OBJ> .PARENT>
+	 !<MAPF ,LIST
+	   <FUNCTION (CLA "AUX" TT) 
+		   #DECL ((CLA) <OR ATOM LIST> (TT) NODE)
+		   <COND (.DF <SET CLA (ELSE !.CLA)>)>
+		   <COND
+		    (<NOT <TYPE? .CLA ATOM>>
+		     <PUT <SET TT <NODEB ,BRANCH-CODE .PARENT <> <> ()>>
+			  ,PREDIC
+			  <PCOMP <COND (<TYPE? <SET TEM <1 .CLA>> SEGMENT>
+					<FORM QUOTE
+					      <MAPF ,LIST ,VAL-CHK <2 .TEM>>>)
+				       (<TYPE? .TEM OR>
+					<FORM QUOTE <MAPF ,LIST ,VAL-CHK .TEM>>)
+				       (ELSE <VAL-CHK .TEM>)>
+				 .TT>>
+		     <PUT .TT
+			  ,CLAUSES
+			  <MAPF ,LIST
+				<FUNCTION (O) <PCOMP .O .TT>>
+				<REST .CLA>>>
+		     <SET DF <>>
+		     .TT)
+		    (ELSE <SET DF T> <PCOMP .CLA .PARENT>)>>
+	   <REST .OBJ 3>>)>)
+      (ELSE <PMACRO .OBJ .OP!-PACKAGE>)>)
+    (ELSE <MESSAGE ERROR "BAD CASE USAGE" .OBJ>)>>
+
+<DEFINE VAL-CHK (TEM "AUX" TT) 
+	<OR <AND <OR <TYPE? .TEM ATOM> <==? <PRIMTYPE .TEM> WORD>>
+		 .TEM>
+	    <AND <TYPE? .TEM FORM>
+		 <==? <LENGTH .TEM> 2>
+		 <OR <AND <==? <1 .TEM> QUOTE> <2 .TEM>>
+		     <AND <==? <1 .TEM> GVAL> <MANIFESTQ <2 .TEM>> ,<2 .TEM>>
+		     <AND <==? <1 .TEM> ASCII>
+			  <TYPE? <2 .TEM> CHARACTER FIX>
+			  <EVAL .TEM>>>>
+	    <AND <TYPE? .TEM FORM>
+		 <==? <LENGTH .TEM> 3>
+		 <==? <1 .TEM> CHTYPE>
+		 <TYPE? <3 .TEM> ATOM>
+		 <NOT <TYPE? <2 .TEM> FORM LIST VECTOR UVECTOR SEGMENT>>
+		 <EVAL .TEM>>
+	    <AND <TYPE? .TEM FORM>
+		 <NOT <EMPTY? .TEM>>
+		 <TYPE? <SET TT <1 .TEM>> ATOM>
+		 <GASSIGNED? .TT>
+		 <TYPE? ,.TT MACRO>
+		 <VAL-CHK <EMACRO .TEM>>>>>
+
+<DEFINE EMACRO (OBJ "AUX" (ERR <GET ERROR!-INTERRUPTS INTERRUPT>) TEM) 
+	<COND (.ERR <OFF .ERR>)>
+	<ON "ERROR"
+	    <FUNCTION (FR "TUPLE" T) 
+		    <COND (<AND <GASSIGNED? MACACT> <LEGAL? ,MACACT>>
+			   <DISMISS [!.T] ,MACACT>)
+			  (ELSE <APPLY ,<PARSE "OVALRET!-COMBAT!-"> " ">)>>
+	    100>
+	<COND (<TYPE? <SET TEM
+			   <PROG MACACT () #DECL ((MACACT) <SPECIAL ACTIVATION>)
+				 <SETG MACACT .MACACT>
+				 (<EXPAND .OBJ>)>>
+		      VECTOR>
+	       <OFF "ERROR">
+	       <COND (.ERR <EVENT .ERR>)>
+	       <ERROR " MACRO EXPANSION LOSSAGE " !.TEM>)
+	      (ELSE <OFF "ERROR"> <AND .ERR <EVENT .ERR>> <1 .TEM>)>>
+
+
+
+<DEFINE DATFIX (W) <COND (<TYPE? .W DATUM> <DATUM !.W>) (ELSE .W)>>   
+
+<DEFINE CASE-GEN (N W
+		  "AUX" (K <KIDS .N>) (P <NODE-NAME <1 <KIDS <1 .K>>>>)
+			(N1 <2 .K>) (SKIP-CH <>) (RW .W) (LNT 0) (DF <>) DN
+			(DFT <MAKE:TAG "CASEDF">) MI MX RNGS W1 (TAGS (X))
+			(TBL <MAKE:TAG "CASETBL">) (ET <MAKE:TAG "CASEND">) NOW
+			DAC TG TT W2 (FIRST T) S1 (S2 ()) TNUM)
+   #DECL ((N DN N1) NODE (P) ATOM (S1) SAVED-STATE
+	  (S2) <LIST [REST SAVED-STATE]> (RNGS) UVECTOR)
+   <REGSTO <>>
+   <SET W
+	<COND (<==? .W FLUSHED> FLUSHED) (ELSE <GOODACS .N .W>)>>
+   <PREFER-DATUM .W>
+   <SET W2
+	<GEN .N1
+	     <COND (<AND <==? .P ==?> <SET TT <ISTYPE? <RESULT-TYPE .N1>>>>
+		    <DATUM .TT ANY-AC>)
+		   (ELSE DONT-CARE)>>>
+   <SET K
+	<MAPR ,UVECTOR
+	      <FUNCTION (NP "AUX" (N <1 .NP>)) 
+		      #DECL ((N) NODE)
+		      <COND (<==? <NODE-TYPE .N> ,QUOTE-CODE>
+			     <SET DF T>
+			     <MAPRET>)>
+		      <COND (.DF <SET DN .N> <SET DF <>> <MAPRET>)>
+		      <COND (<==? <RESULT-TYPE .N> FALSE>
+			     <MESSAGE NOTE " CASE PHRASE ALWAYS FALSE " .N>
+			     <MAPRET>)>
+		      <COND (<AND <==? <RESULT-TYPE .N> ATOM>
+				  <NOT <EMPTY? <REST .NP>>>>
+			     <MESSAGE NOTE
+				      " NON REACHABLE CASE CLAUSE(S) "
+				      <2 .NP>>
+			     (.N () FOO))>
+		      (.N () FOO)>
+	      <REST .K 2>>>
+   <SET LNT
+    <LENGTH
+     <SET RNGS
+      <MAPF ,UVECTOR
+       <FUNCTION (L "AUX" (N <1 .L>) (NN <NODE-NAME <PREDIC .N>>)) 
+	  #DECL ((N) NODE)
+	  <PUT .L 3 <MAKE:TAG "CASE">>
+	  <COND
+	   (<==? .P ==?>
+	    <COND (<TYPE? .NN LIST>
+		   <MAPR <> <FUNCTION (L) <PUT .L 1 <FIX <1 .L>>>> .NN>)
+		  (ELSE <SET NN <CHTYPE .NN FIX>>)>)
+	   (<==? .P TYPE?>
+	    <COND (<TYPE? .NN LIST>
+		   <MAPR <>
+			 <FUNCTION (L "AUX" TT) 
+				 <COND (<G? <SET TT <CHTYPE <1 .L> FIX>> ,PMAX>
+					<SET SKIP-CH T>)>
+				 <PUT .L 1 .TT>>
+			 .NN>)
+		  (ELSE
+		   <COND (<G? <SET NN <CHTYPE <TYPE-C .NN> FIX>> ,PMAX>
+			  <SET SKIP-CH T>)>
+		   .NN)>)
+	   (<TYPE? .NN LIST>
+	    <MAPR <>
+		  <FUNCTION (L) <PUT .L 1 <CHTYPE <PTYPE-C <1 .L>> FIX>>>
+		  .NN>)
+	   (ELSE <SET NN <CHTYPE <PTYPE-C .NN> FIX>>)>
+	  <COND (<TYPE? .NN LIST> <PUT .L 2 .NN> <MAPRET !.NN>)
+		(ELSE <PUT .L 2 (.NN)> .NN)>>
+       .K>>>>
+   <SORT <> .RNGS>
+   <COND (<L=? .LNT 3> <SET SKIP-CH T>)
+	 (<G? <- <SET MX <NTH .RNGS .LNT>> <SET MI <SET TNUM <1 .RNGS>>>>
+		  <* .LNT ,MAX-DENSE>>
+	  <SET SKIP-CH T>)>
+   <MAPF <>
+	 <FUNCTION (NUM) 
+		 <COND (<==? .NUM .TNUM>
+			<MESSAGE ERROR " DUPLICATE CASE ENTRY " .N>)>
+		 <SET TNUM .NUM>>
+	 <REST .RNGS>>
+   <COND
+    (<==? .P ==?>
+     <COND
+      (<NOT .TT>
+       <EMIT <INSTRUCTION GETYP!-OP!-PACKAGE `O  !<ADDR:TYPE .W2>>>
+       <EMIT
+	<INSTRUCTION
+	 `CAIE 
+	 `O 
+	 <FORM
+	  TYPE-CODE!-OP!-PACKAGE
+	  <TYPE <COND (<TYPE? <SET TT <NODE-NAME <PREDIC <1 <1 .K>>>>> LIST>
+		       <1 .TT>)
+		      (ELSE .TT)>>>>>
+       <BRANCH:TAG .DFT>)>
+     <SET W2 <TOACV .W2>>
+     <SET DAC <DATVAL .W2>>)
+    (<==? .P TYPE?>
+     <SET DAC <GETREG <>>>
+     <EMIT <INSTRUCTION GETYP!-OP!-PACKAGE
+			<ACSYM .DAC>
+			!<ADDR:TYPE .W2>>>)
+    (ELSE
+     <SET DAC <GETREG <>>>
+     <EMIT <INSTRUCTION GETYP!-OP!-PACKAGE
+			<ACSYM .DAC>
+			!<ADDR:TYPE .W2>>>
+     <EMIT <INSTRUCTION `ASH  <ACSYM .DAC> 1>>
+     <EMIT <INSTRUCTION `ADD  <ACSYM .DAC> TYPVEC!-MUDDLE 1 `(TVP) >>
+     <EMIT <INSTRUCTION `LDB 
+			<ACSYM .DAC>
+			[<FORM (576) (<ADDRSYM .DAC>)>]>>)>
+   <COND
+    (<NOT .SKIP-CH>
+     <MUNG-AC .DAC .W2>
+     <RET-TMP-AC .W2>
+     <COND (<0? .MI> <EMIT <INSTRUCTION `JUMPL  <ACSYM .DAC> .DFT>>)
+	   (<==? .MI 1>
+	    <EMIT <INSTRUCTION `JUMPLE  <ACSYM .DAC> .DFT>>)
+	   (ELSE
+	    <IMCHK '(`CAMGE `CAIGE) <ACSYM .DAC> <REFERENCE:ADR .MI>>
+	    <BRANCH:TAG .DFT>)>
+     <COND (<0? .MX> <EMIT <INSTRUCTION `JUMPG  <ACSYM .DAC> .DFT>>)
+	   (<==? .MX -1>
+	    <EMIT <INSTRUCTION `JUMPGE  <ACSYM .DAC> .DFT>>)
+	   (ELSE
+	    <IMCHK '(`CAMLE `CAILE) <ACSYM .DAC> <REFERENCE:ADR .MX>>
+	    <BRANCH:TAG .DFT>)>
+     <EMIT <INSTRUCTION `ADD  <ACSYM .DAC> [<INSTRUCTION `SETZ .TBL>]>>
+     <EMIT <INSTRUCTION `JRST  `@  <- .MI> (<ADDRSYM .DAC>)>>
+     <LABEL:TAG .DFT>
+     <SET S1 <SAVE-STATE>>
+     <COND (<ASSIGNED? DN>
+	    <SET W1 <SEQ-GEN <KIDS .DN> <DATFIX .W>>>
+	    <ACFIX .W .W1>
+	    <COND (<N==? <RESULT-TYPE .DN> NO-RETURN>
+		   <SET S2 (<SAVE-STATE>)>
+		   <BRANCH:TAG .ET>)>
+	    <VAR-STORE <>>)
+	   (ELSE
+	    <SET W1 <MOVE:ARG <REFERENCE <>> <DATFIX .W>>>
+	    <ACFIX .W .W1>
+	    <SET S2 (<SAVE-STATE>)>
+	    <VAR-STORE <>>
+	    <BRANCH:TAG .ET>)>
+     <LABEL:TAG .TBL>
+     <SET NOW <+ .MI 1>>
+     <REPEAT ()
+	     <COND (<EMPTY? .RNGS> <RETURN>)>
+	     <COND (<N==? .NOW <+ <1 .RNGS> 1>>
+		    <SET NOW <+ .NOW 1>>
+		    <EMIT <INSTRUCTION `SETZ .DFT>>)
+		   (ELSE
+		    <EMIT <INSTRUCTION `SETZ <DOTAGS <1 .RNGS> .K>>>
+		    <SET NOW <+ .NOW 1>>
+		    <SET RNGS <REST .RNGS>>)>>
+     <MAPF <>
+      <FUNCTION (L "AUX" (N <1 .L>) (TG <3 .L>)) 
+	 <RET-TMP-AC .W1>
+	 <RESTORE-STATE .S1>
+	 <COND (<NOT .FIRST> <OR <==? .W1 ,NO-DATUM> <BRANCH:TAG .ET>>)
+	       (ELSE <SET FIRST <>>)>
+	 <LABEL:TAG .TG>
+	 <COND
+	  (<NOT <EMPTY? <KIDS .N>>>
+	   <SET W1 <SEQ-GEN <KIDS .N> <DATFIX .W>>>)
+	  (ELSE
+	   <SET W1
+		<MOVE:ARG
+		 <REFERENCE <COND (<==? .P ==?> T)
+				  (ELSE <NODE-NAME <PREDIC .N>>)>>
+		 <DATFIX .W>>>)>
+	 <OR <==? .W1 ,NO-DATUM> <SET S2 (<SAVE-STATE> !.S2)>>
+	 <ACFIX .W .W1>>
+      .K>)
+    (ELSE
+     <RET-TMP-AC .W2>
+     <SET S1 <SAVE-STATE>>
+     <REPEAT (L)
+	     <COND (<EMPTY? .K> <RETURN>)>
+	     <DISTAG <2 <SET L <1 .K>>> .DAC <SET TG <3 .L>>>
+	     <COND (<NOT <EMPTY? <KIDS <1 .L>>>>
+		    <SET W1 <SEQ-GEN <KIDS <1 .L>> <DATFIX .W>>>)
+		   (ELSE <SET W1 <MOVE:ARG <REFERENCE T> <DATFIX .W>>>)>
+	     <OR <==? .W1 ,NO-DATUM> <SET S2 (<SAVE-STATE> !.S2)>>
+	     <VAR-STORE <>>
+	     <RESTORE-STATE .S1>
+	     <ACFIX .W .W1>
+	     <OR <==? .W1 ,NO-DATUM> <BRANCH:TAG .ET>>
+	     <LABEL:TAG .TG>
+	     <SET K <REST .K>>
+	     <RET-TMP-AC .W1>>
+     <COND (<ASSIGNED? DN> <SET W1 <SEQ-GEN <KIDS .DN> <DATFIX .W>>>)
+	   (ELSE <SET W1 <MOVE:ARG <REFERENCE <>> <DATFIX .W>>>)>
+     <OR <==? .W1 ,NO-DATUM> <SET S2 (<SAVE-STATE> !.S2)>>)>
+   <COND (<AND <TYPE? .W DATUM> <N==? <RESULT-TYPE .N> NO-RETURN>>
+	  <SET W2 .W>
+	  <AND <ISTYPE? <DATTYP .W2>>
+	       <TYPE? <DATTYP .W1> AC>
+	       <NOT <==? <DATTYP .W2> <DATTYP .W1>>>
+	       <RET-TMP-AC <DATTYP .W1> .W1>>
+	  <AND <TYPE? <DATTYP .W2> AC>
+	       <FIX-ACLINK <DATTYP .W2> .W2 .W1>>
+	  <AND <TYPE? <DATVAL .W2> AC>
+	       <FIX-ACLINK <DATVAL .W2> .W2 .W1>>)>
+   <MERGE-STATES .S2>
+   <LABEL:TAG .ET>
+   <MOVE:ARG .W .RW>>
+
+<DEFINE DOTAGS (N L) 
+	#DECL ((N) FIX (L) <UVECTOR [REST <LIST NODE <LIST [REST FIX]> ATOM>]>)
+	<MAPF <>
+	      <FUNCTION (LL) <COND (<MEMQ .N <2 .LL>> <MAPLEAVE <3 .LL>>)>>
+	      .L>> 
+ 
+<DEFINE DISTAG (L DAC ATM "AUX" TG) 
+	#DECL ((L) <LIST [REST FIX]> (DAC) AC (ATM) ATOM)
+	<COND (<G=? <LENGTH .L> 2> <SET TG <MAKE:TAG>>)>
+	<REPEAT ()
+		<COND (<EMPTY? .L>
+		       <BRANCH:TAG .ATM>
+		       <AND <ASSIGNED? TG> <LABEL:TAG .TG>>
+		       <RETURN>)
+		      (<EMPTY? <REST .L>>
+		       <IMCHK '(`CAME `CAIE) <ACSYM .DAC> <REFERENCE:ADR <1 .L>>>
+		       <BRANCH:TAG .ATM>
+		       <AND <ASSIGNED? TG> <LABEL:TAG .TG>>
+		       <RETURN>)
+		      (ELSE
+		       <IMCHK '(`CAME `CAIE) <ACSYM .DAC> <REFERENCE:ADR <1 .L>>>
+		       <IMCHK '(`CAMN `CAIN) <ACSYM .DAC> <REFERENCE:ADR <2 .L>>>
+		       <BRANCH:TAG .TG>)>
+		<SET L <REST .L 2>>>> 
+ 
+<DEFINE PTYPE-C (ATM) <PRIM-CODE <TYPE-C .ATM>>>
+
+<ENDPACKAGE>  
+ 
+

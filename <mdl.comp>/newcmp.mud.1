@@ -1,0 +1,43 @@
+
+	<TITLE	NEWCOMP>
+
+	<PSEUDO <SETG *SSNAM *400016*>>
+	<PSEUDO <SETG *RSNAM *16*>>
+
+	<SETZB	A* B>
+	<*SETM2 A*>
+	<MOVE A* [<*CLOSE >]>
+	<MOVEI O* *20*>
+
+LP	<XCT A>
+	<ADD A* [<A*>]>
+	<SOJN O* LP>
+	<*SUSET [<(*RSNAM)A>]>
+	<MOVE B* [<SIXBIT "SYS1">]>
+	<*SUSET [<(*SSNAM)B>]>
+	<*OPEN A* MUDOPN>
+	<*VALUE>
+SELFLD	<*SUSET [<(*SSNAM)A>]>
+	<MOVSI P* STUFF>
+	<BLT P* P>
+	<JRST 1>
+
+MUDOPN	<SIXBIT "  $DSK">
+	<SIXBIT "TS    ">
+	<SIXBIT "NPCOMP">
+
+STUFF	<SIXBIT "NCOMP ">
+	<*CORE 1>
+	<*VALUE>
+	<*CALL *10*>
+	<*VALUE >
+	<*IOT A* A>
+	<*CLOSE A*>
+	<JRST @ A>
+
+	<SETZ>
+	<SIXBIT "LOAD">
+	<(*1000*) *777777*>
+	<SETZI 1>
+
+

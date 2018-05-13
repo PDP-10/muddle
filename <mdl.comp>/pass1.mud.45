@@ -1,0 +1,1145 @@
+<PACKAGE "PASS1">
+
+<ENTRY PASS1 PCOMP PMACRO PAPPLY-OBJECT PAPPLY-TYPE PTHIS-OBJECT PTHIS-TYPE
+       GEN-D ACT-FIX FIND:DECL SEG? PSUBR-C>
+
+<USE "CHKDCL" "COMPDEC" "CDRIVE">
+
+
+"	This file contains the first pass of the MUDDLE compiler.
+The functions therein take a MUDDLE function and build a more detailed
+model of it.  Each entity in the function is represented by an object
+of type NODE.  The entire function is represented by the functions node
+and it points to the rest of the nodes for the function."
+
+"	Nodes vary in complexity and size depending on what they represent.
+A function or prog/repeat node is contains more information than a node
+for a quoted object.  All nodes have some fields in common to allow
+general programs to traverse the model."
+
+"	The model built by PASS1 is used by the analyzer (SYMANA), the
+variable allocator (VARANA) and the code generator (CODGEN).  In some
+cases the analyzers and generators for certain classes of SUBRs are 
+together in their own files (e.g.  CARITH, STRUCT, ISTRUC)."
+
+"	This the top level program for PASS1.  It takes a function as
+input and returns the data structure representing the model."
+
+<DEFINE PASS1 (FUNC
+	       "OPTIONAL" (NAME <>) (JUSTDCL <>) (RNAME .NAME)
+	       "AUX" RESULT (VARTBL ,LVARTBL) (DCL #DECL ()) (ARGL ())
+		     (HATOM <>) (TT ()) (FCN .FUNC) TEM (RQRG 0) (TRG 0) INAME)
+	#DECL ((FUNC) FUNCTION (VARTBL) <SPECIAL SYMTAB>
+	       (RQRG TRG) <SPECIAL FIX> (FCN) <PRIMTYPE LIST> (ARGL TT) LIST
+	       (RESULT) <SPECIAL NODE> (INAME) <UVECTOR [REST ATOM]>)
+	<AND <EMPTY? .FCN> <MESSAGE ERROR " EMPTY FUNCTION ">>
+	<AND <TYPE? <1 .FCN> ATOM>
+	    <SET HATOM <1 .FCN>>
+	    <SET FCN <REST .FCN>>>
+	<AND <EMPTY? .FCN> <MESSAGE ERROR " NO ARG LIST ">>
+	<SET ARGL <1 .FCN>>
+	<SET FCN <REST .FCN>>
+	<COND (<AND <NOT <EMPTY? .FCN>> <TYPE? <1 .FCN> DECL>>
+	       <SET DCL <1 .FCN>>
+	       <SET FCN <REST .FCN>>)>
+	<AND <EMPTY? .FCN> <MESSAGE ERROR " NO BODY ">>
+	<COND (<SET TEM <GET .RNAME .IND>>
+	       <SET RESULT .TEM>
+	       <SET VARTBL <SYMTAB .RESULT>>)
+	      (ELSE
+	       <SET TT <GEN-D .ARGL .DCL .HATOM>>
+	       <SET INAME
+		    <IUVECTOR <- .TRG .RQRG -1> '<MAKE:TAG <PNAME .NAME>>>>
+	       <SET RESULT
+		    <NODEF ,FUNCTION-CODE
+			   ()
+			   <FIND:DECL VALUE .DCL>
+			   .INAME
+			   ()
+			   <1 .TT>
+			   <2 .TT>
+			   .HATOM
+			   .VARTBL
+			   <COND (<==? <LENGTH .TT> 3> <3 .TT>)>
+			   .TRG
+			   .RQRG>>
+	       <ACT-FIX .RESULT <2 .TT>>
+	       <PUT .RNAME .IND .RESULT>
+	       <PUT .RESULT
+		    ,RSUBR-DECLS
+		    ("VALUE" <RESULT-TYPE .RESULT> !<RSUBR-DECLS .RESULT>)>)>
+	<OR .JUSTDCL
+		<PUT .RESULT
+		     ,KIDS
+		     <MAPF ,LIST <FUNCTION (O) <PCOMP .O .RESULT>> .FCN>>>
+	.RESULT>
+
+"	This function (and others on this page) take an arg list and
+decls and parses them producing 3 things.
+
+	1) An RSUBR decl list.
+
+	2) A machine readable binding specification.
+
+	3) Possibly an AC call spec.
+
+Atoms are also entered into the symbol table."
+
+<DEFINE GEN-D (ARGL DCL HATOM "OPTIONAL" (ACS:TOP <COND (.GLUE '(() STACK)) (T (()))>)
+	       "AUX" (SVTBL .VARTBL) (ACS:BOT <CHTYPE .ACS:TOP LIST>) (NACS 1)
+		     (RES:TOP (())) (RES:BOT .RES:TOP) (ARGN 1) (BNDL:TOP (()))
+		     (BNDL:BOT .BNDL:TOP) (MODE ,TOT-MODES) (DOIT ,INIT-D)
+		     (ST <>) T T1 SVT (IX 0) TIX VIX)
+   #DECL ((ACS:BOT RES:BOT BNDL:TOP BNDL:BOT) <SPECIAL LIST> (RES:TOP) LIST
+	  (ACS:TOP) <SPECIAL <PRIMTYPE LIST>> (NACS ARGN) <SPECIAL FIX>
+	  (VIX) <VECTOR [REST STRING]> (MODE) <SPECIAL <VECTOR [REST STRING]>>
+	  (IX) FIX (DOIT) <SPECIAL ANY> (ARGL) LIST (SVTBL SVT) SYMTAB
+	  (DCL) <SPECIAL <PRIMTYPE LIST>>)
+   <REPEAT ()
+	   <AND <EMPTY? .ARGL> <RETURN>>
+	   <COND (<SET T1 <TYPE? <SET T <1 .ARGL>> ATOM FORM LIST>>
+		  <SET ST <>>
+		  <APPLY .DOIT .T .T1>)
+		 (<TYPE? .T STRING>
+		  <AND .ST <MESSAGE ERROR " TWO DECL STRINGS IN A ROW ">>
+		  <SET ST T>
+		  <OR <SET TIX <MEMBER .T .MODE>>
+			  <MESSAGE ERROR " UNRECOGNIZED STRING IN DECL " .T>>
+		  <SET VIX .TIX>
+		  <SET MODE <REST .MODE <NTH ,RESTS <SET IX <LENGTH .VIX>>>>>
+		  <SET DOIT <NTH ,DOITS .IX>>
+		  <COND (<OR <L? .IX 5> <G? .IX 8>>)
+			(ELSE <PUT-RES (<COND (<=? <1 .ARGL> "OPT">
+					       "OPTIONAL")
+					      (ELSE <1 .ARGL>)>)>)>)
+		 (ELSE <MESSAGE ERROR " BAD THING IN DECL " .T>)>
+	   <SET ARGL <REST .ARGL>>>
+   <AND .HATOM <ACT-D .HATOM <TYPE .HATOM>>>
+   <REPEAT (DC DC1)
+	   #DECL ((DC1) FORM (DC) ANY (VARTBL) <SPECIAL SYMTAB>)
+	   <COND (<EMPTY? .DCL> <RETURN>)
+		 (<EMPTY? <REST .DCL>> <MESSAGE ERROR  "DECL LIST AT END OF DECL">)>
+	   <SET DC <2 .DCL>>
+	   <COND (<AND <TYPE? .DC FORM>
+		       <SET DC1 .DC>
+		       <==? <LENGTH .DC1> 2>
+		       <OR <==? <1 .DC1> SPECIAL> <==? <1 .DC1> UNSPECIAL>>>
+		  <SET DC <2 .DC1>>)>
+	   <MAPF <>
+		 <FUNCTION (ATM)
+			 <OR <==? .ATM VALUE>
+			     <SRCH-SYM .ATM>
+			     <ADDVAR .ATM T -1 0 T (.DC) <> <>>>>
+		 <CHTYPE <1 .DCL> LIST>>
+	   <SET DCL <REST .DCL 2>>>
+   <SET SVT .VARTBL>
+   <SET VARTBL .SVTBL>
+   <COND (<N==? .SVTBL .SVT>
+      <REPEAT ((SV .SVT))
+	   #DECL ((SV) SYMTAB)
+	   <COND (<==? <NEXT-SYM .SV> .SVTBL>
+		  <PUT .SV ,NEXT-SYM .VARTBL>
+		  <SET VARTBL .SVT>
+		  <RETURN>)
+		 (ELSE <SET SV <NEXT-SYM .SV>>)>>)>
+   <AND <L? <SET TRG <- .ARGN 1>> 0> <SET RQRG -1>>
+   <COND (<OR <NOT .ACS:TOP> <=? .ACS:TOP '(() STACK)>>
+	  <REPEAT ((BB ()) B (CHNG T) (N1 0) (N2 0) TEM)
+		  #DECL ((BB B) <LIST [REST SYMTAB]> (N1 N2) FIX (TEM) SYMTAB)
+		  <COND (<EMPTY? .BB>
+			 <OR .CHNG <RETURN>>
+			 <SET CHNG <>>
+			 <SET N1 0>
+			 <SET B .BNDL:TOP>
+			 <SET BB <REST .B>>
+			 <AGAIN>)>
+		  <COND (<NOT <0? <SET N2 <ARGNUM-SYM <SET TEM <1 .BB>>>>>>
+			 <COND (<G? .N1 .N2>
+				<PUT .BB 1 <1 .B>>
+				<PUT .B 1 .TEM>
+				<SET CHNG T>)
+			       (ELSE <SET N1 .N2>)>)
+		        (ELSE <SET BB ()> <AGAIN>)>
+		  <SET B <REST .B>>
+		  <SET BB <REST .BB>>>)>
+   (<REST .RES:TOP>
+    <REST .BNDL:TOP>
+    !<COND (.ACS:TOP (<REST .ACS:TOP>)) (ELSE ())!>)>
+
+
+<DEFINE SRCH-SYM (ATM "AUX" (TB .VARTBL))
+	#DECL ((ATM) ATOM (TB) <PRIMTYPE VECTOR>)
+	<REPEAT ()
+		<AND <EMPTY? .TB> <RETURN <>>>
+		<AND <==? .ATM <NAME-SYM .TB>> <RETURN .TB>>
+		<SET TB <NEXT-SYM .TB>>>>
+
+"Vector of legal strings in decl list."
+
+<SETG TOT-MODES
+      ["BIND"
+       "CALL"
+       "OPT"
+       "OPTIONAL"
+       "ARGS"
+       "TUPLE"
+       "AUX"
+       "EXTRA"
+       "ACT"
+       "NAME"]>
+
+"Amount to rest off decl vector after each encounter."
+
+<SETG RESTS ![1 2 1 2 1 2 1 2 1 1!]>
+
+"This function used for normal args when \"BIND\" and \"CALL\" still possible."
+
+<DEFINE INIT-D (OBJ TYP) #DECL ((MODE) <VECTOR STRING>)
+	<SET MODE <REST .MODE>> <INIT1-D .OBJ .TYP>>
+
+"This function for normal args when \"CALL\" still possible."
+
+<DEFINE INIT1-D (OBJ TYP)
+	#DECL ((MODE) <VECTOR STRING>)
+	<SET MODE <REST .MODE>>
+	<SET DOIT ,NORM-D>
+	<NORM-D .OBJ .TYP>>
+
+"Handle a normal argument or quoted normal argument."
+
+<DEFINE NORM-D (OBJ TYP) #DECL ((TYP) ATOM (RQRG ARGN) FIX (DCL) DECL)
+	<AND <==? .TYP LIST>
+	    <MESSAGE ERROR " LIST NOT IN OPT OR AUX " .OBJ>>
+	<SET RQRG <+ .RQRG 1>>
+	<COND (<==? .TYP ATOM>
+	       <PUT-RES (<PUT-DCL 13 .OBJ <><FIND:DECL .OBJ .DCL> T>)>)
+	      (<SET OBJ <QUOTCH .OBJ>>
+	       <PUT-RES ("QUOTE" <PUT-DCL 12 .OBJ <> <FIND:DECL .OBJ .DCL> T>)>)>
+	<SET ARGN <+ .ARGN 1>>>
+
+"Handle \"BIND\" decl."
+
+<DEFINE BIND-D (OBJ TYP "AUX" DC) #DECL ((TYP) ATOM (ARGN) FIX (DCL) DECL)
+	<SET ACS:TOP <>>
+	<OR <==? .TYP ATOM> <MESSAGE ERROR " BAD BIND " .OBJ>>
+	<SET DC <PUT-DCL 11 .OBJ <> <FIND:DECL .OBJ .DCL> T>>
+	<TYPE-ATOM-OK? .DC ENVIRONMENT .OBJ>
+	<SET DOIT ,INIT1-D>>
+
+"Handle \"CALL\" decl."
+
+<DEFINE CALL-D (OBJ TYP "AUX" DC) #DECL ((TYP) ATOM (RQRG ARGN) FIX (DCL) DECL)
+	<SET RQRG <+ .RQRG 1>>
+	<OR <==? .TYP ATOM> <MESSAGE ERROR " BAD CALL " .OBJ>>
+	<PUT-RES (<SET DC <PUT-DCL 10 .OBJ <> <FIND:DECL .OBJ .DCL> T>>)>
+	<TYPE-ATOM-OK? .DC FORM .OBJ>
+	<SET ARGN <+ .ARGN 1>>
+	<SET DOIT ,ERR-D>>
+
+"Flush on extra atoms after \"CALL\", \"ARGS\" etc."
+
+<DEFINE ERR-D (OBJ TYPE) <MESSAGE ERROR " BAD SYNTAX ARGLIST " .OBJ>>
+
+"Handle \"OPTIONAL\" decl."
+
+<DEFINE OPT-D (OBJ TYP "AUX" DC OBJ1)
+	#DECL ((TYP) ATOM (ARGN) FIX (DCL) DECL)
+	<COND (.ACS:TOP <SET ACS:TOP '(() STACK)>)> ;"Temporary until know how to win."
+	<COND (<==? .TYP ATOM>
+	       <PUT-RES (<PUT-DCL 9 .OBJ <><FIND:DECL .OBJ .DCL> <>>)>)
+	      (<==? .TYP FORM>
+	       <SET OBJ <QUOTCH .OBJ>>
+	       <PUT-RES ("QUOTE" <PUT-DCL 8 .OBJ <> <FIND:DECL .OBJ .DCL> <>>)>)
+	      (<TYPE? <SET OBJ1 <LISTCH .OBJ>> ATOM>
+	       <PUT-RES (<PAUX .OBJ1 <2 <CHTYPE .OBJ LIST>> <FIND:DECL .OBJ1 .DCL> 7>)>)
+	      (<TYPE? .OBJ1 FORM>
+	       <SET OBJ1 <QUOTCH .OBJ1>>
+	       <PUT-RES ("QUOTE"
+			 <PAUX .OBJ1 <2 <CHTYPE .OBJ LIST>> <FIND:DECL .OBJ1 .DCL> 6>)>)
+	      (ELSE <MESSAGE ERROR "BAD USE OF OPTIONAL " .OBJ>)>
+	<SET ARGN <+ .ARGN 1>>>
+
+"Handle \"ARGS\" decl."
+
+<DEFINE ARGS-D (OBJ TYP "AUX" DC)
+	#DECL ((TYP) ATOM (RQRG ARGN) FIX (DCL) DECL (BNDL:BOT) <LIST SYMTAB>)
+	<COND (.ACS:TOP <SET ACS:TOP '(() STACK)>)> ;"Temporary until know how to win."
+	<OR <==? .TYP ATOM> <MESSAGE ERROR " BAD ARGS " .OBJ>>
+	<PUT-RES (<SET DC <PUT-DCL 5 .OBJ <> <FIND:DECL .OBJ .DCL> <>>>)>
+	<TYPE-ATOM-OK? .DC LIST .OBJ>
+	<SET DOIT ,ERR-D>
+	<SET ARGN <+ .ARGN 1>>>
+
+"Handle \"TUPLE\" decl."
+
+<DEFINE TUP-D (OBJ TYP "AUX" DC)
+	#DECL ((TYP) ATOM (ARGN) FIX (DCL) DECL)
+	<OR <==? .TYP ATOM> <MESSAGE ERROR " BAD TUPLE " .OBJ>>
+	<COND (<1? .ARGN> <SET ARGN 0> <SET ACS:TOP '(() STACK)>)
+	      (ELSE <SET ACS:TOP <>>)>
+	<PUT-RES (<SET DC <PUT-DCL 4 .OBJ <> <FIND:DECL .OBJ .DCL> <>>>)>
+	<TYPE-ATOM-OK? .DC TUPLE .OBJ>
+	<SET DOIT ,ERR-D>>
+
+
+"Handle \"AUX\" decl."
+
+<DEFINE AUX-D (OBJ TYP "AUX" DC OBJ1)
+	#DECL ((TYP) ATOM (ARGN) FIX (DCL) DECL)
+	<AND <==? .TYP FORM> <MESSAGE ERROR " QUOTED AUX " .OBJ>>
+	<COND (<==? .TYP ATOM>
+	       <PUT-DCL 3 .OBJ <> <FIND:DECL .OBJ .DCL> <>>)
+	      (<TYPE? <SET OBJ1 <LISTCH .OBJ>> ATOM>
+	       <PAUX .OBJ1 <2 .OBJ> <FIND:DECL .OBJ1 .DCL> 2>)
+	      (ELSE <MESSAGE ERROR " QUOTED AUX " .OBJ>)>>
+
+"Handle \"NAME\" and \"ACT\" decl."
+
+<DEFINE ACT-D (OBJ TYP "AUX" DC)
+	#DECL ((TYP) ATOM (ARGN) FIX (DCL) DECL)
+	<OR <==? .TYP ATOM>
+		<MESSAGE ERROR " BAD ACTIVATION " .OBJ>>
+	<SET DC <PUT-DCL 1 .OBJ <> <FIND:DECL .OBJ .DCL> <>>>
+	<TYPE-ATOM-OK? .DC ACTIVATION .OBJ>>
+
+"Fixup activation atoms after node generated."
+
+<DEFINE ACT-FIX (N L "AUX" (FLG <>)) #DECL ((N) NODE (L) <LIST [REST SYMTAB]>)
+	<REPEAT (SYM) #DECL ((SYM) SYMTAB)
+		<AND <EMPTY? .L> <RETURN .FLG>>
+		<COND (<AND <==? <CODE-SYM <SET SYM <1 .L>>> 1>
+			    <SET FLG T>
+			    <NOT <SPEC-SYM .SYM>>>
+		       <PUT .SYM ,RET-AGAIN-ONLY .N>)>
+		<SET L <REST .L>>>>
+
+"Table of varius decl handlers."
+
+<SETG DOITS
+      ![,ACT-D ,ACT-D ,AUX-D ,AUX-D ,TUP-D ,ARGS-D ,OPT-D ,OPT-D ,CALL-D
+	,BIND-D!]>
+
+<GDECL (DOITS) UVECTOR (TOT-MODES) <VECTOR [REST STRING]> (RESTS) <UVECTOR [REST FIX]>>
+
+"Check for quoted arguments."
+
+<DEFINE QUOTCH (OB) #DECL ((OB) FORM (VALUE) ATOM)
+	<COND (<AND <==? <LENGTH .OB> 2>
+		    <==? <1 .OB> QUOTE>
+		    <TYPE? <2 .OB> ATOM>>
+	       <2 .OB>)
+	      (ELSE <MESSAGE ERROR " BAD FORM IN ARGLIST " .OB> T)>>
+
+"Chech for (arg init) or ('arg init)."
+
+<DEFINE LISTCH (OB) #DECL ((OB) LIST)
+	<COND (<AND <==? <LENGTH .OB> 2>
+		    <OR <TYPE? <1 .OB> ATOM>
+			<AND <TYPE? <1 .OB> FORM> <QUOTCH <1 .OB>>>>>
+	       <1 .OB>)
+	      (ELSE <MESSAGE ERROR " BAD LIST IN ARGLIST " .OB> T)>>
+
+"Add a decl to RSUBR decls and update AC call spec."
+
+<DEFINE PUT-RES (L "AUX" TY)
+    #DECL ((L) LIST (NACS) FIX (ACS:BOT RES:BOT) LIST)
+    <PROG ()
+	<SET RES:BOT <REST <PUTREST .RES:BOT .L> <LENGTH .L>>>
+	<COND (<AND .ACS:TOP <OR <G? .NACS 5> <=? .ACS:TOP '(() STACK)>>>
+	       <SET ACS:TOP '(() STACK)> <RETURN>)>
+	<COND (<AND .ACS:TOP
+		    <REPEAT ()
+			<COND (<EMPTY? .L><RETURN <>>)
+			      (<TYPE? <SET TY <1 .L>> STRING>
+			       <SET L <REST .L>>)
+			      (ELSE <RETURN T>)>>>
+	       <COND (<SET TY <ISTYPE-GOOD? .TY>>
+		      <SET ACS:BOT <REST <PUTREST .ACS:BOT
+						  ((.TY <NTH ,ALLACS .NACS>))>>>
+		      <SET NACS <+ .NACS 1>>)
+		     (<L? <SET NACS <+ .NACS 2>> 7>
+		      <SET ACS:BOT <REST <PUTREST .ACS:BOT
+						  ((<NTH ,ALLACS <- .NACS 2>>
+						   <NTH ,ALLACS <- .NACS 1>>))>>>)
+		     (ELSE <SET ACS:TOP '(() STACK)>)>)>
+	T>>
+
+"Add code to set up a certain kind of argument."
+
+<DEFINE PUT-DCL (COD ATM VAL DC COM "AUX" SPC DC1 TT SYM)
+	#DECL ((DC1) FORM (ATM) ATOM (BNDL:BOT BNDL:TOP TT) LIST (COD) FIX
+	       (SYM) SYMTAB)
+	<COND (<AND <TYPE? .DC FORM>
+		    <SET DC1 .DC>
+		    <==? <LENGTH .DC1> 2>
+		    <OR <SET SPC <==? <1 .DC1> SPECIAL>>
+			<==? <1 .DC1> UNSPECIAL>>>
+	       <SET DC <2 .DC1>>)
+	      (ELSE <SET SPC .GLOSP>)>
+	<SET SYM <ADDVAR .ATM .SPC .COD .ARGN T (.DC) <> .VAL>>
+	<COND (<AND .COM <NOT <SPEC-SYM .SYM>>>	;"Can specials commute?"
+	       <SET TT <REST .BNDL:TOP>>
+	       <PUTREST .BNDL:TOP (.SYM !.TT)>
+	       <AND <EMPTY? .TT> <SET BNDL:BOT <REST .BNDL:TOP>>>)
+	      (ELSE <SET BNDL:BOT <REST <PUTREST .BNDL:BOT (.SYM)>>>)>
+	.DC>
+
+"Find decl associated with a variable, if none, use ANY."
+
+<DEFINE FIND:DECL (ATM "OPTIONAL" (DC .DECLS)) 
+	#DECL ((DC) <PRIMTYPE LIST> (ATM) ATOM)
+	<REPEAT (TT)
+		#DECL ((TT) LIST)
+		<AND <OR <EMPTY? .DC> <EMPTY? <SET TT <REST .DC>>>>
+		     <RETURN ANY>>
+		<COND (<NOT <TYPE? <1 .DC> LIST>>
+		       <MESSAGE ERROR " BAD DECL LIST " .DC>)>
+		<AND <MEMQ .ATM <CHTYPE <1 .DC> LIST>> <RETURN <1 .TT>>>
+		<SET DC <REST .TT>>>>
+
+"Add an AUX variable spec to structure."
+
+<DEFINE PAUX (ATM OBJ DC NTUP "AUX" EV TT) 
+	#DECL ((EV TT) NODE (TUP NTUP) FIX (ATM) ATOM)
+	<COND (<AND <TYPE? .OBJ FORM>
+		    <NOT <EMPTY? .OBJ>>
+		    <OR <==? <1 .OBJ> TUPLE> <==? <1 .OBJ> ITUPLE>>>
+	       <SET TT
+		    <NODEFM <COND (<==? <1 .OBJ> TUPLE> ,COPY-CODE)
+				  (ELSE ,ISTRUC-CODE)>
+			    ()
+			    TUPLE
+			    <1 .OBJ>
+			    ()
+			    ,<1 .OBJ>>>
+	       <COND (<==? <NODE-TYPE .TT> ,ISTRUC-CODE>
+		      <SET EV
+			   <PCOMP <COND (<==? <LENGTH .OBJ> 3> <3 .OBJ>)
+					(ELSE #LOSE *000000000000*)>
+				  .TT>>
+		      <COND (<==? <NODE-TYPE .EV> ,QUOTE-CODE>
+			     <SET EV <PCOMP <NODE-NAME .EV> .TT>>
+							        ;"Reanalyze it."
+			     <PUT .TT ,NODE-TYPE ,ISTRUC2-CODE>)>
+		      <PUT .TT ,KIDS (<PCOMP <2 .OBJ> .TT> .EV)>)
+		     (ELSE
+		      <PUT .TT
+			   ,KIDS
+			   <MAPF ,LIST
+				 <FUNCTION (O) <PCOMP .O .TT>>
+				 <REST .OBJ>>>)>)
+	      (ELSE <SET TT <PCOMP .OBJ ()>>)>
+	<PUT-DCL .NTUP .ATM .TT .DC <>>>
+
+"Main dispatch function during pass1."
+
+<DEFINE PCOMP (OBJ PARENT)
+	#DECL ((PARENT) <SPECIAL ANY> (VALUE) NODE)
+	<APPLY <OR <GET .OBJ PTHIS-OBJECT>
+		   <GET <TYPE .OBJ> PTHIS-TYPE>
+		   ,PDEFAULT>
+		.OBJ>>
+
+"Build a node for <> or #FALSE ()."
+
+<DEFINE FALSE-QT (O)
+	#DECL ((VALUE) NODE)
+	<NODE1 ,QUOTE-CODE .PARENT FALSE <> ()>>
+
+<PUT '<> PTHIS-OBJECT ,FALSE-QT>
+
+"Build a node for ()."
+
+<DEFINE NIL-QT (O) #DECL ((VALUE) NODE)
+	<NODE1 ,QUOTE-CODE .PARENT LIST () ()>>
+
+<PUT () PTHIS-OBJECT ,NIL-QT>
+
+"Build a node for a LIST, VECTOR or UVECTOR."
+
+<DEFINE PCOPY (OBJ "AUX" (TT <NODEFM ,COPY-CODE .PARENT <TYPE .OBJ> <TYPE .OBJ> () <>>))
+	#DECL ((VALUE) NODE (TT) NODE)
+	<PUT .TT ,KIDS
+		 <MAPF ,LIST <FUNCTION (O) <PCOMP .O .TT>> .OBJ>>>
+
+<PUT VECTOR PTHIS-TYPE ,PCOPY>
+
+<PUT UVECTOR PTHIS-TYPE ,PCOPY>
+
+<PUT LIST PTHIS-TYPE ,PCOPY>
+
+"Build a node for unknown things."
+
+<DEFINE PDEFAULT (OBJ) #DECL ((VALUE) NODE)
+	<NODE1 ,QUOTE-CODE .PARENT <TYPE .OBJ> .OBJ ()>>
+
+"Further analyze a FORM and build appropriate node."
+
+<DEFINE PFORM (OBJ) #DECL ((OBJ) <FORM ANY> (VALUE) NODE)
+	<PROG APPLICATION ((APPLY <1 .OBJ>))
+		#DECL ((APPLICATION) <SPECIAL ACTIVATION>
+		       (APPLY) <SPECIAL ANY>)
+		<APPLY <OR <GET .APPLY PAPPLY-OBJECT>
+			   <GET <TYPE .APPLY> PAPPLY-TYPE>
+			   ,PAPDEF>
+		       .OBJ .APPLY>>>
+
+<PUT FORM PTHIS-TYPE ,PFORM>
+
+"Build a SEGMENT node."
+
+<DEFINE SEG-FCN (OBJ "AUX" (TT <NODE1 ,SEGMENT-CODE .PARENT <> <> ()>))
+	#DECL ((TT VALUE PARENT) NODE)
+	<PUT .TT ,KIDS (<PFORM <CHTYPE .OBJ FORM>>)>>
+
+<PUT SEGMENT PTHIS-TYPE ,SEG-FCN>
+
+"Analyze a form or the form <ATM .....>"
+
+<DEFINE ATOM-FCN (OB AP) #DECL ((AP) ATOM (VALUE) NODE)
+	<COND (<GASSIGNED? .AP>
+	       <SET APPLY ,.AP>
+	       <AGAIN .APPLICATION>)
+	      (<ASSIGNED? .AP>
+	       <MESSAGE WARNING " LOCAL VALUE USED FOR " .AP>
+	       <SET APPLY ..AP>
+	       <AGAIN .APPLICATION>)
+	      (.REASONABLE
+	       <PSUBR-C .OB DUMMY>)
+	      (ELSE <MESSAGE WARNING " NO VALUE FOR " .AP>
+	       <PAPDEF .OB .AP>)>>
+
+<PUT ATOM PAPPLY-TYPE ,ATOM-FCN>
+
+"Expand MACRO and process result."
+
+<DEFINE PMACRO (OBJ AP "AUX" ERR TEM)
+	<SET ERR <ON "ERROR" ,MACROERR 100>>	;"Turn On new Error"
+	<SET TEM <PROG MACACT ()
+		       #DECL ((MACACT) <SPECIAL ACTIVATION>)
+		       <SETG MACACT .MACACT>
+		       <EXPAND .OBJ>>>
+	<OFF .ERR>				;"Turn OFF new Error"
+	<COND (<TYPE? .TEM FUNNY>
+	       <MESSAGE ERROR " MACRO EXPANSION LOSSAGE " !.TEM>)
+	      (ELSE
+	       <PCOMP .TEM .PARENT>)>>
+
+<NEWTYPE FUNNY VECTOR>
+<PROG (X)		;"Find the real Valret Subr"
+      <COND (<TYPE? ,VALRET SUBR> <SETG REAL-VALRET ,VALRET>)
+	    (<AND <GASSIGNED? <SET X <PARSE "OVALRET!-COMBAT!-">>>
+		  <TYPE? ,.X SUBR>>
+	     <SETG REAL-VALRET ,.X>)
+	    (<NOT <GASSIGNED? REAL-VALRET>> <ERROR ',VALRET COMPILE>)>>
+<PUT MACRO PAPPLY-TYPE ,PMACRO>
+
+<DEFINE MACROERR (FR "TUPLE" T)
+	#DECL ((T) TUPLE)
+	<COND (<AND <GASSIGNED? MACACT> <LEGAL? ,MACACT>>
+	       <DISMISS <CHTYPE [!.T] FUNNY> ,MACACT>)
+	      (ELSE <REAL-VALRET " ">)>>
+
+"Build a node for a form whose 1st element is a form (could be NTH)."
+
+<DEFINE PFORM-FORM (OBJ AP "AUX" TT)
+	#DECL ((TT) NODE (VALUE) NODE (OBJ) FORM)
+	<COND (<AND <==? <LENGTH .OBJ> 2> <NOT <SEG? .OBJ>>>
+ 	       <SET TT <NODEFM ,FORM-F-CODE .PARENT <> .OBJ () .AP>>
+	       <PUT .TT ,KIDS
+		    <MAPF ,LIST <FUNCTION (O) <PCOMP .O .TT>> .OBJ>>)
+	      (ELSE <PAPDEF .OBJ .AP>)>>
+
+<PUT FORM PAPPLY-TYPE ,PFORM-FORM>
+
+"Build a node for strange forms."
+
+<DEFINE PAPDEF (OBJ AP) #DECL ((VALUE) NODE)
+	<MESSAGE WARNING " FORM NOT BEING COMPILED " .OBJ>
+	<SPECIALIZE .OBJ>
+	<NODEFM ,FORM-CODE .PARENT <> .OBJ  () .AP>>
+
+"For objects that require EVAL, make sure all atoms used are special."
+
+<DEFINE SPECIALIZE (OBJ "AUX" T1 T2 SYM OB)
+	#DECL ((T1) FIX (OB) FORM (T2) <OR FALSE SYMTAB>)
+	<COND (<AND <TYPE? .OBJ FORM SEGMENT>
+		    <SET OB <CHTYPE .OBJ FORM>>
+		    <OR <AND <==? <SET T1 <LENGTH .OB>> 2>
+			     <==? <1 .OB> LVAL>
+			     <TYPE? <SET SYM <2 .OB>> ATOM>>
+			<AND <==? .T1 3>
+			     <==? <1 .OB> SET>
+			     <TYPE? <SET SYM <2 .OB>> ATOM>>>
+		    <SET T2 <SRCH-SYM .SYM>>>
+	       <COND (<NOT <SPEC-SYM .T2>>
+		      <MESSAGE NOTE " REDCLARED SPECIAL " .SYM>
+		      <PUT .T2 ,SPEC-SYM T>)>)>
+	<COND (<MEMQ <PRIMTYPE .OBJ> '![FORM LIST UVECTOR VECTOR!]>
+	       <MAPF <> ,SPECIALIZE .OBJ>)>>
+
+"Build a SUBR call node."
+
+<DEFINE PSUBR-C (OBJ AP "AUX" (TT <NODEFM ,SUBR-CODE .PARENT <>
+					  <SUBR-NAME .AP <1 .OBJ>> () .AP>))
+	#DECL ((TT) NODE (VALUE) NODE (OBJ) FORM)
+	<PUT .TT ,KIDS
+		 <MAPF ,LIST <FUNCTION (O) <PCOMP .O .TT>> <REST .OBJ>>>>
+
+<PUT SUBR PAPPLY-TYPE ,PSUBR-C>
+
+<FLOAD "SBRNAM" "NBIN">
+
+<DEFINE SUBR-NAME (THING DEFAULT)
+	<COND (<TYPE? .THING SUBR> <HACK-NAME .THING>)
+	      (<TYPE? .THING RSUBR RSUBR-ENTRY> <2 .THING>)
+	      (ELSE .DEFAULT)>>
+
+<DEFINE FIX-FCN (OBJ AP "AUX" TT (LN <LENGTH .OBJ>))
+	#DECL ((TT VALUE) NODE (OBJ) FORM)
+	<OR <==? .LN 2> <==? .LN 3>
+	    <MESSAGE ERROR " BAD APPLICATION OF A NUMBER ">>
+	<SET TT <NODEFM ,SUBR-CODE .PARENT <> <COND (<==? .LN 2> INTH)(ELSE IPUT)>
+			 () <COND (<==? .LN 2> ,NTH) (ELSE ,PUT)>>>
+	<PUT .TT ,KIDS (<PCOMP <2 .OBJ> .TT><PCOMP .AP .TT>
+			!<COND (<==? .LN 2> ()) (ELSE (<PCOMP <3 .OBJ> .TT>))>)>>
+
+<PUT FIX PAPPLY-TYPE ,FIX-FCN>
+
+<PUT OFFSET PAPPLY-TYPE ,FIX-FCN>
+
+"PROG/REPEAT node."
+
+<DEFINE PPROG-REPEAT (OBJ AP
+		      "AUX" (NAME <1 .OBJ>) TT (DCL #DECL ()) (HATOM <>) ARGL
+			    (VARTBL .VARTBL))
+	#DECL ((OBJ) <PRIMTYPE LIST> (TT) NODE (VALUE) NODE (DCL) DECL
+	       (ARGL) LIST (VARTBL) <SPECIAL SYMTAB>)
+	<AND <EMPTY? <SET OBJ <REST .OBJ>>>
+	    <MESSAGE ERROR " EMPTY " .NAME>>
+	<AND <TYPE? <1 .OBJ> ATOM>
+	    <SET HATOM <1 .OBJ>>
+	    <SET OBJ <REST .OBJ>>>
+	<SET ARGL <1 .OBJ>>
+	<SET OBJ <REST .OBJ>>
+	<AND <NOT <EMPTY? .OBJ>>
+	     <TYPE? <1 .OBJ> DECL>
+	     <SET DCL <1 .OBJ>>
+	     <SET OBJ <REST .OBJ>>>
+	<AND <EMPTY? .OBJ> <MESSAGE ERROR " NO DODY FOR " .NAME>>
+	<SET TT
+	     <NODEPR ,PROG-CODE
+		     .PARENT
+		     <FIND:DECL VALUE .DCL>
+		     .NAME
+		     ()
+		     .AP
+		     <2 <GEN-D <COND (<AND <NOT <EMPTY? .ARGL>>
+					   <TYPE? <1 .ARGL> STRING>>
+				      .ARGL)
+				     (ELSE ("AUX" !.ARGL))>
+			       .DCL
+			       .HATOM>>
+		     .HATOM
+		     .VARTBL>>
+	<ACT-FIX .TT <BINDING-STRUCTURE .TT>>
+	<PUT .TT
+	     ,KIDS
+	     <MAPF ,LIST <FUNCTION (O) <PCOMP .O .TT>> .OBJ>>
+	.TT>
+
+<PUT ,PROG PAPPLY-OBJECT ,PPROG-REPEAT>
+
+<PUT ,REPEAT PAPPLY-OBJECT ,PPROG-REPEAT>
+
+<PUT ,BIND PAPPLY-OBJECT ,PPROG-REPEAT>
+
+"Unwind compiler."
+
+<DEFINE UNWIND-FCN (OBJ AP "AUX" (TT <NODEFM ,UNWIND-CODE .PARENT <>
+						 <1 .OBJ> () .AP>))
+	#DECL ((PARENT VALUE TT) NODE (OBJ) FORM)
+	<COND (<==? <LENGTH .OBJ> 3>
+	       <PUT .TT ,KIDS (<PCOMP <2 .OBJ> .TT> <PCOMP <3 .OBJ> .TT>)>)
+	      (ELSE <MESSAGE ERROR "WRONG # OF ARGS TO UNWIND " .OBJ>)>>
+
+<PUT ,UNWIND PAPPLY-OBJECT ,UNWIND-FCN>
+
+"Build a node for a COND."
+
+<DEFINE COND-FCN (OBJ AP "AUX" (PARENT <NODECOND ,COND-CODE .PARENT <> COND ()>))
+	#DECL ((PARENT) <SPECIAL NODE> (OBJ) <FORM ANY> (VALUE) NODE)
+	<PUT .PARENT ,KIDS
+	     <MAPF ,LIST
+		    <FUNCTION (CLA "AUX" (TT <NODEB ,BRANCH-CODE .PARENT <> <> ()>))
+			#DECL ((TT) NODE)
+			<COND (<AND <TYPE? .CLA LIST> <NOT <EMPTY? .CLA>>>
+			       <PUT .TT ,PREDIC <PCOMP <1 .CLA> .TT>>
+			       <PUT .TT ,CLAUSES
+				 <MAPF ,LIST
+				       <FUNCTION (O) <PCOMP .O .TT>>
+						     <REST .CLA>>>)
+			       (ELSE <MESSAGE ERROR "BAD COND" .OBJ>)>>
+		    <REST .OBJ>>>>
+
+<PUT ,COND PAPPLY-OBJECT ,COND-FCN>
+
+<PUT ,AND PAPPLY-OBJECT <GET SUBR PAPPLY-TYPE>>
+
+<PUT ,OR PAPPLY-OBJECT <GET SUBR PAPPLY-TYPE>>
+
+<PUT ,STACKFORM PAPPLY-OBJECT <GET SUBR PAPPLY-TYPE>>
+
+"Build a node for '<-object>-."
+
+<DEFINE QUOTE-FCN (OBJ AP "AUX" (TT <NODE1 ,QUOTE-CODE .PARENT <> () ()>))
+	#DECL ((TT VALUE) NODE (OBJ) FORM)
+	<COND (<NOT <EMPTY? <REST .OBJ>>>
+	       <PUT .TT ,RESULT-TYPE <TYPE <2 .OBJ>>>
+	       <PUT .TT ,NODE-NAME <2 .OBJ>>)>>
+
+<PUT ,QUOTE PAPPLY-OBJECT ,QUOTE-FCN>
+
+"Build a node for a call to an RSUBR."
+
+<DEFINE RSUBR-FCN (OBJ AP "AUX" (PARENT <NODEFM ,RSUBR-CODE .PARENT <><1 .OBJ> () .AP>))
+	#DECL ((OBJ) FORM (AP) <OR RSUBR-ENTRY RSUBR> (PARENT) <SPECIAL NODE>
+	       (VALUE) NODE)
+	<COND (<AND <G? <LENGTH .AP> 2>
+		    <TYPE? <3 .AP> DECL>>
+	       <PUT .PARENT ,KIDS <PRSUBR-C <1 .OBJ> .OBJ <3 .AP>>>
+	       <PUT .PARENT ,TYPE-INFO 
+		    <MAPF ,LIST
+			  <FUNCTION (X) <RESULT-TYPE .X>> <KIDS .PARENT>>>)
+	      (ELSE <PSUBR-C .OBJ .AP>)>>
+
+<PUT RSUBR PAPPLY-TYPE ,RSUBR-FCN>
+
+<PUT RSUBR-ENTRY PAPPLY-TYPE <GET RSUBR PAPPLY-TYPE>>
+
+<DEFINE INTERNAL-RSUBR-FCN (OBJ AP
+			    "AUX" (PARENT <NODEFM ,IRSUBR-CODE .PARENT <>
+						  <1 .OBJ> () .AP>))
+	#DECL ((OBJ) FORM (AP) IRSUBR (PARENT) <SPECIAL NODE>)
+	<PUT .PARENT ,KIDS <PRSUBR-C <1 .OBJ> .OBJ <1 .AP>>>
+	<PUT .PARENT ,TYPE-INFO 
+		    <MAPF ,LIST
+			  <FUNCTION (X) <RESULT-TYPE .X>> <KIDS .PARENT>>>>
+
+<PUT IRSUBR PAPPLY-TYPE ,INTERNAL-RSUBR-FCN>
+
+"Predicate:  any segments in this object?"
+
+<DEFINE SEG? (OB) #DECL ((OB) <PRIMTYPE LIST>)
+	<REPEAT ()
+		<AND <EMPTY? .OB> <RETURN <>>>
+		<AND <TYPE? <1 .OB> SEGMENT> <RETURN T>>
+		<SET OB <REST .OB>>>>
+
+
+"Analyze a call to an RSUBR with decls checking number of args and types wherever
+ possible."
+
+<DEFINE PRSUBR-C (NAME OBJ RDCL
+		  "AUX" (DOIT ,INIT-R) (SEGSW <>) (SGD '<>) (SGP '(1)) SGN
+			(IX 0) DC (RM ,RMODES) (ARG-NUMBER 0) (KDS (()))
+			(TKDS .KDS) RMT (OB <REST .OBJ>) (ST <>))
+   #DECL ((TKDS KDS) <SPECIAL LIST> (OB) LIST (OBJ) <SPECIAL <PRIMTYPE LIST>>
+	  (RM) <SPECIAL <VECTOR [REST STRING]>> (ARG-NUMBER) FIX
+	  (RDCL) <SPECIAL <PRIMTYPE LIST>> (DOIT SEGSW) <SPECIAL ANY> (IX) FIX
+	  (NAME) <SPECIAL ANY> (SGD) FORM (SGP) <LIST ANY> (SGN) NODE)
+   <REPEAT RSB ()
+     #DECL ((RSB) <SPECIAL ACTIVATION>)
+     <COND
+      (<NOT <EMPTY? .RDCL>>
+       <COND (<NOT <EMPTY? .RM>>
+	      <SET DC <1 .RDCL>>
+	      <SET RDCL <REST .RDCL>>)>
+       <COND
+	(<TYPE? .DC STRING>
+	 <COND (<=? .DC "OPT"> <SET DC "OPTIONAL">)>
+	 <OR <SET RMT <MEMBER .DC .RM>>
+		 <MESSAGE ERROR "BAD STRING IN RSUBR DECL " .NAME>>
+	 <SET RM .RMT>
+	 <SET DOIT <NTH ,RDOIT <SET IX <LENGTH .RM>>>>
+	 <SET ST <APPLY <NTH ,SDOIT .IX> .ST>>
+	 <COND (<EMPTY? .RM>					  ;"TUPLE seen."
+		<SET DC <GET-ELE-TYPE <1 .RDCL> ALL>>)>)
+	(<COND
+	  (<EMPTY? .OB>
+	   <AND <L? <LENGTH .RM> 4> <RETURN <REST .TKDS>>>
+	   <MESSAGE ERROR " TOO FEW ARGS TO " .NAME>)
+	  (.SEGSW
+	   <SET ST <>>
+	   <COND (<EMPTY? .RM>
+		  <PUTREST .SGP ([REST .DC])>
+		  <PUT .SGN ,RESULT-TYPE <TYPE-AND <RESULT-TYPE .SGN> .SGD>>
+		  <RETURN <REST .TKDS>>)
+		 (ELSE <SET SGP <REST <PUTREST .SGP (.DC)>>>)>)
+	  (<TYPE? <1 .OB> SEGMENT>
+	   <SET KDS
+		<REST <PUTREST .KDS (<SET SGN <SEGCHK <1 .OB>>>)>>>
+	   <COND
+	    (<EMPTY? <REST .OB>>
+	     <COND (<EMPTY? .RM>
+		    <PUT .SGN
+			 ,RESULT-TYPE
+			 <SEGCH1 .DC <RESULT-TYPE .SGN> <1 .OB>>>
+		    <RETURN <REST .TKDS>>)
+		   (ELSE <SET SEGSW T>)>)
+	    (ELSE
+	     <PUTREST
+	      .KDS
+	      <MAPF ,LIST
+	       <FUNCTION (O "AUX" TT) 
+		  <SET TT <PCOMP .O .PARENT>>
+		  <COND
+		   (<EMPTY? .RM>
+		    <COND
+		     (<==? <NODE-TYPE .TT> ,SEGMENT-CODE>
+		      <OR <TYPE-OK? <RESULT-TYPE <1 <KIDS .TT>>>
+				    <FORM STRUCTURED [REST .DC]>>
+			  <MESSAGE ERROR "BAD ARG TO " .NAME .OB>>)
+		     (ELSE
+		      <OR <TYPE-OK? <RESULT-TYPE .TT> .DC>
+			  <MESSAGE ERROR "BAD ARG TO " .NAME .OB>>
+		      <OR <RESULT-TYPE .TT> <PUT .TT ,RESULT-TYPE .DC>>)>)>
+		  .TT>
+	       <REST .OB>>>
+	     <RETURN <REST .TKDS>>)>
+	   <SET SGP
+		<REST <CHTYPE <SET SGD <FORM STRUCTURED .DC>> LIST>>>
+	   <SET ST <>>
+	   <AGAIN>)
+	  (<SET KDS <REST <PUTREST .KDS (<APPLY .DOIT .DC .OB>)>>>
+	   <SET OB <REST .OB>>
+	   <SET ARG-NUMBER <+ .ARG-NUMBER 1>>
+	   <SET ST <>>)>)>)
+      (<EMPTY? .OB> <RETURN <REST .TKDS>>)
+      (.SEGSW
+       <PUT .SGN
+	    ,RESULT-TYPE
+	    <COND (<RESULT-TYPE .SGN> <TYPE-AND <RESULT-TYPE .SGN> .SGD>)
+		  (ELSE .SGD)>>
+       <RETURN <REST .TKDS>>)
+      (ELSE <MESSAGE ERROR " TOO MANY ARGS TO " .NAME>)>>>    
+
+
+<DEFINE SQUOT (F) T>
+
+"Flush one possible decl away."
+
+<DEFINE CHOPPER (F) #DECL ((RM) <VECTOR [REST STRING]>)
+	<AND .F <MESSAGE ERROR " 2 STRINGS IN ROW IN DCL ">>
+	<SET RM <REST .RM>>
+	T>
+
+"Handle Normal arg when \"VALUE\" still possible."
+
+<DEFINE INIT-R (DC OB)
+	#DECL ((RM) <VECTOR [REST STRING]>)
+	<SET RM <REST .RM 2>> <SET DOIT ,INIT1-R> <INIT1-R .DC .OB>>
+
+"Handle Normal arg when \"CALL\" still possible."
+
+<DEFINE INIT2-R (DC OB)
+	#DECL ((RM) <VECTOR [REST STRING]>)
+	<SET RM <REST .RM>> <SET DOIT ,INIT1-R> <INIT1-R .DC .OB>>
+
+"Handle normal arg."
+
+<DEFINE INIT1-R (DC OB "AUX" TT) #DECL ((TT) NODE (OB) LIST)
+	<OR <TYPE-OK? 
+		    <RESULT-TYPE 
+			<SET TT <PCOMP <1 .OB> .PARENT>>> .DC>
+		<MESSAGE ERROR "BAD ARG TO " .NAME>>
+	<OR <RESULT-TYPE .TT><PUT .TT ,RESULT-TYPE .DC>>
+	.TT>
+
+"Handle \"QUOTE\" arg."
+
+<DEFINE QINIT-R (DC OB "AUX" TT) #DECL ((TT) NODE (OB) LIST)
+	<OR <TYPE-OK?
+		   <RESULT-TYPE
+			<SET TT
+			     <NODE1 ,QUOTE-CODE .PARENT <TYPE <1 .OB>>
+				    <1 .OB> ()>>> .DC>
+		<MESSAGE ERROR "BAD ARG TO " .NAME>>
+	<SET DOIT ,INIT1-R>
+	.TT>
+
+"Handle \"CALL\" decl."
+
+<DEFINE CAL-R (DC OB "AUX" TT) #DECL ((TKDS KDS) LIST (TT) NODE)
+	<OR <TYPE-OK?
+		   <RESULT-TYPE
+			<SET TT
+			     <NODE1 ,QUOTE-CODE .PARENT FORM .OBJ ()>>> .DC>
+		<MESSAGE ERROR "BAD ARG TO " .NAME>>
+	<PUTREST .KDS (.TT)>
+	<RETURN <REST .TKDS> .RSB>>
+
+"Handle \"ARGS\" decl."
+
+<DEFINE ARGS-R (DC OB "AUX" TT) #DECL ((TT) NODE (KDS TKDS) LIST)
+	<OR <TYPE-OK?
+		     <RESULT-TYPE
+			<SET TT
+			     <NODE1 ,QUOTE-CODE .PARENT LIST .OB ()>>> .DC>
+		<MESSAGE "BAD CALL TO " .NAME>>
+	<PUTREST .KDS (.TT)>
+	<RETURN <REST .TKDS> .RSB>>
+
+"Handle \"TUPLE\" decl."
+
+<DEFINE TUPL-R (DC OB "AUX" TT) #DECL ((OB) LIST (TT) NODE)
+	<OR <TYPE-OK? <RESULT-TYPE <SET TT <PCOMP <1 .OB> .PARENT>>> .DC>
+	   <MESSAGE ERROR "BAD ARG TO " .NAME>>
+	<OR <RESULT-TYPE .TT> <PUT .TT ,RESULT-TYPE .DC>>
+	.TT>
+
+"Handle stuff with segments in arguments."
+
+<DEFINE SEGCHK (OB "AUX" TT) #DECL ((TT) NODE)
+	<OR <TYPE-OK? <RESULT-TYPE <SET TT <PCOMP .OB .PARENT>>> STRUCTURED>
+	    <MESSAGE ERROR "BAD SEGMENT GOODIE. " .OB>>
+	.TT>
+
+
+<DEFINE SEGCH1 (DC RT OB)
+	<OR <TYPE-AND .RT <FORM STRUCTURED [REST .DC]>>
+	    <MESSAGE ERROR "BAD ARG TO " .NAME .OB>>>
+
+"Handle \"VALUE\" chop decl and do the rest."
+
+<DEFINE VAL-R (F) #DECL ((RDCL) <PRIMTYPE LIST> (PARENT) NODE)
+	<CHOPPER .F>
+	<PUT .PARENT ,RESULT-TYPE <1 .RDCL>>
+	<SET DOIT ,INIT2-R>
+	<SET F <TYPE? <1 .RDCL> STRING>>
+	<SET RDCL <REST .RDCL>> .F>
+
+<DEFINE ERR-R (DC OB)
+	<MESSAGE INCONISTANCY "SHOULDN'T GET HERE ">>
+
+<SETG RMODES ["VALUE" "CALL" "QUOTE" "OPTIONAL" "QUOTE" "ARGS" "TUPLE"]>
+
+<SETG RDOIT ![,TUPL-R ,ARGS-R ,QINIT-R ,INIT1-R ,QINIT-R ,CAL-R ,ERR-R!]>
+
+<SETG SDOIT ![,CHOPPER ,CHOPPER ,SQUOT ,CHOPPER ,SQUOT ,CHOPPER ,VAL-R!]>
+
+<GDECL (RMODES) <VECTOR [REST STRING]> (RDOIT SDOIT) UVECTOR>
+
+"Create a node for a call to a function."
+
+<DEFINE PFUNC (OB AP "AUX" TEM NAME)
+	#DECL ((OB) <PRIMTYPE LIST> (VALUE) NODE)
+	<COND (<TYPE? <1 .OB> ATOM>
+	       <COND (<OR <==? <1 .OB> .FCNS>
+			  <AND <TYPE? .FCNS LIST> <MEMQ <1 .OB> <CHTYPE .FCNS LIST>>>>
+		      <RSUBR-CALL2 ,<1 .OB> <1 .OB> .OB>)
+		     (<SET TEM <GET <1 .OB> RSUB-DEC>>
+		      <RSUBR-CALL3 .TEM <1 .OB> .OB>)
+		     (.REASONABLE <PSUBR-C .OB DUMMY>)
+		     (ELSE
+		      <MESSAGE WARNING "UNCOMPILED FUNCTION CALLED " <1 .OB>>
+		      <PAPDEF .OB ,<1 .OB>>)>)
+	      (<TYPE? <1 .OB> FUNCTION>
+	       <SET NAME <MAKE:TAG "ANONF">>
+	       <ANONF .NAME <1 .OB>>
+	       <RSUBR-CALL1 ,.NAME .NAME .OB>)>>
+
+"Call compiler recursively to compile anonymous function."
+
+<DEFINE ANONF (NAME BODY "AUX" (INT? <>) T GROUP-NAME)
+	#DECL ((INT? GROUP-NAME) <SPECIAL <OR FALSE ATOM>> (VALUE) NODE)
+	<MESSAGE NOTE " COMPILING ANONYMOUS FUNCTION ">
+	<SETG .NAME .BODY>
+	<APPLY ,COMP2 .NAME T> ; "Use APPLY to avoid compilation probs."
+	<SET T ,.NAME>
+	<MESSAGE NOTE " FINISHED ANONYMOUS FUNCTION ">
+	<GUNASSIGN .NAME>
+	<NODE1 ,QUOTE-CODE .PARENT RSUBR  .T ()>>
+
+"#FUNCTION (....) compiler -- call ANONF."
+
+<DEFINE FCN-FCN (OB "AUX" (NAME <MAKE:TAG "ANONF">)) <ANONF .NAME .OB>>
+
+<PUT FUNCTION PTHIS-TYPE ,FCN-FCN>
+
+<PUT FUNCTION PAPPLY-TYPE ,PFUNC>
+
+"<FUNCTION (..) ....> compiler -- call ANONF."
+
+<DEFINE FCN-FCN1 (OB AP "AUX" (NAME <MAKE:TAG "ANONF">))
+	#DECL ((OB) <PRIMTYPE LIST>)
+	<ANONF .NAME <CHTYPE <REST .OB> FUNCTION>>>
+
+<PUT ,FUNCTION PAPPLY-OBJECT ,FCN-FCN1>
+
+"Handle RSUBR that is really a function."
+
+<DEFINE RSUBR-CALL2 (BODY NAME OBJ "AUX" ACF
+			(PARENT <NODEFM ,RSUBR-CODE .PARENT <> .NAME () .BODY>))
+	#DECL ((PARENT) <SPECIAL NODE> (VALUE) NODE)
+	<PUT .PARENT
+	     ,KIDS
+	     <PRSUBR-C .NAME .OBJ <RSUBR-DECLS <SET ACF <PASS1 .BODY .NAME T .NAME>>>>>
+	<PUT .PARENT ,TYPE-INFO 
+		    <MAPF ,LIST
+			  <FUNCTION (X) <RESULT-TYPE .X>> <KIDS .PARENT>>>>
+
+"Handle an RSUBR that is already an RSUBR."
+
+<DEFINE RSUBR-CALL1 (BODY NAME OBJ "AUX"
+			(PARENT <NODEFM ,RSUBR-CODE .PARENT <> .NAME () .BODY>))
+	#DECL ((BODY) <PRIMTYPE LIST> (PARENT) <SPECIAL NODE>
+	       (VALUE) NODE)
+	<PUT .PARENT ,KIDS <PRSUBR-C .NAME .OBJ <3 .BODY>>>
+	<PUT .PARENT ,TYPE-INFO 
+		    <MAPF ,LIST
+			  <FUNCTION (X) <RESULT-TYPE .X>> <KIDS .PARENT>>>>
+
+<DEFINE RSUBR-CALL3 (DC NAME OBJ "AUX"
+			(PARENT <NODEFM ,RSUBR-CODE .PARENT <> .NAME () FOO>))
+	#DECL ((PARENT) <SPECIAL NODE>
+	       (VALUE) NODE)
+	<PUT .PARENT ,KIDS <PRSUBR-C .NAME .OBJ .DC>>
+	<PUT .PARENT ,TYPE-INFO 
+		    <MAPF ,LIST
+			  <FUNCTION (X) <RESULT-TYPE .X>> <KIDS .PARENT>>>>
+
+
+;"ILIST, ISTRING, IVECTOR AND IUVECTOR"
+
+<DEFINE PLIST (O A) <PSTRUC .O .A ILIST LIST>>
+
+<PUT ,ILIST PAPPLY-OBJECT ,PLIST>
+
+<DEFINE PIVECTOR (O A) <PSTRUC .O .A IVECTOR VECTOR>>
+
+<PUT ,IVECTOR PAPPLY-OBJECT ,PIVECTOR>
+
+<DEFINE PISTRING (O A) <PSTRUC .O .A ISTRING STRING>>
+
+<PUT ,ISTRING PAPPLY-OBJECT ,PISTRING>
+
+<DEFINE PIUVECTOR (O A) <PSTRUC .O .A IUVECTOR UVECTOR>>
+
+<PUT ,IUVECTOR PAPPLY-OBJECT ,PIUVECTOR>
+
+<DEFINE PIFORM (O A) <PSTRUC .O .A IFORM FORM>>
+
+<PUT ,IFORM PAPPLY-OBJECT ,PIFORM>
+
+<DEFINE PIBYTES (O A) <PSTRUC .O .A IBYTES BYTES>>
+
+<PUT ,IBYTES PAPPLY-OBJECT ,PIBYTES>
+
+<DEFINE PSTRUC (OBJ AP NAME TYP "AUX" (TT <NODEFM ,ISTRUC-CODE .PARENT .TYP .NAME
+						  () ,.NAME>) 
+				      (LN <LENGTH .OBJ>) N EV SIZ)
+	#DECL ((VALUE N EV TT) NODE (LN) FIX (OBJ) <PRIMTYPE LIST>)
+	<COND (<SEG? .OBJ><PSUBR-C .OBJ .AP>)
+	      (ELSE
+	       <COND (<==? .NAME IBYTES>
+		      <COND (<L=? .LN 2> <ARGCHK 2 3 .NAME>)
+			    (<G? .LN 4> <ARGCHK .LN 4 .NAME>)>)
+		     (<1? .LN><ARGCHK 1 2 .NAME>)
+		     (<G? .LN 3><ARGCHK .LN 3 .NAME>)>
+	       <COND (<==? .NAME IBYTES>
+		      <SET SIZ <PCOMP <2 .OBJ> .TT>>
+		      <SET OBJ <REST .OBJ>>
+		      <SET LN <- .LN 1>>)>
+	       <SET N <PCOMP <2 .OBJ> .TT>>
+	       <SET EV <PCOMP <COND (<==? .LN 3> <3 .OBJ>)
+				    (<==? .TYP STRING> <ASCII 0>)
+				    (<==? .TYP BYTES> 0)
+				    (ELSE #LOSE 0)> .TT>>
+	       <COND (<==? <NODE-TYPE .EV> ,QUOTE-CODE>
+		      <SET EV <PCOMP <NODE-NAME .EV> .TT>>	;"Reanalyze it."
+		      <PUT .TT ,NODE-TYPE ,ISTRUC2-CODE>)>
+	       <PUT .TT ,RESULT-TYPE .TYP>
+	       <COND (<ASSIGNED? SIZ> <PUT .TT ,KIDS (.SIZ .N .EV)>)
+		     (ELSE <PUT .TT ,KIDS (.N .EV)>)>)>>
+
+
+ 
+"READ, READCHR, READSTRING, NEXTCHR, READB, GET, GETL, GETPROP, GETPL"
+
+<PUT ,READ PAPPLY-OBJECT <FUNCTION (O A) <CHANFCNS .O .A READ 2 ANY>>>
+
+<PUT ,GC-READ PAPPLY-OBJECT <FUNCTION (O A) <CHANFCNS .O .A GC-READ 2 ANY>>>
+
+<PUT ,READCHR PAPPLY-OBJECT <FUNCTION (O A) <CHANFCNS .O .A READCHR 2 ANY>>>
+
+<PUT ,NEXTCHR PAPPLY-OBJECT <FUNCTION (O A) <CHANFCNS .O .A NEXTCHR 2 ANY>>>
+
+<PUT ,READB PAPPLY-OBJECT <FUNCTION (O A) <CHANFCNS .O .A READB 3 ANY>>>
+
+<PUT ,READSTRING
+     PAPPLY-OBJECT
+     <FUNCTION (O A) <CHANFCNS .O .A READSTRING 4 ANY>>>
+
+<DEFINE CHANFCNS (OBJ AP NAME ARGN TYP "AUX" TT (LN <LENGTH .OBJ>) N (TEM 0))
+	#DECL ((VALUE) NODE (TT) NODE (N) <LIST [REST NODE]>
+	       (LN) FIX (TEM ARGN) FIX (OBJ) <PRIMTYPE LIST>)
+	<COND (<OR <SEG? .OBJ> <L? <- .LN 1> .ARGN>>
+	       <PSUBR-C .OBJ .AP>)
+	      (ELSE
+	       <SET TT <NODEFM ,READ-EOF-CODE .PARENT .TYP .NAME () ,.NAME>>
+	       <SET N
+		    <MAPF ,LIST
+			  <FUNCTION (OB "AUX" (EV <PCOMP .OB .TT>))
+				#DECL ((EV) NODE)
+				<COND (<==? <SET TEM <+ .TEM 1>> .ARGN>
+				       <COND (<==? <NODE-TYPE .EV> ,QUOTE-CODE>
+					      <SET EV <PCOMP <NODE-NAME .EV> .TT>>
+					      <PUT .TT ,NODE-TYPE ,READ-EOF2-CODE>)>
+				       <SET EV
+					    <NODE1 ,EOF-CODE .TT
+						   <RESULT-TYPE .EV> <> (.EV)>>)>
+				.EV>
+			   <REST .OBJ>>>
+	       <PUT .TT ,KIDS .N>)>>
+
+<PUT ,GET PAPPLY-OBJECT <FUNCTION (O A) <GETFCNS .O .A GET>>>
+
+<PUT ,GETL PAPPLY-OBJECT <FUNCTION (O A) <GETFCNS .O .A GETL>>>
+
+<PUT ,GETPROP PAPPLY-OBJECT <FUNCTION (O A) <GETFCNS .O .A GETPROP>>>
+
+<PUT ,GETPL PAPPLY-OBJECT <FUNCTION (O A) <GETFCNS .O .A GETPL>>>
+
+<DEFINE GETFCNS (OBJ AP NAME "AUX" EV TEM T2 (LN <LENGTH .OBJ>) TT)
+	#DECL ((OBJ) FORM (LN) FIX (TT VALUE TEM T2 EV) NODE)
+	<COND (<OR <AND <N==? .LN 4>
+			<N==? .LN 3>> <SEG? .OBJ>>
+	       <PSUBR-C .OBJ .AP>)
+	      (ELSE
+	       <SET TT <NODEFM ,GET-CODE .PARENT ANY .NAME () ,.NAME>>
+	       <SET TEM <PCOMP <2 .OBJ> .TT>>
+	       <SET T2 <PCOMP <3 .OBJ> .TT>>
+	       <COND (<==? .LN 3>
+		      <PUT .TT ,NODE-TYPE ,GET2-CODE>
+		      <PUT .TT ,KIDS (.TEM .T2)>)
+		     (ELSE
+		      <SET EV <PCOMP <4 .OBJ> .TT>>
+		      <COND (<==? <NODE-TYPE .EV> ,QUOTE-CODE>
+			     <SET EV <PCOMP <NODE-NAME .EV> .TT>>
+			     <PUT .TT ,NODE-TYPE ,GET2-CODE>)>
+		      <PUT .TT ,KIDS (.TEM .T2 .EV)>)>
+	       .TT)>>
+
+<DEFINE ARGCHK (GIV REQ NAME "AUX" (HI .REQ) (LO .REQ))
+	#DECL ((GIV) FIX (REQ HI LO) <OR <LIST FIX FIX> FIX>)
+	<COND (<TYPE? .REQ LIST>
+	       <SET HI <2 .REQ>>
+	       <SET LO <1 .REQ>>)>
+	<COND (<L? .GIV .LO>
+	       <MESSAGE ERROR "TOO FEW ARGS TO " .NAME>)
+	      (<G? .GIV .HI>
+	       <MESSAGE ERROR "TOO MANY ARGS TO " .NAME>)> T>
+
+<ENDPACKAGE>
+

@@ -1,0 +1,270 @@
+<PACKAGE "CDRIVE">
+
+<ENTRY COMPILE COMPILE-GROUP COMP2>
+
+<USE "CODGEN" "SYMANA" "VARANA" "COMCOD" "COMPDEC" "PASS1" "TIMFCN" "ADVMES"
+	"CUP">
+"****** TOP LEVEL COMILER CALLS ******"
+
+"COMPILE -- compile one function or a group.  Compile does not merge a group
+	    into one big RSUBR (see COMPILE-GROUP).
+
+	The arguments to compile are:
+
+	FCNS -- an atom whose GVAL is a function, a locative to a function
+		or a list of the previous 2.
+
+	SRC-FLG -- a channel for assembly listing or #FALSE () for none.
+
+	BIN-FLG -- If false, don't assemble else do.
+
+	CAREFUL -- If true compile bounds checking else don't.
+
+	GLOSP   -- Whether or not default is SPECIAL.
+"
+
+<DEFINE <ENTRY COMPILE> (FCNS
+			 "OPTIONAL" (SRC-FLG <>) (BIN-FLG T) (CAREFUL T)
+				    (GLOSP <>) (REASONABLE T) (GLUE T)
+				    (ANALY-OK T) (VERBOSE <>)
+			 "AUX" (IND (1)) (TAG:COUNT 0) "NAME" COMPILER)
+	#DECL ((FCNS SRC-FLG BIN-FLG CAREFUL GLOSP REASONABLE GLUE IND
+		TAG:COUNT COMPILER ANALY-OK VERBOSE) <SPECIAL ANY>)
+	<ZTMPLST>
+	<COND (<TYPE? .FCNS LIST>
+	       <MAPF <> ,VERIFY .FCNS>
+	       <MAPF <>
+		     <FUNCTION (FCN) <PRINC <COMP2 .FCN>> <TERPRI>>
+		     .FCNS>
+	       <MAPF <> ,UNASSOC .FCNS>)
+	      (ELSE <VERIFY .FCNS>
+	       <PRINC <COMP2 .FCNS>>
+	       <UNASSOC .FCNS>)>
+	<TERPRI>
+	"DONE">
+
+"COMP2 -- compile one thing (atom or locative) print time if second arg
+         missing or false.  Assemble result if desired (time entire job)."
+
+<DEFINE COMP2 (TH "OPTIONAL" (SILENT <>)
+		  "AUX" (CODE:TOP (())) MESS
+			(CODE:PTR .CODE:TOP)
+			(ST <TIME>) (RT <RTIME>) (DAT <DATE>))
+	#DECL ((CODE:PTR CODE:TOP) <SPECIAL LIST>)
+	<SET MESS <COMP1 .TH <> <> .SILENT>>
+	<COND (<TYPE? .MESS LIST>
+	       <SETLOC <1 .MESS> <ASSEM? .SRC-FLG>>
+	       <STRING "Job done in:  "
+			<TIME-STR1 <FIX <+ 0.5 <- <TIME> .ST>>>> " / "
+			<TIME-DIF1 .DAT <DATE> .RT <RTIME>>>)
+	      (ELSE .MESS)>>
+
+"VERIFY -- check types of arguments prior to compilation."
+
+<DEFINE VERIFY (THING)
+	<COND (<TYPE? .THING ATOM>
+	       <IF-NOT <GASSIGNED? .THING>
+		       <MESSAGE ERROR " UNASSIGNED " .THING>>
+	       <IF-NOT <OR <TYPE? ,.THING FUNCTION>
+			   <AND <TYPE? ,.THING MACRO>
+				<NOT <EMPTY? ,.THING>>
+				<TYPE? <1 ,.THING> FUNCTION>>>
+		       <MESSAGE ERROR " NOT A FUNCTION " .THING>>)
+	      (<TYPE? .THING LOCL LOCV LOCU LOCA LOCAS LOCD>
+	       <IF-NOT <TYPE? <IN .THING> FUNCTION>
+		       <MESSAGE ERROR " NOT A FUNCTION " .THING>>)
+	      (ELSE <MESSAGE ERROR " ARG WRONG TYPE " .THING>)>>
+
+"COMP1 -- compile one object and time compilation.  Make noise if second arg
+	  there and not false."
+
+<DEFINE COMP1 (THING SUB? INT?
+	       "OPTIONAL" (SILENT <>)
+	       "EXTRA" (START-TIME <TIME>) (NM1 .THING) RDCL (REALT <RTIME>)
+		       (TH .THING) (RDAT <DATE>)
+	       "NAME" COMPILER)
+	#DECL ((SUB? INT? RDCL COMPILER) <SPECIAL ANY> (START-TIME) FLOAT)
+	<COND (<TYPE? .THING ATOM>
+	       <COND (<GASSIGNED? SNAME-SETTER> <SNAME-SETTER .THING>)>
+	       <COND (<NOT .SILENT>
+		      <PRINC "COMPILING ">
+		      <PRIN1 .THING>
+		      <TERPRI>)>
+	       <COND (<TYPE? ,.THING FUNCTION> <SET TH <GLOC .THING>>)
+		     (ELSE <SET TH <AT ,.THING 1>>)>)
+	      (ELSE
+	       <OR .SILENT <PRINC "COMPILING LOCATIVE">>
+	       <SET NM1 <MAKE:TAG "ANONF">>)>
+	<COMPILE-FUNCTION <IN .TH> .NM1 .THING>
+	(.TH
+	 <STRING "Compilation done in "
+		 <TIME-STR1 <FIX <+ 0.5 <- <TIME> .START-TIME>>>>
+		 "cpu time, "
+		 <ASCII 13>
+		 <ASCII 10>
+		 <TIME-DIF1 .RDAT <DATE> .REALT <RTIME>>
+		 " real time. "
+		 <ASCII 13>
+		 <ASCII 10>>)>
+
+"COMPILE-GROUP -- compile into one RSUBR a group of functions.  Eliminate identity
+		   of internal RSUBRs.  First arg same as for COMPILE.  Second arg
+		   specifies those FUNCTIONS to become external. Third arg
+		   name of entire group upon completion of compilation."
+
+<DEFINE <ENTRY COMPILE-GROUP>
+	(FCNS EXTS GROUP-NAME
+		   "OPTIONAL" (SRC-FLG <>)
+			      (BIN-FLG T)
+			      (CAREFUL T)
+			      (GLOSP <>)
+			      (REASONABLE T)
+			      (GLUE T)
+			      (TMPCHN <>)
+			      (ANALY-OK T)
+			      (VERBOSE <>)
+		    "AUX" (FIRST T) (IND (1)) (TAG:COUNT 0)
+			  (STRT <TIME>)
+			  (RSTRT <RTIME>)
+			  (RDAT <DATE>)
+			  (CODE:TOP (()))
+			  (CODE:PTR .CODE:TOP)
+		    "NAME" COMPILER)
+	#DECL ((FCNS GROUP-NAME SEC-FLG BIN-FLG CAREFUL GLOSP REASONABLE GLUE
+		IND TAG:COUNT CODE:TOP CODE:PTR COMPILER ANALY-OK VERBOSE)
+		<SPECIAL ANY>)
+	<MAPF <> ,VERIFY .FCNS>
+	<ZTMPLST>
+	<GROUP:INITIAL .GROUP-NAME>
+	<MAPF <>
+	      <FUNCTION (FCN "AUX" (MESS <COMP1 .FCN T <NOT <MEMQ .FCN .EXTS>>>))
+		<COND (<TYPE? .MESS LIST>)
+		      (ELSE <RETURN <CHTYPE (.MESS) FALSE> .COMPILER>)>
+		<SET FIRST <>>
+		<TERPRI>
+		<ASSEM? .CODE:TOP <>>
+		<COND (.TMPCHN <OUTCOD .CODE:TOP .TMPCHN>
+		       <SET CODE:PTR <SET CODE:TOP (())>>)>>
+	      .FCNS>
+	<MAPF <> ,UNASSOC .FCNS>
+	<COND (.TMPCHN <CLOSE .TMPCHN>)
+	      (ELSE <SETG .GROUP-NAME <ASSEM? .SRC-FLG>>)>
+	<STRING "Time for group:  "
+		<TIME-STR1 <FIX <+ 0.5 <- <TIME> .STRT>>>> " / "
+		<TIME-DIF1 .RDAT <DATE> .RSTRT <RTIME>>>>
+
+<SETG WDCNTLC ![1623294726!]>
+
+<SETG WDSPACE ![17315143744!]>
+
+<DEFINE OUTCOD (L TMPCH "AUX" (OBLIST (<MOBLIST OP!-PACKAGE> <GET MUDDLE OBLIST>
+					     !.OBLIST)) ACC ACC2)
+	#DECL ((L) LIST (TMPCH) CHANNEL (OBLIST) <SPECIAL LIST> (ACC ACC2) FIX)
+	<SET ACC <17 .TMPCH>>
+	<RESET .TMPCH>
+	<ACCESS .TMPCH .ACC>
+	<PRINC <ASCII 12> .TMPCH>
+	<REPEAT ()
+		<COND (<EMPTY? <SET L <REST .L>>> <RETURN>)>
+		<TERPRI .TMPCH>
+		<OR <TYPE? <1 .L> ATOM> <PRINC "	" .TMPCH>>
+		<PRIN1 <1 .L> .TMPCH>>
+	<BUFOUT .TMPCH>
+	<PRINTB ,WDCNTLC .TMPCH>
+	<SET ACC2 <17 .TMPCH>>
+	<ACCESS .TMPCH <- .ACC 1>>
+	<PRINTB ,WDSPACE .TMPCH>
+	<ACCESS .TMPCH .ACC2>
+	<CLOSE .TMPCH>>
+
+<DEFINE UNASSOC (THING)
+	<COND (<TYPE? .THING ATOM>
+	       <PUT ,.THING .IND>)
+	      (ELSE <PUT <IN .THING> .IND>)>>
+
+"COMPILE-FUNCTION -- run the compiler on one function.
+		     PASS1 builds internal structure.
+		     ANA further specifies the structure and computes types for all nodes.
+		     VARS allocates stack slots for variables.
+		     CODE-GEN generates assembler source.
+"
+
+<DEFINE COMPILE-FUNCTION (FCN NAME "OPTIONAL" (RNAME .NAME) "AUX" INAME (LOCAL-TAGS ())
+	(VP (())))
+	#DECL ((LOCAL-TAGS) <SPECIAL LIST>)
+	<COND (.VERBOSE <SET VERBOSE .VP>)>
+	<REACS>
+	<SET INAME <NODE-NAME <SET FCN <PASS1 .FCN .NAME <> .RNAME>>>>
+	<ANA .FCN ANY>
+	<VARS .FCN>
+	<COND (.VERBOSE <ANA-MESS .VP>)>
+	<REACS>
+	<COND (<ACS .FCN>	;"AC call exists?"
+	       <COND (<AND .INT? .SUB?>
+		      <INT:INITIAL .NAME>)
+		     (.SUB? <SUB:INT:INITIAL .NAME> <ARGS-TO-ACS .FCN>)
+		     (ELSE <FCN:INT:INITIAL .NAME> <ARGS-TO-ACS .FCN>)>)
+	      (<AND <ASSIGNED? GROUP-NAME>
+		    <NOT <EMPTY? <ACS .FCN>>>
+		    <OR .INT? <NOT <EMPTY? .INAME>>>>
+	       <INT:LOSER:INITIAL .NAME .FCN>)
+	      (.SUB? <SUB:INITIAL .NAME>)
+	      (ELSE	       
+	       <FUNCTION:INITIAL .NAME>)>
+	<CODE-GEN .FCN>
+	<CHECK-LOCAL-TAGS .LOCAL-TAGS>
+	<PUT .FCN ,BINDING-STRUCTURE ()>
+	<PUT .FCN ,KIDS ()>
+	<PUT .FCN ,SYMTAB ,LVARTBL>
+	<COND (<ACS .FCN>
+	       <COND (.INT? <INT:FINAL .FCN>)
+		     (ELSE
+		      <PUT .RDCL 2 <RSUBR-DECLS .FCN>>
+	       <FS:INT:FINAL <ACS .FCN>>)>)
+	      (ELSE
+	       <PUT .RDCL 2 <RSUBR-DECLS .FCN>>
+	       <FCNSUB:FINAL .FCN>)>>
+
+
+
+
+<DEFINE TIME-STR1 (NSEC "AUX" (NMIN </ <FIX .NSEC> 60>)
+			     (NHRS </ .NMIN 60>))
+	#DECL ((NSEC) <OR FIX FLOAT> (NMIN NHRS) FIX (VALUE) STRING)
+	<TIMEST1 .NHRS
+		<- .NMIN <* .NHRS 60>>
+		<- .NSEC <* .NMIN 60>>>>
+
+<DEFINE TIME-DIF1 (D1 D2 T1 T2
+		   "AUX" (DY
+			  <- <DAYS <1 .D2> <2 .D2> <3 .D2>>
+			     <DAYS <1 .D1> <2 .D1> <3 .D1>>>))
+	#DECL ((D1 D2 T1 T2) <LIST FIX FIX FIX> (VALUE) STRING)
+	<TIME-STR1 <- <+ <* .DY 3600 24>
+			 <* <1 .T2> 3600>
+			 <* <2 .T2> 60>
+			 <3 .T2>>
+		      <+ <* <1 .T1> 3600> <* <2 .T1> 60> <3 .T1>>>>>
+
+<DEFINE TIMEST1 (HR MI SE) 
+   #DECL ((HR MI SE) FIX)
+   <STRING <COND (<NOT <0? .HR>> <STRING <UNPARSE .HR> ":">) (ELSE "")>
+	   <COND (<OR <NOT <0? .MI>> <NOT <0? .HR>>>
+		  <STRING <COND (<L=? .MI 9>
+				 <STRING <COND (<0? .HR> "") (ELSE "0")>
+					 <CHTYPE <+ .MI 48> CHARACTER>>)
+				(ELSE
+				 <STRING <CHTYPE <+ </ .MI 10> 48> CHARACTER>
+					 <CHTYPE <+ <MOD .MI 10> 48>
+						 CHARACTER>>)>
+			  ":">)
+		 (ELSE "")>
+	   <COND (<L=? .SE 9>
+		  <STRING <COND (<OR <NOT <0? .MI>> <NOT <0? .HR>>> "0")
+				(ELSE "")>
+			  <CHTYPE <+ .SE 48> CHARACTER>>)
+		 (ELSE
+		  <STRING <CHTYPE <+ </ .SE 10> 48> CHARACTER>
+			  <CHTYPE <+ <MOD .SE 10> 48> CHARACTER>>)>>>
+
+<ENDPACKAGE>

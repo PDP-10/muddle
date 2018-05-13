@@ -1,0 +1,196 @@
+<PACKAGE "BACKAN">
+
+<ENTRY BACK-ANA TOP-ANA SUBSTRUC-ANA>
+
+<USE "CHKDCL" "COMPDEC" "SYMANA">
+
+<DEFINE BACK-ANA (NOD RTYP "AUX" TF TS (K <KIDS .NOD>) (LN <LENGTH .K>) TPS) 
+   #DECL ((NOD) NODE (K) <LIST [REST NODE]> (LN) FIX)
+   <COND
+    (<SEGFLUSH .NOD .RTYP>)
+    (ELSE
+     <COND (<1? .LN>
+	    <PUT .NOD
+		 ,KIDS
+		 <SET K (<1 .K> <NODE1 ,QUOTE-CODE .NOD FIX 1 ()>)>>)
+	   (ELSE <ARGCHK .LN 2 BACK>)>
+     <SET TS <EANA <1 .K> STRUCTURED BACK>>
+     <SET TF <EANA <2 .K> FIX BACK>>
+     <COND (<NOT <OR <NOT <SET TPS <STRUCTYP .TS>>>
+		     <==? .TPS TUPLE>
+		     <==? .TPS VECTOR>
+		     <==? .TPS STRING>
+		     <==? .TPS TEMPLATE>
+		     <==? .TPS UVECTOR>>>
+	    <MESSAGE ERROR "BAD 1ST ARG TO BACK" .NOD>)>
+     <TYPE-OK?
+      <COND (<OR <NOT .TPS> <==? .TPS STRING> <==? .TPS TEMPLATE>>
+	     <PUT .NOD ,NODE-TYPE ,ISUBR-CODE>
+	     .TPS)
+	    (ELSE
+	     <PUT .NOD ,NODE-TYPE ,BACK-CODE>
+	     <COND (<==? <NODE-TYPE <2 .K>> ,QUOTE-CODE>
+		    <TYPE-AND <REST-DECL .TS <NODE-NAME <2 .K>>> .TPS>)
+		   (ELSE .TPS)>)>
+      .RTYP>)>>
+
+<PUT ,BACK ANALYSIS ,BACK-ANA>
+
+<DEFINE TOP-ANA (N R "AUX" (K <KIDS .N>) TS TPS) #DECL ((N) NODE (K) <LIST [REST NODE]>)
+	<COND (<SEGFLUSH .N .R>)
+	      (ELSE
+	       <ARGCHK <LENGTH .K> 1 TOP>
+	       <SET TS <EANA <1 .K> STRUCTURED TOP>>
+	       <COND (<AND <SET TPS <STRUCTYP .TS>>
+			   <MEMQ .TPS '![VECTOR UVECTOR TUPLE]>>
+		      <PUT .N ,NODE-TYPE ,TOP-CODE>
+		      <TYPE-OK? .R .TPS>)
+		     (<==? .TPS LIST>
+		      <MESSAGE ERROR " BAD ARG TO TOP ">)
+		     (ELSE
+		      <PUT .N ,NODE-TYPE ,ISUBR-CODE>
+		      <TYPE-OK? .R <COND (.TPS)(ELSE STRUCTURED)>>)>)>>
+
+<PUT ,TOP ANALYSIS ,TOP-ANA>
+
+"ROUTINE TO ANALYZE SUBSTRUCS"
+
+<DEFINE SUBSTRUC-ANA (NOD RTYP
+		      "AUX" RNODE K FRST-ARG TS TF TYP LN FD TPS NUM NN SN
+			    (ALRDY <==? <NODE-TYPE .NOD> ,SUBSTRUC-CODE>) TEM)
+   #DECL ((FRST-ARG RNODE NOD) NODE (K) <LIST [REST NODE]>
+	  (FLG) <OR ATOM FALSE> (NUM) FIX)
+   <COND
+    (<SEGFLUSH .NOD .RTYP>)
+    (ELSE
+     <SET K <KIDS .NOD>>
+     <COND (<0? <SET LN <LENGTH .K>>>
+	    <MESSAGE ERROR "TOO FEW ARGS TO SUBSTRUC">)>
+     <SET FD <EANA <SET FRST-ARG <1 .K>> STRUCTURED SUBSTRUC>>
+     <COND (<AND .ALRDY <G? .LN 1> <==? <NODE-TYPE <1 .K>> ,REST-CODE>>
+	    <SET SN <1 <KIDS <1 .K>>>>
+	    <SET NN <2 <KIDS <1 .K>>>>
+	    <PUT .NN ,PARENT .NOD>
+	    <PUT .SN ,PARENT .NOD>
+	    <SET LN <+ .LN 1>>
+	    <PUT .NOD ,KIDS <SET K (.SN .NN !<REST .K>)>>)>
+     <AND <G? .LN 1> <EANA <2 .K> FIX SUBSTRUC>>
+     <AND <G? .LN 2> <EANA <3 .K> FIX SUBSTRUC>>
+     <AND <G? .LN 3> <EANA <4 .K> STRUCTURED SUBSTRUC>>
+     <COND
+      (<OR <==? <SET TPS <STRUCTYP .FD>> VECTOR>
+	   <==? .TPS UVECTOR>
+	   <==? .TPS TUPLE>>
+       <SET TF
+	<COND
+	 (<1? .LN> <PUT .NOD ,NODE-TYPE ,SUBSTRUC-CODE> <GET-ELE-TYPE .FD 0 T>)
+	 (<G? .LN 4> <MESSAGE ERROR "TOO MANY ARGS TO SUBSTRUC">)
+	 (<OR <L? .LN 4>
+	      <COND (<OR <SUB-CASE-1 .FRST-ARG <4 .K>>
+			 <SUB-CASE-2 .FRST-ARG <4 .K>>>)>>
+	  <PUT .NOD ,NODE-TYPE ,SUBSTRUC-CODE>
+	  <SET RNODE <BUILD-REST-NODE <1 .K> <2 .K> .NOD>>
+	  <SPLICE-IN-SUB .K .RNODE>
+	  <SET TF <EANA .RNODE .TPS SUBSTRUC>>
+	  <COND (<==? .LN 4> <SET TS <RESULT-TYPE <3 .K>>>) (<SET TS .TF>)>
+	  <SET TF
+	       <COND (<AND <N=? .LN 2> <==? <NODE-TYPE <2 .K>> ,QUOTE-CODE>>
+		      <SET NUM <NODE-NAME <2 .K>>>
+		      <TYPE-OK? .TF <FORM STRUCTURED [.NUM ANY]>>)
+		     (ELSE .TS)>>
+	  <COND
+	   (<N==? .LN 2>
+	    <COND
+	     (<==? <NODE-TYPE <2 .K>> ,QUOTE-CODE>
+	      <SET TF
+	       <CHTYPE
+		(.TPS
+		 !<MAPF ,LIST
+			<FUNCTION ("AUX" X) 
+				<COND (<0? .NUM> <MAPSTOP>)
+				      (ELSE
+				       <SET X <GET-ELE-TYPE .TF .NUM>>
+				       <SET NUM <- .NUM 1>>
+				       .X)>>>)
+		SEGMENT>>)
+	     (ELSE <SET TF .TPS>)>)>)
+	 (ELSE <PUT .NOD ,NODE-TYPE ,ISUBR-CODE> .TPS)>>
+       <COND
+	(<L? .LN 4>
+	 <AND <==? .TPS TUPLE> <SET TPS VECTOR>>
+	 <SET TF
+	  <COND
+	   (<AND <TYPE? .TF FORM SEGMENT> <ISTYPE? .TF>>
+	    <COND
+	     (<==? <1 .TF> OR>
+	      <CHTYPE
+	       (OR
+		!<MAPF ,LIST
+		       <FUNCTION (D) 
+			       <COND (<TYPE? .D FORM>
+				      <CHTYPE (.TPS !<REST .D>) FORM>)
+				     (<TYPE? .D SEGMENT>
+				      <CHTYPE (.TPS !<REST .D>) SEGMENT>)
+				     (ELSE .TPS)>>
+		       <REST .TF>>)
+	       FORM>)
+	     (<TYPE? .TF FORM> <CHTYPE (.TPS !<REST .TF>) FORM>)
+	     (ELSE <CHTYPE (.TPS !<REST .TF>) SEGMENT>)>)
+	   (ELSE .TPS)>>)>
+       <TYPE-OK? .TF .RTYP>)
+      (ELSE <PUT .NOD ,NODE-TYPE ,ISUBR-CODE> <TYPE-OK? STRUCTURED .RTYP>)>)>>
+
+<PUT ,SUBSTRUC ANALYSIS ,SUBSTRUC-ANA>
+
+"BUILD A REST NODE"
+
+<DEFINE BUILD-REST-NODE (NODE NUM PAR) 
+	<NODEFM ,SUBR-CODE .PAR ANY REST (.NODE .NUM) ,REST>>
+
+"SPICE IN A REST NODE"
+
+<DEFINE SPLICE-IN-SUB (K NNODE) 
+	#DECL ((K) <LIST [REST NODE]> (NNODE) NODE)
+	<PUT .K 1 .NNODE>
+	<PUTREST .K <REST .K 2>>>
+
+
+"SUB-CASE-1 LOOKS FOR <SUBSTRUC <REST .X> .N1 .N2 .X> AND SIMILAR CASES WHERE
+ BLTS ARE ALWAYS POSSIBLE.
+ STRNOD== NODE OF STRUCTURE
+ CPYNOD== NODE OF STRUCTURE TO COPY INTO"
+
+<DEFINE SUB-CASE-1 (STRNOD CPYNOD
+		    "AUX" (DATA <GET-SUB-DATA .STRNOD>)
+			  (DATAC <GET-SUB-DATA .CPYNOD>))
+	#DECL ((STRNOD CPYNOD) NODE (DATAC DATA) <OR FALSE LIST>)
+	<AND .DATA
+	     .DATAC
+	     <==? <1 .DATA> <1 .DATAC>>
+	     <TYPE? <2 .DATAC> FIX>
+	     <OR <0? <2 .DATAC>>
+		 <AND <TYPE? <2 .DATA> FIX> <G=? <2 .DATA> <2 .DATAC>>>>>>
+
+<DEFINE SUB-CASE-2 (STRNOD CPYNOD
+		    "AUX" (DATA <GET-SUB-DATA .STRNOD>)
+			  (DATAC <GET-SUB-DATA .CPYNOD>))
+	#DECL ((STRNOD CPYNOD) NODE (DATAC DATA) <OR FALSE LIST>)
+	<AND .DATA
+	     .DATAC
+	     <==? <1 .DATA> <1 .DATAC>>
+	     <TYPE? <2 .DATA> FIX>
+	     <OR <0? <2 .DATA>>
+		 <AND <TYPE? <2 .DATAC> FIX> <L? <2 .DATA> <2 .DATAC>>>>>>
+
+
+<DEFINE GET-SUB-DATA (NOD "AUX" SYM TNOD (NTYP <NODE-TYPE .NOD>)) 
+   #DECL ((NOD TNOD) NODE (SYM) SYMTAB (NTYP) FIX)
+   <COND (<OR <==? .NTYP ,LVAL-CODE> <==? .NTYP ,SET-CODE>>
+	  (<NODE-NAME .NOD> 0))
+	 (<AND <==? .NTYP ,REST-CODE>
+	       <COND (<OR <==? <SET NTYP <NODE-TYPE <SET TNOD <1 <KIDS .NOD>>>>>
+			       ,LVAL-CODE>
+			  <==? .NTYP ,SET-CODE>>
+		      <SET SYM <NODE-NAME .TNOD>>)>>
+	  (.SYM <NODE-NAME <2 <KIDS .NOD>>>))>><ENDPACKAGE>
+

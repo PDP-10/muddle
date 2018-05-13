@@ -1,0 +1,314 @@
+<PACKAGE "BITSGEN">
+
+<ENTRY BITLOG-GEN GETBITS-GEN PUTBITS-GEN BITS-GEN>
+
+<USE "CACS" "CODGEN" "COMCOD" "COMPDEC" "CHKDCL">
+
+<DEFINE BITLOG-GEN (N W
+		    "AUX" (K <KIDS .N>) (REG <UPDATE-WHERE .N .W>) (FST <1 .K>)
+			  (INS <LGINS <NODE-SUBR .N>>))
+	#DECL ((FST N) NODE (K) <LIST [REST NODE]> (REG) DATUM)
+	<COND (<==? <NODE-TYPE .FST> ,QUOTE-CODE>
+	       <PUT .K 1 <2 .K>>
+	       <PUT .K 2 .FST>)>
+	<SET REG <GEN <1 .K> .REG>>
+	<RET-TMP-AC <DATTYP .REG> .REG>
+	<PUT .REG
+	     ,DATTYP
+	     <COND (<ISTYPE? <RESULT-TYPE .N>>) (ELSE WORD)>>
+	<MAPF <>
+	      <FUNCTION (NN "AUX" (NXT <GEN .NN DONT-CARE>) TT) 
+		      #DECL ((NN) NODE (NXT) DATUM)
+		      <COND (<TYPE? <DATVAL .REG> AC>)
+			    (<TYPE? <SET TT <DATVAL .NXT>> AC>
+			     <PUT .NXT ,DATVAL <DATVAL .REG>>
+			     <PUT .REG ,DATVAL .TT>
+			     <FIX-ACLINK .TT .REG .NXT>)
+			    (ELSE <TOACV .REG>)>
+		      <PUT <SET TT <DATVAL .REG>> ,ACPROT T>
+		      <MUNG-AC .TT .REG>
+		      <IMCHK .INS <ACSYM .TT> <DATVAL .NXT> T>
+		      <PUT .TT ,ACPROT <>>
+		      <RET-TMP-AC .NXT>>
+	      <REST .K>>
+	<MOVE:ARG .REG .W>>
+
+<DEFINE LGINS (SUBR) 
+	<NTH '![(`AND  `ANDI `ANDCMI )
+		(`IOR  `IORI `ORCMI )
+		(`XOR  `XORI )
+		(`EQV  `EQVI )!]
+	     <LENGTH <MEMQ .SUBR ,LSUBRS>>>>
+
+<SETG LSUBRS ![,EQVB ,XORB ,ORB ,ANDB!]>
+
+<DEFINE GETBITS-GEN (N W
+		     "AUX" (WRDN <1 <KIDS .N>>) (BP <2 <KIDS .N>>) REG POS WDTH
+			   BAC AC BPW WRD BPD TEM)
+   #DECL ((WRDN N BP) NODE (POS WDTH) FIX (WRD REG BPD) DATUM (AC BAC) AC
+	  (BPW) <PRIMTYPE WORD>)
+   <COND
+    (<==? <NODE-TYPE .BP> ,QUOTE-CODE>
+     <SET WRD <GEN .WRDN DONT-CARE>>
+     <SET BPW <NODE-NAME .BP>>
+     <SET POS <CHTYPE <GETBITS .BPW #BITS *360600000000*> FIX>>
+     <SET WDTH <CHTYPE <GETBITS .BPW #BITS *300600000000*> FIX>>
+     <COND
+      (<AND <==? <+ .POS .WDTH> 36>
+	    <N==? .WDTH 18>
+	    <TYPE? <DATVAL .WRD> AC>
+	    <NOT <ACRESIDUE <SET AC <DATVAL .WRD>>>>
+	    <OR <==? .W DONT-CARE>
+		<AND <TYPE? .W DATUM> <==? .AC <DATVAL .WRD>>>>>
+       <MUNG-AC .AC <SET REG .WRD>>
+       <EMIT <INSTRUCTION `LSH  <ACSYM .AC> <- .POS>>>)
+      (ELSE
+       <PUT <SGETREG <SET AC <DATVAL <SET REG <REG? WORD .W T>>>> .REG>
+	    ,ACPROT
+	    T>
+       <COND (<AND <==? .WDTH 18>		     ;"Could be half word hack."
+		   <COND (<0? .POS>
+			  <EMIT <INSTRUCTION `HRRZ 
+					     <ACSYM .AC>
+					     !<ADDR:VALUE .WRD>>>
+			  T)
+			 (<==? .POS 18>
+			  <EMIT <INSTRUCTION `HLRZ 
+					     <ACSYM .AC>
+					     !<ADDR:VALUE .WRD>>>
+			  T)>>)
+	     (ELSE
+	      <EMIT <INSTRUCTION `LDB 
+				 <ACSYM .AC>
+				 [<FORM <CHTYPE .BPW OPCODE!-OP!-PACKAGE>
+					!<ADDR:VALUE .WRD>>]>>)>
+       <PUT .AC ,ACPROT <>>
+       <RET-TMP-AC .WRD>)>)
+    (<==? <NODE-TYPE .BP> ,BITS-CODE>
+     <SET WRD
+	  <GEN .WRDN
+	       <COND (<SIDE-EFFECTS .BP> <DATUM WORD ANY-AC>)
+		     (ELSE DONT-CARE)>>>
+     <SET BPD
+	  <1 <SET TEM <RBITS-GEN .BP <DATUM BITS ANY-AC> .WRD>>>>
+     <PUT <SGETREG <SET AC <DATVAL <SET REG <REG? WORD .W T>>>> .REG>
+	  ,ACPROT
+	  T>
+     <TOACV .BPD>
+     <PUT <SET BAC <DATVAL .BPD>> ,ACPROT T>
+     <SET TEM <2 .TEM>>
+     <PUT .TEM 1 <1 <ADDR:VALUE .WRD>>>
+     <PUTREST .TEM <REST <ADDR:VALUE .WRD>>>
+     <EMIT <INSTRUCTION `LDB  <ACSYM .AC> <ADDRSYM .BAC>>>
+     <PUT .BAC ,ACPROT <>>
+     <PUT .AC ,ACPROT <>>
+     <RET-TMP-AC .WRD>
+     <RET-TMP-AC .BPD>)
+    (ELSE					   ;"Non constant byte pointer."
+     <SET WRD
+	  <GEN .WRDN
+	       <COND (<SIDE-EFFECTS .BP> <DATUM WORD ANY-AC>)
+		     (ELSE DONT-CARE)>>>
+     <SET BPD <GEN .BP DONT-CARE>>
+     <PUT <SGETREG <SET AC <DATVAL <SET REG <REG? WORD .W T>>>> .REG>
+	  ,ACPROT
+	  T>
+     <SET BPD <MOVE:ARG .BPD <DATUM BITS ANY-AC>>>
+     <PUT <SET BAC <DATVAL .BPD>> ,ACPROT T>
+     <MUNG-AC .BAC .BPD>
+     <EMIT <INSTRUCTION `HRRI  <ACSYM .BAC> !<ADDR:VALUE .WRD>>>
+     <EMIT <INSTRUCTION `LDB  <ACSYM .AC> <ADDRSYM .BAC>>>
+     <PUT .BAC ,ACPROT <>>
+     <PUT .AC ,ACPROT <>>
+     <RET-TMP-AC .WRD>
+     <RET-TMP-AC .BPD>)>
+   <MOVE:ARG .REG .W>>
+
+<DEFINE PUTBITS-GEN (N W
+		     "AUX" (K <KIDS .N>) (SWRD <1 .K>) (BP <2 .K>) BAC POS WDTH
+			   FLD BPW BPD SWRDD (FLG T) TEM NUM)
+   #DECL ((N SWRD BP) NODE (FLD BPD REG SWRDD) DATUM (AC BAC PAC) AC
+	  (POS WDTH) FIX (BPW) <PRIMTYPE WORD> (NUM) <OR FALSE FIX>)
+   <COND
+    (<==? <NODE-TYPE .BP> ,QUOTE-CODE>
+     <SET POS
+	  <CHTYPE <GETBITS <SET BPW <NODE-NAME .BP>> #BITS *360600000000*> FIX>>
+     <SET WDTH <CHTYPE <GETBITS .BPW #BITS *300600000000*> FIX>>
+     <COND
+      (<AND <==? <NODE-TYPE .SWRD> ,QUOTE-CODE>
+	    <0? <CHTYPE <NODE-NAME .SWRD> FIX>>>
+       <SET SWRDD <GEN <3 .K> <REG? <RESULT-TYPE .SWRD> .W>>>
+       <MUNG-AC <DATVAL .SWRDD> .SWRDD>
+       <COND (<L? <+ .POS .WDTH> 36>
+	      <IMCHK '(`AND  `ANDI )
+		     <ACSYM <DATVAL .SWRDD>>
+		     <REFERENCE:ADR <GETBITS -1 <BITS .WDTH>>>>)>
+       <EMIT <INSTRUCTION `LSH  <ACSYM <DATVAL .SWRDD>> .POS>>)
+      (ELSE
+       <SET SWRDD
+	    <GEN .SWRD
+		 <REG? <COND (<ISTYPE? <RESULT-TYPE .SWRD>>) (ELSE TUPLE)> .W>>>
+       <MUNG-AC <DATVAL .SWRDD> .SWRDD>
+       <COND
+	(<AND
+	  <==? .WDTH 18>
+	  <COND
+	   (<0? .POS>
+	    <COND (<AND <SET NUM <ZERQ .K>> <OR <L=? .NUM 0> <G=? .NUM 262143>>>
+		   <EMIT <INSTRUCTION <COND (<0? .NUM> `HLLZS ) (ELSE `HLLOS )>
+				      <ADDRSYM <DATVAL .SWRDD>>>>)
+		  (ELSE <PCLOB .SWRDD '(`HRR  `HRRI ) <3 .K>>)>)
+	   (<==? .POS 18>
+	    <COND (<AND <SET NUM <ZERQ .K>> <OR <L=? .NUM 0> <G=? .NUM 262143>>>
+		   <EMIT <INSTRUCTION <COND (<0? .NUM> `HRRZS ) (ELSE `HRROS )>
+				      <ADDRSYM <DATVAL .SWRDD>>>>)
+		  (ELSE <PCLOB .SWRDD '(`HRL  `HRLI ) <3 .K>>)>
+	    T)>>)
+	(<AND <OR <AND <L? .POS 18> <L=? <+ .POS .WDTH> 18>> <G? .POS 18>>
+	      <SET NUM <ZERQ .K>>
+	      <OR <0? .NUM> <L? .WDTH <POPWR2 <+ .NUM 1>>>>>
+	 <EMIT <INSTRUCTION <COND (<0? .NUM>
+				   <COND (<L? .POS 18> `ANDCMI ) (ELSE `TLZ )>)
+				  (ELSE
+				   <COND (<L? .POS 18> `IORI ) (ELSE `TLO )>)>
+			    <ACSYM <DATVAL .SWRDD>>
+			    <LSH <LSH -1 <- .WDTH 36>>
+				 <COND (<L? .POS 18> .POS)
+				       (ELSE <- .POS 18>)>>>>)
+	(ELSE
+	 <SET FLD <GEN <3 .K> <DATUM WORD ANY-AC>>>
+	 <PUT <DATVAL .FLD> ,ACPROT T>
+	 <TOACV .SWRDD>
+	 <PUT <DATVAL .SWRDD> ,ACPROT T>
+	 <EMIT <INSTRUCTION `DPB 
+			    <ACSYM <DATVAL .FLD>>
+			    [<FORM <CHTYPE .BPW OPCODE!-OP!-PACKAGE>
+				   <ADDRSYM <DATVAL .SWRDD>>>]>>
+	 <PUT <DATVAL .FLD> ,ACPROT <>>
+	 <PUT <DATVAL .SWRDD> ,ACPROT <>>
+	 <RET-TMP-AC .FLD>)>)>)
+    (ELSE
+     <COND (<NOT <AND <NOT <SIDE-EFFECTS .N>> <MEMQ <NODE-TYPE .SWRD> ,SNODES>>>
+	    <SET SWRDD
+		 <GEN .SWRD
+		      <REG? <COND (<ISTYPE? <RESULT-TYPE .SWRD>>) (ELSE TUPLE)>
+			    .W>>>)>
+     <PREFER-DATUM .W>
+     <SET BPD
+	  <COND (<==? <NODE-TYPE .BP> ,BITS-CODE>
+		 <SET FLG <>>
+		 <1 <SET TEM
+			 <RBITS-GEN .BP
+				    <DATUM BITS ANY-AC>
+				    <COND (<ASSIGNED? SWRDD> .SWRDD)
+					  (ELSE ,NO-DATUM)>>>>)
+		(ELSE <GEN .BP DONT-CARE>)>>
+     <PREFER-DATUM .W>
+     <COND (<SET NUM <ZERQ .K>>
+	    <SET FLD <MOVE:ARG <REFERENCE .NUM> <DATUM WORD ANY-AC>>>)
+	   (ELSE <SET FLD <GEN <3 .K> <DATUM WORD ANY-AC>>>)>
+     <DATTYP-FLUSH .FLD>
+     <PUT .FLD ,DATTYP WORD>
+     <COND (<NOT <ASSIGNED? SWRDD>>
+	    <SET SWRDD
+		 <GEN .SWRD
+		      <REG? <COND (<ISTYPE? <RESULT-TYPE .SWRD>>) (ELSE TUPLE)>
+			    .W>>>)>
+     <COND (<NOT <TYPE? <DATVAL .SWRDD> AC>>
+	    <SET SWRDD
+		 <MOVE:ARG
+		  .SWRDD
+		  <REG? <COND (<ISTYPE? <RESULT-TYPE .SWRD>>) (ELSE TUPLE)>
+			.W>>>)>
+     <PUT <DATVAL .SWRDD> ,ACPROT T>
+     <TOACV .FLD>
+     <PUT <DATVAL .FLD> ,ACPROT T>
+     <TOACV .BPD>
+     <PUT <SET BAC <DATVAL .BPD>> ,ACPROT T>
+     <COND (<NOT .FLG>
+	    <PUT <2 .TEM> 1 <ADDRSYM <DATVAL .SWRDD>>>
+	    <PUTREST <2 .TEM> ()>)>
+     <MUNG-AC <DATVAL .SWRDD> .SWRDD>
+     <COND (.FLG
+	    <MUNG-AC .BAC .BPD>
+	    <EMIT <INSTRUCTION `HRRI  <ACSYM .BAC> <ADDRSYM <DATVAL .SWRDD>>>>)>
+     <EMIT <INSTRUCTION `DPB  <ACSYM <DATVAL .FLD>> <ADDRSYM .BAC>>>
+     <PUT .BAC ,ACPROT <>>
+     <PUT <DATVAL .SWRDD> ,ACPROT <>>
+     <PUT <DATVAL .FLD> ,ACPROT <>>
+     <RET-TMP-AC .BPD>
+     <RET-TMP-AC .FLD>)>
+   <MOVE:ARG .SWRDD .W>>
+
+<DEFINE ZERQ (L "AUX" NUM) 
+	#DECL ((L) <LIST [REST NODE]>)
+	<COND (<==? <LENGTH .L> 2>)
+	      (<AND <==? <NODE-TYPE <SET NUM <3 .L>>> ,QUOTE-CODE>
+		    <==? <PRIMTYPE <SET NUM <NODE-NAME .NUM>>> WORD>
+		    <OR <AND <0? <SET NUM <CHTYPE .NUM FIX>>> 0>
+			<AND <POPWR2 <+ .NUM 1>> .NUM>>>)>>
+
+<DEFINE PCLOB (DEST INS SRC "AUX" SRCD) 
+	#DECL ((DEST SRCD) DATUM (SRC) NODE)
+	<SET SRCD <GEN .SRC DONT-CARE>>
+	<TOACV .DEST>
+	<PUT <DATVAL .DEST> ,ACPROT T>
+	<IMCHK .INS <ACSYM <DATVAL .DEST>> <DATVAL .SRCD>>
+	<PUT <DATVAL .DEST> ,ACPROT <>>
+	<RET-TMP-AC .SRCD>>
+
+<DEFINE BITS-GEN (N W) <1 <RBITS-GEN .N .W DONT-CARE>>>
+
+<DEFINE RBITS-GEN (N W ADDR
+		   "AUX" (K <KIDS .N>) (WDTHN <1 .K>) WDTH POS TEM
+			 (REG <REG? WORD .W>) POSD (FLG T))
+	#DECL ((POS N WDTHN) NODE (REG WDTH POSD) DATUM (K) <LIST [REST NODE]>)
+	<COND (<==? <LENGTH .K> 2> <SET POS <2 .K>>)>
+	<COND
+	 (<==? <NODE-TYPE .WDTHN> ,QUOTE-CODE>
+	  <SET TEM <MAKE-PTR .ADDR T <NODE-NAME .WDTHN>>>)
+	 (<OR <NOT <ASSIGNED? POS>>
+	      <==? <NODE-TYPE .POS> ,QUOTE-CODE>>
+	  <SET TEM
+	       <MAKE-PTR .ADDR
+			 <>
+			 <COND (<ASSIGNED? POS> <NODE-NAME .POS>) (ELSE 0)>>>
+	  <SET POS .WDTHN>
+	  <SET FLG <>>)
+	 (ELSE
+	  <SET WDTH <GEN .WDTHN .REG>>
+	  <MUNG-AC <DATVAL .REG> .REG>
+	  <EMIT <INSTRUCTION `LSH  <ACSYM <DATVAL .REG>> 24>>
+	  <COND (<TYPE? .ADDR DATUM>
+		 <EMIT <SET TEM <INSTRUCTION `HRRI  <ACSYM <DATVAL .REG>> 0>>>
+		 <SET TEM <REST .TEM 2>>)
+		(ELSE <SET TEM '(0)>)>)>
+	<SET POSD <GEN .POS <DATUM WORD ANY-AC>>>
+	<PUT <DATVAL .POSD> ,ACPROT T>
+	<COND (<NOT <ASSIGNED? WDTH>>
+	       <SET WDTH <DATUM WORD ANY-AC>>
+	       <PUT .WDTH ,DATVAL <GETREG .WDTH>>
+	       <EMIT <INSTRUCTION `MOVE  <ACSYM <DATVAL .WDTH>> .TEM>>
+	       <SET TEM <REST <1 .TEM>>>)
+	      (ELSE <TOACV .WDTH>)>
+	<PUT <DATVAL .WDTH> ,ACPROT T>
+	<EMIT <INSTRUCTION `DPB 
+			   <ACSYM <DATVAL .POSD>>
+			   [<FORM (<COND (.FLG 123264) (ELSE 98688)>)
+				  <ADDRSYM <DATVAL .WDTH>>>]>>
+	<PUT <DATVAL .WDTH> ,ACPROT <>>
+	<PUT <DATVAL .POSD> ,ACPROT <>>
+	<RET-TMP-AC .POSD>
+	<COND (<TYPE? <DATTYP .WDTH> AC>
+	       <RET-TMP-AC <DATTYP .WDTH> .WDTH>)>
+	<PUT .WDTH ,DATTYP BITS>
+	[<MOVE:ARG .WDTH .W> .TEM]>
+
+<DEFINE MAKE-PTR (AD W-P CNST "AUX" (BP <BITS 6 <COND (.W-P 24) (ELSE 30)>>)) 
+	#DECL ((CNST) FIX)
+	<COND (<TYPE? .AD DATUM>
+	       [<FORM (<GETBITS <PUTBITS 0 .BP .CNST> <BITS 18 18>>) HERE>])
+	      (ELSE
+	       [<FORM (<GETBITS <PUTBITS 0 .BP .CNST> <BITS 18 18>>) 0>])>>
+
+<ENDPACKAGE>

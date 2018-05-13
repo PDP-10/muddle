@@ -1,0 +1,46 @@
+;"need to fload <ac.mud>init.mud in order to compile this"
+
+<DEFINE GENERATE_PROCESSING_ORDERS (TR		 ;"transaction description"
+				    PS		        ;"partial sequence"
+				    "AUX" (NN <NTH .TR ,nnodes_t>)
+							    ;"no. of nodes"
+					  TEMP)
+   #DECL ((TR) transaction_type_desc (PS) <LIST [REST FIX]>
+	  (TEMP) <OR <LIST [REST FIX]> FALSE> (NN) FIX)
+   <COND
+    (<==? <LENGTH .PS> .NN> .PS)
+    (<MAPF <>
+      <FUNCTION (X) 
+	 #DECL ((X) FIX)
+	 <SET TEMP
+	  <MAPF ,LIST
+	   <FUNCTION (Y) 
+	      #DECL ((Y) FIX)
+	      <COND (<NOT <MEMBER .Y .PS>>
+		     <MAPRET !<GENERATE_PROCESSING_ORDERS .TR (.Y !.PS)>>)
+		    (ELSE <MAPRET>)>>
+	   <NTH <NTH <NTH .TR ,conns_t> .X> ,rcn_c>>>
+	 <COND (<NOT <EMPTY? .TEMP>> <MAPLEAVE .TEMP>)>>
+      .PS>)
+    (<MAPF <>
+      <FUNCTION (X "AUX" (Y <NTH <NTH <NTH .TR ,conns_t> .X> ,pn_c>)) 
+	      #DECL ((X) FIX (Y) <OR FIX FALSE>)
+	      <COND
+	       (<AND .Y <NOT <MEMBER .Y .PS>>>
+		<MAPLEAVE <GENERATE_PROCESSING_ORDERS .TR (.Y !.PS)>>)>>
+      .PS>)
+    (ELSE			    ;"look for unrestricted children nodes"
+     <MAPF <>
+      <FUNCTION (X) 
+	 #DECL ((X) FIX)
+	 <SET TEMP
+	  <MAPF <>
+	   <FUNCTION (Y) 
+	      #DECL ((Y) FIX)
+	      <COND
+	       (<NOT <MEMBER .Y .PS>>
+		<MAPLEAVE <GENERATE_PROCESSING_ORDERS .TR (.Y !.PS)>>)>>
+	   <NTH <NTH <NTH .TR ,conns_t> .X> ,ucn_c>>>
+	 <COND (.TEMP <MAPLEAVE .TEMP>)>>
+      <LREVERSE <LIST !.PS>>>)>>
+

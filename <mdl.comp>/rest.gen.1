@@ -1,0 +1,177 @@
+
+
+	<TITLE REST-GEN>
+
+	<DECLARE ("VALUE" DATUM!-COMPDEC!-PACKAGE NODE!-COMPDEC!-PACKAGE ANY)>
+	<PUSH	TP* (AB) >
+	<PUSH	TP* (AB) 1>
+	<PUSH	TP* (AB) 2>
+	<PUSH	TP* (AB) 3>
+	<PUSHJ	P* TAG1>
+	<JRST	|FINIS >
+TAG1	<SUBM	M* (P) >				    ; 6
+	<PUSH	TP* [0]>				    ; [4]
+	<PUSH	TP* [0]>				    ; [5]
+	<PUSH	TP* [0]>				    ; [6]
+	<PUSH	TP* [0]>				    ; [7]
+	<MOVE	B* (TP) -6>				    ; (1)
+	<PUSH	TP* <TYPE-WORD LIST>>			    ; [8]
+	<PUSH	TP* (B) 9>				    ; [9]
+	<MOVE	D* (TP) >				    ; (9)
+	<MOVE	PVP* (D) 1>
+	<PUSH	TP* (PVP) 4>				    ; [10]
+	<PUSH	TP* (PVP) 5>				    ; [11]
+	<PUSH	TP* (TP) -1>				    ; (10) [12]
+	<PUSH	TP* (TP) -1>				    ; (11) [13]
+	<MCALL	1 STRUCTYP>
+	<PUSH	TP* A>					    ; [12]
+	<PUSH	TP* B>					    ; [13]
+	<MOVE	B* (TP) -4>				    ; (9)
+	<HRRZ	D* (B) >
+	<PUSH	TP* <MQUOTE %<TYPE-W NODE!-COMPDEC!-PACKAGE VECTOR>>>; [14]
+	<PUSH	TP* (D) 1>				    ; [15]
+	<PUSH	TP* <MQUOTE %<TYPE-W NODE!-COMPDEC!-PACKAGE VECTOR>>>; [16]
+	<PUSH	TP* (B) 1>				    ; [17]
+	<PUSH	TP* (TP) -1>				    ; (16) [18]
+	<PUSH	TP* (TP) -1>				    ; (17) [19]
+	<MCALL	1 NTH-REST-PUT?>
+	<PUSH	TP* A>					    ; [18]
+	<PUSH	TP* B>					    ; [19]
+	<MOVE	B* (TP) -4>				    ; (15)
+	<MOVE	D* (B) 1>
+	<CAIE	D* 2 >
+	<JRST	TAG2>
+	<MOVE	PVP* <MQUOTE T> -1>
+	<MOVE	TVP* <MQUOTE T>>
+	<JRST	TAG3>
+TAG2	<MOVE	PVP* <TYPE-WORD FALSE>>			    ; 41
+	<MOVEI	TVP* 0>
+TAG3	<PUSH	TP* PVP>				    ; 43 [20]
+	<PUSH	TP* TVP>				    ; [21]
+	<SKIPL	(TP) >					    ; (21)
+	<JRST	TAG4>
+	<MOVE	PVP* (B) 7>
+	<JRST	TAG5>
+TAG4	<MOVEI	PVP* 0>					    ; 49
+TAG5	<PUSH	TP* <TYPE-WORD FIX>>			    ; 50 [22]
+	<PUSH	TP* PVP>				    ; [23]
+	<PUSH	TP* (B) 4>				    ; [24]
+	<PUSH	TP* (B) 5>				    ; [25]
+	<MCALL	1 GET-RANGE>
+	<PUSH	TP* A>					    ; [24]
+	<PUSH	TP* B>					    ; [25]
+	<INTGO>
+	<PUSH	TP* <MQUOTE %<TYPE-W NODE!-COMPDEC!-PACKAGE VECTOR>>>; [26]
+	<PUSH	TP* (TP) -25>				    ; (1) [27]
+	<MCALL	1 FIND-COMMON>
+	<MOVEM	A* (TP) -19>				    ; (6)
+	<MOVEM	B* (TP) -18>				    ; (7)
+	<JUMPGE	B* TAG6>
+	<PUSH	TP* A>					    ; [26]
+	<PUSH	TP* B>					    ; [27]
+	<MCALL	1 GET-COMMON-DATUM>
+	<PUSH	TP* A>					    ; [26]
+	<PUSH	TP* B>					    ; [27]
+	<PUSH	TP* (TP) -25>				    ; (2) [28]
+	<PUSH	TP* (TP) -25>				    ; (3) [29]
+	<MCALL	2 MOVE:ARG>
+	<MOVEM	A* (TP) -21>				    ; (4)
+	<MOVEM	B* (TP) -20>				    ; (5)
+	<JRST	TAG7>
+TAG6	<PUSH	TP* [<(%<TYPE-CODE ATOM>) -1>]>		    ; 76 [26]
+	<PUSH	TP* <MQUOTE COMMON-SUB>>		    ; [27]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [28]
+	<PUSH	TP* [0]>				    ; [29]
+	<PUSH	TP* <MQUOTE (<OR FALSE COMMON!-COMPDEC!-PACKAGE>)> -1>; [30]
+	<PUSH	TP* <MQUOTE (<OR FALSE COMMON!-COMPDEC!-PACKAGE>)>>; [31]
+	<PUSHJ	P* |SPECBN >
+	<MOVE	B* <MQUOTE %<RGLOC RESTERS T>>>
+	<ADD	B* |GLOTOP 1>
+	<MOVE	D* <MQUOTE %<RGLOC STYPES!-COMPDEC!-PACKAGE T>>>
+	<ADD	D* |GLOTOP 1>
+	<MOVE	PVP* <TYPE-WORD UVECTOR>>
+	<MOVE	TVP* (D) 1>
+	<MOVE	D* (TP) -18>				    ; (13)
+	<JUMPGE	TVP* TAG8>
+TAG10	<CAMN	D* (TVP) >				    ; 91
+	<JRST	TAG9>
+	<AOBJN	TVP* TAG10>
+TAG8	<MOVE	D* <TYPE-WORD FALSE>>			    ; 94
+	<MOVEI	PVP* 0>
+	<JRST	TAG11>
+TAG9	<MOVE	D* <TYPE-WORD UVECTOR>>			    ; 97
+	<MOVE	PVP* TVP>
+TAG11	<HLRE	D* PVP>					    ; 99
+	<MOVNS	O* D>
+	<MOVE	PVP* (B) 1>
+	<JUMPLE	D* |CERR1 >
+	<ASH	D* A>
+	<HRLI	D* (D) 0>
+	<ADD	D* PVP>
+	<CAILE	D* -1 >
+	<JRST	|CERR2 >
+	<PUSH	TP* (D) -2>				    ; [32]
+	<PUSH	TP* (D) -1>				    ; [33]
+	<PUSH	TP* <MQUOTE %<TYPE-W NODE!-COMPDEC!-PACKAGE VECTOR>>>; [34]
+	<PUSH	TP* (TP) -33>				    ; (1) [35]
+	<PUSH	TP* (TP) -33>				    ; (2) [36]
+	<PUSH	TP* (TP) -33>				    ; (3) [37]
+	<PUSH	TP* (TP) -27>				    ; (10) [38]
+	<PUSH	TP* (TP) -27>				    ; (11) [39]
+	<PUSH	TP* (TP) -27>				    ; (12) [40]
+	<PUSH	TP* (TP) -27>				    ; (13) [41]
+	<PUSH	TP* (TP) -21>				    ; (20) [42]
+	<PUSH	TP* (TP) -21>				    ; (21) [43]
+	<PUSH	TP* (TP) -21>				    ; (22) [44]
+	<PUSH	TP* (TP) -21>				    ; (23) [45]
+	<MOVE	B* (TP) -36>				    ; (9)
+	<PUSH	TP* <MQUOTE %<TYPE-W NODE!-COMPDEC!-PACKAGE VECTOR>>>; [46]
+	<PUSH	TP* (B) 1>				    ; [47]
+	<PUSH	TP* (TP) -33>				    ; (14) [48]
+	<PUSH	TP* (TP) -33>				    ; (15) [49]
+	<PUSH	TP* <MQUOTE T> -1>			    ; [50]
+	<PUSH	TP* <MQUOTE T>>				    ; [51]
+	<PUSH	TP* <TYPE-WORD FALSE>>			    ; [52]
+	<PUSH	TP* [0]>				    ; [53]
+	<PUSH	TP* (TP) -29>				    ; (24) [54]
+	<PUSH	TP* (TP) -29>				    ; (25) [55]
+	<MCALL	*14* APPLY>
+	<MOVE	D* (TP) -3>				    ; (28)
+	<MOVE	PVP* (TP) -2>				    ; (29)
+	<SUB	TP* [<(6) 6>]>
+	<PUSHJ	P* |SSPECS >
+	<MOVEM	A* (TP) -21>				    ; (4)
+	<MOVEM	B* (TP) -20>				    ; (5)
+	<MOVEM	D* (TP) -19>				    ; (6)
+	<MOVEM	PVP* (TP) -18>				    ; (7)
+TAG7	<PUSH	TP* <MQUOTE REST> -1>			    ; 142 [26]
+	<PUSH	TP* <MQUOTE REST>>			    ; [27]
+	<PUSH	TP* (TP) -11>				    ; (16) [28]
+	<PUSH	TP* (TP) -11>				    ; (17) [29]
+	<PUSH	TP* (TP) -23>				    ; (6) [30]
+	<PUSH	TP* (TP) -23>				    ; (7) [31]
+	<PUSH	TP* (TP) -29>				    ; (2) [32]
+	<PUSH	TP* (TP) -29>				    ; (3) [33]
+	<PUSH	TP* (TP) -29>				    ; (4) [34]
+	<PUSH	TP* (TP) -29>				    ; (5) [35]
+	<PUSH	TP* (TP) -15>				    ; (20) [36]
+	<PUSH	TP* (TP) -15>				    ; (21) [37]
+	<PUSH	TP* (TP) -15>				    ; (22) [38]
+	<PUSH	TP* (TP) -15>				    ; (23) [39]
+	<PUSH	TP* (TP) -27>				    ; (12) [40]
+	<PUSH	TP* (TP) -27>				    ; (13) [41]
+	<PUSH	TP* (TP) -23>				    ; (18) [42]
+	<PUSH	TP* (TP) -23>				    ; (19) [43]
+	<MCALL	*11* HACK-COMMON>
+	<MOVE	B* (TP) -20>				    ; (5)
+	<SUB	TP* [<(26) 26>]>
+	<MOVE	A* <MQUOTE %<TYPE-W DATUM!-COMPDEC!-PACKAGE LIST>>>
+	<JRST	|MPOPJ >
+	<0>
+	<(*47*) -1>
+	<(6) 6>
+	<(26) 26>
+	<(2) 6>
+	<(*65523*) *200067*>
+	<0>
+	<(1) 2>

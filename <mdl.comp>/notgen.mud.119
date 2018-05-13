@@ -1,0 +1,330 @@
+<PACKAGE "NOTGEN">
+
+<ENTRY NOT-GEN TYPE?-GEN ==-GEN>
+
+<USE "CODGEN" "COMCOD" "CHKDCL" "CACS" "COMPDEC">
+
+
+" Generate NOT code.  This is done in a variety of ways.
+	1) If NOTs arg is a predicate itself and this is a predicate usage
+	    (flagged by BRANCH arg), just pass through setting the NOTF arg.
+	2) If NOTs arg is a predicate but a value is needed,
+	    set up a predicate like situation and return NOT of the normal
+	    value.
+	3) Else just compile and complement result."
+
+<DEFINE NOT-GEN (NOD WHERE
+		 "OPTIONAL" (NOTF <>) (BRANCH <>) (DIR T)
+		 "AUX" (P <1 <KIDS .NOD>>) (RW .WHERE)
+		       (PF <PRED? <NODE-TYPE .P>>) T1 T2 TT (FLG <>))
+	#DECL ((NOD P) NODE (TT) DATUM)
+	<SET WHERE <GOODACS .NOD .WHERE>>
+	<SET NOTF <NOT .NOTF>>
+	<COND (<AND .BRANCH .PF>
+	       <SET WHERE
+		    <APPLY <NTH ,GENERATORS <NODE-TYPE .P>>
+			   .P
+			   <COND (<==? .RW FLUSHED> FLUSHED) (ELSE .WHERE)>
+			   .NOTF
+			   .BRANCH
+			   .DIR>>)
+	      (<AND .BRANCH <==? .RW FLUSHED>>
+	       <AND .NOTF <SET DIR <NOT .DIR>>>
+	       <SET WHERE <GEN .P .WHERE>>
+	       <VAR-STORE <>>
+	       <D:B:TAG .BRANCH .WHERE .DIR <RESULT-TYPE .P>>)
+	      (.BRANCH
+	       <SET TT <GEN .P DONT-CARE>>
+	       <VAR-STORE <>>
+	       <SET T1 <MAKE:TAG>>
+	       <D:B:TAG .T1 .TT .DIR <RESULT-TYPE .P>>
+	       <RET-TMP-AC .TT>
+	       <SET WHERE <MOVE:ARG <REFERENCE .DIR> .WHERE>>
+	       <BRANCH:TAG .BRANCH>
+	       <LABEL:TAG .T1>)
+	      (<==? .RW FLUSHED> <SET WHERE <GEN .P FLUSHED>>)
+	      (<OR <SET FLG <==? <ISTYPE? <RESULT-TYPE .NOD>> FALSE>>
+		   <NOT <TYPE-OK? <RESULT-TYPE .NOD> FALSE>>>
+	       <GEN .P FLUSHED>
+	       <SET WHERE <MOVE:ARG <REFERENCE <NOT .FLG>> .WHERE>>)
+	      (.PF
+	       <SET T1 <MAKE:TAG>>
+	       <SET T2 <MAKE:TAG>>
+	       <APPLY <NTH ,GENERATORS <NODE-TYPE .P>>
+		      .P
+		      FLUSHED
+		      .NOTF
+		      .T1
+		      .DIR>
+	       <MOVE:ARG <REFERENCE <>> .WHERE>
+	       <BRANCH:TAG .T2>
+	       <LABEL:TAG .T1>
+	       <RET-TMP-AC .WHERE>
+	       <MOVE:ARG <REFERENCE T> .WHERE>
+	       <LABEL:TAG .T2>)
+	      (ELSE
+	       <SET T1 <MAKE:TAG>>
+	       <SET T2 <MAKE:TAG>>
+	       <SET TT <GEN .P DONT-CARE>>
+	       <VAR-STORE <>>
+	       <D:B:TAG .T1 .TT T <RESULT-TYPE .P>>
+	       <RET-TMP-AC .TT>
+	       <MOVE:ARG <REFERENCE T> .WHERE>
+	       <BRANCH:TAG .T2>
+	       <LABEL:TAG .T1>
+	       <RET-TMP-AC .WHERE>
+	       <MOVE:ARG <REFERENCE <>> .WHERE>
+	       <LABEL:TAG .T2>)>
+	<MOVE:ARG .WHERE .RW>>
+
+<DEFINE PRED? (N) #DECL ((N) FIX) <1? <NTH ,PREDV .N>>>
+
+" Generate code for ==?.  If types are the same then just compare values,
+otherwise generate a full comparison."
+
+<DEFINE ==-GEN (NOD WHERE
+		"OPTIONAL" (NOTF <>) (BRANCH <>) (DIR <>)
+		"AUX" (K <KIDS .NOD>) REG REG2 B2 T2OK T2 T1
+		      (T1OK <ISTYPE? <RESULT-TYPE <1 .K>>>)
+		      (TYPSAM
+		       <AND <==? .T1OK
+				 <SET T2OK <ISTYPE? <RESULT-TYPE <2 .K>>>>>
+			    .T1OK>) (RW .WHERE) (SDIR .DIR)
+		      (FLS <==? .RW FLUSHED>) INA)
+	#DECL ((NOD) NODE (K) <LIST [REST NODE]>)
+	<COND (<==? <NODE-SUBR .NOD> ,N==?> <SET NOTF <NOT .NOTF>>)>
+	<AND <NOT .TYPSAM>
+	     .T1OK
+	     .T2OK
+	     <MESSAGE WARNING
+		      " ARGS CAN NEVER BE EQUAL "
+		      <NODE-NAME .NOD>
+		      " "
+		      .NOD>>
+	<COND (<OR <==? <NODE-TYPE <SET T1 <1 .K>>> ,QUOTE-CODE>
+		   <AND <NOT <SIDE-EFFECTS .NOD>>
+			<N==? <NODE-TYPE <SET T2 <2 .K>>> ,QUOTE-CODE>
+			<MEMQ <NODE-TYPE .T1> ,SNODES>
+			<OR <N==? <NODE-TYPE .T2> ,LVAL-CODE>
+			    <AND <==? <NODE-TYPE .T1> ,LVAL-CODE>
+				 <SET INA <INACS <NODE-NAME .T2>>>
+				 <TYPE? <DATVAL .INA> AC>>>>>
+	       <PUT .K 1 <2 .K>>
+	       <PUT .K 2 .T1>
+	       <SET T1 .T1OK>
+	       <SET T1OK .T2OK>
+	       <SET T2OK .T1>)>
+	<SET WHERE <UPDATE-WHERE .NOD .WHERE>>
+	<SET REG
+	     <COND (<ISTYPE-GOOD? .T1OK> <DATUM .T1OK ANY-AC>)
+		   (ELSE <DATUM ANY-AC ANY-AC>)>>
+	<SET REG2 DONT-CARE>
+	<COND (.BRANCH
+	       <AND .NOTF <SET DIR <NOT .DIR>>>
+	       <GEN-EQTST .REG
+			  .REG2
+			  <1 .K>
+			  <2 .K>
+			  .T1OK
+			  .T2OK
+			  <COND (.FLS .DIR) (ELSE <NOT .DIR>)>
+			  .TYPSAM
+			  <COND (.FLS .BRANCH) (ELSE <SET B2 <MAKE:TAG>>)>>
+	       <COND (<NOT .FLS>
+		      <SET RW
+			   <MOVE:ARG <MOVE:ARG <REFERENCE .SDIR> .WHERE> .RW>>
+		      <BRANCH:TAG .BRANCH>
+		      <LABEL:TAG .B2>
+		      .RW)>)
+	      (ELSE
+	       <SET BRANCH <MAKE:TAG>>
+	       <GEN-EQTST .REG
+			  .REG2
+			  <1 .K>
+			  <2 .K>
+			  .T1OK
+			  .T2OK
+			  .NOTF
+			  .TYPSAM
+			  .BRANCH>
+	       <MOVE:ARG <REFERENCE T> .WHERE>
+	       <RET-TMP-AC .WHERE>
+	       <BRANCH:TAG <SET B2 <MAKE:TAG>>>
+	       <LABEL:TAG .BRANCH>
+	       <MOVE:ARG <REFERENCE <>> .WHERE>
+	       <LABEL:TAG .B2>
+	       <MOVE:ARG .WHERE .RW>)>>
+
+<DEFINE GEN-EQTST (R11 R21 N1 N2 T1 T2 DIR TYPS BR "AUX" (TMP <>) AC R1 R2) 
+   #DECL ((N1 N2) NODE (R1 R2) DATUM (AC) AC)
+   <SET R1 <GEN .N1 .R11>>
+   <SET R2 <GEN .N2 .R21>>
+   <VAR-STORE <>>
+   <COND (<TYPE? <DATVAL .R1> AC>)
+	 (<TYPE? <DATVAL .R2> AC>
+	  <SET R11 .R1>
+	  <SET R1 .R2>
+	  <SET R2 .R11>
+	  <SET R11 .T1>
+	  <SET T1 .T2>
+	  <SET T2 .R11>)>
+   <TOACV .R1>
+   <AND <TYPE? <DATVAL .R2> AC>
+	<PUT <SET TMP <DATVAL .R2>> ,ACPROT T>>
+   <PUT <DATVAL .R1> ,ACPROT T>
+   <COND (.TYPS
+	  <IMCHK <COND (.DIR '(`CAMN  `CAIN )) (ELSE '(`CAME  `CAIE ))>
+		 <ACSYM <DATVAL .R1>>
+		 <DATVAL .R2>>)
+	 (ELSE
+	  <COND (.T2
+		 <EMIT <INSTRUCTION GETYP!-OP!-PACKAGE `O  !<ADDR:TYPE .R1>>>)
+		(.T1
+		 <EMIT <INSTRUCTION GETYP!-OP!-PACKAGE `O  !<ADDR:TYPE .R2>>>)
+		(ELSE
+		 <EMIT <INSTRUCTION GETYP!-OP!-PACKAGE `O  !<ADDR:TYPE .R2>>>
+		 <EMIT <INSTRUCTION GETYP!-OP!-PACKAGE
+				    <ACSYM <SET AC <GETREG <>>>>
+				    !<ADDR:TYPE .R1>>>)>
+	  <IMCHK '(`CAMN  `CAIN ) <ACSYM <DATVAL .R1>> <DATVAL .R2>>
+	  <EMIT <INSTRUCTION
+		 `CAIE 
+		 `O 
+		 <COND (.T1 <FORM TYPE-CODE!-OP!-PACKAGE .T1>)
+		       (.T2 <FORM TYPE-CODE!-OP!-PACKAGE .T2>)
+		       (ELSE (<ADDRSYM .AC>))>>>
+	  <AND .DIR <EMIT '<`SKIPA >>>)>
+   <BRANCH:TAG .BR>
+   <RET-TMP-AC .R1>
+   <RET-TMP-AC .R2>
+   <AND <TYPE? .TMP AC> <PUT .TMP ,ACPROT <>>>>
+
+"	Generate TYPE? code for all various cases."
+
+<DEFINE TYPE?-GEN (NOD WHERE
+		   "OPTIONAL" (NOTF <>) (BRANCH <>) (DIR <>)
+		   "AUX" B2 REG (RW .WHERE) (K <KIDS .NOD>) (SDIR .DIR)
+			 (FLS <==? .RW FLUSHED>) B3 (TEST? T))
+   #DECL ((NOD) NODE (K) <LIST [REST NODE]> (REG) DATUM
+	  (WHERE BRANCH B2 B3) ANY)
+   <COND (<==? <RESULT-TYPE .NOD> FALSE>
+	  <MESSAGE WARNING "TYPE? NEVER TRUE " .NOD>
+	  <SET TEST? #FALSE (1)>)
+	 (<NOT <TYPE-OK? <RESULT-TYPE .NOD> FALSE>>
+	  <MESSAGE WARNING "TYPE? ALWAYS TRUE " .NOD>
+	  <SET TEST? #FALSE (2)>)>
+			        ;"Type of false indicates always true or false"
+   <SET REG
+	<GEN <1 .K> <COND (<AND <NOT .TEST?> .FLS> FLUSHED) (ELSE DONT-CARE)>>>
+   <AND .NOTF <SET DIR <NOT .DIR>>>
+   <SET K <REST .K>>
+   <VAR-STORE <>>
+   <COND (<OR .TEST?
+	      <AND <NOT .FLS> <NOT <EMPTY? <REST .K>>> <==? <1 .TEST?> 2>>>
+	  <EMIT <INSTRUCTION GETYP!-OP!-PACKAGE `O*  !<ADDR:TYPE .REG>>>)>
+   <RET-TMP-AC .REG>
+   <COND
+    (<AND .BRANCH .FLS>				       ;"In a COND, OR or AND?"
+     <AND <NOT <EMPTY? <REST .K>>> <NOT .DIR> <SET B2 <MAKE:TAG>>>
+     <REPEAT ()
+	     <COND
+	      (<EMPTY? <REST .K>>
+	       <COND (.TEST? <TYPINS .DIR <1 .K>>)>
+	       <COND (<OR .TEST?
+			  <AND .DIR <==? <1 .TEST?> 2>>
+			  <AND <NOT .DIR> <==? <1 .TEST?> 1>>>
+		      <BRANCH:TAG .BRANCH>)>
+	       <AND <ASSIGNED? B2> <LABEL:TAG .B2>>
+	       <RETURN>)
+	      (ELSE
+	       <COND (.TEST?
+		      <TYPINS <> <1 .K>>
+		      <TYPINS T <2 .K>>
+		      <BRANCH:TAG <COND (.DIR .BRANCH) (ELSE .B2)>>)>
+	       <COND (<EMPTY? <SET K <REST .K 2>>>
+		      <COND (<OR <AND <NOT .DIR> .TEST?>
+				 <AND <NOT .TEST?>
+				      <OR <AND .DIR <==? <1 .TEST?> 2>>
+					  <AND <NOT .DIR>
+					       <==? <1 .TEST?> 1>>>>>
+			     <BRANCH:TAG .BRANCH>
+			     <LABEL:TAG .B2>)>
+		      <RETURN>)>)>>)
+    (<AND .FLS <NOT .TEST?> <NOT .BRANCH>>)
+    (<OR .NOTF <NOT <==? <NOT .BRANCH> <NOT .DIR>>>>
+     <SET WHERE <GOODACS .NOD .WHERE>>
+     <SET B2 <MAKE:TAG>>
+     <SET B3 <MAKE:TAG>>
+     <COND (.TEST?
+	    <REPEAT ()
+		    <COND (<EMPTY? <REST .K>>
+			   <TYPINS <COND (.BRANCH <NOT .DIR>) (ELSE .DIR)>
+				   <1 .K>>
+			   <RETURN>)
+			  (ELSE
+			   <TYPINS <> <1 .K>>
+			   <TYPINS T <2 .K>>
+			   <COND (<EMPTY? <SET K <REST .K 2>>>
+				  <AND <N==? <NOT .BRANCH> .DIR>
+				       <EMIT '<`SKIPA >>>
+				  <RETURN>)>)>
+		    <BRANCH:TAG <OR <AND .BRANCH .NOTF .B3> .B2>>>
+	    <BRANCH:TAG .B2>
+	    <LABEL:TAG .B3>
+	    <COND (.BRANCH
+		   <MOVE:ARG <REFERENCE .SDIR> .WHERE>
+		   <BRANCH:TAG .BRANCH>
+		   <LABEL:TAG .B2>)
+		  (ELSE <TRUE-FALSE .NOD .BRANCH .WHERE>)>)
+	   (ELSE
+	    <COND (.BRANCH
+		   <COND (<OR <AND .DIR <==? <1 .TEST?> 2>>
+			      <AND <NOT .DIR> <==? <1 .TEST?> 1>>>
+			  <MOVE:ARG <REFERENCE .SDIR> .WHERE>
+			  <BRANCH:TAG .BRANCH>)>)
+		  (ELSE <MOVE:ARG <==? <1 .TEST?> 2> .WHERE>)>)>)
+    (ELSE
+     <SET WHERE <GOODACS .NOD .WHERE>>
+     <SET B2 <MAKE:TAG>>
+     <SET REG <REG? ATOM .WHERE>>
+     <COND
+      (<OR .TEST? <AND <G=? <LENGTH .K> 2> <==? <1 .TEST?> 2>>>
+       <MAPR <>
+	     <FUNCTION (TYL "AUX" (TY <1 .TYL>)) 
+		     <COND (<NOT <AND <NOT .TEST?> <EMPTY? <REST .TYL>>>>
+			    <TYPINS <> .TY>
+			    <BRANCH:TAG <SET B3 <MAKE:TAG>>>)>
+		     <MOVE:ARG <REFERENCE <NODE-NAME .TY>> .REG>
+		     <COND (<EMPTY? <REST .TYL>>
+			    <LABEL:TAG .B2>
+			    <RET-TMP-AC <MOVE:ARG .REG .WHERE>>
+			    <COND (.BRANCH
+				   <BRANCH:TAG .BRANCH>
+				   <LABEL:TAG .B3>)
+				  (ELSE
+				   <BRANCH:TAG <SET B2 <MAKE:TAG>>>
+				   <LABEL:TAG .B3>
+				   <MOVE:ARG <REFERENCE <>> .WHERE>
+				   <LABEL:TAG .B2>)>)
+			   (ELSE
+			    <RET-TMP-AC .REG>
+			    <BRANCH:TAG .B2>
+			    <LABEL:TAG .B3>)>>
+	     .K>)
+      (ELSE
+       <COND
+	(.BRANCH
+	 <COND (<OR <AND .DIR <==? <1 .TEST?> 2>>
+		    <AND <NOT .DIR> <==? <1 .TEST?> 1>>>
+		<MOVE:ARG <REFERENCE <AND .DIR <NODE-NAME <1 .K>>>> .WHERE>
+		<BRANCH:TAG .BRANCH>)>)
+	(ELSE <MOVE:ARG <REFERENCE <AND .DIR <NODE-NAME <1 .K>>>> .WHERE>)>)>)>
+   <MOVE:ARG .WHERE .RW>>
+
+<DEFINE TYPINS (DIR N) 
+	#DECL ((N) NODE)
+	<EMIT <INSTRUCTION <COND (.DIR `CAIN ) (ELSE `CAIE )>
+			   <FORM TYPE-CODE!-OP!-PACKAGE <NODE-NAME .N>>>>>
+
+<ENDPACKAGE>
+

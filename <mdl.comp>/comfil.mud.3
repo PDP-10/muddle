@@ -1,0 +1,650 @@
+
+<SETG OSETG ,SETG>
+
+<USE "DATIME">
+
+<USE "NOW">
+
+<COND (<L? ,MUDDLE 100>
+       <SETG COMPILER-DIR "NCOMPI">)
+      (<SETG COMPILER-DIR "MDL.COMP">)>
+
+<FLOAD "GETORD" "FBIN" "DSK" ,COMPILER-DIR>
+
+<COND (<L? ,MUDDLE 100>
+       <FLOAD "NCOMPI;SNMSET FBIN">)>
+
+<SETG WDCNTLC ![1623294726!]>
+
+<SETG WDSPACE ![17315143744!]>
+
+
+<SETG GC-COUNT 0>
+
+<DEFINE FCOMP (CH "TUPLE" TUP "EXTRA" (ACC <17 .CH>) VAL)
+;"Called by PLANs & PCOMPs to do File Compile.
+  Tastefully Closes & Resets Channel during Compilation.
+  Calling sequence is <FCOMP %.INCHAN \"IN\" \"OUT\">"
+	#DECL ((CH) CHANNEL (TUP) TUPLE (ACC) FIX)
+	<CLOSE .CH>		;"Flush PLAN Channel"
+	<COND  (<NOT <SET VAL <FILE-COMPILE !.TUP>>>	;"Do It"
+		<ERROR .VAL>)>
+	<AND <RESET .CH> <ACCESS .CH .ACC>>
+				;"Restore PLAN Channel to Former Glory"
+	<MODES-INIT>		;"Reset the Various Compiler Flags"
+	.VAL>
+
+<DEFINE FILE-COMPILE FCEX (INFILE
+			   "OPTIONAL" OUTFILE
+			   "AUX" (INCH <OPEN "READ" .INFILE>) OUTCH TEMPCH
+				 (STARCPU <FIX <+ <TIME> 0.5>>) (GFLG T)
+				 (PREV ()) (STARR <RTIME:SEC>) R (TW? <G? ,MUDDLE 100>)
+				 (SRC-CHAN #FALSE ()) (IC <>) ATOM-LIST OC SOURCE-STR
+				 FILE-DATA GC-HANDLER OREDEFINE REDONE LOSS ATL
+				 (GCTIME 0.0000000) (OUTCHAN .OUTCHAN) VERS)
+   #DECL ((FCEX) <SPECIAL ACTIVATION> (SOURCE-STR INFILE OUTFILE VERS) STRING
+	  (TW?) <OR ATOM FALSE>
+	  (OUTCHAN) <SPECIAL CHANNEL> (INCH OC IC) <OR FALSE CHANNEL>
+	  (TEMPCH SRC-CHAN) <SPECIAL <OR CHANNEL FALSE>> (PREV) LIST
+	  (OUTCH) <OR FALSE CHANNEL> (STARCPU STARR ATNUM) <SPECIAL FIX>
+	  (ATOM-LIST ATL) <SPECIAL <LIST [REST <OR LIST ATOM>]>>
+	  (FILE-DATA) <LIST <LIST [REST ATOM]> ATOM> (REDONE) <LIST [REST
+								     LIST]>
+	  (GCTIME) <SPECIAL FLOAT>)
+   <COND (<NOT .INCH> <RETURN #FALSE ("INPUT FILE NOT FOUND") .FCEX>)>
+   <PRINSPEC "Input from " .INCH>
+   <COND (.TW?
+	  <SET VERS <REST <MEMQ !\. <8 .INCH>>>>
+	  <SET VERS
+	       <SUBSTRUC .VERS 0 <- <LENGTH .VERS> <LENGTH <MEMQ !\; <8 .INCH>>>>>>)>
+   <CLOSE .INCH>
+   <SET OUTCH
+	<COND (<ASSIGNED? OUTFILE> <CHANNEL "PRINT" .OUTFILE>)
+	      (ELSE
+	       <CHANNEL "PRINT"
+			<SET OUTFILE
+			     <COND (.TW?
+				    <STRING !\< <10 .INCH> !\> <7 .INCH>
+					    ".NBIN." .VERS>)
+				   (<STRING <10 .INCH> !\; <7 .INCH> " NBIN">)>>>)>>
+   <PRINSPEC "Output to " .OUTCH>
+   <SET SOURCE-STR <COND (.TW? <STRING "SOURCE." .VERS>)
+			 ("SOURCE")>>
+   <AND <==? .SOURCE T>
+	<SET SOURCE <OPEN "PRINT" <3 .INCH>
+			  .SOURCE-STR
+			  "DSK" <COND (.TW? <SNAME>)(ELSE "HUDINI")>>>>
+   <SET SRC-CHAN
+	<DO-AND-CHECK "Source listing generated "
+		      .SOURCE-STR
+		      SOURCE
+		      .INCH
+		      .OUTCH
+		      #FALSE ()>>
+   <COND (<AND <ASSIGNED? PRECOMPILED> <TYPE? .PRECOMPILED STRING>>
+	  <COND (<SET IC <OPEN "READ" .PRECOMPILED>>
+		 <PRINSPEC "Will load precompilation from " .IC>
+		 <CLOSE .IC>)>)>
+   <COND (<NOT .CAREFUL>
+	  <PRINCTHEM "Bounds checking off." ,CRET>)>
+   <COND (.SPECIAL
+	  <PRINCTHEM "Default declaration is SPECIAL." ,CRET>)>
+   <COND (<NOT <EMPTY? .REDO>> <PRINC "Recompiling: "> <PRINT .REDO> <TERPRI>)>
+   <COND (.GROUP-MODE
+	  <PRINC "Making a GROUP named ">
+	  <PRIN1 .GROUP-MODE>
+	  <TERPRI>)>
+   <COND (<NOT <ASSIGNED? TEMPNAME>>
+	  <SET TEMPNAME <STRING "_" <7 .INCH> <COND (.TW? ".TEMP")
+						    (ELSE " >")>>>)>
+   <PRINCTHEM "Temporary output going to:  " .TEMPNAME ,CRET>
+   <COND (<SET OC
+	       <DO-AND-CHECK <COND (.TW? "Writing record ")
+				   ("Running disowned, with record ")>
+			     "RECORD"
+			     DISOWN
+			     .INCH
+			     .OUTCH
+			     .SRC-CHAN>>
+	  <AND .ERROR-LOGOUT <ON "ERROR" ,ERROR-HANDLER 100>>
+	  <PRINCTHEM "Toodle-oo." ,CRET>
+	  <COND (<AND <NOT .TW?> <NOT <DEMON?>>> <VALRET ":PROCED
+">)>
+	  <SETG COMPCHAN <SET OUTCHAN .OC>>
+	  <PRINSPEC "Compilation record for: " .INCH>
+	  <PRINSPEC "Output file:  " .OUTCH>
+	  <COND (<NOT .TW?> <PRINCTHEM ,CRET "It is now " <NOW> ,CRET ,CRET>)>)>
+   <SETG GC-COUNT 0>
+   <SET GC-HANDLER <ON "GC" ,COUNT-GCS 10>>
+   <SET KEEP-FIXUPS T>
+   <SET FILE-DATA <FIND-DEFINE-LOAD .INFILE>>
+   <PRINCTHEM "File loaded." ,CRET>
+   <COND (<SET TEMPCH <OPEN "PRINTB" .TEMPNAME>>)
+	 (ELSE <ERROR CANT-OPEN-TEMPORARY-FILE!-ERRORS FILE-COMPILE>)>
+   <COND
+    (.IC
+     <COND (<ASSIGNED? REDEFINE> <SET OREDEFINE .REDEFINE>)>
+     <SET REDEFINE T>
+     <RESET .IC>
+     <SET REDONE
+	  <MAPR ,LIST
+		<FUNCTION (L "AUX" (ATM <1 .L>)) 
+			#DECL ((ATM) ATOM (L) <LIST ATOM>)
+			<COND (.PACKAGE-MODE
+			       <SET ATM <PACK-FIX .PACKAGE-MODE .ATM>>)>
+			<PUT .L 1 .ATM>
+			<COND (<GASSIGNED? .ATM> (.ATM ,.ATM)) (ELSE <MAPRET>)>>
+		.REDO>>
+     <REPEAT (F V)
+       <PRINT <SET F <READ .IC '<RETURN>>> .TEMPCH>
+       <COND (<AND <TYPE? .F FORM>
+		   <NOT <EMPTY? .F>>
+		   <OR <MEMQ <1 .F>
+			     '![PACKAGE ENDPACKAGE ENTRY USE USE-DEFER
+				USE-TOTAL BLOCK ENDBLOCK!]>
+		       <AND <==? <1 .F> SETG>
+			    <==? <LENGTH .F> 3>
+			    <OR <TYPE? <3 .F> RSUBR RSUBR-ENTRY>
+				<AND <TYPE? <SET V <3 .F>> FORM>
+				     <G=? <LENGTH .V> 2>
+				     <OR <==? <1 .V> RSUBR>
+					 <==? <1 .V> RSUBR-ENTRY>
+					 <AND <==? <1 .V> QUOTE>
+					      <TYPE? <2 .V>
+						     RSUBR
+						     RSUBR-ENTRY>>>>>>
+		       <AND <==? <1 .F> AND>
+			    <==? <LENGTH .F> 4>
+			    <=? <2 .F> '<ASSIGNED? GLUE>>
+			    <=? <3 .F> '.GLUE>>>>
+	      <SET V <EVAL .F>>
+	      <COND (<AND .MAX-SPACE
+			  <TYPE? .V RSUBR RSUBR-ENTRY>
+			  <==? <LENGTH .F> 3>
+			  <TYPE? <2 .F> ATOM>
+			  <==? <2 .F> <2 .V>>>
+		     <PUT .V GLUE>
+		     <PUT .V RSUBR>
+		     <SETG <2 .F> <RSUBR [#CODE ![!] <2 .V> <3 .V>]>>)>)>>
+     <CLOSE .IC>
+     <BUFOUT .TEMPCH>
+     <MAPF <>
+	   <FUNCTION (L) #DECL ((L) <LIST ATOM ANY>) <SETG <1 .L> <2 .L>>>
+	   .REDONE>
+     <SET REDONE ()>
+     <PRINCTHEM "Precompilation loaded." ,CRET>
+     <COND (<ASSIGNED? OREDEFINE> <SET REDEFINE .OREDEFINE>)
+	   (ELSE <UNASSIGN REDEFINE>)>)
+    (<NOT <EMPTY? .IC>>
+     <PRINCTHEM ,CRET "Precompilation file not found." ,CRET>)>
+   <PRINTB ,WDCNTLC .TEMPCH>
+   <CLOSE .TEMPCH>
+   <PUT .TEMPCH 2 "PRINTO">
+   <SET ATOM-LIST
+	<MAPF ,LIST
+	      <FUNCTION (ATM) 
+		      <COND (<OR <TYPE? ,.ATM FUNCTION>
+				 <AND <TYPE? ,.ATM MACRO>
+				      <NOT <EMPTY? ,.ATM>>
+				      <TYPE? <1 ,.ATM> FUNCTION>>>
+			     .ATM)
+			    (ELSE
+			     <COND (<AND .MAX-SPACE
+					 <TYPE? ,.ATM RSUBR RSUBR-ENTRY>>
+				    <SETG .ATM
+					  <RSUBR [#CODE ![!] .ATM <3 ,.ATM>]>>)>
+			     <MAPRET>)>>
+	      <1 .FILE-DATA>>>
+   <FLUSH-COMMENTS>
+   <COND (<EMPTY? .ATOM-LIST>
+	  <PRINCTHEM "No DEFINEd functions in this file." ,CRET>
+	  <SET ATOM-LIST ()>)
+	 (ELSE <SET ATOM-LIST <GETORDER !<SET ATL .ATOM-LIST>>>)>
+   <PRINCTHEM "Functions ordered." ,CRET>
+   <MAPF <>
+	 <FUNCTION (A) 
+		 <COND (<NOT <GASSIGNED? .A>>
+			<PRIN1 .A>
+			<PRINCTHEM " not REdone." ,CRET>)>>
+	 .REDO>
+   <COND
+    (.GROUP-MODE
+     <AND .PACKAGE-MODE <SET GROUP-MODE <PACK-FIX .PACKAGE-MODE .GROUP-MODE>>>
+     <COND (<AND .PACKAGE-MODE <NOT .SURVIVORS>>
+	    <PROG ((OBLIST .OBLIST))
+		  #DECL ((OBLIST) <SPECIAL ANY>)
+		  <PACKAGE .PACKAGE-MODE>
+		  <SET SURVIVORS
+		       <MAPF ,LIST <FUNCTION (L) <MAPRET !.L>> <2 .OBLIST>>>
+		  <ENDPACKAGE>>)
+	   (<AND .PACKAGE-MODE <TYPE? .SURVIVORS LIST>>
+	    <SET SURVIVORS
+		 <MAPF ,LIST
+		       <FUNCTION (A) <PACK-FIX .PACKAGE-MODE .A>>
+		       .SURVIVORS>>)>
+     <SET ATOM-LIST <LINEARIZE .ATOM-LIST>>
+     <SET ATL <LINEARIZE .ATL>>
+     <REPEAT ((AL (START)) (AL1 <SET ATOM-LIST (START !.ATOM-LIST)>)
+	      (AL2 <REST .AL1>) (AL4 .AL) AL5)
+	     #DECL ((AL AL1 AL2 AL4 AL5) <LIST [REST ATOM]>)
+	     <COND (<EMPTY? .AL2>
+		    <SET ATL <REST .AL4>>
+		    <SET ATOM-LIST <REST .ATOM-LIST>>
+		    <RETURN>)
+		   (<MEMQ <1 .AL2> .ATL> <SET AL2 <REST <SET AL1 .AL2>>>)
+		   (ELSE
+		    <SET AL <REST <PUTREST .AL .AL2>>>
+		    <SET AL5 <REST .AL2>>
+		    <PUTREST .AL2 ()>
+		    <PUTREST .AL1 <SET AL2 .AL5>>)>>
+     <MAPF <>
+	   <FUNCTION (AL) 
+		   <APPLY ,COMPILE
+			  .AL
+			  .SRC-CHAN
+			  T
+			  .CAREFUL
+			  .SPECIAL
+			  .REASONABLE
+			  .GLUE
+			  .HAIRY-ANALYSIS
+			  .DEBUG-COMPILE>>
+	   .ATL>
+     <COND (<SET LOSS
+		 <APPLY ,COMPILE-GROUP
+			.ATOM-LIST
+			<COND (<TYPE? .SURVIVORS LIST> .SURVIVORS)
+			      (ELSE .ATOM-LIST)>
+			.GROUP-MODE
+			.SRC-CHAN
+			T
+			.CAREFUL
+			.SPECIAL
+			.REASONABLE
+			.GLUE
+			.TEMPCH
+			.HAIRY-ANALYSIS
+			.DEBUG-COMPILE>>
+	    <PRINC .LOSS>
+	    <KILL-COMP>
+	    <CLOSE .TEMPCH>
+	    <PUT .TEMPCH 2 "READ">
+	    <OR <RESET .TEMPCH> <ERROR WHERE-HAS-TEMP-FILE-GONE!-ERRORS>>
+	    <BEGIN-HACK!-ICC!-CC!-PACKAGE "BTB">
+	    <BEGIN-MHACK!-ICC!-CC!-PACKAGE>
+	    <APPLY ,ASSEMBLE!-CODING!-PACKAGE .TEMPCH .OBLIST <> .SRC-CHAN>
+	    <GUNASSIGN READ-TABLE>
+	    <UNASSIGN READ-TABLE>)
+	   (<RETURN .LOSS .FCEX>)>
+     <COND
+      (<GASSIGNED? .GROUP-MODE>
+       <MAPR <>
+	<FUNCTION (OBP "AUX" (OBJ <1 .OBP>) IT) 
+		#DECL ((OBP) <LIST ANY>)
+		<COND (<AND <TYPE? .OBJ FORM>
+			    <G=? <LENGTH .OBJ> 2>
+			    <OR <==? <1 .OBJ> DEFINE> <==? <1 .OBJ> DEFMAC>>>
+		       <AND .GFLG
+			    <PUT .OBP 1 <FORM SETG .GROUP-MODE ,.GROUP-MODE>>
+			    <PUTREST .OBP (.OBJ !<REST .OBP>)>>
+		       <OR <TYPE? .SURVIVORS LIST> <MAPLEAVE>>
+		       <SET OBJ <1 .OBP>>
+		       <OR .GFLG
+			   <MEMQ <SET IT <GET <2 .OBJ> VALUE '<2 .OBJ>>>
+				 .SURVIVORS>
+			   <AND <GASSIGNED? .IT> <TYPE? ,.IT RSUBR RSUBR-ENTRY>>
+			   <COND (<EMPTY? .PREV>
+				  <SET <2 .FILE-DATA> <REST .OBP>>)
+				 (ELSE <SET OBP <PUTREST .PREV <REST .OBP>>>)>>
+		       <SET GFLG <>>)>
+		<SET PREV .OBP>>
+	.<2 .FILE-DATA>>)>)
+    (ELSE
+     <AND .REASONABLE <SET ATOM-LIST <LINEARIZE .ATOM-LIST>>>
+     <MAPF <>
+      #FUNCTION ((AL) 
+	#DECL ((AL) <SPECIAL <OR LIST ATOM>> (TEMPCH) <SPECIAL CHANNEL>)
+	<COND (<NOT .TW?> <SNAME-SETTER <COND (<TYPE? .AL LIST> <1 .AL>) (ELSE .AL)>>)>
+	<APPLY ,COMPILE
+	       .AL
+	       .SRC-CHAN
+	       T
+	       .CAREFUL
+	       .SPECIAL
+	       .REASONABLE
+	       .GLUE
+	       .HAIRY-ANALYSIS
+	       .DEBUG-COMPILE>
+	<AND .SRC-CHAN
+	     <PRINC ,CRET .SRC-CHAN>
+	     <PRINC <ASCII 12> .SRC-CHAN>
+	     <BUFOUT .SRC-CHAN>>
+	<BUFOUT .OUTCHAN>
+	<MAPF <>
+	 #FUNCTION ((AT "AUX" ACC ACC2) 
+		    #DECL ((AT) ATOM (LN ACC ACC2) FIX)
+		    <BLOCK ()>
+		    <SET ACC <17 .TEMPCH>>
+		    <RESET .TEMPCH>
+		    <ACCESS .TEMPCH .ACC>
+		    <PRINT <FORM SETG .AT ,.AT> .TEMPCH>
+		    <AND .GLUE
+			 <PRINT
+			  <FORM AND
+				'<ASSIGNED? GLUE>
+				'.GLUE
+				<FORM PUT
+				      <COND (<TYPE? ,.AT MACRO>
+					     <FORM 1 <FORM GVAL .AT>>)
+					    (<FORM GVAL .AT>)>
+				      GLUE
+				      <GET ,.AT GLUE>>>
+			  .TEMPCH>>
+		    <BUFOUT .TEMPCH>
+		    <PRINTB ,WDCNTLC .TEMPCH>
+		    <SET ACC2 <17 .TEMPCH>>
+		    <ACCESS .TEMPCH <- .ACC 1>>
+		    <PRINTB ,WDSPACE .TEMPCH>
+		    <ACCESS .TEMPCH .ACC2>
+		    <CLOSE .TEMPCH>
+		    <ENDBLOCK>
+		    <COND (<AND .MAX-SPACE <TYPE? ,.AT RSUBR RSUBR-ENTRY>>
+			   <PUT ,.AT RSUBR>
+			   <PUT ,.AT GLUE>
+			   <SETG .AT <RSUBR [#CODE ![!] .AT <3 ,.AT>]>>)>)
+	 <COND (<TYPE? .AL ATOM> (.AL)) (ELSE .AL)>>)
+      .ATOM-LIST>)>
+   <COND (.MAX-SPACE
+	  <PROG ((REDEFINE T))
+	    #DECL ((REDEFINE) <SPECIAL ATOM>)
+	    <FLOAD <7 .TEMPCH> <8 .TEMPCH> <9 .TEMPCH> <10 .TEMPCH>>>)>
+   <COND (.NILOBL <BLOCK ()>)>
+   <AND .GLUE <DOGLUE .<2 .FILE-DATA>>>
+   <OR <SET R <GROUP-DUMP .OUTFILE <2 .FILE-DATA> ,PRINT>>
+       <ERROR GROUP-DUMP .R>>
+   <COND (.NILOBL <ENDBLOCK>)>
+   <CLOSE .OUTCH>
+   <CLOSE .TEMPCH>
+   <COND (.DESTROY
+	  <RENAME <FILENAME .TEMPCH>>)>
+   <PRINTSTATS>
+   <OFF .GC-HANDLER>
+   <OFF ,ERROR-HANDLER>
+   <AND .SRC-CHAN <CLOSE .SRC-CHAN>>
+   <SETG COMPCHAN ,OUTCHAN>
+   <COND (<AND <NOT .TW?> <ASSIGNED? DISOWN> .DISOWN>
+	  <APPLY ,LOGOUT>
+	  "So you re-owned me, eh?  I'm done anyway.")
+	 (ELSE "Compilation completed. Your patience is godlike.")>>
+
+<DEFINE DOGLUE (GRP "AUX" OBJ)
+	#DECL ((GRP) LIST)
+	<REPEAT (RSBR NXT MCR)
+		<SET MCR <>>
+		<COND (<EMPTY? .GRP> <RETURN>)
+		      (<AND <TYPE? <SET OBJ <1 .GRP>> FORM>
+			    <G=? <LENGTH .OBJ> 2>
+			    <MEMQ <1 .OBJ> '![DEFINE SETG DEFMAC]>
+			    <GASSIGNED? <SET OBJ <GET <2 .OBJ> VALUE '<2 .OBJ>>>>
+			    <OR <TYPE? <SET RSBR ,.OBJ> RSUBR>
+				<AND <TYPE? .RSBR MACRO>
+				     <NOT <EMPTY? .RSBR>>
+				     <TYPE? <SET RSBR <1 .RSBR>> RSUBR>
+				     <SET MCR T>>>
+			    <GET .RSBR GLUE>>
+			    <COND (<AND <NOT <EMPTY? <REST .GRP>>>
+				      <TYPE? <SET NXT <2 .GRP>> FORM>
+				      <==? <LENGTH .NXT> 4>
+				      <==? <1 .NXT> AND>
+				      <=? <2 .NXT> '<ASSIGNED? GLUE>>
+				      <=? <3 .NXT> '.GLUE>
+				      <=? <2 <2 <4 .NXT>>> .OBJ>>)
+				 (ELSE
+				  <SET GRP <PUTREST .GRP (0 !<REST .GRP>)>>)>
+		       <COND (<==? <2 .RSBR> .OBJ>
+			      <PUT <SET GRP <REST .GRP>> 1 <FORM AND '<ASSIGNED? GLUE> 
+					'.GLUE
+					<FORM PUT <COND (.MCR <FORM 1 <FORM GVAL .OBJ>>)
+							(ELSE <FORM GVAL .OBJ>)> GLUE
+					<GET .RSBR GLUE>>>>)
+			      (ELSE <PUTREST .GRP <REST .GRP 2>>)>)>
+		<SET GRP <REST .GRP>>>>
+
+<DEFINE PACK-FIX (PCK ATM
+		  "AUX" (S <PNAME .ATM>) (WIN <>)
+			(PO <LOOKUP .PCK <GET PACKAGE OBLIST>>))
+	<AND .PO <SET PO ,.PO>>
+	<MAPF <>
+	      <FUNCTION (O) 
+		      #DECL ((O) OBLIST)
+		      <AND <SET WIN <LOOKUP .S .O>> <MAPLEAVE>>>
+	      .PO>
+	<COND (.WIN) (.PO <INSERT .S <1 .PO>>) (ELSE .ATM)>>
+
+<DEFINE LINEARIZE (ATOM-LIST) #DECL ((ATOM-LIST) LIST)
+     <REPEAT ((L <SET ATOM-LIST (START !.ATOM-LIST)>) (LL <REST .L>))
+	     #DECL ((L LL) LIST)
+	     <COND (<EMPTY? .LL> <RETURN <REST .ATOM-LIST>>)
+		   (<TYPE? <1 .LL> LIST>
+		    <PUTREST .L <1 .LL>>
+		    <PUTREST <SET L <REST .L <- <LENGTH .L> 1>>>
+			     <SET LL <REST .LL>>>)
+		   (ELSE <SET LL <REST <SET L .LL>>>)>>>
+
+<DEFINE NSETG (ATM VAL)
+	<COND (<NOT <MEMQ .ATM .REDO>> <OSETG .ATM .VAL>)>>
+
+
+<DEFINE KILL-COMP ("AUX" (ENTS <LOOKUP "CC" <GET PACKAGE OBLIST>>)
+			 INTS ENTO INTO)
+	<GUNASSIGN COMPILE>
+	<GUNASSIGN COMPILE-GROUP>
+	<COND (<NOT <TYPE? ,GDECL FSUBR>>
+	       <GUNASSIGN GDECL>)>
+	<COND (<NOT <TYPE? ,MANIFEST SUBR>>
+	       <GUNASSIGN MANIFEST>)>
+	<COND (.ENTS <SET ENTO <PUT .ENTS OBLIST>>)>
+	<COND (<AND .ENTO <SET INTS <LOOKUP "ICC" .ENTO>>>
+	       <SET INTO <PUT .INTS OBLIST>>)>
+	<COND (.ENTO <MUNGOB .ENTO>)>
+	<COND (.INTO <MUNGOB .INTO>)>
+	<COND (.ENTS <REMOVE .ENTS>)>
+	<COND (.INTS <REMOVE .INTS>)>>
+
+<DEFINE MUNGOB (OB) #DECL ((OB) OBLIST)
+	<MAPF <>
+	      <FUNCTION (L) #DECL ((L) LIST)
+		<MAPF <>
+		      <FUNCTION (ATM)
+			<GUNASSIGN <SET ATM <CHTYPE .ATM ATOM>>>	; "LINKS?"
+			<UNASSIGN .ATM>
+			<REMOVE .ATM>> .L>> .OB>>
+
+
+<DEFINE PRINTSTATS ("AUX" (TSTARCPU <- <FIX <+ 0.5 <TIME>>> .STARCPU>)
+			  (TSTARR <- <RTIME:SEC> .STARR>))
+	#DECL((STARCPU STARR TSTARCPU TSTARR) FIX)
+	<COND (<L? .TSTARR 0>		;"Went over midnight."
+		<SET TSTARR <+ .TSTARR %<* 24 60 60>>>)>
+	<PRINCTHEM ,CRET ,CRET "Total time used is" ,CRET ,TAB>
+	<PRINTIME .TSTARCPU "CPU time,">
+	<PRINCTHEM ,CRET ,TAB>
+	<PRINTIME <FIX .GCTIME> "garbage collector CPU time,">
+	<PRINCTHEM ,CRET ,TAB>
+	<PRINTIME .TSTARR "real time.">
+	<PRINCTHEM ,CRET
+		"CPU utilization is " <* 100.0 </ .TSTARCPU <FLOAT .TSTARR>>>
+		"%." ,CRET
+		"Number of garbage collects = " ,GC-COUNT ,CRET>>
+
+<DEFINE PRINTIME (AMT STR) #DECL((AMT) FIX)
+	<COND (<G? .AMT %<* 60 60>>
+		<PRINCTHEM </ .AMT %<* 60 60>> " hours ">
+		<SET AMT <MOD .AMT %<* 60 60>>>)>
+	<COND (<G? .AMT 60>
+		<PRINCTHEM </ .AMT 60> " min. ">
+		<SET AMT <MOD .AMT 60>>)>
+	<PRINCTHEM .AMT " sec. " .STR>>
+
+
+<DEFINE STATUS ("AUX" FL PL)
+	<COND (<AND <ASSIGNED? ATOM-LIST> .GROUP-MODE <GASSIGNED? COMPILE>>
+	       <PRINCTHEM ,CRET "Running group " <LENGTH .ATOM-LIST> " long.">
+	       <PRINTSTATS>)
+	      (<AND <ASSIGNED? ATOM-LIST> <ASSIGNED? AL>>
+		<SET FL <LENGTH .ATOM-LIST>>
+		<SET PL <- .FL <LENGTH <MEMQ .AL .ATOM-LIST>>>>
+		<PRINCTHEM ,CRET "Running: " .PL " finished, working on ">
+		<PRIN1 .AL>
+		<PRINCTHEM ", and " <- .FL .PL 1> " to go.">
+		<PRINTSTATS>)
+	      (<AND <ASSIGNED? STARCPU> <ASSIGNED? STARR>>
+		<COND (<NOT <ASSIGNED? FILE-DATA>>
+			<PRINC "
+Files not yet loaded.">
+			<PRINTSTATS>)
+		      (<NOT <ASSIGNED? ATOM-LIST>>
+			<PRINC"
+Files loaded, but functions not yet ordered for compilation.">
+			<PRINTSTATS>)
+		      (ELSE <PRINC "
+Almost done, just cleaning up and writing out final file.">
+			<PRINTSTATS>)>)
+	      (ELSE <PRINCTHEM ,CRET "I'm not running." ,CRET>)>>
+
+<DEFINE COUNT-GCS (TI RS SU) <SETG GC-COUNT <+ ,GC-COUNT 1>>
+	<AND <ASSIGNED? GCTIME> <SET GCTIME <+ .GCTIME .TI>>>>
+
+<GDECL (GC-COUNT) FIX>
+
+<SETG NOT-COMPILE-TIME
+      '![PREV
+	 SPLOUTEM
+	 REVERSE
+	 ORDEREM
+	 REMEMIT
+	 FINDREC
+	 FINDEM
+	 FINDEMALL
+	 GETORDER
+	 PRINSPEC
+	 DO-AND-CHECK
+	 FIND-DEFINE-LOAD
+	 FDREAD-LP
+	 NEW-DEFINE
+	 NEW-FLOAD
+	 HELP
+	 NOT-COMPILE-TIME!]>
+
+<MANIFEST CRET NOT-COMPILE-TIME>
+
+<SETG CRET "
+">
+
+<SETG TAB <ASCII 9> ;"Char Tab">
+
+<MANIFEST CRET TAB>
+
+<DEFMAC PRINCTHEM ("ARGS" A) #DECL ((A) LIST)
+	<FORM PROG ()
+	      !<MAPF ,LIST <FUNCTION (X)
+				     <FORM PRINC .X>>
+		     .A>>>
+
+<DEFINE FIND-DEFINE-LOAD (FNM "AUX" GRP (OLD-FLOAD ,FLOAD))
+	<SET GRP <GROUP-LOAD .FNM>>
+	(<1 <GET-ATOMS ..GRP>> .GRP)>
+
+<DEFINE GET-ATOMS (L "AUX" (L1 .L) (AL ()) (LL ()) TEM TT MCR ATM VAL) 
+	#DECL ((L AL L1 LL) LIST (TT) FORM)
+	<REPEAT ()
+		<SET MCR <>>
+		<COND (<EMPTY? .L1> <RETURN (.AL .L)>)
+		      (<AND <TYPE? <1 .L1> FORM>
+			    <NOT <EMPTY? <SET TT <1 .L1>>>>>
+		       <COND (<OR <==? <1 .TT> DEFINE>
+				  <SET MCR <==? <1 .TT> DEFMAC>>>
+			      <COND (<AND .MCR .MACRO-FLUSH>
+				     <PUT .L1 1 <FORM DEFINE <ATOM "A"> ()>>)
+				    (ELSE
+				     <PUT .L1 1 <FORM <1 .TT> <2 .TT> <>>>)>
+			      <SET ATM <GET <2 .TT> VALUE '<2 .TT>>>
+			      <OR <AND .MCR <NOT .MACRO-COMPILE>>
+				  <SET AL (.ATM !.AL)>>)>)>
+		<SET L1 <REST .L1>>>>
+
+<DEFINE NEW-ERROR (FRM "TUPLE" TUP "EXTRA" (OUTCHAN ,COMPCHAN))
+	#DECL ((TUP) TUPLE (OUTCHAN) <SPECIAL ANY>)
+	<COND (<AND <NOT <EMPTY? .TUP>> <==? <1 .TUP> CONTROL-G?!-ERRORS>>
+		<INT-LEVEL 0>
+		<OFF ,ERROR-HANDLER>	;"HAVE TO NEST TO TURN HANDLER ON AND OFF"
+		<ERROR !.TUP>
+		<ON "ERROR" ,ERROR-HANDLER 100>
+		<ERRET T .FRM>)
+	      (ELSE <PRINC"
+***********************************************************
+*        ERROR ERROR ERROR ERROR ERROR ERROR ERROR        *
+***********************************************************
+
+to wit,">
+		<MAPF <> ,PRINT .TUP>
+		<PRINC "
+Compilation totally aborted.
+Status at death was:
+
+">
+		<STATUS> <FRATM>
+		<APPLY ,LOGOUT> <OFF ,ERROR-HANDLER>)>>
+
+<SETG COMPCHAN ,OUTCHAN>
+
+<OFF <SETG ERROR-HANDLER <ON "ERROR" ,NEW-ERROR 100>>>
+
+<DEFINE PRINSPEC (STR CHAN) #DECL((STR) STRING (CHAN) CHANNEL)
+	<PRINCTHEM .STR <FILENAME .CHAN> ,CRET>>
+	
+
+<DEFINE FILENAME (CHAN) #DECL ((CHAN) CHANNEL)
+  <COND (<G? ,MUDDLE 100>
+	 <STRING <9 .CHAN> ":<" <10 .CHAN> !\> <7 .CHAN> !\. <8 .CHAN>>)
+	(<STRING <9 .CHAN> !\: <10 .CHAN> !\; <7 .CHAN> !\  <8 .CHAN>>)>>
+
+<DEFINE DO-AND-CHECK (STR1 STR2 ATM INCH OUTCH FOOCH "AUX" NEW-CHAN)
+	<COND (<AND <ASSIGNED? .ATM> ..ATM>			;"Do it?"
+		<PRINC .STR1>
+	       <COND					;"Yes. Get the channel."
+		(<TYPE? ..ATM CHANNEL>		;"Output channel already open."
+		 <COND (<OR <0? <1 ..ATM>> <NOT <=? "PRINT" <2 ..ATM>>>>
+							;"But is it good?"
+			<CLOSE .INCH> <CLOSE .OUTCH> <AND .FOOCH <CLOSE .FOOCH>>
+			<RETURN #FALSE("CLOSED special channel??") .FCEX>)
+		       (ELSE <SET NEW-CHAN ..ATM>)>)
+		(<TYPE? ..ATM STRING>			;"Name of output file given."
+		 <COND (<SET NEW-CHAN <OPEN "PRINT" ..ATM>>)	;"So try opening it."
+		       (ELSE				;"Bad name."
+			<CLOSE .INCH> <CLOSE .OUTCH> <AND .FOOCH <CLOSE .FOOCH>>
+			<RETURN #FALSE("Can't open channel.") .FCEX>)>)
+		(<SET NEW-CHAN
+			<OPEN "PRINT" <7 .INCH> .STR2 "DSK" <10 .INCH>>>)
+		(ELSE <CLOSE .INCH> <CLOSE .OUTCH> <AND .FOOCH <CLOSE .FOOCH>>
+			<RETURN #FALSE("Can't open channel.") .FCEX>)>
+		<PRINSPEC "on " .NEW-CHAN>
+		.NEW-CHAN)>>
+
+<DEFINE FLUSH-COMMENTS ("AUX" (A <ASSOCIATIONS>) B)
+	<REPEAT ()
+		<SET B <NEXT .A>>
+		<COND (<==? <INDICATOR .A> COMMENT>
+		       <PUT <ITEM .A> COMMENT>)>
+		<OR <SET A .B> <RETURN>>>>
+
+<SETG DEMON?
+      %<FIXUP!-RSUBRS '[
+#CODE ![4793303048 28063301637 17859346449 17330864128 23085680158 17859346471 
+17200316423 23085680158 13893633 5768480256 0 2!]
+			DEMON?
+			#DECL ("VALUE" <OR FALSE ATOM>)
+			T]
+		      '(54 FINIS!-MUDDLE 230942 (8 5))>>
+
+

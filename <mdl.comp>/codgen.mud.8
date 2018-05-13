@@ -1,0 +1,2192 @@
+<PACKAGE "CODGEN">
+
+<ENTRY GEN CODE-GEN STB SEQ-GEN MERGE-STATES FRMS LVAL-UP GOOD-TUPLE
+	UPDATE-WHERE NSLOTS NTSLOTS STFIXIT STK GET-TMPS PRE
+	STACK:L NO-KILL DELAY-KILL BSTB TOT-SPEC BASEF AC-HACK BINDUP SPECD LADDR
+	ADD:STACK GENERATORS GOODACS FRMID RES-FLS STORE-SET TRUE-FALSE ACFIX 
+	SUBR-GEN BIND-CODE SPEC-LIST BTP NPRUNE REG? ARG? ARGS-TO-ACS>
+
+<USE "CACS" "CHKDCL" "COMCOD" "COMPDEC" "STRGEN" "MAPGEN" "MMQGEN" "BUILDL" "BITSGEN"
+     "LNQGEN" "ISTRUC" "CARGEN" "NOTGEN" "COMSUB" "BITTST" "CBACK" "ALLR"
+     "CUP" "SUBRTY" "NEWREP" "CPRINT" "INFCMP" "CASE" "SPCGEN">
+
+<SETG FUDGE <>>
+
+;"DISABLE FUNNY COND./BOOL FEATURE"
+
+"	This file contains the major general codde generators.  These include
+ variable access functions (LVAL, SETG etc.), FSUBRs (COND, AND, REPEAT)
+ and a few assorted others."
+
+"	All generators are called with a node and a destination for the 
+ result.  The destinations are either DATUMs (lists of ACs or types)
+ or the special atoms DONT-CARE or FLUSHED.  Generators for
+ SUBRs that can be predicates may have additional arguments when they
+ are being invoked for their branching effect."
+
+"	The atom STK always points to a list that specifies the model
+ of the TP stack."
+
+" Main generator, dispatches to specific code generators. "
+
+<SETG OTBSAV
+      <PROG (TEM)
+	    <COND (<AND <SET TEM <LOOKUP "OTBSAV" <GET MUDDLE OBLIST>>>
+			<GASSIGNED? .TEM>>
+		   ,.TEM)
+		  (ELSE <SQUOTA |OTBSAV >)>>>
+
+<GDECL (OTBSAV) FIX>
+
+<DEFINE GEN (NOD WHERE "AUX" TEMP) 
+	#DECL ((NOD) NODE (WHERE) <OR ATOM DATUM>)
+	<SET TEMP <APPLY <NTH ,GENERATORS <NODE-TYPE .NOD>> .NOD .WHERE>>
+	<OR <ASSIGNED? NPRUNE> <PUT .NOD ,KIDS ()>>
+	.TEMP>
+
+" Generate a sequence of nodes flushing all values except the ladt."
+
+<DEFINE SEQ-GEN (L WHERE "OPTIONAL" (INPROG <>) (SINPROG <>) (INCODE-GEN <>)) 
+   #DECL ((L) <LIST [REST NODE]> (WHERE) <OR ATOM DATUM>)
+   <MAPR <>
+    <FUNCTION (N "AUX" (ND <1 .N>)) 
+	    #DECL ((N) <LIST NODE> (ND) NODE)
+	    <COND (<AND .INPROG
+			<==? <NODE-TYPE .ND> ,QUOTE-CODE>
+			<==? <RESULT-TYPE .ND> ATOM>
+			<OR <NOT <EMPTY? <REST .N>>>
+			    <ISTAG? <NODE-NAME .ND>>>>
+		   <MESSAGE WARNING " TAG SEEN IN PROG/REPEAT " .ND>
+		   <REGSTO T>
+		   <LABEL:TAG <UNIQUE:TAG <NODE-NAME .ND> T>>
+		   <COND (<EMPTY? <REST .N>>
+			  <SET WHERE
+			       <GEN .ND
+				    <COND (<TYPE? .WHERE DATUM> <DATUM !.WHERE>)
+					  (ELSE .WHERE)>>>)>)
+		  (<EMPTY? <REST .N>>
+		   <SET WHERE
+			<GEN .ND
+			     <COND (<AND .INPROG <TYPE? .WHERE DATUM>>
+				    <DATUM !.WHERE>)
+				   (ELSE .WHERE)>>>)
+		  (ELSE <RET-TMP-AC <GEN .ND FLUSHED>>)>>
+    .L>
+   <COND (<AND <NOT .INPROG> <NOT .INCODE-GEN>> <VAR-STORE>)>
+   .WHERE>
+
+" The main code generation entry (called from CDRIVE).  Sets up initial
+ stack model, calls to generate code for the bindings and generates code for
+ the function's body."
+
+<DEFINE CODE-GEN (BASEF
+		  "AUX" (TOT-SPEC 0) (NTSLOTS (<FORM GVAL <TMPLS .BASEF>>))
+			(IDT 0) XX (STB (0)) (STK (0 !.STB)) (PRE <>) (FRMID 1)
+			BTP (FRMS (1 .STK .BASEF 0 .NTSLOTS)) (BSTB .STB)
+			(SPECD <>)
+			(TMPS <COND (<ACTIVATED .BASEF> (2)) (ELSE (0))>)
+			START:TAG (AC-HACK <ACS .BASEF>) (K <KIDS .BASEF>)
+			(CD <>)
+			(DEST
+			 <COND (<ACTIVATED .BASEF> <FUNCTION:VALUE>)
+			       (ELSE <GOODACS .BASEF <FUNCTION:VALUE>>)>)
+			(ATAG <MAKE:TAG "AGAIN">) (RTAG <MAKE:TAG "EXIT">)
+			(SPEC-LIST ()) (RET <>) (NO-KILL ()) (KILL-LIST ()))
+	#DECL ((TOT-SPEC IDT) <SPECIAL FIX> (BASEF) <SPECIAL NODE>
+	       (SPEC-LIST KILL-LIST STK BSTB NTSLOTS) <SPECIAL LIST>
+	       (PRE SPECD) <SPECIAL ANY> (FRMID TMPS) <SPECIAL ANY>
+	       (START:TAG) <SPECIAL ATOM> (AC-HACK) <SPECIAL <PRIMTYPE LIST>>
+	       (FRMS NO-KILL) <SPECIAL LIST> (K) <LIST [REST NODE]> (BTP) LIST
+	       (CD) <OR DATUM FALSE>)
+	<BEGIN-FRAME <TMPLS .BASEF>
+		     <ACTIVATED .BASEF>
+		     <PRE-ALLOC .BASEF>>
+	<PUT .BASEF ,STK-B .STB>
+	<BIND-CODE .BASEF .AC-HACK>
+	<VAR-STORE>
+	<LABEL:TAG .ATAG>
+	<SET SPEC-LIST (.BASEF .SPECD <SPECS-START .BASEF>)>
+	<SET STK (0 !<SET BTP .STK!>)>
+	<COND (.AC-HACK <EMIT '<INTGO!-OP!-PACKAGE>>)>
+	<PUT .BASEF ,ATAG .ATAG>
+	<PUT .BASEF ,RTAG .RTAG>
+	<PUT .BASEF ,BTP-B .BTP>
+	<PUT .BASEF ,DST .DEST>
+	<PUT .BASEF ,PRE-ALLOC .PRE>
+	<PUT .BASEF ,SPCS-X .SPECD>
+	<COND (<N==? <SET CD
+			  <SEQ-GEN .K
+				   <COND (<TYPE? .DEST DATUM> <DATUM !.DEST>)
+					 (ELSE .DEST)>
+				   <>
+				   <>
+				   T>>
+		     ,NO-DATUM>
+	       <SET RET T>
+	       <ACFIX .DEST .CD>)
+	      (ELSE <SET CD <CDST .BASEF>>)>
+	<COND (<AND <TYPE? .DEST DATUM>
+		    .CD
+		    <ISTYPE? <DATTYP .DEST>>
+		    <TYPE? <DATTYP .CD> AC>>
+	       <RET-TMP-AC <DATTYP .CD> .CD>)>
+	<COND (<AND .RET .AC-HACK>
+	       <UNBIND:LOCS .STK .STB <=? .AC-HACK '(FUNNY-STACK)>>)>
+	<LABEL:TAG .RTAG>
+	<COND (.CD
+	       <AND <TYPE? <DATTYP .DEST> AC>
+		    <FIX-ACLINK <DATTYP .DEST> .DEST .CD>>
+	       <AND <TYPE? <DATVAL .DEST> AC>
+		    <FIX-ACLINK <DATVAL .DEST> .DEST .CD>>)>
+	<MAPF <>
+	      <FUNCTION (AC) 
+		      #DECL ((AC) AC)
+		      <MAPF <>
+			    <FUNCTION (ITEM) 
+				    <COND (<TYPE? .ITEM SYMTAB>
+					   <PUT .ITEM ,STORED T>)>>
+			    <ACRESIDUE .AC>>>
+	      ,ALLACS>
+	<SET XX <RET-TMP-AC <MOVE:ARG .DEST <FUNCTION:VALUE>>>>
+	<END-FRAME>
+	.XX>
+
+
+" Update ACs with respect to their datums."
+
+<DEFINE ACFIX (OLD1 NEW1 "AUX" OLD NEW) 
+	#DECL ((OLD NEW) DATUM)
+	<COND (<TYPE? .OLD1 DATUM>
+	       <SET NEW .NEW1>
+	       <SET OLD .OLD1>
+	       <COND (<==? <DATTYP .OLD> ANY-AC>
+		      <PUT .OLD ,DATTYP <DATTYP .NEW>>)>
+	       <COND (<==? <DATVAL .OLD> ANY-AC>
+		      <PUT .OLD ,DATVAL <DATVAL .NEW>>)>)>
+	T>
+
+" Generate code for setting up and binding agruments."
+
+<DEFINE BIND-CODE (NOD
+		   "OPTIONAL" (FLG <>)
+		   "AUX" (BST <BINDING-STRUCTURE .NOD>) B (NPRUNE T)
+			 (NSLOTS <SSLOTS .NOD>) (TSLOTS <TMPLS .NOD>) (LARG <>)
+			 INAME GOOD-OPTS
+			 (SFLG
+			  <AND .FLG <MEMBER .FLG '![(STACK) (FUNNY-STACK)!]>>)
+			 (STB <STK-B .NOD>))
+   #DECL ((NOD) NODE (BST B) <LIST [REST SYMTAB]> (NPRUNE) <SPECIAL ANY>
+	  (NSLOTS) <SPECIAL FIX> (TSLOTS) ATOM (INAME) <UVECTOR [REST ATOM]>
+	  (FRMS) <LIST [5 ANY]> (TOT-SPEC) FIX (BASEF) NODE)
+   <AND <ACTIVATED .NOD> <ACT:INITIAL> <ADD:STACK 2>>
+   <OR .PRE .FLG <PROG ()
+		       <SALLOC:SLOTS .TSLOTS>
+		       <ADD:STACK .TSLOTS>>>
+   <AND .FLG <SET INAME <NODE-NAME .NOD>>>
+   <COND
+    (<AND .SFLG <L? <TOTARGS .NOD> 0>>
+     <EMIT <INSTRUCTION INTERNAL-ENTRY!-OP!-PACKAGE <1 .INAME> -1>>
+     <EMIT '<`SUBM  `M*  `(P) >>
+     <ADD:STACK PSTACK>
+     <ADD:STACK 4>
+     <PUT .FRMS 2 <SET BSTB <SET STB <SET STK (0 !.STK)>>>>
+     <TUPLE1-B <1 .BST>>
+     <PUT <1 .BST> ,POTLV <>>
+     <SET BST <REST .BST>>)
+    (.SFLG
+     <SET GOOD-OPTS
+	  <OPT-CHECK <REST .BST <REQARGS .NOD>>
+		     <- <TOTARGS .NOD> <REQARGS .NOD>>
+		     .INAME>>
+     <ADD:STACK <* 2 <TOTARGS .NOD>>>
+     <SET TMPS <STACK:L .STK .STB>>
+     <ADD:STACK .TSLOTS>
+     <REPEAT ((I (.TSLOTS 0)) (TG <MAKE:TAG>) (TRG <TOTARGS .NOD>) (OPS 0)
+	      (OSTK .STK))
+       #DECL ((TG) ATOM (OPS TRG) FIX (STK OSTK) LIST)
+       <EMIT <INSTRUCTION INTERNAL-ENTRY!-OP!-PACKAGE <1 .INAME> .TRG>>
+       <SET STK (0 !.STK)>
+       <EMIT '<`SUBM  `M*  `(P) >>
+       <SALLOC:SLOTS <2 .I>>
+       <ALLOC:SLOTS <1 .I>>
+       <SET B .BST>
+       <REPEAT ((TRG .TRG) (OPS .OPS) SYM T1)
+	 #DECL ((TRG OPS) FIX (SYM) SYMTAB (T1) ADDRESS:C)
+	 <COND (<EMPTY? .B> <RETURN>) (ELSE <SET SYM <1 .B>>)>
+	 <PUT .SYM ,POTLV <>>
+	 <COND (<OR <==? <CODE-SYM .SYM> 7>
+		    <==? <CODE-SYM .SYM> 8>
+		    <==? <CODE-SYM .SYM> 9>>
+		<TUPCHK <INIT-SYM .SYM> T>)>
+	 <COND
+	  (<NOT <0? .TRG>>
+	   <AND
+	    <SPEC-SYM .SYM>
+	    <PUSH:BIND
+	     <NAME-SYM .SYM>
+	     <DATUM
+	      <COND (<=? .AC-HACK '(FUNNY-STACK)>
+		     <SET T1
+			  <ADDRESS:C <- -3
+					<* 2
+					   <- <TOTARGS .NOD>
+					      <ARGNUM-SYM .SYM>>>>
+				     `(FRM) >>)
+		    (<SET T1
+			  <ADDRESS:C <FORM -
+					   <* 2 <ARGNUM-SYM .SYM>>
+					   !<STACK:L .STK .BSTB>
+					   3>
+				     `(TP) >>)>
+	      .T1>
+	     <DECL-SYM .SYM>>
+	    <ADD:STACK 6>
+	    <VAR-STORE>
+	    <BIND:END>
+	    <SET SPECD T>
+	    <SET TOT-SPEC <+ .TOT-SPEC 6>>>
+	   <SET TRG <- .TRG 1>>)
+	  (<NOT <0? .OPS>>
+	   <COND (<L=? <CODE-SYM .SYM> 7>
+		  <COND (<SPEC-SYM .SYM> <AUX1-B .SYM>)
+			(ELSE <GEN <INIT-SYM .SYM> <LADDR .SYM T <>>>)>)
+		 (ELSE
+		  <COND (<SPEC-SYM .SYM> <AUX2-B .SYM>)
+			(ELSE
+			 <MOVE:ARG <REFERENCE:UNBOUND> <LADDR .SYM T <>>>)>)>
+	   <VAR-STORE>
+	   <SET OPS <- .OPS 1>>)
+	  (ELSE <RETURN>)>
+	 <AND <OR .GOOD-OPTS <1? <LENGTH .INAME>>>
+	      <SPEC-SYM .SYM>
+	      <PUT .SYM ,ARGNUM-SYM <TMPLS .BASEF>>>
+	 <SET B <REST .B>>>
+       <PUT .I 2 <+ <CHTYPE <2 .I> FIX> 2>>
+       <SET TRG <- .TRG 1>>
+       <SET OPS <+ .OPS 1>>
+       <COND (<OR .GOOD-OPTS <EMPTY? <SET INAME <REST .INAME>>>>
+	      <LABEL:TAG .TG>
+	      <SET BST .B>
+	      <RETURN>)
+	     (ELSE <SET STK .OSTK> <BRANCH:TAG .TG>)>>
+     <SET LARG T>)
+    (.FLG <LABEL:TAG <1 .INAME>> <EMIT '<`SUBM  `M*  `(P) >>)>
+   <REPEAT ((COD 0) SYM)
+	   #DECL ((COD) FIX (SYM) SYMTAB)
+	   <COND (<EMPTY? .BST>
+		  <COND (<AND .FLG
+			      <NOT .LARG>
+			      <COND (.SPECD <VAR-STORE> <BIND:END> T) (ELSE T)>>
+			 <SALLOC:SLOTS .TSLOTS>
+			 <SET TMPS <STACK:L .STK .STB>>
+			 <ADD:STACK .TSLOTS>)>
+		  <OR .PRE
+		      <0? .NSLOTS>
+		      <PROG ()
+			    <COND (<G? .NSLOTS 0>
+				   <SALLOC:SLOTS <- .NSLOTS .TOT-SPEC>>
+				   <ADD:STACK <- .NSLOTS .TOT-SPEC>>)>
+			    <SET PRE T>
+			    <EMIT-PRE T>>>
+		  <AND <ACTIVATED .NOD> <ACT:FINAL>>
+		  <RETURN>)>
+	   <SET COD <CODE-SYM <SET SYM <1 .BST>>>>
+	   <PUT .SYM ,POTLV <>>
+	   <COND (<L? .COD 0>
+		  <PUT .SYM ,CODE-SYM <SET COD <- .COD>>>
+		  <COND (<G? .NSLOTS 0>
+			 <SALLOC:SLOTS <- .NSLOTS .TOT-SPEC>>
+			 <ADD:STACK <- .NSLOTS .TOT-SPEC>>)>
+		  <SET PRE T>
+		  <EMIT-PRE T>)>
+	   <COND (<AND .FLG
+		       <NOT .LARG>
+		       <0? <NTH '![0 0 0 0 1 0 0 0 0 1 0 1 1!] .COD>>
+		       <SET LARG T>
+		       <COND (.SPECD <VAR-STORE> <BIND:END> T) (ELSE T)>>
+		  <SET TMPS <STACK:L .STK .STB>>
+		  <SALLOC:SLOTS .TSLOTS>
+		  <ADD:STACK .TSLOTS>)>
+	   <APPLY <NTH ,BINDERS .COD> .SYM>
+	   <OR .PRE <PUT .SYM ,SPEC-SYM FUDGE>>
+	   <SET BST <REST .BST>>>
+   .TOT-SPEC>
+
+<DEFINE OPT-CHECK (B NUM LBLS "AUX" (N .NUM) (RQ <REQARGS .BASEF>) NOD S) 
+   #DECL ((B) <LIST [REST SYMTAB]> (N NUM RQ) FIX (LBLS) <UVECTOR [REST ATOM]>
+	  (NOD BASEF) NODE (S) SYMTAB)
+   <COND
+    (<AND
+      <NOT <0? .NUM>>
+      <MAPF <>
+       <FUNCTION (S) 
+	       #DECL ((S) SYMTAB)
+	       <PUT .S ,POTLV <>>
+	       <COND (<L? <SET N <- .N 1>> 0> <MAPLEAVE>)>
+	       <COND (<AND <OR <==? <CODE-SYM .S> 6> <==? <CODE-SYM .S> 7>>
+			   <NOT <MEMQ <NODE-TYPE <CHTYPE <INIT-SYM .S> NODE>> ,SNODES>>>
+		      <MAPLEAVE <>>)
+		     (ELSE T)>>
+       .B>>
+     <REPEAT (ADDR OFFS)
+       #DECL ((OFFS) FIX)
+       <SET S <1 .B>>
+       <SET B <REST .B>>
+       <EMIT <INSTRUCTION INTERNAL-ENTRY!-OP!-PACKAGE
+			  <NTH .LBLS <+ .NUM 1>>
+			  .RQ>>
+       <COND (<OR <==? <CODE-SYM .S> 6> <==? <CODE-SYM .S> 7>>
+	      <COND (<==? <NODE-TYPE <SET NOD <INIT-SYM .S>>> ,LVAL-CODE>
+		     <SET OFFS <* <- .RQ
+				     <ARGNUM-SYM <CHTYPE <NODE-NAME .NOD> SYMTAB>>> 2>>
+		     <SET ADDR <ADDRESS:C <- -1 .OFFS> `(TP) >>
+		     <SET ADDR <DATUM .ADDR .ADDR>>)
+		    (ELSE <SET ADDR <GEN .NOD DONT-CARE>>)>)
+	     (ELSE <SET ADDR <REFERENCE:UNBOUND>>)>
+       <STACK:ARGUMENT .ADDR>
+       <COND (<L=? <SET NUM <- .NUM 1>> 0> <RETURN>)>
+       <SET RQ <+ .RQ 1>>>)>>
+
+" Generate \"BIND\" binding code."
+
+<DEFINE BIND-B (SYM) #DECL ((SYM) SYMTAB) <BINDUP .SYM <MAKE:ENV>>>
+
+" Do code generation for normal  arguments."
+
+<DEFINE NORM-B (SYM) 
+	#DECL ((SYM) SYMTAB (AC-HACK) <PRIMTYPE LIST>)
+	<COND (.AC-HACK
+	       <BINDUP .SYM <DATUM !<NTH .AC-HACK <ARGNUM-SYM .SYM>>> <>>)
+	      (<TYPE? <ADDR-SYM .SYM> DATUM>)
+	      (ELSE <BINDUP .SYM <REFERENCE:ARG <ARGNUM-SYM .SYM>>>)>>
+
+" Initialized optional argument binder."
+
+<DEFINE OPT1-B (SYM) 
+	#DECL ((SYM) SYMTAB)
+	<TUPCHK <INIT-SYM .SYM>>
+	<OPTBIND .SYM <INIT-SYM .SYM>>>
+
+" Uninitialized optional argument binder."
+
+<DEFINE OPT2-B (SYM) #DECL ((SYM) SYMTAB) <OPTBIND .SYM>>
+
+" Create a binding either by pushing or moving if slots PRE created."
+
+<DEFINE BINDUP (SYM SRC "OPTIONAL" (SPCB T)) 
+	#DECL ((SYM) SYMTAB (SRC) DATUM (TOT-SPEC) FIX)
+	<COND (<SPEC-SYM .SYM>
+	       <SET SPECD T>
+	       <COND (.PRE
+		      <PUT .SYM ,ADDR-SYM <- <CHTYPE <ADDR-SYM .SYM> FIX> .TOT-SPEC>>
+		      <STORE:BIND .SYM .SRC>)
+		     (ELSE
+		      <PUSH:BIND <NAME-SYM .SYM> .SRC <DECL-SYM .SYM>>
+		      <SET TOT-SPEC <+ .TOT-SPEC 6>>
+		      <ADD:STACK 6>
+		      <AND .SPCB <VAR-STORE> <BIND:END>>)>)
+	      (ELSE <CLOB:PAIR .SYM .PRE .SRC>)>
+	<RET-TMP-AC .SRC>>
+
+" Push or store a non special argument."
+
+<DEFINE CLOB:PAIR (SYM PRE SRC) 
+	#DECL ((SYM) SYMTAB (SRC) DATUM (TOT-SPEC) FIX)
+	<COND (.PRE
+	       <PUT .SYM ,ADDR-SYM <- <CHTYPE <ADDR-SYM .SYM> FIX> .TOT-SPEC>>
+	       <STORE:PAIR .SYM .SRC>)
+	      (ELSE <PUSH:PAIR .SRC> <ADD:STACK 2>)>>
+
+" Create a binding for either intitialized or unitialized optional."
+
+<DEFINE OPTBIND (SYM
+		 "OPTIONAL" DVAL
+		 "AUX" (GIVE <MAKE:TAG>) (DEF <MAKE:TAG>) DV (LPRE .PRE))
+   #DECL ((SYM) SYMTAB (BASEF DVAL) NODE (GIVE DEF) ATOM (DV) DATUM (TOT-SPEC) FIX)
+   <COND (<SPEC-SYM .SYM>
+	  <SET SPECD T>
+	  <OR .LPRE <PUSH:ATB <NAME-SYM .SYM>>>)>
+   <TEST:ARG <ARGNUM-SYM .SYM> .DEF>
+   <COND
+    (.LPRE
+     <COND
+      (<SPEC-SYM .SYM>
+       <MOVE:ARG <REFERENCE:ARG <ARGNUM-SYM .SYM>>
+		 <FUNCTION:VALUE>>)
+      (ELSE
+       <MOVE:ARG
+	<REFERENCE:ARG <ARGNUM-SYM .SYM>>
+	<REFERENCE:STACK
+	 (<ADDR-SYM .SYM>
+	  <COND (<TYPE? <ARGNUM-SYM .SYM> ATOM>
+		 <FORM GVAL <ARGNUM-SYM .SYM>>)
+		(ELSE 0)>)>>)>)
+    (ELSE <PUSH:PAIR <REFERENCE:ARG <ARGNUM-SYM .SYM>>>)>
+   <BRANCH:TAG .GIVE>
+   <LABEL:TAG .DEF>
+   <SET DV
+	<COND (<ASSIGNED? DVAL>
+	       <GEN .DVAL <COND (.LPRE <FUNCTION:VALUE>) (ELSE DONT-CARE)>>)
+	      (ELSE <REFERENCE:UNBOUND>)>>
+   <AND <OR <NOT .LPRE> <NOT <SPEC-SYM .SYM>>>
+        <CLOB:PAIR .SYM .LPRE .DV>>
+   <LABEL:TAG .GIVE>
+   <AND <SPEC-SYM .SYM>
+        <COND (.LPRE <STORE:BIND .SYM .DV>)
+	      (ELSE
+	       <PUSH:PAIR <REFERENCE <DECL-SYM .SYM>>>
+	       <ADD:STACK 4>
+	       <VAR-STORE>
+	       <BIND:END>)>>
+   <VAR-STORE>
+   <COND (<AND <NOT .LPRE> <SPEC-SYM .SYM>>
+	  <SET TOT-SPEC <+ .TOT-SPEC 6>>)>
+   <RET-TMP-AC .DV>>
+
+" Do a binding for a named activation."
+
+<DEFINE ACT-B (SYM) 
+	#DECL ((SYM) SYMTAB)
+	<AND <ASSIGNED? START:TAG> <BINDUP .SYM <MAKE:ACT>>>>
+
+" Bind an \"AUX\" variable."
+
+<DEFINE AUX1-B (SYM "AUX" TT TEM TY) 
+   #DECL ((SYM) SYMTAB (TT) DATUM (FCN) NODE (TOT-SPEC) FIX)
+   <PUT .SYM ,POTLV <>>
+   <TUPCHK <INIT-SYM .SYM>>
+   <COND
+    (<AND <NOT .PRE> <SPEC-SYM .SYM>>
+     <PUSH:ATB <NAME-SYM .SYM>>
+     <ADD:STACK 2>
+     <PUSH:PAIR <SET TT <GEN <INIT-SYM .SYM> DONT-CARE>>>
+     <PUSH:PAIR <REFERENCE <DECL-SYM .SYM>>>
+     <SET SPECD T>
+     <ADD:STACK 4>
+     <VAR-STORE>
+     <BIND:END>
+     <SET TOT-SPEC <+ .TOT-SPEC 6>>
+     <RET-TMP-AC .TT>)
+    (<TYPE? <ADDR-SYM .SYM> TEMPV>
+     <SET TY <CREATE-TMP <SET TEM <ISTYPE-GOOD? <1 <DECL-SYM .SYM>>>>>>
+     <PUT .SYM
+	  ,ADDR-SYM
+	  <CHTYPE (.BSTB
+		   .TY
+		   <COND (<=? .AC-HACK '(FUNNY-STACK)> <* <TOTARGS .FCN> -2>)
+			 (ELSE 0)>
+		   !.TMPS)
+		  TEMPV>>
+     <SET TT
+      <GEN
+       <INIT-SYM .SYM>
+       <DATUM <COND (<OR <ISTYPE-GOOD? <RESULT-TYPE <INIT-SYM .SYM>>> .TEM>)
+		    (ELSE ANY-AC)>
+	      ANY-AC>>>
+     <SMASH-INACS .SYM .TT>
+     <PUT .SYM ,STORED <>>
+     <PUT <SET TEM <CHTYPE <DATVAL .TT> AC>> ,ACRESIDUE (.SYM !<ACRESIDUE .TEM>)>
+     <COND (<TYPE? <SET TEM <DATTYP .TT>> AC>
+	    <PUT .TEM ,ACRESIDUE (.SYM !<ACRESIDUE .TEM>)>)>
+     <RET-TMP-AC .TT>)
+    (ELSE <BINDUP .SYM <GEN <INIT-SYM .SYM> DONT-CARE>>)>>
+
+" Do a binding for an uninitialized \"AUX\" "
+
+<DEFINE AUX2-B (SYM "AUX" ADR TY) 
+	#DECL ((SYM) SYMTAB (FCN) NODE)
+	<PUT .SYM ,POTLV <>>
+	<TUPCHK <INIT-SYM .SYM>>
+	<COND (<TYPE? <ADDR-SYM .SYM> TEMPV>
+	       <SET TY <CREATE-TMP <ISTYPE-GOOD? <1 <DECL-SYM .SYM>>>>>
+	       <COND (<ISTYPE-GOOD? <1 <DECL-SYM .SYM>>>
+		      <PUT .SYM ,INIT-SYM T>)>
+	       <PUT .SYM
+		    ,ADDR-SYM
+		    <CHTYPE (.BSTB
+			     .TY
+			     <COND (<=? .AC-HACK '(FUNNY-STACK)>
+				    <* <TOTARGS .FCN> -2>)
+				   (ELSE 0)>
+			     !.TMPS)
+			    TEMPV>>)
+	      (<AND <SET TY <ISTYPE-GOOD? <1 <DECL-SYM .SYM>>>>
+		    <NOT <ASS? .SYM>>
+		    <NOT <SPEC-SYM .SYM>>>
+	       <SET ADR <ADDRESS:PAIR <FORM TYPE-WORD!-OP!-PACKAGE .TY> '[0]>>
+	       <PUT .SYM ,INIT-SYM T>
+	       <BINDUP .SYM <DATUM .ADR .ADR>>)
+	      (ELSE <BINDUP .SYM <REFERENCE:UNBOUND>>)>>
+
+<DEFINE TUPCHK (TUP "OPTIONAL" (OPT <>) "AUX" (NS .NSLOTS) (TS .TOT-SPEC)) 
+	#DECL ((TUP) <OR FALSE NODE> (NS TS) FIX)
+	<OR .PRE
+	    <COND (<AND <TYPE? .TUP NODE>
+			<OR <==? <NODE-NAME .TUP> ITUPLE>
+			    <==? <NODE-NAME .TUP> TUPLE>>>
+		   <COND (<OR .OPT
+			      <==? <NODE-TYPE .TUP> ,ISTRUC-CODE>
+			      <NOT <GOOD-TUPLE .TUP>>>
+			  <COND (<G? .NS 0>
+				 <SALLOC:SLOTS <- .NS .TS>>
+				 <ADD:STACK <- .NS .TS>>)>
+			  <EMIT-PRE <SET PRE T>>)>)>>>
+
+<DEFINE GOOD-TUPLE (TUP "AUX" (K <KIDS .TUP>) NT (WD 0)) 
+	#DECL ((NT) FIX (TUP) NODE (K) <LIST [REST NODE]>)
+	<AND <NOT <==? <NODE-TYPE .TUP> ,ISTRUC-CODE>>
+	     <COND (<==? <NODE-SUBR .TUP> ,ITUPLE>
+		    <AND <==? <NODE-TYPE <1 .K>> ,QUOTE-CODE>
+			 <OR <==? <SET NT <NODE-TYPE <2 .K>>> ,QUOTE-CODE>
+			     <==? .NT ,FLVAL-CODE>
+			     <==? .NT ,FGVAL-CODE>
+			     <==? .NT ,GVAL-CODE>
+			     <==? .NT ,LVAL-CODE>>
+			 <* <NODE-NAME <1 .K>> 2>>)
+		   (ELSE
+		    <MAPF <>
+			  <FUNCTION (K) 
+				  <COND (<==? <NODE-TYPE .K> ,SEGMENT-CODE>
+					 <MAPLEAVE <>>)
+					(ELSE <SET WD <+ .WD 2>>)>>
+			  .K>)>>>
+
+" Do a \"TUPLE\" binding."
+
+<DEFINE TUPLE1-B (SYM) 
+	#DECL ((SYM) SYMTAB)
+	<EMIT '<`PUSH  `P*  `A >>
+	<EMIT '<`PUSHJ  `P*  |MAKTU2 >>
+	<COND (<SPEC-SYM .SYM>
+	       <EMIT '<`POP  `TP*  `B >>
+	       <EMIT '<`POP  `TP*  `A >>
+	       <BINDUP .SYM <FUNCTION:VALUE T>>)>>
+
+<DEFINE TUPL-B (SYM "AUX" (SK <* 2 <- <ARGNUM-SYM .SYM> 1>>)) 
+	#DECL ((SYM) SYMTAB (SK) FIX)
+	<EMIT '<`MOVE  `B*  `AB >>
+	<OR <L=? .SK 0>
+	    <EMIT <INSTRUCTION `ADD  `B*  [<FORM .SK (.SK)>]>>>
+	<EMIT '<`HLRZ  `A*  |OTBSAV  `(TB) >>
+	<EMIT '<`HRLI  `A*  <TYPE-CODE!-OP!-PACKAGE TUPLE>>>
+	<BINDUP .SYM <FUNCTION:VALUE T>>>
+
+" Generate the code to actually build a TUPLE."
+
+<DEFINE BUILD:TUPLE (NUM "AUX" (STAG <MAKE:TAG>) (ETAG <MAKE:TAG>)) 
+	#DECL ((NUM) FIX (STAG ETAG) ATOM)
+	<COPY:ARGPNTR>
+	<AND <NOT <1? .NUM>> <BUMP:ARGPNTR <- .NUM 1>>>
+	<LABEL:TAG .STAG>
+	<TEST:ARGPNTR .ETAG>
+	<STACK:ARGUMENT <REFERENCE:ARGPNTR>>
+	<BUMP:ARGPNTR>
+	<BUMP:CNTR>
+	<BRANCH:TAG .STAG>
+	<LABEL:TAG .ETAG>
+	<TUPLE:FINAL>>
+
+" Dispatch table for binding generation code."
+
+<SETG BINDERS
+      ![,ACT-B ,AUX1-B ,AUX2-B ,TUPL-B ,NORM-B ,OPT1-B ,OPT1-B ,OPT2-B ,OPT2-B
+	,NORM-B ,BIND-B ,NORM-B ,NORM-B!]>
+
+<DEFINE MENTROPY (N R) T>
+
+<COND (<GASSIGNED? NOTIMP>
+       <SETG MBINDERS
+	     [,ACT-B
+	      ,AUX1-B
+	      ,AUX2-B
+	      ,NOTIMP
+	      ,MENTROPY
+	      ,MOPTG
+	      ,MOPTG
+	      ,MOPTG2
+	      ,MOPTG2
+	      ,MENTROPY
+	      ,BIND-B
+	      ,MENTROPY
+	      ,MENTROPY]>)>
+
+" Appliacation of a form could still be an NTH."
+
+<DEFINE FORM-F-GEN (NOD WHERE "AUX" (K <KIDS .NOD>) TY) 
+	#DECL ((NOD) NODE)
+	<COND (<==? <ISTYPE? <SET TY <RESULT-TYPE <1 .K>>>> FIX>
+	       <PUT .NOD ,NODE-NAME INTH>
+	       <PUT .NOD ,NODE-TYPE <NODE-SUBR .NOD>>
+	       <PUT .NOD ,NODE-SUBR ,NTH>
+	       <COND (<OR <==? <NODE-TYPE .NOD> ,ALL-REST-CODE>
+			  <==? <NODE-TYPE .NOD> ,NTH-CODE>>
+		      <SET K (<2 .K> <1 .K>)>)>
+	       <PUT .NOD ,KIDS .K>
+	       <GEN .NOD .WHERE>)
+	      (.TY <FORM-GEN .NOD .WHERE>)
+	      (ELSE
+	       <MESSAGE ERROR
+			" NON APPLICABLE OBJECT "
+			<NODE-NAME .NOD>
+			.NOD>)>>
+
+" Generate a call to EVAL for uncompilable FORM."
+
+<DEFINE FORM-GEN (NOD WHERE "AUX" (SSTK .STK) TEM (STK (0 !.STK))) 
+	#DECL ((NOD) NODE (WHERE) <OR ATOM DATUM> (TEM) DATUM
+	       (STK) <SPECIAL LIST> (SSTK) LIST)
+	<RET-TMP-AC <STACK:ARGUMENT <REFERENCE <NODE-NAME .NOD>>>>
+	<ADD:STACK 2>
+	<REGSTO T>
+	<SET TEM <FUNCTION:VALUE T>>
+	<SUBR:CALL EVAL 1>
+	<SET STK .SSTK>
+	<MOVE:ARG .TEM .WHERE>>
+
+" Generate code for LIST/VECTOR etc. evaluation."
+
+<GDECL (COPIERS) <UVECTOR [REST ATOM]>>
+
+<DEFINE COPY-GEN (NOD WHERE
+		  "AUX" GT RES (I 0) (ARGS <KIDS .NOD>) (UNK <>)
+			(TYP  <ISTYPE? <RESULT-TYPE .NOD>>)
+			(INAME
+			 <NTH
+			  '[|IILIST  |CIVEC  |CIUVEC  TUPLE]
+			  <LENGTH <CHTYPE <MEMQ .TYP ,COPIERS> UVECTOR>>>))
+   #DECL ((GT) <OR FALSE FIX> (NOD) NODE (WHERE) <OR ATOM DATUM>
+	  (ARGS) <LIST [REST NODE]> (I) FIX (VALUE RES) DATUM)
+   <PROG ((STK (0 !.STK)))
+     #DECL ((STK) <SPECIAL LIST>)
+     <COND
+      (<REPEAT ()
+	       <AND <EMPTY? .ARGS> <RETURN>>
+	       <COND (<==? <NODE-TYPE <1 .ARGS>> ,SEGMENT-CODE>
+		      <RET-TMP-AC <GEN <1 <KIDS <1 .ARGS>>> <FUNCTION:VALUE>>>
+		      <COND (<AND <==? <NODE-NAME .NOD> LIST>
+				  <EMPTY? <REST .ARGS>>>
+			     <REGSTO T>
+			     <SEGMENT:LIST .I .UNK>
+			     <SET RES <FUNCTION:VALUE T>>
+			     <RETURN <>>)
+			    (ELSE
+			     <REGSTO T>
+			     <SEGMENT:STACK </ <STACKS .NOD> 2> .UNK>
+			     <ADD:STACK <- <STACKS .NOD>>>
+			     <ADD:STACK PSTACK>
+			     <SET UNK T>)>)
+		     (ELSE
+		      <RET-TMP-AC <STACK:ARGUMENT <GEN <1 .ARGS> DONT-CARE>>>
+		      <ADD:STACK 2>
+		      <SET I <+ .I 1>>)>
+	       <SET ARGS <REST .ARGS>>>
+       <REGSTO T>
+       <SET RES <FUNCTION:VALUE T>>
+       <COND (.UNK
+	      <AND <NOT <==? .INAME TUPLE>>
+		   <EMIT <INSTRUCTION `POP 
+				      `P* 
+				      <COND (<==? .INAME TUPLE> `D )
+					    (ELSE `A )>>>>)
+	     (ELSE
+	      <EMIT <INSTRUCTION `MOVEI 
+				 <COND (<==? .INAME TUPLE> `D* ) (ELSE `A* )>
+				 <COND (<==? .INAME TUPLE> <+ .I .I>)
+				       (ELSE .I)>>>)>
+       <COND (<==? .INAME TUPLE>
+	      <COND (.UNK
+		     <EMIT <INSTRUCTION `MOVE  `D*  `(P) >>
+		     <EMIT <INSTRUCTION `ASH  `D*  1>>)>
+	      <EMIT <INSTRUCTION `PUSHJ  `P*  |MAKTUP >>)
+	     (ELSE <EMIT <INSTRUCTION `PUSHJ  `P*  .INAME>>)>)>>
+   <COND (<==? .INAME TUPLE>
+	  <COND (<SET GT <GOOD-TUPLE .NOD>> <ADD:STACK <+ 2 .GT>>)
+		(ELSE <EMIT <INSTRUCTION `AOS  `(P) >> <ADD:STACK PSTACK>)>)>
+   <MOVE:ARG .RES .WHERE>>
+
+<SETG COPIERS ![TUPLE UVECTOR VECTOR LIST!]>
+
+"Generate code for a call to a SUBR."
+
+<DEFINE SUBR-GEN (NOD WHERE) 
+	#DECL ((WHERE) <OR ATOM DATUM> (NOD) NODE)
+	<COMP:SUBR:CALL <NODE-NAME .NOD>
+			<KIDS .NOD>
+			<STACKS .NOD>
+			.WHERE>>
+
+" Compile call to a SUBR that doesn't compile or PUSHJ."
+
+<DEFINE COMP:SUBR:CALL (SUBR OBJ STA W
+			"AUX" RES (I 0) (UNK <>) (OS .STK) (STK (0 !.STK)))
+   #DECL ((STA I) FIX (OBJ) <LIST [REST NODE]> (UNK) <OR FALSE ATOM>
+	  (STK) <SPECIAL LIST> (OS) LIST (RES) DATUM)
+   <MAPF <>
+    <FUNCTION (OB) 
+	    #DECL ((OB) NODE (I STA) FIX)
+	    <COND (<==? <NODE-TYPE .OB> ,SEGMENT-CODE>
+		   <RET-TMP-AC <GEN <1 <KIDS .OB>> <FUNCTION:VALUE>>>
+		   <REGSTO T>
+		   <SEGMENT:STACK </ .STA 2> .UNK>
+		   <ADD:STACK <- .STA>>
+		   <ADD:STACK PSTACK>
+		   <SET UNK T>)
+		  (ELSE
+		   <RET-TMP-AC <STACK:ARGUMENT <GEN .OB DONT-CARE>>>
+		   <ADD:STACK 2>
+		   <SET I <+ .I 1>>)>>
+    .OBJ>
+   <REGSTO T>
+   <SET RES <FUNCTION:VALUE T>>
+   <COND (.UNK <SEGMENT:FINAL .SUBR>)
+	 (ELSE <SUBR:CALL .SUBR .I>)>
+   <SET STK .OS>
+   <MOVE:ARG .RES .W>>
+
+
+<GDECL (SUBRS TEMPLATES) UVECTOR>
+
+<DEFINE GET-TMPS (SUB "AUX" (LS <MEMQ .SUB ,SUBRS>))
+	#DECL ((VALUE) <LIST ANY ANY> (LS) <OR FALSE UVECTOR>)
+	<COND (.LS <NTH ,TEMPLATES <LENGTH .LS>>)
+	      (ELSE '(ANY ANY))>>
+
+" Generate calls to SUBRs using the internal PUSHJ feature."
+
+<DEFINE ISUBR-GEN (NOD WHERE
+		   "OPTIONAL" (NOTF <>) (BRANCH <>) (DIR <>)
+		   "AUX" (TMPL <GET-TMPS <NODE-SUBR .NOD>>) W (SDIR .DIR) B2
+			 (OS .STK) (STK (0 !.STK)) W2 (TP <4 .TMPL>))
+   #DECL ((NOD) NODE (WHERE W2) <OR ATOM DATUM> (W) DATUM
+	  (TMPL) <LIST ANY ANY ANY ANY ANY ANY> (UNK) <OR FALSE ATOM>
+	  (STA ARGS) FIX (STK) <SPECIAL LIST> (OS) LIST)
+   <AND .NOTF <SET DIR <NOT .DIR>>>
+   <COND (<==? <NODE-NAME .NOD> INTH> <SET TP (<2 <CHTYPE .TP LIST>>
+					       <1 <CHTYPE .TP LIST>>)>)>
+   <COND (<=? .TP STACK> <STACK-ARGS .NOD T>)
+	 (<NOT <AC-ARGS .NOD .TP>> <AC-SEG-CALL .TP>)>
+   <REGSTO T>
+   <EMIT <INSTRUCTION `PUSHJ  `P*  <6 .TMPL>>>
+   <SET STK .OS>
+   <COND (<AND .BRANCH <5 .TMPL>>
+	  <COND (<==? .WHERE FLUSHED>
+		 <COND (.DIR <EMIT '<`SKIPA >> <BRANCH:TAG .BRANCH>)
+		       (ELSE <BRANCH:TAG .BRANCH>)>)
+		(ELSE
+		 <COND (.DIR <BRANCH:TAG <SET B2 <MAKE:TAG>>>)
+		       (<OR .NOTF
+			    <NOT <OR <==? .WHERE DONT-CARE>
+				     <AND <TYPE? .WHERE DATUM>
+					  <SET W .WHERE>
+					  <==? <LENGTH .W> 2>
+					  <OR <==? <DATTYP .W> ANY-AC>
+					      <==? <DATTYP .W> ,AC-A>>
+					  <OR <==? <DATVAL .W> ANY-AC>
+					      <==? <DATVAL .W> ,AC-B>>>>>>
+			<EMIT '<`SKIPA >>
+			<BRANCH:TAG <SET B2 <MAKE:TAG>>>)>
+		 <SET WHERE
+		      <MOVE:ARG <COND (.NOTF <REFERENCE .SDIR>)
+				      (ELSE <FUNCTION:VALUE T>)>
+				.WHERE>>
+		 <BRANCH:TAG .BRANCH>
+		 <COND (<ASSIGNED? B2> <LABEL:TAG .B2>)>
+		 .WHERE)>)
+	 (.BRANCH
+	  <OR <==? .WHERE FLUSHED> <SET DIR <NOT .DIR>>>
+	  <D:B:TAG <COND (<==? .WHERE FLUSHED> .BRANCH)
+			 (ELSE <SET B2 <MAKE:TAG>>)>
+		   <FUNCTION:VALUE>
+		   .DIR
+		   <RESULT-TYPE .NOD>>
+	  <SET W2
+	       <MOVE:ARG <COND (.NOTF <REFERENCE .SDIR>)
+			       (ELSE <FUNCTION:VALUE T>)>
+			 .WHERE>>
+	  <COND (<N==? .WHERE FLUSHED>
+		 <BRANCH:TAG .BRANCH>
+		 <LABEL:TAG .B2>)>
+	  .W2)
+	 (<5 .TMPL>
+	  <GEN:FALSE>
+	  <MOVE:ARG <FUNCTION:VALUE T> .WHERE>)
+	 (ELSE <MOVE:ARG <FUNCTION:VALUE T> .WHERE>)>>
+
+<DEFINE STACK-ARGS (NOD PASN
+		    "AUX" (UNK <>) (ARGS 0) (STA <STACKS .NOD>) N
+			  (K <KIDS .NOD>))
+	#DECL ((NOD N) NODE (ARGS STA) FIX (K) <LIST [REST NODE]>)
+	<REPEAT ()
+		<AND <EMPTY? .K> <RETURN>>
+		<COND (<==? <NODE-TYPE <SET N <1 .K>>> ,SEGMENT-CODE>
+		       <RET-TMP-AC <GEN <1 <KIDS .N>> <FUNCTION:VALUE>>>
+		       <REGSTO T>
+		       <SEGMENT:STACK </ .STA 2> .UNK>
+		       <ADD:STACK <- .STA>>
+		       <ADD:STACK PSTACK>
+		       <SET UNK T>)
+		      (ELSE
+		       <RET-TMP-AC <STACK:ARGUMENT <GEN .N DONT-CARE>>>
+		       <ADD:STACK 2>
+		       <SET ARGS <+ .ARGS 1>>)>
+		<SET K <REST .K>>>
+	<REGSTO T>
+	<COND (.UNK <EMIT '<`POP  `P*  `A >>)
+	      (.PASN <EMIT <INSTRUCTION `MOVEI  `A*  .ARGS>>)>
+	<COND (<NOT .UNK> .ARGS)>>
+
+" Get a bunch of goodies into ACs for a PUSHJ call."
+
+<DEFINE AC-ARGS (NOD ACTMP "AUX" WHS) 
+   #DECL ((WHS) <LIST [REST DATUM]> (NOD) NODE (ACTMP) LIST)
+   <COND
+    (<SEGS .NOD> <STACK-ARGS .NOD <>>)
+    (<SET WHS
+      <MAPR ,LIST
+       <FUNCTION (NL WL
+		  "AUX" (N <1 .NL>) (W <1 .WL>) (SD <SIDES <REST .NL>>)
+			(RT <ISTYPE-GOOD? <DATTYP .W>>))
+	  #DECL ((N) NODE (W) <OR DATUM LIST> (RT) <OR ATOM FALSE>)
+	  <SET W
+	   <GEN .N
+		<COND (<==? <NODE-TYPE .N> ,QUOTE-CODE> DONT-CARE)
+		      (.SD
+		       <DATUM <COND (<ISTYPE-GOOD? <RESULT-TYPE .N>>)
+				    (ELSE ANY-AC)>
+			      ANY-AC>)
+		      (ELSE <DATUM !.W>)>>>
+	  <AND .SD <REGSTO <>>>
+	  <COND (.RT <DATTYP-FLUSH .W> <PUT .W ,DATTYP .RT>)>
+	  .W>
+       <KIDS .NOD>
+       .ACTMP>>
+     <SET WHS
+	  <MAPF ,LIST
+		<FUNCTION (W1 W2) 
+			#DECL ((W1) DATUM (W2) LIST)
+			<MOVE:ARG .W1 <DATUM !.W2>>>
+		.WHS
+		.ACTMP>>
+     <MAPF <> ,RET-TMP-AC .WHS>
+     T)>>
+
+<DEFINE SIDES (L) 
+	#DECL ((L) <LIST [REST NODE]>)
+	<MAPF <>
+	      <FUNCTION (N) 
+		      <COND (<==? <NODE-TYPE .N> ,QUOTE-CODE> <>)
+			    (<OR <==? <NODE-TYPE .N> ,ISUBR-CODE>
+				 <MEMQ ALL <SIDE-EFFECTS .N>>>
+			     <MAPLEAVE T>)>>
+	      .L>>
+
+" Generate code for a call to an RSUBR (maybe PUSHJ)."
+
+<DEFINE RSUBR-GEN (N W
+		   "AUX" (IT <NODE-NAME .N>) ACST RN KNWN (OS .STK)
+			 (STK (0 !.STK)))
+	#DECL ((N RN) NODE (W) <OR ATOM DATUM> (STK) <SPECIAL LIST> (OS) LIST)
+	<MAPF <>
+	      <FUNCTION (ARG) 
+		      #DECL ((ARG) NODE)
+		      <OR <RESULT-TYPE .ARG>
+			  <==? <NODE-TYPE .ARG> ,SEGMENT-CODE>
+			  <MESSAGE ERROR "BAD ARG TO " <NODE-NAME .N> .ARG>>>
+	      <KIDS .N>>
+	<COND (<AND <TYPE? <NODE-SUBR .N> FUNCTION>
+		    <SET ACST <ACS <SET RN <GET .IT .IND>>>>
+		    <OR <ASSIGNED? GROUP-NAME> <==? .FCN .RN>>>
+	       <COND (<OR <=? .ACST '(STACK)> <=? .ACST '(FUNNY-STACK)>>
+		      <SET KNWN <STACK-ARGS .N <>>>
+		      <REGSTO T>
+		      <SET STK .OS>
+		      <STACK-CALL <REQARGS .RN>
+				  <TOTARGS .RN>
+				  <NODE-NAME .RN>
+				  .KNWN <>>)
+		     (ELSE
+		      <OR <AC-ARGS .N .ACST> <AC-SEG-CALL .ACST>>
+		      <REGSTO T>
+		      <SET STK .OS>
+		      <EMIT <INSTRUCTION `PUSHJ  `P*  <1 <CHTYPE <NODE-NAME .RN>
+								 UVECTOR>>>>)>
+	       <MOVE:ARG <FUNCTION:VALUE T> .W>)
+	      (ELSE <SUBR-GEN .N .W>)>>
+
+" Generate a call to an internal compiled goodies using a PUSHJ."
+
+<DEFINE IRSUBR-GEN (NOD WHERE
+		    "AUX" KNWN (N <NODE-SUBR .NOD>) (AN <2 .N>) (OS .STK)
+			  (STK (0 !.STK)))
+	#DECL ((NOD) NODE (WHERE) <OR ATOM DATUM> (STK) <SPECIAL LIST> (OS) LIST
+	       (N) <IRSUBR ANY <LIST [REST FIX]>> (AN) <LIST [REST FIX]>)
+	<REGSTO T>
+	<SET KNWN <STACK-ARGS .NOD <>>>
+	<STACK-CALL <MIN !.AN>
+		    <MAX !.AN>
+		    '![!]
+		    .KNWN
+		    <NODE-NAME .NOD>>
+	<MOVE:ARG <FUNCTION:VALUE T> .WHERE>>
+
+" Get the arguemnts to a FUNCTION into the ACs."
+
+<DEFINE ARGS-TO-ACS (NOD
+		     "AUX" (RQRG <REQARGS .NOD>) (INAME <NODE-NAME .NOD>) (N 1)
+			   (ACST <ACS .NOD>) TG1 TG2 TG)
+   #DECL ((N RQRG) FIX (INAME) <UVECTOR [REST ATOM]> (ACST) LIST (NOD) NODE)
+   <COND
+    (<MEMBER .ACST '![(STACK) (FUNNY-STACK)!]>
+     <COND (<AND <EMPTY? <REST .INAME>> <NOT <L? .RQRG 0>>>
+	    <REPEAT ()
+		    <AND <G? .N .RQRG> <RETURN>>
+		    <STACK:ARGUMENT <REFERENCE:ARG .N>>
+		    <SET N <+ .N 1>>>
+	    <EMIT <INSTRUCTION `PUSHJ  `P*  <1 .INAME>>>
+	    <EMIT '<`JRST  |FINIS >>)
+	   (ELSE
+	    <EMIT '<`MOVE  `A*  `AB >>
+	    <AND <L=? .RQRG 0>
+		 <EMIT <INSTRUCTION `JUMPGE  `AB*  <SET TG1 <MAKE:TAG>>>>>
+	    <LABEL:TAG <SET TG2 <MAKE:TAG>>>
+	    <AND <L? .RQRG 0> <EMIT '<INTGO!-OP>>>
+	    <STACK:ARGUMENT <REFERENCE:ARG 1>>
+	    <EMIT <INSTRUCTION `ADD  `AB*  '[<2 (2)>]>>
+	    <EMIT <INSTRUCTION `JUMPL  `AB*  .TG2>>
+	    <AND <L=? .RQRG 0> <LABEL:TAG .TG1>>
+	    <EMIT '<`HLRES  `A >>
+	    <EMIT '<`ASH  `A*  -1>>
+	    <COND (<G=? .RQRG 0>
+		   <EMIT <INSTRUCTION `ADDI  `A*  <SET TG <MAKE:TAG>>>>
+		   <EMIT <INSTRUCTION `PUSHJ  `P*  `@  .RQRG '`(A) >>)
+		  (ELSE
+		   <EMIT '<`MOVMS  `A >>
+		   <EMIT <INSTRUCTION `PUSHJ  `P*  <1 .INAME>>>)>
+	    <EMIT '<`JRST  |FINIS >>
+	    <COND (<G=? .RQRG 0>
+		   <REPEAT ()
+			   <AND <EMPTY? <REST .INAME>> <LABEL:TAG .TG>>
+			   <EMIT <INSTRUCTION `SETZ <1 .INAME>>>
+			   <AND <EMPTY? <SET INAME <REST .INAME>>>
+				<RETURN>>>)>)>)
+    (ELSE
+     <REPEAT ()
+	     <AND <EMPTY? .ACST> <RETURN>>
+	     <RET-TMP-AC <MOVE:ARG <REFERENCE:ARG .N> <DATUM !<1 .ACST>>>>
+	     <SET N <+ .N 1>>
+	     <SET ACST <REST .ACST>>>
+     <EMIT <INSTRUCTION `PUSHJ  `P*  <1 .INAME>>>
+     <EMIT '<`JRST  |FINIS >>)>>
+
+" Push the args supplied in ACs onto the stack."
+
+<DEFINE ACS-TO-STACK (ACST "AUX" (N 0)) 
+	#DECL ((N) FIX (ACST) LIST (VALUE) FIX)
+	<MAPF <>
+	      <FUNCTION (W) 
+		      #DECL ((N) FIX)
+		      <STACK:ARGUMENT <DATUM !.W>>
+		      <SET N <+ .N 1>>>
+	      .ACST>
+	.N>
+
+<DEFINE AC-SEG-CALL (ACS "AUX" (NARG <LENGTH .ACS>) TT OFFS) 
+	#DECL ((OFFS NARG) FIX (ACS) LIST (TT) ADDRESS:C)
+	<COND (.CAREFUL
+	       <EMIT <INSTRUCTION `CAIE  `A*  .NARG>>
+	       <EMIT '<`JRST  |COMPER >>)>
+	<SET OFFS <- 1 <SET NARG <* .NARG 2>>>>
+	<MAPF <>
+	      <FUNCTION (X) 
+		      #DECL ((X) LIST)
+		      <SET TT <ADDRESS:C .OFFS '`(TP) >>
+		      <SET OFFS <+ .OFFS 2>>
+		      <RET-TMP-AC <MOVE:ARG <DATUM .TT .TT> <DATUM !.X>>>>
+	      .ACS>
+	<EMIT <INSTRUCTION `SUB  `TP*  [<FORM .NARG (.NARG)>]>>>
+
+" Generate PUSHJ in stack arg case (may go different places)"
+
+<DEFINE STACK-CALL (RQRG TRG INAME KNWN INT) 
+   #DECL ((TRG RQRG) FIX (INAME) <UVECTOR [REST ATOM]> (KNWN) <OR FIX FALSE>
+	  (INT) <OR ATOM FALSE>)
+   <COND
+    (<L? .TRG 0>						       ;"TUPLE?"
+     <COND (.KNWN <EMIT <INSTRUCTION `MOVEI  `A*  .KNWN>>)>
+     <EMIT <COND (.INT
+		  <INSTRUCTION `PUSHJ 
+			       `P* 
+			       `@ 
+			       <FORM MQUOTE!-OP!-PACKAGE
+				     <INTERNAL-RSUBR .INT -1 T>>>)
+		 (ELSE <INSTRUCTION `PUSHJ  `P*  <1 .INAME>>)>>)
+    (ELSE
+     <COND
+      (<NOT .KNWN>
+       <COND
+	(<==? .RQRG .TRG>
+	 <COND (.CAREFUL
+		<EMIT <INSTRUCTION `CAIE  `A*  .RQRG>>
+		<EMIT '<`JRST  |COMPER >>)>
+	 <EMIT <COND (.INT
+		      <INSTRUCTION `PUSHJ 
+				   `P* 
+				   `@ 
+				   <FORM MQUOTE!-OP!-PACKAGE
+					 <INTERNAL-RSUBR .INT .RQRG T>>>)
+		     (ELSE <INSTRUCTION `PUSHJ  `P*  <1 .INAME>>)>>)
+	(ELSE
+	 <COND (.CAREFUL
+		<EMIT <INSTRUCTION `CAIG  `A*  .TRG>>
+		<EMIT <INSTRUCTION `CAIGE  `A*  .RQRG>>
+		<EMIT '<`JRST  |COMPER >>)>
+	 <EMIT
+	  <INSTRUCTION
+	   `ADDI 
+	   `A* 
+	   <PROG ((I <+ <- .TRG .RQRG> 2>))
+	     #DECL ((I) FIX)
+	     <IVECTOR
+	      <- .I 1>
+	      '<COND
+		(.INT
+		 <FORM `@ 
+		       <FORM MQUOTE!-OP!-PACKAGE
+			     <INTERNAL-RSUBR .INT
+					     <- .TRG <SET I <- .I 1>>>
+					     T>>>)
+		(ELSE <FORM <NTH .INAME <SET I <- .I 1>>>>)>>>>>
+	 <EMIT <INSTRUCTION `PUSHJ  `P*  `@  <- .RQRG> `(A) >>)>)
+      (ELSE
+       <EMIT <COND (.INT
+		    <INSTRUCTION `PUSHJ 
+				 `P* 
+				 `@ 
+				 <FORM MQUOTE!-OP!-PACKAGE
+				       <INTERNAL-RSUBR .INT .KNWN T>>>)
+		   (ELSE
+		    <INSTRUCTION `PUSHJ 
+				 `P* 
+				 <NTH .INAME <- .TRG .KNWN -1>>>)>>)>)>>
+
+
+" Generate code for a stackform."
+
+<DEFINE STACKFORM-GEN (NOD WHERE
+		       "AUX" (K <KIDS .NOD>) TT T1 T2 TTT (PRE T) (OS .STK)
+			     (STK (0 !.STK))
+			     (SUBRC
+			      <AND
+			       <==? <NODE-TYPE <SET TT <1 .K>>> ,FGVAL-CODE>
+			       <==? <NODE-TYPE <SET TT <1 <KIDS .TT>>>>
+				    ,QUOTE-CODE>
+			       <GASSIGNED? <SET TTT <NODE-NAME .TT>>>
+			       <TYPE? ,.TTT SUBR>
+			       .TTT>))
+	#DECL ((NOD TT) NODE (K) <LIST [REST NODE]> (PRE) <SPECIAL ANY>
+	       (WHERE) <OR ATOM DATUM> (STK) <SPECIAL LIST> (OS) LIST)
+	<REGSTO T>
+	<COND (<NOT .SUBRC>
+	       <RET-TMP-AC <STACK:ARGUMENT <GEN <1 .K> DONT-CARE>>>)>
+	<PCOUNTER <COND (.SUBRC 0) (ELSE 1)>>
+	<ADD:STACK PSTACK>
+	<LABEL:TAG <SET T1 <MAKE:TAG>>>
+	<PRED:BRANCH:GEN <SET T2 <MAKE:TAG>> <3 .K> <>>
+	<RET-TMP-AC <STACK:ARGUMENT <GEN <2 .K> DONT-CARE>>>
+	<COUNTP>
+	<BRANCH:TAG .T1>
+	<LABEL:TAG .T2>
+	<SEGMENT:FINAL <COND (.SUBRC .SUBRC) (ELSE APPLY)>>
+	<SET STK .OS>
+	<MOVE:ARG <FUNCTION:VALUE T> .WHERE>>
+
+" Generate code for a COND."
+
+<DEFINE COND-GEN (NOD WHERE
+		  "OPTIONAL" (NOTF <>) (BRANCH <>) (DIR <>)
+		  "AUX" SACS NWHERE (ALLSTATES ()) (SSTATE #SAVED-STATE ())
+			(RW .WHERE) LOCN (COND <MAKE:TAG "COND">) W2
+			(KK <CLAUSES .NOD>) (SDIR .DIR) (SACS-OK T)
+			(SNUMSYM ()))
+   #DECL ((NOD) NODE (WHERE RW) <OR ATOM DATUM> (COND) ATOM (W2) DATUM
+	  (KK) <LIST [REST NODE]> (ALLSTATES) <LIST [REST SAVED-STATE]>
+	  (SSTATE) SAVED-STATE (LOCN) DATUM)
+   <AND .NOTF <SET DIR <NOT .DIR>>>
+   <COND (<AND ,FUDGE .BRANCH> <VAR-STORE>) (ELSE <SET SACS <SAVE:RES>> <REGSTO <>>)>
+   <PREFER-DATUM .WHERE>
+   <SET WHERE <GOODACS .NOD .WHERE>>
+   <COND (<AND <TYPE? .WHERE DATUM>
+	       <SET W2 .WHERE>
+	       <OR <==? <ISTYPE? <RESULT-TYPE .NOD>> FALSE>
+		   <==? <ISTYPE? <DATTYP .W2>> FALSE>>>
+	  <SET WHERE <DATUM ANY-AC <DATVAL .W2>>>)>
+   <MAPR <>
+    <FUNCTION (BRN
+	       "AUX" (LAST <EMPTY? <REST .BRN>>) (BR <1 .BRN>) NEXT
+		     (K <CLAUSES .BR>) (PR <PREDIC .BR>) (NO-SEQ <>) (LEAVE <>)
+		     (W
+		      <COND (<TYPE? .WHERE DATUM> <DATUM !.WHERE>)
+			    (ELSE .WHERE)>) FLG (BRNCHED <>))
+       #DECL ((PR BR) NODE (BRN) <LIST NODE> (K) <LIST [REST NODE]>)
+       <OR <AND ,FUDGE .BRANCH> <SET SNUMSYM <SAVE-NUM-SYM .SACS>>>
+       <RESTORE-STATE .SSTATE <AND <ASSIGNED? LOCN> <==? .LOCN ,NO-DATUM>>>
+       <COND
+	(<EMPTY? .K>
+	 <COND
+	  (<OR <SET FLG <NOT <TYPE-OK? <RESULT-TYPE .PR> FALSE>>> .LAST>
+	   <OR .LAST <COND-COMPLAIN "NON REACHABLE COND CLAUSE(S) " <2 .BRN>>>
+	   <COND (<AND .FLG .BRANCH>
+		  <SET LOCN
+		       <GEN .PR <COND (<==? .RW FLUSHED> FLUSHED) (ELSE .W)>>>
+		  <COND (.DIR <BRANCH:TAG .BRANCH>)>)
+		 (<AND .BRANCH .LAST>
+		  <SET LOCN
+		       <PRED:BRANCH:GEN .BRANCH
+					.PR
+					.SDIR
+					<COND (<==? .RW FLUSHED> FLUSHED)
+					      (ELSE .W)>
+					.NOTF>>)
+		 (ELSE
+		  <SET LOCN
+		       <GEN .PR <COND (<==? .RW FLUSHED> FLUSHED) (ELSE .W)>>>
+		  <ACFIX .WHERE .W>
+		  <VAR-STORE <>>)>
+	   <COND (<==? .LOCN ,NO-DATUM>
+		  <SET SACS-OK <SAVE-TYP .PR>>
+		  <OR <AND ,FUDGE .BRANCH> <FIX-NUM-SYM .SNUMSYM .SACS>>)
+		 (<NOT <AND ,FUDGE .BRANCH>><SET ALLSTATES (<SAVE-STATE> !.ALLSTATES)>)>
+	   <MAPLEAVE>)
+	  (<==? <ISTYPE? <RESULT-TYPE .PR>> FALSE> <GEN .PR FLUSHED>)
+	  (<==? .RW FLUSHED>
+	   <PRED:BRANCH:GEN <COND (<AND .BRANCH .SDIR> .BRANCH) (ELSE .COND)>
+			    .PR
+			    T
+			    FLUSHED
+			    .NOTF>)
+	  (ELSE
+	   <COND
+	    (<AND .BRANCH .SDIR>
+	     <RET-TMP-AC <PRED:BRANCH:GEN .BRANCH .PR T FLUSHED .NOTF>>)
+	    (ELSE
+	     <RET-TMP-AC
+	      <PRED:BRANCH:GEN
+	       .COND
+	       .PR
+	       T
+	       <COND (<AND <TYPE? .W DATUM> <ISTYPE? <DATTYP .W>>>
+		      <PUT .W ,DATTYP ANY-AC>
+		      .W)
+		     (ELSE .W)>
+	       .NOTF>>)>)>
+	 <SET SSTATE <SAVE-STATE>>
+	 <OR <==? <RESULT-TYPE .PR> FLUSHED>
+	     <AND ,FUDGE .BRANCH>
+	     <SET ALLSTATES (.SSTATE !.ALLSTATES)>>
+	 <VAR-STORE <>>)
+	(ELSE
+	 <SET NEXT <MAKE:TAG "PHRASE">>
+	 <COND (<==? <ISTYPE? <RESULT-TYPE .PR>> FALSE>
+		<COND (<AND .BRANCH .LAST <NOT .DIR>>
+		       <SET LOCN <GEN .PR .W>>
+		       <BRANCH:TAG .BRANCH>)
+		      (ELSE
+		       <COND (<AND .LAST <NOT <==? .RW FLUSHED>>>
+			      <SET LOCN <GEN .PR .W>>)
+			     (ELSE <SET LOCN <GEN .PR FLUSHED>>)>
+		       <AND <N==? .LOCN ,NO-DATUM> <BRANCH:TAG .NEXT>>)>
+		<SET NO-SEQ T>
+		<OR <AND ,FUDGE .BRANCH> <SET ALLSTATES (<SAVE-STATE> !.ALLSTATES)>>
+		<COND-COMPLAIN "COND PREDICATE ALWAYS FALSE" .PR>)
+	       (<TYPE-OK? FALSE <RESULT-TYPE .PR>>
+		<COND (<AND .LAST <NOT .DIR> .BRANCH>
+		       <RET-TMP-AC <PRED:BRANCH:GEN .BRANCH .PR <> .W .NOTF>>)
+		      (<AND .LAST .BRANCH>
+		       <RET-TMP-AC <PRED:BRANCH:GEN .NEXT .PR <> FLUSHED>>)
+		      (<AND .LAST <NOT <==? .RW FLUSHED>>>
+		       <RET-TMP-AC <PRED:BRANCH:GEN .NEXT .PR <> .W>>)
+		      (ELSE <PRED:BRANCH:GEN .NEXT .PR <> FLUSHED>)>
+		<COND (<AND .LAST <N==? <RESULT-TYPE .PR> NO-RETURN>>
+		       <OR <AND ,FUDGE .BRANCH>
+			   <SET ALLSTATES (<SAVE-STATE> !.ALLSTATES)>>)
+		      (<==? <RESULT-TYPE .PR> NO-RETURN>
+		       <SET SACS-OK <SAVE-TYP <NTH .K <LENGTH .K>>>>
+		       <OR <AND ,FUDGE .BRANCH> <FIX-NUM-SYM .SNUMSYM .SACS>>)>)
+	       (ELSE
+		<SET K (.PR !.K)>
+		<COND (<NOT .LAST>
+		       <SET LEAVE T>
+		       <COND-COMPLAIN "NON REACHABLE COND CLAUSE(S)"
+				      <2 .BRN>>)>)>
+	 <SET SSTATE <SAVE-STATE>>
+	 <VAR-STORE <>>
+	 <COND
+	  (.BRANCH
+	   <OR
+	    .NO-SEQ
+	    <COND
+	     (<OR
+	       <SET FLG
+		    <NOT <TYPE-OK?
+			  <RESULT-TYPE <SET PR <NTH .K <LENGTH .K>>>> FALSE>>>
+	       <NOT <TYPE-OK? <RESULT-TYPE .PR> '<NOT FALSE>>>>
+	      <COND (.NOTF
+		     <SEQ-GEN .K FLUSHED>
+		     <COND (<==? .RW FLUSHED> <SET LOCN ,NO-DATUM>)
+			   (ELSE
+			    <SET LOCN <MOVE:ARG <REFERENCE <NOT .FLG>> .W>>)>)
+		    (<SET LOCN
+			  <SEQ-GEN .K
+				   <COND (<OR <==? .RW FLUSHED>
+					      <N==? .SDIR .FLG>>
+					  FLUSHED)
+					 (ELSE .W)>>>)>
+	      <AND <==? .FLG .SDIR> <SET BRNCHED T> <BRANCH:TAG .BRANCH>>)
+	     (ELSE
+	      <SET LOCN
+		   <PSEQ-GEN .K
+			     <COND (<==? .RW FLUSHED> FLUSHED) (ELSE .W)>
+			     .BRANCH
+			     .SDIR
+			     .NOTF>>)>>
+	   <AND .LAST .NO-SEQ <NOT .DIR> <BRANCH:TAG .BRANCH>>)
+	  (<NOT .NO-SEQ>
+	   <SET LOCN
+		<PSEQ-GEN .K
+			  <COND (<==? .RW FLUSHED> FLUSHED) (ELSE .W)>
+			  .BRANCH
+			  .SDIR
+			  .NOTF>>)>
+	 <VAR-STORE <>>
+	 <COND (<N==? .LOCN ,NO-DATUM>
+		<OR <AND ,FUDGE .BRANCH> <SET ALLSTATES (<SAVE-STATE> !.ALLSTATES)>>)
+	       (ELSE
+		<SET SACS-OK <SAVE-TYP <NTH .K <LENGTH .K>>>>
+		<OR <AND ,FUDGE .BRANCH> <FIX-NUM-SYM .SNUMSYM .SACS>>
+		<RESTORE-STATE .SSTATE T>)>
+	 <COND (<AND <NOT .LAST> <N==? .LOCN ,NO-DATUM>>
+		<OR .NO-SEQ <RET-TMP-AC .LOCN>>
+		<OR .BRNCHED <BRANCH:TAG .COND>>)>
+	 <LABEL:TAG .NEXT>)>
+       <ACFIX .WHERE .W>
+       <OR <ASSIGNED? NPRUNE> <PUT .BR ,CLAUSES ()>>
+       <AND .LEAVE <MAPLEAVE>>>
+    .KK>
+   <OR <ASSIGNED? NPRUNE> <PUT .NOD ,CLAUSES ()>>
+   <COND (<AND <TYPE? .WHERE DATUM> <N==? <RESULT-TYPE .NOD> NO-RETURN>>
+	  <SET W2 .WHERE>
+	  <AND <ISTYPE? <DATTYP .W2>>
+	       <TYPE? <DATTYP .LOCN> AC>
+	       <NOT <==? <DATTYP .W2> <DATTYP .LOCN>>>
+	       <RET-TMP-AC <DATTYP .LOCN> .LOCN>>
+	  <AND <TYPE? <DATTYP .W2> AC> <FIX-ACLINK <DATTYP .W2> .W2 .LOCN>>
+	  <AND <TYPE? <DATVAL .W2> AC> <FIX-ACLINK <DATVAL .W2> .W2 .LOCN>>)>
+   <LABEL:TAG .COND>
+   <SET NWHERE
+	<COND (<==? <RESULT-TYPE .NOD> NO-RETURN> ,NO-DATUM)
+	      (ELSE <MOVE:ARG .WHERE .RW>)>>
+   <AND <N==? .NWHERE ,NO-DATUM> <NOT <AND ,FUDGE .BRANCH>> <MERGE-STATES .ALLSTATES>>
+   <OR .BRANCH <CHECK:VARS .SACS .SACS-OK>>
+   .NWHERE>
+
+<DEFINE PSEQ-GEN (L W B D N) 
+	#DECL ((L) <LIST [REST NODE]>)
+	<REPEAT ()
+		<COND (<EMPTY? <REST .L>>
+		       <RETURN <COND (.B <PRED:BRANCH:GEN .B <1 .L> .D .W .N>)
+				     (ELSE <GEN <1 .L> .W>)>>)>
+		<RET-TMP-AC <GEN <1 .L> FLUSHED>>
+		<SET L <REST .L>>>>
+
+<DEFINE COND-COMPLAIN (MSG N1) #DECL ((N1) NODE) <MESSAGE NOTE .MSG .N1>>
+
+<DEFINE SAVE-TYP (NOD)
+	#DECL ((NOD) NODE)
+	<==? <NODE-TYPE .NOD> ,RETURN-CODE>>
+
+<DEFINE MERGE-STATES (ALLSTATES) 
+   #DECL ((ALLSTATES) LIST)
+   <COND
+    (<EMPTY? .ALLSTATES>
+     <MAPF <>
+	   <FUNCTION (AC "AUX" (NRES <ACRESIDUE .AC>)) 
+		   <COND (.NRES
+			  <MAPF <> <FUNCTION (X) <SMASH-INACS .X <>>> .NRES>)>
+		   <PUT .AC ,ACRESIDUE <>>>
+	   ,ALLACS>)
+    (ELSE <MAPF <> <FUNCTION (X) <MERGE-STATE .X>> .ALLSTATES>)>>
+
+" Fixup where its going better or something?"
+
+<DEFINE UPDATE-WHERE (NOD WHERE "AUX" TYP) 
+	#DECL ((NOD) NODE (WHERE VALUE) <OR ATOM DATUM>)
+	<COND (<==? .WHERE FLUSHED> DONT-CARE)
+	      (<SET TYP <ISTYPE? <RESULT-TYPE .NOD>>> <REG? .TYP .WHERE>)
+	      (<==? .WHERE DONT-CARE> <DATUM ANY-AC ANY-AC>)
+	      (ELSE .WHERE)>>
+
+" Generate code for OR use BOOL-GEN to do work."
+
+<DEFINE OR-GEN (NOD WHERE "OPTIONAL" (NF <>) (BR <>) (DIR T)) 
+	#DECL ((NOD) NODE)
+	<BOOL-GEN .NOD <CLAUSES .NOD> T .WHERE .NF .BR .DIR>>
+
+" Generate code for AND use BOOL-GEN to do work."
+
+<DEFINE AND-GEN (NOD WHERE "OPTIONAL" (NF <>) (BR <>) (DIR <>)) 
+	#DECL ((NOD) NODE)
+	<BOOL-GEN .NOD <CLAUSES .NOD> <> .WHERE .NF .BR .DIR>>
+
+<DEFINE BOOL-GEN (NOD PREDS RESULT WHERE NOTF BRANCH DIR
+		  "AUX" SACS (SSTATE ()) (SS #SAVED-STATE ()) (RW .WHERE)
+			(BOOL <MAKE:TAG "BOOL">) (FLUSH <==? .RW FLUSHED>)
+			(FLS <AND <NOT .BRANCH> .FLUSH>) RTF SRES
+			(LOCN <DATUM ANY ANY>) FIN (SACS-OK T))
+   #DECL ((PREDS) <LIST [REST NODE]> (SSTATE) <LIST [REST SAVED-STATE]>
+	  (SS) SAVED-STATE (NOTF DIR FLUSH FLS RTF) ANY (BOOL) ATOM
+	  (BRANCH) <OR ATOM FALSE> (WHERE RW) <OR DATUM ATOM> (NOD) NODE
+	  (LOCN) ANY (SRES RESULT) ANY)
+   <COND (<AND ,FUDGE .BRANCH> <VAR-STORE <>>) (ELSE <SET SACS <SAVE:RES>> <REGSTO <>>)>
+   <PREFER-DATUM .WHERE>
+   <AND .NOTF <SET RESULT <NOT .RESULT>>>
+   <SET SRES .RESULT>
+   <SET RTF
+	<AND <NOT .FLUSH> <==? .SRES .DIR> <TYPE-OK? <RESULT-TYPE .NOD> FALSE>>>
+   <AND .DIR <SET RESULT <NOT .RESULT>>>
+   <SET WHERE <GOODACS .NOD .WHERE>>
+   <COND
+    (<EMPTY? .PREDS> <SET LOCN <MOVE:ARG <REFERENCE .RESULT> .WHERE>>)
+    (ELSE
+     <MAPR <>
+      <FUNCTION (BRN
+		 "AUX" (BR <1 .BRN>) (LAST <EMPTY? <REST .BRN>>)
+		       (RT <RESULT-TYPE .BR>)
+		       (W
+			<COND (<AND <TYPE? .WHERE DATUM>
+				    <ISTYPE? <DATTYP .WHERE>>
+				    <NOT .LAST>>
+			       <GOODACS .BR <DATUM ANY-AC <DATVAL .WHERE>>>)
+			      (<AND <OR <NOT .RTF> .LAST> <TYPE? .WHERE DATUM>>
+			       <DATUM !.WHERE>)
+			      (<==? .RW FLUSHED> FLUSHED)
+			      (ELSE .WHERE)>) (RTFL <>))
+	 #DECL ((BRN) <LIST NODE> (BR) NODE (W) <OR ATOM DATUM>)
+	 <SET SS <SAVE-STATE>>
+	 <COND
+	  (<AND <TYPE-OK? .RT FALSE> <NOT <SET RTFL <==? <ISTYPE? .RT> FALSE>>>>
+	   <COND
+	    (<OR .BRANCH <AND .FLS <NOT .LAST>>>
+	     <COND (.LAST
+		    <SET LOCN
+			 <PRED:BRANCH:GEN .BRANCH
+					  .BR
+					  .DIR
+					  <COND (.FLUSH FLUSHED) (ELSE .W)>
+					  .NOTF>>)
+		   (ELSE
+		    <RET-TMP-AC
+		     <PRED:BRANCH:GEN <COND (.FLS .BOOL)
+					    (.RESULT .BOOL)
+					    (ELSE .BRANCH)>
+				      .BR
+				      .SRES
+				      <COND (.RTF .W) (ELSE FLUSHED)>
+				      .NOTF>>)>
+	     <COND (<AND <NOT <AND ,FUDGE .BRANCH>> <N==? .RT NO-RETURN>>
+		    <SET SSTATE (<SAVE-STATE> !.SSTATE)>)
+		   (<==? .RT NO-RETURN>
+		    <SET SACS-OK <SAVE-TYP .BR>>
+		    <RESTORE-STATE .SS T>)>)
+	    (.LAST
+	     <SET LOCN <GEN .BR .W>>
+	     <COND (<AND <NOT <AND ,FUDGE .BRANCH>> <N==? .RT NO-RETURN>>
+		    <SET SSTATE (<SAVE-STATE> !.SSTATE)>)
+		   (<==? .RT NO-RETURN>
+		    <SET SACS-OK <SAVE-TYP .BR>>
+		    <RESTORE-STATE .SS T>)>
+	     .LOCN)
+	    (ELSE
+	     <SET LOCN <PRED:BRANCH:GEN .BOOL .BR .DIR .W .NOTF>>
+	     <COND (<AND <NOT <AND ,FUDGE .BRANCH>> <N==? .RT NO-RETURN>>
+		    <SET SSTATE (<SAVE-STATE> !.SSTATE)>)
+		   (<==? .RT NO-RETURN>
+		    <SET SACS-OK <SAVE-TYP .BR>>
+		    <RESTORE-STATE .SS T>)>
+	     <RET-TMP-AC .LOCN>)>)
+	  (<OR <N==? .SRES <COND (.NOTF <SET RTFL <NOT .RTFL>>) (ELSE .RTFL)>>
+	       .LAST>
+	   <OR .LAST <MESSAGE NOTE "NON REACHABLE AND/OR CLAUSE" <2 .BRN>>>
+	   <COND (.BRANCH
+		  <SET LOCN
+		       <GEN .BR <COND (<N==? .DIR .RTFL> .W) (ELSE FLUSHED)>>>
+		  <AND <N==? .DIR .RTFL>
+		       <N==? .LOCN ,NO-DATUM>
+		       <PROG ()
+			     <VAR-STORE>
+			     T>
+		       <BRANCH:TAG .BRANCH>>)
+		 (ELSE <SET LOCN <GEN .BR .W>>)>
+	   <ACFIX .WHERE .W>
+	   <VAR-STORE>
+	   <MAPLEAVE>)
+	  (ELSE <RET-TMP-AC <GEN .BR FLUSHED>>)>
+	 <ACFIX .WHERE .W>
+	 <VAR-STORE <>>>
+      .PREDS>)>
+   <OR <ASSIGNED? NPRUNE> <PUT .NOD ,CLAUSES ()>>
+   <COND (<AND <TYPE? .WHERE DATUM> <TYPE? .LOCN DATUM>>
+	  <AND <NOT <==? <DATTYP .WHERE> <DATTYP .LOCN>>>
+	       <ISTYPE? <DATTYP .WHERE>>
+	       <TYPE? <DATTYP .LOCN> AC>
+	       <RET-TMP-AC <DATTYP .LOCN> .LOCN>>
+	  <AND <TYPE? <DATTYP .WHERE> AC>
+	       <FIX-ACLINK <DATTYP .WHERE> .WHERE .LOCN>>
+	  <AND <TYPE? <DATVAL .WHERE> AC>
+	       <FIX-ACLINK <DATVAL .WHERE> .WHERE .LOCN>>)>
+   <OR <AND .BRANCH <NOT .RESULT>> <LABEL:TAG .BOOL>>
+   <SET FIN
+	<COND (<==? <RESULT-TYPE .NOD> NO-RETURN> ,NO-DATUM)
+	      (ELSE <OR <AND ,FUDGE .BRANCH>
+	                <MERGE-STATES .SSTATE>> <MOVE:ARG .WHERE .RW>)>>
+   <OR <AND ,FUDGE .BRANCH> <CHECK:VARS .SACS .SACS-OK>>
+   .FIN>
+
+" Get the best set of acs around for this guy."
+
+<DEFINE GOODACS (N W1 "AUX" W) 
+	#DECL ((N) NODE (W) DATUM)
+	<COND (<==? .W1 FLUSHED> DONT-CARE)
+	      (<TYPE? .W1 DATUM>
+	       <SET W .W1>
+	       <DATUM <COND (<OR <ISTYPE-GOOD? <DATTYP .W>>
+				 <ISTYPE-GOOD? <RESULT-TYPE .N>>>)
+			    (<TYPE? <DATTYP .W> AC> <DATTYP .W>)
+			    (ELSE ANY-AC)>
+		      <COND (<TYPE? <DATVAL .W> AC> <DATVAL .W>)
+			    (ELSE ANY-AC)>>)
+	      (ELSE
+	       <DATUM <COND (<ISTYPE-GOOD? <RESULT-TYPE .N>>) (ELSE ANY-AC)>
+		      ANY-AC>)>>
+
+" Generate code for ASSIGNED?"
+
+<DEFINE ASSIGNED?-GEN (N W
+		       "OPTIONAL" (NF <>) (BR <>) (DIR <>)
+		       "AUX" (A <LOCAL-ADDR .N <>>) (SDIR .DIR)
+			     (FLS <==? .W FLUSHED>) B2)
+	#DECL ((A) DATUM (N) NODE)
+	<AND .NF <SET DIR <NOT .DIR>>>
+	<SET DIR
+	     <COND (<AND .BR <NOT .FLS>> <NOT .DIR>) (ELSE .DIR)>>
+	<EMIT <INSTRUCTION GETYP!-OP `O*  !<ADDR:TYPE .A>>>
+	<EMIT <INSTRUCTION <COND (.DIR `CAIE ) (ELSE `CAIN )>
+			   `O* 
+			   '<TYPE-CODE!-OP!-PACKAGE UNBOUND>>>
+	<RET-TMP-AC .A>
+	<COND (<AND .BR .FLS> <BRANCH:TAG .BR> FLUSHED)
+	      (.BR
+	       <BRANCH:TAG <SET B2 <MAKE:TAG>>>
+	       <SET W <MOVE:ARG <REFERENCE .SDIR> .W>>
+	       <BRANCH:TAG .BR>
+	       <LABEL:TAG .B2>
+	       .W)
+	      (ELSE
+	       <BRANCH:TAG <SET BR <MAKE:TAG>>>
+	       <TRUE-FALSE .N .BR .W>)>>
+
+<DEFINE TRUE-FALSE (N B W "OPTIONAL" (THIS T) "AUX" (RW .W) (B2 <MAKE:TAG>)) 
+	#DECL ((N) NODE (B2 B) ATOM (W) <OR DATUM ATOM>)
+	<SET W <UPDATE-WHERE .N .W>>
+	<MOVE:ARG <REFERENCE .THIS> .W>
+	<RET-TMP-AC .W>
+	<BRANCH:TAG .B2>
+	<LABEL:TAG .B>
+	<MOVE:ARG <REFERENCE <NOT .THIS>> .W>
+	<LABEL:TAG .B2>
+	<MOVE:ARG .W .RW>>
+
+" Generate code for LVAL."
+
+<DEFINE LVAL-GEN (NOD WHERE
+		  "AUX" (SYM <NODE-NAME .NOD>) (TAC <>) (VAC <>) TT ADDR
+			(LIVE
+			 <COND (<==? <LENGTH <SET TT <TYPE-INFO .NOD>>> 2>
+				<2 .TT>)
+			       (ELSE T)>))
+	#DECL ((NOD) NODE (SYM) SYMTAB (ADDR) <OR FALSE DATUM>
+	       (TAC VAC) <OR FALSE AC> (NO-KILL) LIST)
+	<LVAL-UP .SYM>
+	<COND (<SET ADDR <INACS .SYM>>
+	       <AND <TYPE? <DATTYP <SET ADDR <DATUM !.ADDR>>> AC>
+		    <PUT <SET TAC <DATTYP .ADDR>>
+			 ,ACLINK
+			 (.ADDR !<ACLINK .TAC>)>>
+	       <AND <TYPE? <DATVAL .ADDR> AC>
+		    <PUT <SET VAC <DATVAL .ADDR>>
+			 ,ACLINK
+			 (.ADDR !<ACLINK .VAC>)>>
+	       <SET ADDR <MOVE:ARG .ADDR .WHERE>>)
+	      (ELSE
+	       <SET ADDR <MOVE:ARG <LADDR .SYM <> <>> .WHERE>>
+	       <COND (<AND <TYPE? <SET TT <DATVAL .ADDR>> AC> <SET VAC .TT>>
+		      <AND <TYPE? <SET TT <DATTYP .ADDR>> AC> <SET TAC .TT>>
+		      <COND (<N==? <DATTYP .ADDR> DONT-CARE>
+			     <SMASH-INACS .SYM <DATUM !.ADDR>>
+			     <AND .TAC <PUT .TAC ,ACRESIDUE (.SYM)>>
+			     <AND .VAC <PUT .VAC ,ACRESIDUE (.SYM)>>)>)>)>
+	<COND (<AND ,DEATH
+		    <NOT .LIVE>
+		    <NOT <MAPF <>
+			       <FUNCTION (LL) 
+				       #DECL ((LL) LIST)
+				       <AND <==? <1 .LL> .SYM>
+					    <PUT .LL 2 T>
+					    <MAPLEAVE>>>
+			       .NO-KILL>>>
+	       <OR <STORED .SYM> <EMIT <MAKE:TAG <SPNAME <NAME-SYM .SYM>>>>>
+	       <SMASH-INACS .SYM <> <>>
+	       <AND .TAC
+		    <ACRESIDUE .TAC>
+		    <PUT .TAC ,ACRESIDUE <RES-FLS <ACRESIDUE .TAC> .SYM>>>
+	       <AND .VAC
+		    <ACRESIDUE .VAC>
+		    <PUT .VAC ,ACRESIDUE <RES-FLS <ACRESIDUE .VAC> .SYM>>>)>
+	.ADDR>
+
+<DEFINE DELAY-KILL (L1 L2 "AUX" TT TAC SYM) 
+	#DECL ((L1 L2) <LIST [REST !<LIST SYMTAB <OR ATOM FALSE>>]> (SYM) SYMTAB)
+	<REPEAT ()
+		<COND (<OR <==? .L1 .L2> <NOT ,DEATH>> <RETURN>)>
+		<COND (<2 <SET TT <1 .L1>>>
+		       <OR <STORED <SET SYM <1 .TT>>>
+			   <EMIT <MAKE:TAG <SPNAME <NAME-SYM .SYM>>>>>
+		       <COND (<SET TT <INACS .SYM>>
+			      <AND <TYPE? <SET TAC <DATTYP .TT>> AC>
+				   <ACRESIDUE .TAC>
+				   <PUT .TAC
+					,ACRESIDUE
+					<RES-FLS <ACRESIDUE .TAC> .SYM>>>
+			      <AND <TYPE? <SET TAC <DATVAL .TT>> AC>
+				   <ACRESIDUE .TAC>
+				   <PUT .TAC
+					,ACRESIDUE
+					<RES-FLS <ACRESIDUE .TAC> .SYM>>>
+			      <SMASH-INACS .SYM <>>)>)>
+		<SET L1 <REST .L1>>>>
+
+<DEFINE RES-FLS (L S) 
+   #DECL ((L) <LIST [REST <OR TEMP SYMTAB COMMON>]> (S) SYMBOL)
+   <COND
+    (<EMPTY? .L> <>)
+    (ELSE
+     <REPEAT ((L1 .L) (LL .L))
+       #DECL ((LL L1) <LIST [REST <OR TEMP SYMTAB COMMON>]>)
+       <COND (<==? <1 .LL> .S>
+	      <COND (<==? .LL .L>
+		     <RETURN <COND (<NOT <EMPTY? <SET L <REST .L>>>> .L)>>)
+		    (ELSE <PUTREST .L <REST .LL>> <RETURN .L1>)>)>
+       <AND <EMPTY? <SET LL <REST <SET L .LL>>>> <RETURN .L1>>>)>>
+
+" Generate LVAL for free variable."
+
+<DEFINE FLVAL-GEN (NOD WHERE "AUX" T2 T1 TT) 
+	#DECL ((NOD) NODE (TT) SYMTAB (T2) DATUM)
+	<REGSTO T>
+	<COND (<TYPE? <SET T1 <NODE-NAME .NOD>> SYMTAB>
+	       <SET TT .T1>
+	       <MOVE:ARG <REFERENCE <NAME-SYM .TT>>
+			 <SET T2 <DATUM ATOM <2 ,ALLACS>>>>)
+	      (ELSE <SET T2 <GEN <1 <KIDS .NOD>> <DATUM ATOM <2 ,ALLACS>>>>)>
+	<FAST:VAL>
+	<RET-TMP-AC .T2>
+	<MOVE:ARG <FUNCTION:VALUE T> .WHERE>>
+
+<DEFINE FSET-GEN (NOD WHERE "AUX" TT TEM T1 T2) 
+	#DECL ((NOD TEM) NODE (T1) SYMTAB (T2) DATUM)
+	<REGSTO T>
+	<COND (<TYPE? <SET TT <NODE-NAME .NOD>> SYMTAB>
+	       <SET T1 .TT>
+	       <SET T2 <MOVE:ARG <REFERENCE <NAME-SYM .T1>> DONT-CARE>>
+	       <SET TEM <2 <KIDS .NOD>>>)
+	      (ELSE
+	       <SET T2 <GEN <1 <KIDS .NOD>> DONT-CARE>>
+	       <SET TEM <2 <KIDS .NOD>>>)>
+	<SET TT <GEN .TEM <FUNCTION:VALUE>>>
+	<SET T2 <MOVE:ARG .T2 <DATUM ATOM <3 ,ALLACS>>>>
+	<FAST:SET>
+	<RET-TMP-AC .T2>
+	<MOVE:ARG .TT .WHERE>>
+
+" Generate code for an internal SET."
+
+<DEFINE SET-GEN (NOD WHERE
+		 "AUX" (SYM <NODE-NAME .NOD>)
+		       (TY <ISTYPE-GOOD? <1 <TYPE-INFO .NOD>>>) TEM
+		       (TYAC ANY-AC) (STORE-SET <>) (VAC ANY-AC) DAT1 (TT <>))
+	#DECL ((NOD) NODE (ADDR TEM) DATUM (SYM) SYMTAB
+	       (STORE-SET) <SPECIAL ANY>)
+	<COND (<TYPE? .WHERE DATUM>
+	       <AND <==? <DATVAL .WHERE> DONT-CARE> <PUT .WHERE ,DATVAL ANY-AC>>
+	       <AND <==? <DATTYP .WHERE> DONT-CARE> <PUT .WHERE ,DATTYP ANY-AC>>
+	       <AND <TYPE? <DATTYP .WHERE> AC> <SET TYAC <DATTYP .WHERE>>>
+	       <AND <TYPE? <DATVAL .WHERE> AC> <SET VAC <DATVAL .WHERE>>>)>
+	<COND (<TYPE? .TYAC AC>
+	       <COND (<MEMQ .SYM <ACRESIDUE .TYAC>>
+		      <MAPF <>
+			    <FUNCTION (S) 
+				    #DECL ((S) SYMTAB)
+				    <OR <==? .S .SYM> <STOREV .SYM>>>
+			    <ACRESIDUE .TYAC>>
+		      <PUT .TYAC ,ACRESIDUE (.SYM)>)
+		     (ELSE <MUNG-AC .TYAC .WHERE>)>)>
+	<COND (<TYPE? .VAC AC>
+	       <COND (<MEMQ .SYM <ACRESIDUE .VAC>>
+		      <MAPF <>
+			    <FUNCTION (S) 
+				    #DECL ((S) SYMTAB)
+				    <OR <==? .S .SYM> <STOREV .SYM>>>
+			    <CHTYPE <ACRESIDUE .VAC> LIST>>
+		      <PUT .VAC ,ACRESIDUE (.SYM)>)
+		     (ELSE <MUNG-AC .VAC .WHERE>)>)>
+	<OR .TY
+	    <AND <OR <==? <SPEC-SYM .SYM> FUDGE> <NOT <SPEC-SYM .SYM>>>
+		 <OR <ARG? .SYM> <INIT-SYM .SYM>>
+		 <SET TY <ISTYPE-GOOD? <1 <DECL-SYM .SYM>>>>>>
+	'<COND (<AND <SET TT <INACS .SYM>>
+		    <==? .TYAC ANY-AC>
+		    <==? .VAC ANY-AC>
+		    <PROG-AC .SYM>
+		    <MEMQ .SYM <LOOP-VARS <1 <PROG-AC .SYM>>>>
+		    <OR <==? .TY <DATTYP .TT>>
+			<AND <NOT .TY>
+			     <TYPE? <DATTYP .TT> AC>
+			     <SET TYAC <DATTYP .TT>>>>>
+	       <SET VAC <DATVAL .TT>>)>
+	<SET TEM
+	     <GEN <2 <KIDS .NOD>>
+		  <COND (.TY <DATUM .TY .VAC>)
+			(ELSE <SET TY <>> <DATUM .TYAC .VAC>)>>>
+	<REPEAT ((TT .TEM) AC)
+		#DECL ((TT) <PRIMTYPE LIST> (AC) AC)
+		<COND (<EMPTY? .TT> <RETURN>)
+		      (<TYPE? <1 .TT> AC>
+		       <OR <MEMQ .TEM <ACLINK <SET AC <1 .TT>>>>
+			   <PUT .AC ,ACLINK (.TEM !<ACLINK .AC>)>>
+		       <OR <MEMQ .SYM <ACRESIDUE .AC>>
+			   <PUT .AC ,ACRESIDUE (.SYM !<ACRESIDUE .AC>)>>)>
+		<SET TT <REST .TT>>>
+	<COND (<SET DAT1 <INACS .SYM>>
+	       <COND (<TYPE? <DATTYP .DAT1> AC>
+		      <OR <MEMQ <DATTYP .DAT1> .TEM>
+			  <FLUSH-RESIDUE <DATTYP .DAT1> .SYM>>)>
+	       <COND (<TYPE? <DATVAL .DAT1> AC>
+		      <OR <MEMQ <DATVAL .DAT1> .TEM>
+			  <FLUSH-RESIDUE <DATVAL .DAT1> .SYM>>)>)>
+	<COND (<TYPE? <DATVAL .TEM> AC> <SMASH-INACS .SYM <DATUM !.TEM>>)>
+	<PUT .SYM ,STORED .STORE-SET>
+	<KILL-LOOP-AC .SYM>
+	<FLUSH-COMMON-SYMT .SYM>
+	<MOVE:ARG .TEM .WHERE>>
+
+
+<DEFINE ARG? (SYM) #DECL ((SYM) SYMTAB) <1? <NTH ,ARGTBL <CODE-SYM .SYM>>>>
+
+<SETG ARGTBL ![0 0 0 0 1 0 0 0 0 1 0 1 1!]>
+
+<GDECL (ARGTBL) <UVECTOR [REST FIX]>>
+
+" Update the stack model with a FIX or an ATOM."
+
+<DEFINE ADD:STACK (THING) 
+	#DECL ((STK) <LIST FIX>)
+	<COND (<TYPE? .THING FIX> <PUT .STK 1 <+ <1 .STK> .THING>>)
+	      (<OR <==? .THING PSLOT> <==? .THING PSTACK>>
+	       <SET STK (0 .THING !.STK)>)
+	      (<TYPE? .THING ATOM>
+	       <SET STK (0 <FORM GVAL .THING> !.STK)>)
+	      (ELSE <MESSAGE INCONSISTENCY "BAD CALL TO ADD:STACK ">)>>
+
+" Return the current distance between two stack places."
+
+<DEFINE STACK:L (FROM TO "AUX" (LN 0) (TF 0) (LF ())) 
+	#DECL ((LN TF) FIX (FROM TO) LIST (VALUE) <OR FALSE LIST>)
+	<REPEAT (T)
+		<AND <==? <SET T <1 .FROM>> PSTACK> <RETURN <>>>
+		<COND (<N==? .T PSLOT>
+		       <COND (<NOT <TYPE? .T FIX>> <SET LF (.T !.LF)>)
+			     (ELSE <SET TF .T> <SET LN <+ .LN .TF>>)>)>
+		<AND <==? .TO .FROM> <RETURN (.LN !.LF)>>
+		<SET FROM <REST .FROM>>>>
+
+" Compute the address of a local variable using the stack model."
+
+<DEFINE LOCAL-ADDR (NOD STYP "AUX" (S <NODE-NAME .NOD>)) 
+	#DECL ((NOD) NODE (S) SYMTAB)
+	<LADDR .S <> .STYP>>
+
+<DEFINE LADDR (S LOSER STYP
+	       "OPTIONAL" (NOSTORE T)
+	       "AUX" TEM T2 T3 T4 (FRMS .FRMS) (AC-HACK .AC-HACK)
+		     (NTSLOTS .NTSLOTS))
+   #DECL ((S) SYMTAB (T4) ADDRESS:C (VALUE TEM) DATUM (FRMS NTSLOTS) LIST)
+   <SET TEM
+    <COND
+     (<SET T2 <INACS .S>>
+      <COND (<TYPE? <DATTYP <SET T2 <DATUM !.T2>>> AC>
+	     <PUT <DATTYP .T2> ,ACLINK (.T2 !<ACLINK <DATTYP .T2>>)>)>
+      <COND (<TYPE? <DATVAL .T2> AC>
+	     <PUT <DATVAL .T2> ,ACLINK (.T2 !<ACLINK <DATVAL .T2>>)>)>
+      <SET LOSER T>
+      .T2)
+     (ELSE
+      <COND (<AND .NOSTORE <TYPE? <NUM-SYM .S> LIST> <1 <NUM-SYM .S>>>
+	     <PUT <NUM-SYM .S> 1 <>>)>
+      <COND
+       (<AND <TYPE? <ADDR-SYM .S> TEMPV> <==? <1 .FRMS> <FRMNO .S>>>
+	<COND
+	 (<=? .AC-HACK '(STACK)>
+	  <SET T4
+	       <ADDRESS:C
+		!<FIX:ADDR (-1 !<STACK:L .STK <1 <ADDR-SYM .S>>>)
+			   <REST <ADDR-SYM .S>>>
+		`(TP) >>)
+	 (<SET T4
+	       <ADDRESS:C !<REST <ADDR-SYM .S>>
+			  <COND (<=? .AC-HACK '(FUNNY-STACK)> `(FRM) )
+				(ELSE `(TB) )>
+			  <COND (<=? .AC-HACK '(FUNNY-STACK)> 1) (ELSE 0)>>>)>
+	<DATUM .T4 .T4>)
+       (<TYPE? <ADDR-SYM .S> DATUM> <DATUM !<ADDR-SYM .S>>)
+       (<TYPE? <ADDR-SYM .S> FIX TEMPV>
+	<COND
+	 (<AND .AC-HACK <=? .AC-HACK '(STACK)> <==? <1 .FRMS> <FRMNO .S>>>
+	  <SET T4
+	   <ADDRESS:C
+	    !<FIX:ADDR (-1 !<STACK:L .STK .BSTB>)
+		       (<ADDR-SYM .S>
+			!<COND (<TYPE? <ARGNUM-SYM .S> ATOM>
+				<MEMBER <FORM GVAL <ARGNUM-SYM .S>> .NTSLOTS>)
+			       (ELSE (0))>)>
+	    `(TP) >>
+	  <DATUM .T4 .T4>)
+	 (<==? <1 .FRMS> <FRMNO .S>>
+	  <SPEC:REFERENCE:STACK
+	   .AC-HACK
+	   (<ADDR-SYM .S>
+	    !<COND (<TYPE? <ARGNUM-SYM .S> FIX>
+		    <COND (<NOT .AC-HACK>
+			   <REST .NTSLOTS <- <LENGTH .NTSLOTS> 1>>)
+			  (ELSE '(-2))>)
+		   (<AND .PRE <NOT <SPEC-SYM .S>>> .NTSLOTS)
+		   (ELSE <MEMBER <FORM GVAL <ARGNUM-SYM .S>> .NTSLOTS>)>)>)
+	 (<REPEAT ((FRMS .FRMS) NNTSLTS (LB <>) (OFFS (0 ())) (CURR <>))
+	    #DECL ((FRMS NNTSLTSJ) LIST (OFFS) <LIST [2 <OR FIX LIST>]>)
+	    <COND
+	     (<SET CURR <==? <4 .FRMS> FUZZ>>
+	      <COND (.LB
+		     <SET T3
+			  <SPEC-OFFPTR
+			   <- ,OTBSAV <1 .OFFS> 1>
+			   <DATUM <ADDRESS:PAIR |$TTB > .T3>
+			   VECTOR
+			   (<FORM - 0 !<2 .OFFS>>)>>
+		     <SET OFFS (0 ())>)
+		    (ELSE
+		     <SET LB T>
+		     <SET T3
+			  <SPEC-OFFPTR
+			   <- ,OTBSAV <1 .OFFS> 1>
+			   <DATUM <ADDRESS:PAIR |$TTB >
+				  <ADDRESS:PAIR |$TTB  `TB >>
+			   VECTOR
+			   (<FORM - 0 !<2 .OFFS>>)>>
+		     <SET OFFS (0 ())>)>)
+	     (ELSE <SET OFFS <STFIXIT .OFFS <4 .FRMS>>>)>
+	    <AND <EMPTY? <SET FRMS <REST .FRMS 5>>>
+		 <MESSAGE INCONSISTANCY "BAD FRAME MODEL ">>
+	    <AND
+	     <==? <FRMNO .S> <1 .FRMS>>
+	     <SET OFFS
+		  (<COND (<TYPE? <ADDR-SYM .S> FIX>
+			  (<+ <ADDR-SYM .S> <- <1 .OFFS>>>))
+			 (ELSE
+			  <FIX:ADDR (<1 .OFFS>)
+				    <REST <CHTYPE <ADDR-SYM .S> LIST>>>)>
+		   (<FORM - 0 !<2 .OFFS>>))>
+	     <SET NNTSLTS <5 .FRMS>>
+	     <RETURN
+	      <COND
+	       (.LB
+		<SET T3
+		 <SPEC-OFFPTR
+		  !<1 .OFFS>
+		  <DATUM <ADDRESS:PAIR |$TTB > .T3>
+		  VECTOR
+		  (!<2 .OFFS>
+		   !<COND (<TYPE? <ARGNUM-SYM .S> ATOM>
+			   <MEMBER <FORM GVAL <ARGNUM-SYM .S>> .NNTSLTS>)
+			  (ELSE <REST .NNTSLTS <- <LENGTH .NNTSLTS> 1>>)>)>>
+		<DATUM .T3 .T3>)
+	       (ELSE
+		<REFERENCE:STACK
+		 (!<1 .OFFS>
+		  !<COND (<TYPE? <ARGNUM-SYM .S> ATOM>
+			  <MEMBER <FORM GVAL <ARGNUM-SYM .S>> .NNTSLTS>)
+			 (<AND <TYPE? <ADDR-SYM .S> FIX>
+			       <G=? <CODE-SYM .S> 6>
+			       <L=? <CODE-SYM .S> 9>
+			       <N=? <ACS <3 .FRMS>> '(STACK)>>
+			  <REST .NNTSLTS <- <LENGTH .NNTSLTS> 1>>)
+			 (ELSE '(0))>
+		  !<2 .OFFS>)>)>>>>)>)
+       (ELSE <MESSAGE INCONSISTENCY "BAD VARIABLE ADDRESS ">)>)>>
+   <COND (<AND <NOT .LOSER>
+	       <NOT <SPEC-SYM .S>>
+	       <OR <ARG? .S> <INIT-SYM .S>>
+	       <SET T2 <ISTYPE-GOOD? <1 <DECL-SYM .S>>>>>
+	  <DATUM .T2 <DATVAL .TEM>>)
+	 (<AND <NOT .LOSER> .STYP <SET T2 <ISTYPE-GOOD? .STYP>>>
+	  <DATUM .T2 <DATVAL .TEM>>)
+	 (ELSE .TEM)>>
+
+<DEFINE STFIXIT (OFF FRM "AUX" (NF 0) (NX ())) 
+	#DECL ((NF) FIX (NX) LIST (OFF) <LIST FIX LIST> (FRM) LIST)
+	<MAPF <>
+	      <FUNCTION (IT) 
+		      <COND (<TYPE? .IT FIX> <SET NF <+ .NF .IT>>)
+			    (ELSE <SET NX (.IT !.NX)>)>>
+	      .FRM>
+	(<+ <1 .OFF> .NF> (!.NX !<2 .OFF>))>
+
+" Generate obscure stuff."
+
+<DEFINE DEFAULT-GEN (NOD WHERE) 
+	#DECL ((NOD) NODE)
+	<MOVE:ARG <REFERENCE <NODE-NAME .NOD>> .WHERE>>
+
+" Do GVAL using direct locative reference."
+
+<DEFINE GVAL-GEN (N W
+		  "AUX" (GD <GLOC? <NODE-NAME <1 <KIDS .N>>>>)
+			(RT <ISTYPE-GOOD? <RESULT-TYPE .N>>))
+	#DECL ((N) NODE)
+	<SET GD <OFFPTR 0 .GD VECTOR>>
+	<MOVE:ARG <DATUM <COND (.RT) (ELSE .GD)> .GD> .W>>
+
+" Do SETG using direct locative reference."
+
+<DEFINE SETG-GEN (N W
+		  "AUX" GD DD (NN <2 <KIDS .N>>) (FA <FREE-ACS T>)
+			(RT <ISTYPE-GOOD? <RESULT-TYPE .N>>)
+			(D
+			 <GEN
+			  .NN
+			  <COND (<==? .W FLUSHED> DONT-CARE)
+				(<G=? .FA 3>
+				 <SET DD <GOODACS .N .W>>
+				 <COND (<NOT <TYPE? <DATTYP .DD> AC>>
+					<PUT .DD ,DATTYP ANY-AC>)>
+				 .DD)
+				(<AND .RT <G=? .FA 2>> <GOODACS .N .W>)
+				(ELSE DONT-CARE)>>))
+	#DECL ((N NN) NODE (D) DATUM (FA) FIX)
+	<SET GD <OFFPTR 0 <SET GD <GLOC? <NODE-NAME <1 <KIDS .N>>>>> VECTOR>>
+	<MOVE:ARG .D <SET GD <DATUM .GD .GD>> T>
+	<COND (<AND <OR <AND <TYPE? <DATTYP .D> ATOM>
+			     <ISTYPE-GOOD? <DATTYP .D>>>
+			<TYPE? <DATTYP .D> AC>>
+		    <TYPE? <DATVAL .D> AC>>
+	       <RET-TMP-AC .GD>
+	       <MOVE:ARG .D .W>)
+	      (ELSE <RET-TMP-AC .D> <MOVE:ARG .GD .W>)>>
+
+<BLOCK (<ROOT>)>
+
+RGLOC 
+
+<ENDBLOCK>
+
+<DEFINE GLOC? (ATM "AUX" GL) 
+	#DECL ((GL) DATUM)
+	<COND (.GLUE
+	       <SET GL
+		    <MOVE:ARG <REFERENCE <RGLOC .ATM T>> <DATUM LOCR ANY-AC>>>
+	       <EMIT <INSTRUCTION `ADD 
+				  <ACSYM <CHTYPE <DATVAL .GL> AC>>
+				  |GLOTOP 
+				  1 >>
+	       <RET-TMP-AC <DATTYP .GL> .GL>
+	       <PUT .GL ,DATTYP VECTOR>
+	       .GL)
+	      (ELSE <REFERENCE <GLOC .ATM T>>)>>
+
+<SETG USE-RGLOC T>
+
+" Generate GVAL calls."
+
+<DEFINE FGVAL-GEN (NOD WHERE) 
+	#DECL ((NOD) NODE)
+	<RET-TMP-AC <GEN <1 <KIDS .NOD>> <DATUM ATOM ,AC-B>>>
+	<REGSTO T>
+	<FAST:GVAL>
+	<MOVE:ARG <FUNCTION:VALUE T> .WHERE>>
+
+" Generate a SETG call."
+
+<DEFINE FSETG-GEN (NOD WHERE "AUX" TT TEM) 
+	#DECL ((NOD) NODE (TT TEM) DATUM)
+	<SET TT <GEN <1 <KIDS .NOD>> DONT-CARE>>
+	<SET TEM <GEN <2 <KIDS .NOD>> <FUNCTION:VALUE>>>
+	<SET TT <MOVE:ARG .TT <DATUM ATOM <3 ,ALLACS>>>>
+	<PUT <3 ,ALLACS> ,ACPROT T>
+	<MOVE:ARG .TEM <SET TEM <FUNCTION:VALUE>>>
+	<PUT <3 ,ALLACS> ,ACPROT <>>
+	<RET-TMP-AC .TT>
+	<REGSTO T>
+	<FAST:SETG>
+	<MOVE:ARG .TEM .WHERE>>
+
+<DEFINE CHTYPE-GEN (NOD WHERE
+		    "AUX" (TYP <ISTYPE? <RESULT-TYPE .NOD>>) (N <1 <KIDS .NOD>>)
+			  TEM
+			  (ITYP
+			   <COND (<ISTYPE? <RESULT-TYPE .N>>)
+				 (<MEMQ <NODE-TYPE .N> ,SNODES> DONT-CARE)
+				 (ELSE ANY-AC)>))
+   #DECL ((NOD N) NODE (TEM) DATUM (WHERE) <OR ATOM DATUM>)
+   <COND (<TYPE? .WHERE ATOM>
+	  <COND (<ISTYPE-GOOD? .TYP>
+		 <SET TEM <GEN .N DONT-CARE>>
+		 <DATTYP-FLUSH .TEM>
+		 <PUT .TEM ,DATTYP .TYP>)
+		(ELSE
+		 <SET TEM <GEN .N <DATUM ANY-AC ANY-AC>>>
+		 <MUNG-AC <DATTYP .TEM> .TEM>
+		 <EMIT <INSTRUCTION `HRLI 
+				    <ACSYM <CHTYPE <DATTYP .TEM> AC>>
+				    <FORM TYPE-CODE!-OP!-PACKAGE .TYP>>>
+		 <MOVE:ARG .TEM .WHERE>)>)
+	 (<ISTYPE-GOOD? .TYP>
+	  <COND (<AND <==? <LENGTH .WHERE> 2> <TYPE? <DATVAL .WHERE> AC>>
+		 <DATTYP-FLUSH <SET TEM <GEN .N <DATUM .ITYP <DATVAL .WHERE>>>>>
+		 <PUT .TEM ,DATTYP .TYP>
+		 <MOVE:ARG .TEM .WHERE>)
+		(ELSE
+		 <DATTYP-FLUSH <SET TEM <GEN .N <DATUM .ITYP ANY-AC>>>>
+		 <PUT .TEM ,DATTYP .TYP>
+		 <MOVE:ARG .TEM .WHERE>)>)
+	 (ELSE
+	  <SET TEM <GEN .N <DATUM ANY-AC ANY-AC>>>
+	  <MUNG-AC <DATTYP .TEM> .TEM>
+	  <EMIT <INSTRUCTION `HRLI 
+			     <ACSYM <CHTYPE <DATTYP .TEM> AC>>
+			     <FORM TYPE-CODE!-OP!-PACKAGE .TYP>>>
+	  <MOVE:ARG .TEM .WHERE>)>>
+
+" Generate do-nothing piece of code."
+
+<DEFINE ID-GEN (N W) #DECL ((N) NODE) <GEN <1 <KIDS .N>> .W>>
+
+<DEFINE UNWIND-GEN (N W
+		    "AUX" (OSTK .STK) (STK (0 !.STK)) (UNBRANCH <MAKE:TAG>)
+			  (NOUNWIND <MAKE:TAG>) W1)
+	#DECL ((N) NODE (STK) <SPECIAL LIST> (OSTK) LIST (W1) DATUM)
+	<SGETREG ,AC-C <>>
+	<EMIT <INSTRUCTION `MOVEI  `C*  .UNBRANCH>>
+	<EMIT <INSTRUCTION `SUBI  `C*  `(M) >>
+	<EMIT <INSTRUCTION `PUSHJ  `P*  |IUNWIN >>
+	<ADD:STACK 10>
+	<RET-TMP-AC <SET W1 <GEN <1 <KIDS .N>> <GOODACS .N .W>>>>
+	<VAR-STORE>
+	<SGETREG ,AC-E <>>
+	<EMIT '<`PUSHJ `P* |POPUNW>>
+	<BRANCH:TAG .NOUNWIND>
+	<LABEL:TAG .UNBRANCH>
+	<GEN <2 <KIDS .N>> FLUSHED>
+	<VAR-STORE>
+	<EMIT '<`JRST  |UNWIN2 >>
+	<LABEL:TAG .NOUNWIND>
+	<AND <TYPE? <DATTYP .W1> AC> <SGETREG <DATTYP .W1> .W1>>
+	<AND <TYPE? <DATVAL .W1> AC> <SGETREG <DATVAL .W1> .W1>>
+	<POP:LOCS .STK .OSTK>
+	<SET STK .OSTK>
+	<MOVE:ARG .W1 .W>>
+
+" Generate call to READ etc. with eof condition."
+
+<DEFINE READ2-GEN (N W
+		   "AUX" (OSTK .STK) (STK (0 !.STK)) (I 0) SPOB BRANCH
+			 (PSJ <MEMQ <NODE-NAME .N> '![READCHR NEXTCHR!]>))
+   #DECL ((N) NODE (STK) <SPECIAL LIST> (OSTK) LIST (I) FIX (SPOB) NODE)
+   <MAPF <>
+    <FUNCTION (OB) 
+       #DECL ((OB SPOB) NODE (I) FIX)
+       <COND (.PSJ
+	      <COND (<==? <NODE-TYPE .OB> ,EOF-CODE> <SET SPOB .OB>)
+		    (ELSE <RET-TMP-AC <GEN .OB <DATUM ,AC-A ,AC-B>>>)>)
+	     (ELSE
+	      <COND (<==? <NODE-TYPE .OB> ,EOF-CODE>
+		     <SET SPOB .OB>
+		     <ADD:STACK PSLOT>
+		     <TIME:STACK>)
+		    (ELSE <RET-TMP-AC <STACK:ARGUMENT <GEN .OB DONT-CARE>>>)>
+	      <ADD:STACK 2>
+	      <SET I <+ .I 1>>)>>
+    <KIDS .N>>
+   <REGSTO T>
+   <COND (.PSJ
+	  <EMIT <INSTRUCTION `PUSHJ 
+			     `P* 
+			     <COND (<==? <NODE-NAME .N> READCHR> |CREADC )
+				   (ELSE |CNXTCH )>>>
+	  <EMIT '<`CAIA >>
+	  <BRANCH:TAG <SET BRANCH <MAKE:TAG>>>)
+	 (ELSE
+	  <SUBR:CALL <NODE-NAME .N> .I>
+	  <SET BRANCH <TIME:CHECK>>)>
+   <SET STK .OSTK>
+   <RET-TMP-AC <GEN .SPOB
+		    <COND (<==? .W FLUSHED> .W) (ELSE <FUNCTION:VALUE>)>>>
+   <VAR-STORE>
+   <LABEL:TAG .BRANCH>
+   <MOVE:ARG <FUNCTION:VALUE T> .W>>
+
+<DEFINE GET-GEN (N W) <GETGET .N .W T>>
+
+<DEFINE GET2-GEN (N W) <GETGET .N .W <>>>
+
+<GDECL (GETTERS) UVECTOR>
+
+<DEFINE GETGET (N W REV
+		"AUX" (K <KIDS .N>) PITEM PINDIC (BR <MAKE:TAG>)
+		      (INDX <LENGTH <CHTYPE <MEMQ <NODE-SUBR .N> ,GETTERS> UVECTOR>>)
+		      (LN <LENGTH .K>))
+	#DECL ((N) NODE (K) <LIST NODE NODE [REST NODE]> (PITEM PINDIC) DATUM
+	       (INDX LN) FIX)
+	<SET PITEM <GEN <1 .K> <DATUM ,AC-A ,AC-B>>>
+	<SET PINDIC <GEN <2 .K> <DATUM ,AC-C ,AC-D>>>
+	<SET PITEM <MOVE:ARG .PITEM <DATUM ,AC-A ,AC-B>>>
+	<RET-TMP-AC <MOVE:ARG .PINDIC <DATUM ,AC-C ,AC-D>>>
+	<RET-TMP-AC .PITEM>
+	<REGSTO T>
+	<EMIT <INSTRUCTION `PUSHJ 
+			   `P* 
+			   <NTH '![|CIGETP  |CIGTPR  |CIGETL  |CIGET !] .INDX>>>
+	<COND (<==? .LN 2> <EMIT '<`JFCL >>)
+	      (ELSE
+	       <EMIT '<`SKIPA >>
+	       <BRANCH:TAG .BR>
+	       <COND (.REV
+		      <RET-TMP-AC <STACK:ARGUMENT <GEN <3 .K> DONT-CARE>>>
+		      <REGSTO T>
+		      <SUBR:CALL EVAL 1>)
+		     (ELSE <RET-TMP-AC <GEN <3 .K> <FUNCTION:VALUE>>>)>
+	       <VAR-STORE>
+	       <LABEL:TAG .BR>)>
+	<MOVE:ARG <FUNCTION:VALUE T> .W>>
+
+
+<DEFINE REG? (TYP TRY
+	      "OPTIONAL" (GETIT <>)
+	      "AUX" (FUNNY <MEMQ <TYPEPRIM .TYP> '![STRING BYTES FRAME TUPLE LOCD!]>)
+		    (TRY1 .TRY))
+	#DECL ((TYP) ATOM)
+	<COND (<AND <TYPE? .TRY1 DATUM>
+		    <REPEAT ()
+			    <AND <EMPTY? .TRY1> <RETURN <>>>
+			    <AND <TYPE? <DATVAL .TRY1> AC> <RETURN T>>
+			    <SET TRY1 <REST .TRY1 2>>>>
+	       <DATUM <COND (.FUNNY <DATTYP .TRY1>) (ELSE .TYP)>
+		      <DATVAL .TRY1>>)
+	      (.FUNNY
+	       <COND (.GETIT <ANY2ACS>) (ELSE <DATUM ANY-AC ANY-AC>)>)
+	      (ELSE
+	       <DATUM .TYP <COND (.GETIT <GETREG <>>) (ELSE ANY-AC)>>)>>
+
+<SETG GETTERS ![,GET ,GETL ,GETPROP ,GETPL!]>
+
+<COND (<GASSIGNED? ARITH-GEN>       
+<SETG GENERATORS
+      <DISPATCH ,DEFAULT-GEN
+		(,FORM-CODE ,FORM-GEN)
+		(,PROG-CODE ,PROG-REP-GEN)
+		(,SUBR-CODE ,SUBR-GEN)
+		(,COND-CODE ,COND-GEN)
+		(,LVAL-CODE ,LVAL-GEN)
+		(,SET-CODE ,SET-GEN)
+		(,OR-CODE ,OR-GEN)
+		(,AND-CODE ,AND-GEN)
+		(,RETURN-CODE ,RETURN-GEN)
+		(,COPY-CODE ,COPY-GEN)
+		(,AGAIN-CODE ,AGAIN-GEN)
+		(,GO-CODE ,GO-GEN)
+		(,ARITH-CODE ,ARITH-GEN)
+		(,RSUBR-CODE ,RSUBR-GEN)
+		(,0-TST-CODE ,0-TEST)
+		(,NOT-CODE ,NOT-GEN)
+		(,1?-CODE ,1?-GEN)
+		(,TEST-CODE ,TEST-GEN)
+		(,EQ-CODE ,==-GEN)
+		(,TY?-CODE ,TYPE?-GEN)
+		(,LNTH-CODE ,LNTH-GEN)
+		(,MT-CODE ,MT-GEN)
+		(,REST-CODE ,REST-GEN)
+		(,NTH-CODE ,NTH-GEN)
+		(,PUT-CODE ,PUT-GEN)
+		(,PUTR-CODE ,PUTREST-GEN)
+		(,FLVAL-CODE ,FLVAL-GEN)
+		(,FSET-CODE ,FSET-GEN)
+		(,FGVAL-CODE ,FGVAL-GEN)
+		(,FSETG-CODE ,FSETG-GEN)
+		(,STACKFORM-CODE ,STACKFORM-GEN)
+		(,MIN-MAX-CODE ,MIN-MAX)
+		(,CHTYPE-CODE ,CHTYPE-GEN)
+		(,FIX-CODE ,FIX-GEN)
+		(,FLOAT-CODE ,FLOAT-GEN)
+		(,ABS-CODE ,ABS-GEN)
+		(,MOD-CODE ,MOD-GEN)
+		(,ID-CODE ,ID-GEN)
+		(,ASSIGNED?-CODE ,ASSIGNED?-GEN)
+		(,ISTRUC-CODE ,ISTRUC-GEN)
+		(,ISTRUC2-CODE ,ISTRUC-GEN)
+		(,BITS-CODE ,BITS-GEN)
+		(,GETBITS-CODE ,GETBITS-GEN)
+		(,BITL-CODE ,BITLOG-GEN)
+		(,PUTBITS-CODE ,PUTBITS-GEN)
+		(,ISUBR-CODE ,ISUBR-GEN)
+		(,EOF-CODE ,ID-GEN)
+		(,READ-EOF2-CODE ,READ2-GEN)
+		(,READ-EOF-CODE ,SUBR-GEN)
+		(,IPUT-CODE ,IPUT-GEN)
+		(,IREMAS-CODE ,IREMAS-GEN)
+		(,GET-CODE ,GET-GEN)
+		(,GET2-CODE ,GET2-GEN)
+		(,IRSUBR-CODE ,IRSUBR-GEN)
+		(,MAP-CODE ,MAPFR-GEN)
+		(,MARGS-CODE ,MPARGS-GEN)
+		(,MAPLEAVE-CODE ,MAPLEAVE-GEN)
+		(,MAPRET-STOP-CODE ,MAPRET-STOP-GEN)
+		(,UNWIND-CODE ,UNWIND-GEN)
+		(,GVAL-CODE ,GVAL-GEN)
+		(,SETG-CODE ,SETG-GEN)
+		(,TAG-CODE ,TAG-GEN)
+		(,PRINT-CODE ,PRINT-GEN)
+		(,MEMQ-CODE ,MEMQ-GEN)
+		(,LENGTH?-CODE ,LENGTH?-GEN)
+		(,FORM-F-CODE ,FORM-F-GEN)
+		(,INFO-CODE ,INFO-GEN)
+		(,OBLIST?-CODE ,OBLIST?-GEN)
+		(,AS-NXT-CODE ,AS-NXT-GEN)
+		(,AS-IT-IND-VAL-CODE ,ASSOC-FIELD-GET)
+		(,ALL-REST-CODE ,ALL-REST-GEN)
+		(,COPY-LIST-CODE ,LIST-BUILD)
+		(,PUT-SAME-CODE ,SPEC-PUT-GEN)
+		(,BACK-CODE ,BACK-GEN)
+		(,TOP-CODE ,TOP-GEN)
+		(,SUBSTRUC-CODE ,SUBSTRUC-GEN)
+		(,ROT-CODE ,ROT-GEN)
+		(,LSH-CODE ,LSH-GEN)
+		(,BIT-TEST-CODE ,BIT-TEST-GEN)>>
+)>
+
+<ENDPACKAGE>

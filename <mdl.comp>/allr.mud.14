@@ -1,0 +1,79 @@
+<PACKAGE "ALLR">
+
+<ENTRY ALL-REST-GEN>
+
+<USE "CACS" "CODGEN" "COMCOD" "COMPDEC" "CHKDCL" "STRGEN">
+
+<DEFINE ALL-REST-GEN (N W
+		      "AUX" (R? <==? <NODE-SUBR .N> ,REST>) SAC NAC TEM STR NUM
+			    (K <KIDS .N>) (SS <TYPE-INFO .N>) T1 T2 CAC)
+	#DECL ((N) NODE (K) <LIST NODE NODE> (SAC CAC NAC) AC (STR NUM) DATUM
+	       (SS) <LIST LIST LIST LIST>)
+	<SET STR
+	     <GEN <1 .K>
+		  <COND (.R? <GOODACS .N .W>) (ELSE <DATUM LIST ANY-AC>)>>>
+	<COND (.CAREFUL
+	       <EMIT <INSTRUCTION `JUMPE 
+				  <ACSYM <CHTYPE <DATVAL .STR> AC>>
+				  |COMPERR>>)>
+	<COND (<OR <NOT <EMPTY? <1 .SS>>> <NOT <EMPTY? <2 .SS>>>>
+	       <SET NUM <DATUM FIX ANY-AC>>)>
+	<TOACV .STR>
+	<SET SAC <DATVAL .STR>>
+	<MUNG-VALS .STR .SAC <3 .SS>>
+	<COND (<ASSIGNED? NUM>
+	       <MOVE:ARG <REFERENCE <COND (<EMPTY? <2 .SS>> 1) (ELSE 0)>>
+			 .NUM>
+	       <TOACV .NUM>
+	       <PUT <SET NAC <DATVAL .NUM>> ,ACPROT T>
+	       <TOACV .STR>
+	       <SET SAC <DATVAL .STR>>
+	       <PUT .NAC ,ACPROT <>>)>
+	<COND (.CAREFUL <EMIT '<`MOVEI  `O*  -1>>)>
+	<SET CAC <COND (.CAREFUL <GETREG <>>) (ELSE ,ACO)>>
+	<LABEL:TAG <SET T1 <MAKE:TAG>>>
+	<EMIT <INSTRUCTION `HRRZ  <ACSYM .CAC> (<ADDRSYM .SAC>)>>
+	<EMIT <INSTRUCTION `JUMPE  <ACSYM .CAC> <SET T2 <MAKE:TAG>>>>
+	<EMIT <INSTRUCTION `MOVE  <ACSYM .SAC> <ADDRSYM .CAC>>>
+	<COND (.CAREFUL <EMIT '<`SOJE  `O |COMPERR>>)>
+	<COND (<ASSIGNED? NUM>
+	       <EMIT <INSTRUCTION `AOJA  <ACSYM .NAC> .T1>>)
+	      (ELSE <BRANCH:TAG .T1>)>
+	<LABEL:TAG .T2>
+	<COND (<ASSIGNED? NUM>
+	       <MUNG-VALS .NUM .NAC <1 .SS>>
+	       <COND (<AND <NOT <EMPTY? <2 .SS>>> <NOT <EMPTY? <1 .SS>>>>
+		      <MUNG-AC .NAC .NUM>
+		      <EMIT <INSTRUCTION `ADDI  <ACSYM .NAC> 1>>)>
+	       <MUNG-VALS .NUM .NAC <2 .SS>>
+	       <RET-TMP-AC .NUM>)>
+	<COND
+	 (.R? <MOVE:ARG .STR .W>)
+	 (ELSE
+	  <SET STR <DEFER-IT .N .STR>>
+	  <SET TEM <OFFPTR 0 .STR LIST>>
+	  <MOVE:ARG <DATUM <COND (<ISTYPE-GOOD? <RESULT-TYPE .N>>) (ELSE .TEM)>
+			   .TEM>
+		    .W>)>>
+
+<DEFINE MUNG-VALS (D A L "AUX" (D1 .D)) 
+	#DECL ((D D1) DATUM (A) AC (L) <LIST [REST NODE]>)
+	<MAPF <>
+	      <FUNCTION (N
+			 "AUX" (S <NODE-NAME .N>)
+			       (TY
+				<OR
+				 <ISTYPE-GOOD? <1 <TYPE-INFO .N>>>
+				 <AND <OR <ARG? .S> <INIT-SYM .S>>
+				      <ISTYPE-GOOD? <1 <DECL-SYM .S>>>>>))
+		      #DECL ((S) SYMTAB)
+		      <COND (<AND <NOT .TY> <==? .D .D1>>
+			     <SET D1 <MOVE:ARG .D <DATUM ANY-AC <DATVAL .D>>>>)>
+		      <PUT .S ,STORED <>>
+		      <PUT .S ,INACS <DATUM !<COND (.TY .D) (ELSE .D1)>>>
+		      <PUT .A ,ACRESIDUE (.S !<ACRESIDUE .A>)>>
+	      .L>
+	<COND (<N==? .D .D1> <MOVE:ARG .D1 .D>)>
+	<MUNG-AC .A .D>>
+
+<ENDPACKAGE>

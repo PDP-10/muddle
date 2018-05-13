@@ -1,0 +1,603 @@
+<PACKAGE "VARANA">
+
+<ENTRY VARS>
+
+<USE "COMPDEC" "CHKDCL" "ADVMESS" "SUBRTY">
+
+
+<SETG TEMPSTRT #TEMPV ()>
+
+<DEFINE VARS REVAR (FCN
+		    "AUX" GFRMID NOA ACC LARG (BPRE <>) (UNPRE <>) (NOACT T)
+			  (OV .VERBOSE) (NNEW T))
+	#DECL ((FCN) <SPECIAL NODE>
+	       (GFRMID NOA ACC LARG REVAR BPRE UNPRE NOACT NNEW) <SPECIAL ANY>)
+	<COND (.VERBOSE <PUTREST <SET VERBOSE .OV> ()>)>
+	<SET NOA <ACS .FCN>>
+	<SET ACC <AND .NOA <N=? .NOA '(STACK)> <N=? .NOA '(FUNNY-STACK)>>>
+	<SET LARG <>>
+	<SET GFRMID 0>
+	<COND (<AND .VERBOSE <NOT .NOA>>
+	       <ADDVMESS .FCN ("Frame being generated.")>)>
+	<FUNC-VAR .FCN>>
+
+<DEFINE FUNC-VAR (BASEF
+		  "AUX" (PRE <>) (BST <BINDING-STRUCTURE .BASEF>)
+			(FRMID <SET GFRMID <+ .GFRMID 1>>) (SVIOFF 0) TA
+			(IOFF
+			 <+
+			  <COND (<OR <ACTIV? .BST .NOACT> <ACTIVATED .BASEF>>
+				 <PUT .BASEF ,ACTIVATED T>
+				 2)
+				(ELSE 0)>
+			  <COND
+			   (<=? .NOA '(STACK)>
+			    <* 2
+			       <COND (<L? <SET TA <TOTARGS .BASEF>> 0> 0)
+				     (ELSE .TA)>>)
+			   (ELSE 0)>>) (USOFF 0) (FUZZ <>) (HSLOT 0))
+	#DECL ((BASEF) <SPECIAL NODE> (BST) <LIST [REST SYMTAB]>
+	       (FRMID GFRMID SVIOFF IOFF USOFF HSLOT) <SPECIAL FIX>
+	       (PRE FUZZ) <SPECIAL ANY>)
+	<COND (<AND .NOACT <ACTIVATED .BASEF>>
+	       <SET NOACT <>>
+	       <AGAIN .REVAR>)>
+	<AND <==? .FCN .BASEF>
+	     .NOA
+	     <ACTIVATED .BASEF>
+	     .NNEW
+	     <PUT .BASEF ,ACS <CHTYPE (<ACS .FCN>) FALSE>>
+	     <AGAIN .REVAR>>
+	<PUT .BASEF ,BINDING-STRUCTURE <DOREG .BST>>
+	<SET PRE <OR .PRE .BPRE>>
+	<AND .ACC <NOT .LARG> <SET LARG T>>
+	<AND .PRE <G? .USOFF .HSLOT> <SET HSLOT .USOFF>>
+	<SET SVIOFF .IOFF>
+	<MAPF <> ,VAR-ANA <KIDS .BASEF>>
+	<AND .PRE <PUT .BASEF ,SSLOTS <COND (<0? .HSLOT> -1)(ELSE .HSLOT)>>>>
+
+<DEFINE VAR-ANA (N) 
+	#DECL ((N FCN) NODE)
+	<COND (<AND .FUZZ <ACS .FCN> .NNEW <NOT <=? <ACS .FCN> '(FUNNY-STACK)>>>
+	       <COND (<G=? <TOTARGS .FCN> 0> <PUT .FCN ,ACS '(FUNNY-STACK)>)
+		     (<PUT .FCN ,ACS <CHTYPE (<ACS .FCN>) FALSE>>)>
+	       <AGAIN .REVAR>)>
+	<COND (<VAR-ANA1 .N .FUZZ> <SET FUZZ T>)>>
+
+<DEFINE VAR-ANA1 (N OFUZZ
+		  "AUX" (FUZZ .OFUZZ) (SIOFF .IOFF) (COD <NODE-TYPE .N>) FL K RN
+			ACST)
+   #DECL ((N RN) NODE (FUZZ) <SPECIAL ANY> (SIOFF) FIX (IOFF COD) FIX
+	  (K) <LIST [REST NODE]>)
+   <COND
+    (<==? .COD ,MAP-CODE>
+     <PROG ((GMF ,NUMACS))
+       #DECL ((GMF) <SPECIAL ANY>)
+       <VAR-ANA <1 <SET K <KIDS .N>>>>
+       <SET COD <NODE-TYPE <1 .K>>>
+       <SET FL <==? <NODE-TYPE <2 .K>> ,MFCN-CODE>>
+       <COND
+	(<AND
+	  <OR
+	   <EMPTY? <REST .K 2>>
+	   <MAPF <>
+	    <FUNCTION (N) 
+		    #DECL ((N) NODE)
+		    <COND (<AND <SET TEM <STRUCTYP <RESULT-TYPE .N>>>
+				<N==? .TEM TEMPLATE>>
+			   <SET GMF
+				<- .GMF
+				   <COND (<OR <==? .TEM STRING>
+					      <==? .TEM BYTES>>
+					  2)
+					 (ELSE 1)>>>)
+			  (ELSE <MAPLEAVE <>>)>>
+	    <REST .K 2>>>
+	  <OR <==? <ISTYPE? <RESULT-TYPE <1 .K>>> FALSE>
+	      <AND <AP? <1 .K>> <N==? <NODE-SUBR <1 .K>> 5>>>
+	  .FL>)
+	(ELSE <SET GMF <>>)>
+       <COND (<AND .FL
+		   <NOT <EMPTY? <BINDING-STRUCTURE <2 .K>>>>
+		   <==? <NAME-SYM <1 <BINDING-STRUCTURE <2 .K>>>> DUMMY-MAPF>>
+	      <REPEAT ((B <REST <BINDING-STRUCTURE <2 .K>> <- <LENGTH .K> 1>>)
+		       (N <- <LENGTH .K> 2>))
+		      <COND (<L? <SET N <- .N 1>> 0> <RETURN>)>
+		      <PUT <1 .B> ,CODE-SYM 3>>)>
+       <COND (<AND .FL
+		   <NOT .GMF>
+		   <NOT <EMPTY? <BINDING-STRUCTURE <2 .K>>>>
+		   <==? <NAME-SYM <1 <BINDING-STRUCTURE <2 .K>>>> DUMMY-MAPF>>
+	      <PUT <2 .K>
+		   ,BINDING-STRUCTURE
+		   <REST <BINDING-STRUCTURE <2 .K>> <- <LENGTH .K> 1>>>)>
+       <COND (<NOT <OR .GMF .FUZZ .PRE>>
+	      <COND (<==? .COD ,MFIRST-CODE>
+		     <COND (<==? <NODE-SUBR <1 .K>> 5> <SET IOFF <+ .IOFF 4>>)
+			   (ELSE <SET IOFF <+ .IOFF 2>>)>)
+		    (<NOT <NODE-NAME <1 .K>>> <SET IOFF <+ .IOFF 2>>)>
+	      <COND (<AND <NOT .FL>
+			  <N==? <NODE-TYPE <2 .K>> ,MPSBR-CODE>
+			  <NOT <AP? <2 .K>>>>
+		     <SET IOFF <+ .IOFF 2>>)>)
+	     (<AND <NOT <OR .FUZZ .PRE>>
+		   <==? .COD ,MFIRST-CODE>
+		   <==? <NODE-SUBR <1 .K>> 5>>
+	      <SET IOFF <+ .IOFF 4>>)>
+       <AND .FL <VARMAP .K <OR .GMF .OFUZZ>>>
+       <SET FUZZ <OR .FUZZ <AND <NODE-NAME <1 .K>> <N==? .COD ,MFIRST-CODE>>>>
+       <VAR-ANA <2 .K>>
+       <SET FUZZ .OFUZZ>
+       <OR .FL <VARMAP .K .OFUZZ>>>)
+    (<==? .COD ,STACKFORM-CODE>
+     <VAR-ANA <1 <SET K <KIDS .N>>>>
+     <SET OFUZZ .FUZZ>
+     <SET FUZZ T>
+     <VAR-ANA <2 .K>>
+     <VAR-ANA <3 .K>>
+     <SET FUZZ .OFUZZ>)
+    (<OR <==? .COD ,PROG-CODE> <==? .COD ,MFCN-CODE>> <PROG-REP-VAR .N .OFUZZ>)
+    (<OR <==? .COD ,SUBR-CODE>
+	 <==? .COD ,COPY-CODE>
+	 <AND <==? .COD ,ISUBR-CODE> <==? <4 <GET-TMP <NODE-SUBR .N>>> STACK>>
+	 <AND <==? .COD ,RSUBR-CODE>
+	      <OR <AND <TYPE? <NODE-SUBR .N> FUNCTION>
+		       <SET ACST <ACS <SET RN <GET <NODE-NAME .N> .IND>>>>
+		       <OR <ASSIGNED? GROUP-NAME> <==? .FCN .RN>>
+		       <=? .ACST '(STACK)>>
+		  <TYPE? <NODE-SUBR .N> RSUBR RSUBR-ENTRY>>>>
+     <MAPF <>
+	   <FUNCTION (N) 
+		   #DECL ((N) NODE (IOFF) FIX)
+		   <OR <VAR-ANA .N> .OFUZZ .PRE <SET IOFF <+ .IOFF 2>>>>
+	   <KIDS .N>>)
+    (<OR <==? .COD ,ISTRUC-CODE> <==? .COD ,ISTRUC2-CODE>>
+     <VAR-ANA <1 <KIDS .N>>>
+     <OR .PRE
+	 .OFUZZ
+	 <SET IOFF <+ .IOFF <COND (<==? <NODE-SUBR .N> ,ISTRING> 2) (ELSE 4)>>>>
+     <MAPF <> ,VAR-ANA <REST <KIDS .N>>>)
+    (<==? .COD ,UNWIND-CODE>
+     <OR .PRE .OFUZZ <SET IOFF <+ .IOFF 10>>>
+     <VAR-ANA <1 <KIDS .N>>>
+     <VAR-ANA <2 <KIDS .N>>>)
+    (ELSE
+     <AND <==? <NODE-TYPE .N> ,BRANCH-CODE> <VAR-ANA <PREDIC .N>>>
+     <MAPF <> ,VAR-ANA <KIDS .N>>)>
+   <SET IOFF .SIOFF>
+   <==? <NODE-TYPE .N> ,SEGMENT-CODE>>
+
+<DEFINE VARMAP (K OFUZZ) 
+	#DECL ((K) <LIST [REST NODE]> (OFUZZ) ANY)
+	<MAPF <>
+	      <FUNCTION (N) 
+		      #DECL ((N) NODE (IOFF) FIX)
+		      <VAR-ANA .N>
+		      <OR .PRE .OFUZZ <SET IOFF <+ .IOFF 2>>>>
+	      <REST .K 2>>>
+
+<DEFINE PROG-REP-VAR (PNOD FUZZ
+		      "AUX" (BST <BINDING-STRUCTURE .PNOD>) (SVIOFF .SVIOFF)
+			    (USOFF .USOFF) (IOFF .IOFF) (NOA <>)
+			    (PROG-REP
+			     <OR <==? <NODE-SUBR .PNOD> ,PROG>
+				 <==? <NODE-SUBR .PNOD> ,REPEAT>>))
+	#DECL ((PNOD) <SPECIAL NODE> (FUZZ NOA) <SPECIAL ANY>
+	       (BST) <LIST [REST SYMTAB]> (SVIOFF USOFF IOFF) <SPECIAL FIX>)
+	<COND (<OR <ACTIV? .BST .NOACT> <ACTIVATED .PNOD>>
+	       <AND .NOACT <PROG ()
+				 <SET NOACT <>>
+				 <AGAIN .REVAR>>>
+	       <PUT .PNOD ,ACTIVATED T>
+	       <AND .FUZZ
+		    <NOT .PRE>
+		    <SET PRE T>
+		    <OR <ASSIGNED? INARG> .UNPRE>
+		    <NOT .BPRE>
+		    <SET BPRE T>
+		    <NOT <SET UNPRE <>>>
+		    <AGAIN .REVAR>>
+	       <AND .PRE
+		    .NOA
+		    .NNEW
+		    <PUT .BASEF ,ACS (FUNNY-STACK)>
+		    <AGAIN .REVAR>>
+	       <PROG REVAR ((BPRE <>) (UNPRE <>) (OG .GFRMID) (OV .VERBOSE)
+			    (NNEW <>))
+		     #DECL ((REVAR BPRE NNEW UNPRE) <SPECIAL ANY>)
+		     <COND (.VERBOSE <PUTREST <SET VERBOSE .OV> ()>)>
+		     <SET GFRMID .OG>
+		     <SET NOA <>>
+		     <COND (.VERBOSE
+			    <ADDVMESS .PNOD ("Internal FRAME generated.")>)>
+		     <FUNC-VAR .PNOD>>)
+	      (ELSE
+	       <COND (<OR .PRE .FUZZ>
+		      <AND <NOT .PRE>
+			   <OR <ASSIGNED? INARG> .UNPRE>
+			   <NOT .BPRE>
+			   <SET BPRE T>
+			   <NOT <SET UNPRE <>>>
+			   <AGAIN .REVAR>>
+		      <SET PRE T>
+		      <OR <ASSIGNED? INARG> <SET IOFF .SVIOFF>>
+		      <PUT .PNOD ,SPECS-START <+ .IOFF .USOFF>>
+		      <PUT .PNOD ,USLOTS <+ .IOFF .USOFF>>
+		      <PUT .PNOD ,BINDING-STRUCTURE <DOUNREG .BST .BST .BST T>>
+		      <MAPF <> ,VAR-ANA <KIDS .PNOD>>
+		      <AND <ASSIGNED? INARG> <SET IOFF .SVIOFF>>
+		      <AND <G? .USOFF .HSLOT> <SET HSLOT .USOFF>>)
+		     (ELSE
+		      <PROG ((BASEF .PNOD) (HSLOT 0) (PRE <>))
+			    #DECL ((BASEF) <SPECIAL NODE> (PRE) <SPECIAL ANY>
+				   (HSLOT) <SPECIAL FIX>)
+			    <PUT .BASEF ,BINDING-STRUCTURE <DOREG .BST T>>
+			    <SET SVIOFF .IOFF>
+			    <AND .PRE <G? .USOFF .HSLOT> <SET HSLOT .USOFF>>
+			    <MAPF <> ,VAR-ANA <KIDS .BASEF>>
+			    <COND (<AND .PRE .UNPRE>
+				   <SET BPRE T>
+				   <SET UNPRE <>>
+				   <AGAIN .REVAR>)
+				  (<NOT .BPRE> <SET UNPRE T>)>
+			    <COND (.PRE
+				   <AND <G? .USOFF .HSLOT> <SET HSLOT .USOFF>>
+				   <PUT .BASEF
+					,SSLOTS
+					<COND (<0? .HSLOT> -1)
+					      (ELSE .HSLOT)>>)>>)>)>>
+
+<DEFINE ARG? (SYM) #DECL ((SYM) SYMTAB) <1? <NTH ,ARGTBL <CODE-SYM .SYM>>>>
+
+<SETG ARGTBL ![0 0 0 0 1 0 0 0 0 1 0 1 1!]>
+
+<DEFINE ACTIV? (BST NOACT) 
+	#DECL ((BST) <LIST [REST SYMTAB]>)
+	<REPEAT ()
+		<AND <EMPTY? .BST> <RETURN <>>>
+		<AND <==? <CODE-SYM <1 .BST>> 1>
+		     <OR <NOT .NOACT>
+			 <NOT <RET-AGAIN-ONLY <1 .BST>>>
+			 <SPEC-SYM <1 .BST>>>
+		     <RETURN T>>
+		<SET BST <REST .BST>>>>
+
+<DEFINE INITV? (SYM) 
+	#DECL ((SYM) SYMTAB)
+	<1? <NTH '![0 1 0 0 0 1 1 0 0 0 0 0 0!] <CODE-SYM .SYM>>>>
+
+<DEFINE NONARG (SYM) 
+	#DECL ((SYM) SYMTAB)
+	<1? <NTH '![1 1 1 0 0 0 0 0 0 0 1 0 0!] <CODE-SYM .SYM>>>>
+
+<DEFINE TUPLE? (TUP-NOD) 
+	<AND .TUP-NOD
+	     <OR <==? <NODE-NAME .TUP-NOD> ITUPLE>
+		 <==? <NODE-NAME .TUP-NOD> TUPLE>>>>
+
+<DEFINE GOOD-TUPLE (TUP "AUX" (K <KIDS .TUP>) NT (WD 0)) 
+	#DECL ((NT) FIX (TUP) NODE (K) <LIST [REST NODE]>)
+	<AND <NOT <==? <NODE-TYPE .TUP> ,ISTRUC-CODE>>
+	     <COND (<==? <NODE-SUBR .TUP> ,ITUPLE>
+		    <AND <==? <NODE-TYPE <1 .K>> ,QUOTE-CODE>
+			 <OR <==? <SET NT <NODE-TYPE <2 .K>>> ,QUOTE-CODE>
+			     <==? .NT ,FLVAL-CODE>
+			     <==? .NT ,FGVAL-CODE>
+			     <==? .NT ,GVAL-CODE>
+			     <==? .NT ,LVAL-CODE>>
+			 <* <NODE-NAME <1 .K>> 2>>)
+		   (ELSE
+		    <MAPF <>
+			  <FUNCTION (K) 
+				  <COND (<==? <NODE-TYPE .K> ,SEGMENT-CODE>
+					 <MAPLEAVE <>>)
+					(ELSE <SET WD <+ .WD 2>>)>>
+			  .K>)>>>
+
+<DEFINE DOREG (BST
+	       "OPTIONAL" (HACK-INITS <>)
+	       "AUX" TUP SYM COD (RQRG 0) (TRG 0) (COOL <AND .NOA <NOT .ACC>>)
+		     (INARG T) INIT-LIST)
+   #DECL ((BST) <LIST [REST SYMTAB]> (SYM) SYMTAB (COD IOFF RQRG TRG) FIX
+	  (BASEF) NODE (INARG) <SPECIAL ANY> (INIT-LIST) LIST)
+   <COND (<AND <ASSIGNED? GMF> .GMF <L=? .GMF 0>> <SET HACK-INITS <>>)>
+   <COND (<==? <NODE-TYPE .BASEF> ,FUNCTION-CODE>
+	  <SET RQRG <REQARGS .BASEF>>
+	  <SET TRG <TOTARGS .BASEF>>)>
+   <COND
+    (.HACK-INITS
+     <SET INIT-LIST
+      <MAPF ,LIST
+       <FUNCTION (SYM) 
+	  #DECL ((SYM) SYMTAB)
+	  <COND
+	   (<OR
+	     <AND <ASSIGNED? GMF> .GMF <==? <NAME-SYM .SYM> DUMMY-MAPF>>
+	     <AND
+	      <OR <INIT-SYM .SYM> <==? <CODE-SYM .SYM> 13>>
+	      <NOT <ASS? .SYM>>
+	      <NOT <SPEC-SYM .SYM>>
+	      <ISTYPE-GOOD?
+	       <COND (<COMPOSIT-TYPE .SYM>
+		      <TYPE-AND <1 <DECL-SYM .SYM>> <COMPOSIT-TYPE .SYM>>)
+		     (<1 <DECL-SYM .SYM>>)>>
+	      <USAGE-SYM .SYM>
+	      <NOT <0? <USAGE-SYM .SYM>>>>>
+	    <MAPRET .SYM>)
+	   (<MAPRET>)>>
+       .BST>>
+     <REPEAT ((L <LENGTH .INIT-LIST>) (REMPTR .INIT-LIST)
+	      (NA <COND (<AND <ASSIGNED? GMF> .GMF> .GMF) (ELSE ,NUMACS)>))
+	     #DECL ((L NA) FIX (REMPTR) LIST)
+	     <COND (<L? .L .NA> <RETURN>)>
+	     <REPEAT ((PTR .INIT-LIST) (MIN-CNT <CHTYPE <MIN> FIX>) SYM)
+		     <SET SYM <1 .PTR>>
+		     <COND (<L? <USAGE-SYM .SYM> .MIN-CNT>
+			    <SET MIN-CNT <USAGE-SYM .SYM>>
+			    <RETURN>)>
+		     <SET REMPTR <SET PTR <REST .PTR>>>>
+	     <SET L <- .L 1>>
+	     <COND (<==? .REMPTR .INIT-LIST> <SET INIT-LIST <REST .INIT-LIST>>)
+		   (<PUTREST .REMPTR <REST .REMPTR 2>>)>>)>
+   <REPEAT ((FB .BST) (PB .BST))
+     <AND <EMPTY? .BST> <RETURN .FB>>
+     <PUT <SET SYM <1 .BST>> ,CODE-SYM <SET COD <ABS <CODE-SYM .SYM>>>>
+     <COND
+      (<AND <COMPOSIT-TYPE .SYM> <N==? <COMPOSIT-TYPE .SYM> T>>
+       <COND
+	(<NOT <SPEC-SYM .SYM>>
+	 <COND (<NOT <ASS? .SYM>>
+		<PUT .SYM
+		     ,COMPOSIT-TYPE
+		     <TYPE-AND '<NOT UNBOUND> <COMPOSIT-TYPE .SYM>>>)>
+	 <SET DC <1 <DECL-SYM .SYM>>>
+	 <PUT .SYM ,DECL-SYM (<TYPE-AND <COMPOSIT-TYPE .SYM> .DC>)>
+	 <COND (<AND .VERBOSE
+		     <N==? <COMPOSIT-TYPE .SYM> T>
+		     <N==? <COMPOSIT-TYPE .SYM> NO-RETURN>
+		     <NOT <SAME-DECL?
+			   <TYPE-AND .DC <COMPOSIT-TYPE .SYM>> .DC>>>
+		<VMESS "Computed decl of variable:  "
+		       <NAME-SYM .SYM>
+		       " is:  "
+		       <COMPOSIT-TYPE .SYM>>)>)>
+       <PUT .SYM ,COMPOSIT-TYPE T>)>
+     <PUT .SYM ,CURRENT-TYPE <>>
+     <COND
+      (<NOT <OR <AND <1? <CODE-SYM .SYM>>
+		     <NOT <SPEC-SYM .SYM>>
+		     <RET-AGAIN-ONLY .SYM>
+		     <NOT <ACTIVATED .BASEF>>>
+		<AND <NOT <USED-AT-ALL .SYM>>
+		     <PROG ()
+			   <PUT .SYM ,USED-AT-ALL T>
+			   <COND (<SPEC-SYM .SYM>
+				  <MESSAGE NOTE
+					   "Special variable never used: "
+					   <NAME-SYM .SYM>>)
+				 (ELSE
+				  <MESSAGE WARNING
+					   "VARIABLE NEVER USED: "
+					   <NAME-SYM .SYM>>)>
+			   T>
+		     <NONARG .SYM>
+		     <NOT <SPEC-SYM .SYM>>
+		     <NOT <INIT-SYM .SYM>>
+		     <PURE-SYM .SYM>
+		     <SET FB <FLUSH-SYM .BST <SET BST .PB> .FB>>>>>
+       <COND (<SPEC-SYM .SYM>
+	      <PUT .SYM ,ADDR-SYM <+ .USOFF .IOFF 2>>
+	      <AND <OR <NONARG .SYM> <ASSIGNED? PNOD>>
+		   <PUT .SYM ,ARGNUM-SYM <TMPLS .BASEF>>>
+	      <SET USOFF <+ .USOFF 6>>)>
+       <COND (<INITV? .SYM>
+	      <COND (<TUPLE? <INIT-SYM .SYM>>
+		     <COND (<AND <NOT <OR <==? <CODE-SYM .SYM> 7>
+					  <==? <CODE-SYM .SYM> 8>
+					  <==? <CODE-SYM .SYM> 9>
+					  <SPEC-SYM .SYM>>>
+				 <SET TUP <GOOD-TUPLE <INIT-SYM .SYM>>>>
+			    <SET IOFF <+ .IOFF .TUP 2>>)
+			   (ELSE
+			    <SET PRE T>
+			    <COND (<ACS .FCN>
+				   <PUT .FCN ,ACS <CHTYPE (<ACS .FCN>) FALSE>>
+				   <AGAIN .REVAR>)>
+			    <RETURN <DOUNREG .BST .FB .PB .HACK-INITS>>)>)>
+	      <COND (<SPEC-SYM .SYM>
+		     <SET IOFF <+ .IOFF 2>>
+		     <VAR-ANA <INIT-SYM .SYM>>
+		     <SET IOFF <- .IOFF 2>>)
+		    (ELSE <VAR-ANA <INIT-SYM .SYM>>)>
+	      <COND (.PRE
+		     <OR <SPEC-SYM .SYM> <SET USOFF <+ .USOFF 2>>>
+		     <SET COD <- .COD>>)>)>
+       <COND (<AND .ACC <NOT .LARG> <NONARG .SYM>> <SET LARG T>)>
+       <COND (<AND <NOT .NOA>
+		   <ARG? .SYM>
+		   <NOT <SPEC-SYM .SYM>>
+		   <PURE-SYM .SYM>>
+	      <PUT .SYM ,ADDR-SYM <REFERENCE:ARG <ARGNUM-SYM .SYM>>>)
+	     (<AND .COOL <NOT <NONARG .SYM>> <NOT <SPEC-SYM .SYM>>>
+	      <PUT .SYM ,FRMNO .FRMID>
+	      <PUT .SYM
+		   ,ADDR-SYM
+		   <COND (<=? .NOA '(FUNNY-STACK)>
+			  <- -2 <* <- <TOTARGS .FCN> <ARGNUM-SYM .SYM>> 2>>)
+			 (ELSE <* 2 <- <ARGNUM-SYM .SYM> 1>>)>>)
+	     (<AND <TUPLE? <INIT-SYM .SYM>> <NOT .TUP>>
+	      <SET PRE T>
+	      <COND (<ACS .FCN>
+		     <PUT .FCN ,ACS <CHTYPE (<ACS .FCN>) FALSE>>
+		     <AGAIN .REVAR>)>
+	      <RETURN <DOUNREG .BST .FB .PB .HACK-INITS>>)
+	     (ELSE
+	      <PUT .SYM ,FRMNO .FRMID>
+	      <COND (<AND <OR <==? <CODE-SYM .SYM> 2>
+			      <==? <CODE-SYM .SYM> 3>
+			      <==? <CODE-SYM .SYM> 13>>
+			  <NOT <SPEC-SYM .SYM>>
+			  <NOT <ASS? .SYM>>
+			  <OR <==? <CODE-SYM .SYM> 3>
+			      <AND .HACK-INITS <MEMQ .SYM .INIT-LIST>>>>
+		     <PUT .SYM ,ADDR-SYM ,TEMPSTRT>)
+		    (ELSE
+		     <PUT .SYM
+			  ,ADDR-SYM
+			  <+ .IOFF <COND (<SPEC-SYM .SYM> 2) (ELSE 0)>>>
+		     <AND <OR <NONARG .SYM> <ASSIGNED? PNOD>>
+			  <PUT .SYM ,ARGNUM-SYM <TMPLS .BASEF>>>
+		     <OR .PRE
+			 <SET IOFF
+			      <+ .IOFF
+				 <COND (<SPEC-SYM .SYM> 6) (ELSE 2)>>>>)>)>)>
+     <SET BST <REST <SET PB .BST>>>
+     <PUT .SYM ,CODE-SYM .COD>
+     <COND (.PRE <RETURN <DOUNREG .BST .FB .PB .HACK-INITS>>)>>>
+
+<DEFINE DOUNREG (BST FB PB
+		 "OPTIONAL" (HACK-INITS <>)
+		 "AUX" SYM (INARG T) INIT-LIST)
+   #DECL ((BST) <LIST [REST SYMTAB]> (SYM) SYMTAB (USOFF IOFF) FIX
+	  (INARG) <SPECIAL ANY> (INIT-LIST) LIST)
+   <COND (<AND <ASSIGNED? GMF> .GMF <L=? .GMF 0>> <SET HACK-INITS <>>)>
+   <COND
+    (.HACK-INITS
+     <SET INIT-LIST
+      <MAPF ,LIST
+       <FUNCTION (SYM) 
+	  #DECL ((SYM) SYMTAB)
+	  <COND
+	   (<AND <INIT-SYM .SYM>
+		 <NOT <ASS? .SYM>>
+		 <NOT <SPEC-SYM .SYM>>
+		 <ISTYPE-GOOD?
+		  <COND (<COMPOSIT-TYPE .SYM>
+			 <TYPE-AND <1 <DECL-SYM .SYM>> <COMPOSIT-TYPE .SYM>>)
+			(<1 <DECL-SYM .SYM>>)>>
+		 <USAGE-SYM .SYM>
+		 <NOT <0? <USAGE-SYM .SYM>>>>
+	    <MAPRET .SYM>)
+	   (<MAPRET>)>>
+       .BST>>
+     <REPEAT ((L <LENGTH .INIT-LIST>) (REMPTR .INIT-LIST)
+	      (NA <COND (<AND <ASSIGNED? GMF> .GMF> .GMF) (ELSE 5)>))
+	     #DECL ((L NA) FIX (REMPTR) LIST)
+	     <COND (<L? .L .NA> <RETURN>)>
+	     <REPEAT ((PTR .INIT-LIST) (MIN-CNT <CHTYPE <MIN> FIX>) SYM)
+		     <SET SYM <1 .PTR>>
+		     <COND (<L? <USAGE-SYM .SYM> .MIN-CNT>
+			    <SET MIN-CNT <USAGE-SYM .SYM>>
+			    <RETURN>)>
+		     <SET REMPTR <SET PTR <REST .PTR>>>>
+	     <SET L <- .L 1>>
+	     <COND (<==? .REMPTR .INIT-LIST> <SET INIT-LIST <REST .INIT-LIST>>)
+		   (<PUTREST .REMPTR <REST .REMPTR 2>>)>>)>
+   <PROG ()
+     <AND <EMPTY? .BST> <RETURN .FB>>
+     <REPEAT ((BST .BST))
+       <COND
+	(<AND <COMPOSIT-TYPE <SET SYM <1 .BST>>> <N==? <COMPOSIT-TYPE .SYM> T>>
+	 <COND
+	  (<NOT <SPEC-SYM .SYM>>
+	   <COND (<NOT <ASS? .SYM>>
+		  <PUT .SYM
+		       ,COMPOSIT-TYPE
+		       <TYPE-AND '<NOT UNBOUND> <COMPOSIT-TYPE .SYM>>>)>
+	   <SET DC <1 <DECL-SYM .SYM>>>
+	   <PUT .SYM ,DECL-SYM (<TYPE-AND <COMPOSIT-TYPE .SYM> .DC>)>
+	   <COND
+	    (<AND .VERBOSE
+		  <N==? <COMPOSIT-TYPE .SYM> T>
+		  <N==? <COMPOSIT-TYPE .SYM> NO-RETURN>
+		  <NOT <SAME-DECL? <TYPE-AND .DC <COMPOSIT-TYPE .SYM>> .DC>>>
+	     <VMESS "Computed decl of variable:  "
+		    <NAME-SYM .SYM>
+		    " is:  "
+		    <COMPOSIT-TYPE .SYM>>)>)>
+	 <PUT .SYM ,COMPOSIT-TYPE T>)>
+       <PUT .SYM ,CURRENT-TYPE <>>
+       <PUT .SYM ,FRMNO .FRMID>
+       <COND (<NOT <OR <AND <1? <CODE-SYM .SYM>>
+			    <NOT <SPEC-SYM .SYM>>
+			    <RET-AGAIN-ONLY .SYM>
+			    <NOT <ACTIVATED .BASEF>>>
+		       <AND <NOT <USED-AT-ALL .SYM>>
+			    <PROG ()
+				  <PUT .SYM ,USED-AT-ALL T>
+				  <COND (<SPEC-SYM .SYM>
+					 <MESSAGE NOTE
+						  
+"Special variable never used: "
+						  <NAME-SYM .SYM>>)
+					(ELSE
+					 <MESSAGE WARNING
+						  "VARIABLE NEVER USED: "
+						  <NAME-SYM .SYM>>)>
+				  T>
+			    <NONARG .SYM>
+			    <NOT <SPEC-SYM .SYM>>
+			    <NOT <INIT-SYM .SYM>>
+			    <PURE-SYM .SYM>
+			    <SET FB <FLUSH-SYM .BST <SET BST .PB> .FB>>>>>
+	      <AND <INITV? .SYM> <VAR-ANA <INIT-SYM .SYM>>>
+	      <COND (<OR <AND <ASSIGNED? GMF>
+			      .GMF
+			      <==? <NAME-SYM .SYM> DUMMY-MAPF>>
+			 <AND .NOACT
+			      <OR <==? <CODE-SYM .SYM> 3>
+				  <==? <CODE-SYM .SYM> 2>
+				  <==? <CODE-SYM .SYM> 13>>
+			      <NOT <SPEC-SYM .SYM>>
+			      <NOT <ASS? .SYM>>
+			      <OR <==? <CODE-SYM .SYM> 3>
+				  <AND .HACK-INITS <MEMQ .SYM .INIT-LIST>>>>>
+		     <PUT .SYM ,ADDR-SYM ,TEMPSTRT>)
+		    (ELSE
+		     <PUT .SYM
+			  ,ADDR-SYM
+			  <+ .IOFF .USOFF <COND (<SPEC-SYM .SYM> 2) (ELSE 0)>>>
+		     <AND <OR <NONARG .SYM> <ASSIGNED? PNOD>>
+			  <PUT .SYM ,ARGNUM-SYM <TMPLS .BASEF>>>
+		     <SET USOFF
+			  <+ .USOFF <COND (<SPEC-SYM .SYM> 6) (ELSE 2)>>>)>)>
+       <AND <EMPTY? <SET BST <REST <SET PB .BST>>>> <RETURN .FB>>>>>
+
+<DEFINE FLUSH-SYM (B P F) 
+	#DECL ((B P F) <LIST [REST SYMTAB]>)
+	<COND (<==? .B .F> <REST .B>)
+	      (ELSE <PUTREST .P <REST .B>> .F)>>
+
+<DEFINE AP? (N "AUX" AT) 
+	#DECL ((N) NODE)
+	<AND <==? <NODE-TYPE .N> ,GVAL-CODE>
+	     <==? <NODE-TYPE <SET N <1 <KIDS .N>>>> ,QUOTE-CODE>
+	     <SET AT <NODE-NAME .N>>
+	     <OR .REASONABLE
+		 <AND <GASSIGNED? .AT> <TYPE? ,.AT SUBR RSUBR RSUBR-ENTRY>>
+		 <AND <GASSIGNED? .AT>
+		      <TYPE? ,.AT FUNCTION>
+		      <OR <==? .AT .FCNS>
+			  <AND <TYPE? .FCNS LIST> <MEMQ .AT .FCNS>>>>>
+	     .AT>>
+
+
+<DEFINE REFERENCE:ARG (NUMBER "AUX" TEM) 
+	#DECL ((VALUE) <DATUM ADDRESS:C ADDRESS:C> (NUMBER) FIX)
+	<SET TEM <ADDRESS:C `(AB)  <* 2 <- .NUMBER 1>>>>
+	<DATUM .TEM .TEM>>
+
+
+<DEFINE GET-TMP (SUB "AUX" (LS <MEMQ .SUB ,SUBRS>))
+	#DECL ((VALUE) <LIST ANY ANY>)
+	<COND (.LS <NTH ,TEMPLATES <LENGTH .LS>>)
+	      (ELSE '(ANY ANY))>>
+
+<DEFINE SAME-DECL? (D1 D2) <OR <=? .D1 .D2> <NOT <TYPE-OK? .D2 <NOTIFY .D1>>>>>
+
+<DEFINE NOTIFY (D) 
+	<COND (<AND <TYPE? .D FORM> <==? <LENGTH .D> 2> <==? <1 .D> NOT>>
+	       <2 .D>)
+	      (ELSE <FORM NOT .D>)>>
+
+<ENDPACKAGE>

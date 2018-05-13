@@ -1,0 +1,807 @@
+<PACKAGE "PEEPH">
+
+<ENTRY PEEP PRT>
+
+<USE "COMPDEC">
+
+"PEEPHOLE OPTIMIZER: IT WILL DO SEVERAL TYPES OF OPTIMIZATIONS ON THE
+ CODE OUTPUT BY THE COMPILER.  THIS INCLUDES REMOVING UNREACHABLE CODE
+ REMOVE THE COPYING OF SIMILAR CODE AND OTHER MINOR OPTIMIZATIONS."
+
+<SETG INSTRUCTION ,FORM>
+
+<BLOCK (<ROOT>)>
+
+TMP 
+
+<ENDBLOCK>
+
+<SETG SKIP-TBL ![4 5 6 7 0 1 2 3!]>
+
+<SETG TEST-TBL ![2 3 0 1!]>
+
+<MANIFEST SKIP-TBL TEST-TBL>
+
+<NEWTYPE LNODE VECTOR '<VECTOR LIST LIST <OR FALSE TUPLE> ATOM>>
+
+<SETG LABLS-LN 1>
+
+<SETG JUMPS-LN 2>
+
+<SETG CODE-LN 3>
+
+<SETG NAME-LN 4>
+
+<NEWTYPE NULL LIST>
+
+<SETG NULL-INST <CHTYPE () NULL>>
+
+<NEWTYPE JUMP-INS
+	 LIST
+	 '<LIST <PRIMTYPE WORD> FIX <OR 'T FALSE> <OR FALSE LNODE>>>
+
+<SETG INS-JMP 1>
+
+<SETG COND-JMP 2>
+
+<SETG UNCON-JMP 3>
+
+<SETG WHERE-JMP 4>
+
+<NEWTYPE SKIP-INS LIST '<LIST <PRIMTYPE WORD>
+			      FIX
+			      <OR 'T FALSE>
+			      <OR 'T FALSE>>>
+
+<SETG INS-SKP 1>
+
+<SETG COND-SKP 2>
+
+<SETG TEST-SKP 3>
+
+<SETG UNCON-SKP 4>
+
+<MANIFEST LABLS-LN
+	  JUMPS-LN
+	  CODE-LN
+	  NAME-LN
+	  NULL-INST
+	  INS-JMP
+	  COND-JMP
+	  UNCON-JMP
+	  WHERE-JMP
+	  INS-SKP
+	  COND-SKP
+	  TEST-SKP
+	  UNCON-SKP>
+
+"CODE RANGES"
+
+<SETG JRST1 172>
+
+<SETG LOW-SKP1 192>
+
+<SETG HI-SKP1 207>
+
+<SETG LOW-JMP1 208>
+
+<SETG HI-JMP1 215>
+
+<SETG LO-SKP2 216>
+
+<SETG HI-SKP2 223>
+
+<SETG LO-JMP2 224>
+
+<SETG HI-JMP2 255>
+
+<SETG LO-TST1 384>
+
+<SETG HI-TST1 447>
+
+<MANIFEST JRST1
+	  LOW-SKP1
+	  HI-SKP1
+	  LOW-JMP1
+	  HI-JMP1
+	  LO-SKP2
+	  HI-SKP2
+	  LO-JMP2
+	  HI-JMP2
+	  LO-TST1
+	  HI-TST1>
+
+\ 
+
+"PEEP STARTS BY BUILDING A CODE STRUCTURE WITH SKIPS AND JUMPS REPLACED BY THERE
+ EXPANDED INS-TYPES AND WITH JUMPS AND THIER LABELS LINKED UP WITH THE USE OF LNODES."
+
+<DEFINE PEEP (XCOD
+	      "TUPLE" COD
+	      "AUX" QXD (MODLN (())) NNCOD (LABNUM 0) (NUMLABS 0) (NNUMLABS 0)
+		    NLN (LN <LENGTH .COD>) XD QD (SLABS ()) (TOPCOD .COD)
+		    TEMP)
+   #DECL ((XCOD) LIST (SLABS MODLN) <SPECIAL LIST> (LABNUM) <SPECIAL FIX>
+	  (NLN LN) FIX (NUMLABS NNUMLABS) <SPECIAL FIX>)
+   <REPEAT TG-FND ((CPTR .COD) AT)
+	   #DECL ((CPTR) TUPLE)
+	   <COND (<EMPTY? .CPTR> <RETURN>)
+		 (<OR <TYPE? <SET AT <1 .CPTR>> ATOM>
+		      <AND <TYPE? .AT FORM>
+			   <==? <1 .AT> INTERNAL-ENTRY!-OP!-PACKAGE>
+			   <SET AT <2 .AT>>>
+		      <SET AT <PSEUDO? .AT>>>
+		  <PUTREST <REST .MODLN <- <LENGTH .MODLN> 1>>
+			   (<SET AT <CHTYPE [(.AT) () .CPTR .AT] LNODE>>)>
+		  <SET NUMLABS <+ .NUMLABS 1>>
+		  <REPEAT (IN)
+			  <AND <EMPTY? <SET CPTR <REST .CPTR>>>
+			       <RETURN T .TG-FND>>
+			  <COND (<TYPE? <SET IN <1 .CPTR>> ATOM>
+				 <PUT .AT ,LABLS-LN (.IN !<LABLS-LN .AT>)>
+				 <SET NNUMLABS <+ .NNUMLABS 1>>
+				 <PUT .CPTR 1 ,NULL-INST>)
+				(<RETURN>)>>)
+		 (<SET CPTR <REST .CPTR>>)>>
+   <SET MODLN <REST .MODLN>>
+   <MAPR <>
+    <FUNCTION (RCOD "AUX" QD (INST <1 .RCOD>)) 
+       #DECL ((QD) <OR FALSE LNODE> (RCOD) TUPLE)
+       <COND
+	(<TYPE? .INST FORM>
+	 <SET INST <INSTYPE .INST>>
+	 <COND (<TYPE? .INST JUMP-INS>
+		<SET XD <FIND-LAB <REST .INST 4>>>
+		<SET QD <COND (.XD <FIND-NOD .MODLN .XD>)>>
+		<AND .XD
+		     <PROG FFA ()
+			   <COND (.QD
+				  <PUT .INST ,WHERE-JMP .QD>
+				  <PUT .RCOD 1 .INST>
+				  <PUT .QD
+				       ,JUMPS-LN
+				       <ADDON (.RCOD) <JUMPS-LN .QD>>>)
+				 (<SET QD <CHTYPE [(.XD) () <> .XD] LNODE>>
+				  <SET MODLN (.QD !.MODLN)>
+				  <AGAIN .FFA>)>>>)
+	       (ELSE
+		<COND (<AND <SET XD <NFIND-LAB .INST>>
+			    <SET XD <FIND-NOD .MODLN .XD>>>
+		       <SET INST <MUNG-LAB .INST <NAME-LN .XD>>>
+		       <SET SLABS (.XD !.SLABS)>)>
+		<PUT .RCOD 1 .INST>)>)>>
+    .COD>
+   <PROG REOPT ((NLABLS ()) (REDO <>))
+     #DECL ((NLABLS) <SPECIAL LIST> (REDO) <SPECIAL <OR STRING FALSE ATOM>>)
+     <MAPR <>
+      <FUNCTION (NCOD "AUX" QD (INST <1 .NCOD>) (NNCOD .NCOD)) 
+	 #DECL ((NNCOD NCOD) TUPLE)
+	 <COND
+	  (<TYPE? .INST JUMP-INS>
+	   <REPEAT (TMP AOJ-FLG NEWLAB)
+	     <COND (<NOT <SET TMP <CODE-LN <WHERE-JMP .INST>>>> <RETURN>)>
+	     <SET QD <NEXTS .TMP>>
+	     <COND
+	      (<AND <NOT <G? <INS-JMP .INST> ,LO-JMP2>>
+		    <REPEAT ((NC .NNCOD))
+			    <COND (<==? .NC .TOPCOD> <RETURN>)>
+			    <SET NC <BACK .NC>>
+			    <COND (<NOT <TYPE? <1 .NC> ATOM NULL>>
+				   <RETURN <NOT <SKIPPABLE <1 .NC>>>>)>>
+		    <REPEAT ((NC .NNCOD))
+			    <COND (<EMPTY? <SET NC <REST .NC>>> <RETURN <>>)
+				  (<==? .TMP .NC> <RETURN>)
+				  (<NOT <TYPE? <1 .NC> ATOM NULL>>
+				   <RETURN <==? .NC .TMP>>)>>>
+	       <DEL-JUMP-LN .NNCOD>
+	       <PUT .NNCOD 1 ,NULL-INST>
+	       <SET REDO "REMOVED JUMP CHAINING">
+	       <RETURN>)
+	      (<AND <TYPE? .QD JUMP-INS> <UNCON-JMP .QD>>
+	       <COND (<NOT <AND <SET AOJ-FLG <G? <INS-JMP .QD> ,LO-JMP2>>
+				<OR <G? <INS-JMP .INST> ,LO-JMP2>
+				    <NOT <UNCON-JMP .INST>>>>>
+		      <DEL-JUMP-LN .NNCOD>
+		      <SET NEWLAB <ADDON (.NNCOD) <JUMPS-LN <WHERE-JMP .QD>>>>
+		      <COND (.AOJ-FLG
+			     <PUT .NNCOD
+				  1
+				  <SET INST <CHTYPE <SUBSTRUC .QD> JUMP-INS>>>)
+			    (ELSE
+			     <PUT .INST ,WHERE-JMP <WHERE-JMP .QD>>
+			     <PUT <WHERE-JMP .QD> ,JUMPS-LN .NEWLAB>)>
+		      <SET REDO "REMOVED JUMP CHAINING">)
+		     (<RETURN>)>)
+	      (<RETURN>)>>
+	   <COND
+	    (<AND
+	      <NOT <UNCON-JMP .INST>>
+	      <REPEAT ((NC .NCOD))
+		<COND
+		 (<EMPTY? .NC> <RETURN <>>)
+		 (<TYPE? <1 <SET NC <REST .NC>>> NULL>)
+		 (<AND <TYPE? <1 <SET TEMP .NC>> JUMP-INS>
+		       <==? <INS-JMP <1 .NC>> ,JRST1>>
+		  <RETURN <==? <NEXTS <REST .NC> T>
+			       <NEXTS <CODE-LN <WHERE-JMP .INST>> T>>>)
+		 (ELSE <RETURN <>>)>>
+	      <NOT <SKIPPABLE <BACKS .NCOD .TOPCOD <> 1>>>>
+	     <DEL-JUMP-LN .NCOD>
+	     <PUT .INST ,WHERE-JMP <WHERE-JMP <1 .TEMP>>>
+	     <DEL-JUMP-LN .TEMP>
+	     <PUT .TEMP 1 ,NULL-INST>
+	     <PUT <WHERE-JMP .INST>
+		  ,JUMPS-LN
+		  <ADDON (.NCOD) <JUMPS-LN <WHERE-JMP .INST>>>>
+	     <PUT .INST ,COND-JMP <NTH ,SKIP-TBL <+ <COND-JMP .INST> 1>>>
+	     <SET REDO "OPTIMIZED CONDITIONAL JUMP/NON-COND JUMP">)>)
+	  (<TYPE? .INST SKIP-INS>
+	   <AND
+	    <NOT <UNCON-SKP .INST>>
+	    <REPEAT ()
+	      <COND
+	       (<EMPTY? <SET NCOD <REST .NCOD>>> <RETURN>)
+	       (<AND <OR <AND <TYPE? <SET QD <1 .NCOD>> SKIP-INS>
+			      <NOT <TEST-SKP .QD>>
+			      <UNCON-SKP .QD>
+			      <NOT <TYPE? <BACKS .NCOD .TOPCOD <> 2>
+					  SKIP-INS>>>
+			 <AND <TYPE? .QD JUMP-INS>
+			      <==? <INS-JMP .QD> ,JRST1>
+			      <==? <REST <CODE-LN <WHERE-JMP .QD>>>
+				   <NEXTS <REST .NCOD> T 2>>
+			      <NOT <TYPE? <BACKS .NCOD .TOPCOD <> 2> SKIP-INS>>
+			      <DEL-JUMP-LN .NCOD>>>
+		     <PUT <BACKS .NCOD .TOPCOD T 1> 1 ,NULL-INST>
+		     <PUT .NCOD 1 .INST>
+		     <CHANGE-COND .INST>
+		     <SET REDO "SKIP-CHAIN OPTIMIZATION">
+		     <RETURN>>)
+	       (<NOT <TYPE? .QD NULL>> <RETURN>)>>>
+	   <AND <TYPE? <SET XD <1 .NCOD>> JUMP-INS>
+		<NOT <TYPE? <BACKS .NCOD .TOPCOD <> 2> SKIP-INS>>
+		<UNCON-JMP .XD>
+		<SET QXD <WHERE-JMP .XD>>
+		<TYPE? <NEXTS <REST .NCOD>> SKIP-INS>
+		<TYPE? <SET XD <NEXTS <REST .NCOD> <> 2>> JUMP-INS>
+		<UNCON-JMP .XD>
+		<==? <WHERE-JMP .XD> .QXD>
+		<DEL-JUMP-LN .NCOD>
+		<PUT .NCOD 1 ,NULL-INST>
+		<CHANGE-COND .INST>
+		<SET REDO "OPTIMIZING CONDITIONAL JUMPS">>)
+	  (<AND
+	    <TYPE? .INST FORM>
+	    <OR <==? <1 .INST> `ADDI > <==? <1 .INST> `SUBI >>
+	    <==? <LENGTH .INST> 3>
+	    <==? <3 .INST> 1>
+	    <REPEAT (TEM)
+	      <COND (<EMPTY? .NCOD> <RETURN>)>
+	      <SET NCOD <REST .NCOD>>
+	      <COND
+	       (<TYPE? <SET QD <1 .NCOD>> JUMP-INS>
+		<COND
+		 (<OR <==? <INS-JMP .QD> ,JRST1>
+		      <AND <G=? <INS-JMP .QD> ,LOW-JMP1>
+			   <L=? <INS-JMP .QD> ,HI-JMP1>
+			   <G=? <LENGTH .QD> 5>
+			   <==? <2 .INST> <5 .QD>>>>
+		  <PUT <BACK .NCOD> 1 ,NULL-INST>
+		  <PUT
+		   .NCOD
+		   1
+		   <SET TEM
+		    <INSTYPE
+		     <INSTRUCTION
+		      <COND
+		       (<==? <INS-JMP .QD> ,JRST1>
+			<COND (<==? <1 .INST> `ADDI > `AOJA ) (ELSE `SOJA )>)
+		       (<==? <1 .INST> `ADDI >
+			<CHTYPE <PUTBITS 0
+					 <BITS 9 27>
+					 <+ <CHTYPE <INS-JMP .QD> FIX> 16>>
+				OPCODE!-OP!-PACKAGE>)
+		       (ELSE
+			<CHTYPE <PUTBITS 0
+					 <BITS 9 27>
+					 <+ <CHTYPE <INS-JMP .QD> FIX> 32>>
+				OPCODE!-OP!-PACKAGE>)>
+		      <2 .INST>
+		      <OR <AND <WHERE-JMP .QD> <NAME-LN <WHERE-JMP .QD>>>
+			  <NFIND-LAB <REST .QD 4>>>>>>>
+		  <PUT .TEM ,WHERE-JMP <WHERE-JMP .QD>>
+		  <SET REDO "ADDI OR SUBI FOLLOWED BY A JUMP">
+		  <RETURN <>>)
+		 (<RETURN>)>)
+	       (<TYPE? .QD NULL>)
+	       (<RETURN>)>>>
+	   <SET NCOD .NNCOD>
+	   <REPEAT ()
+	     <AND <==? .NCOD .TOPCOD> <RETURN>>
+	     <SET NCOD <BACK .NCOD>>
+	     <COND
+	      (<TYPE? <SET QD <1 .NCOD>> NULL>)
+	      (<TYPE? .QD ATOM>
+	       <SET QD <FIND-NOD .MODLN .QD>>
+	       <COND
+		(<MAPF <>
+		  <FUNCTION (X) 
+			  <COND (<NOT <OR <TYPE? <1 .X> NULL>
+					  <==? <INS-JMP <1 .X>> ,JRST1>>>
+				 <MAPLEAVE <>>)
+				(T)>>
+		  <JUMPS-LN .QD>>
+		 <SET REDO "JUMP TO AN ADDI OR SUBI">
+		 <PUT .NCOD 1 <1 .NNCOD>>
+		 <PUT .NNCOD 1 <NAME-LN .QD>>
+		 <MAPF <>
+		  <FUNCTION (X
+			     "AUX" (IT
+				    <COND (<==? <1 .INST> `ADDI > `AOJA )
+					  (ELSE `SOJA )>))
+			  <PUT
+			   .X
+			   1
+			   <PUT <INSTYPE <INSTRUCTION
+					  .IT <2 .INST> <NAME-LN .QD>>>
+				,WHERE-JMP
+				.QD>>>
+		  <JUMPS-LN .QD>>)>
+	       <RETURN>)
+	      (<RETURN>)>>)
+	  (<AND <TYPE? .INST FORM>
+		<==? <1 .INST> DEALLOCATE>
+		<TYPE? <SET XD <1 <REST .NCOD>>> FORM>
+		<==? <1 .XD> DEALLOCATE>>
+	   <PUT .NCOD 1 ,NULL-INST>
+	   <PUT .XD 2 (!<2 .XD> !<2 .INST>)>)>>
+      .COD>
+     <MAPF <>
+      <FUNCTION (LN "AUX" (COMPS <JUMPS-LN .LN>)) 
+	 #DECL ((LN) LNODE)
+	 <COND
+	  (<NOT <EMPTY? .COMPS>>
+	   <SET COMPS
+		<MAPF ,LIST
+		      <FUNCTION (CMP) 
+			      #DECL ((CMP) TUPLE)
+			      <COND (<AND <UNCON-JMP <1 .CMP>>
+					  <==? <INS-JMP <1 .CMP>> ,JRST1>>
+				     <MAPRET .CMP>)
+				    (<MAPRET>)>>
+		      .COMPS>>
+	   <AND <CODE-LN .LN> <CROSS-OPT .TOPCOD <CODE-LN .LN> !.COMPS>>
+	   <SET COMPS <JUMPS-LN .LN>>
+	   <SET COMPS
+		<MAPF ,LIST
+		      <FUNCTION (CMP) 
+			      #DECL ((CMP) TUPLE)
+			      <COND (<AND <UNCON-JMP <1 .CMP>>
+					  <==? <INS-JMP <1 .CMP>> ,JRST1>>
+				     <MAPRET .CMP>)
+				    (<MAPRET>)>>
+		      .COMPS>>
+	   <MAPR <>
+		 <FUNCTION (CMP) 
+			 #DECL ((CMP) LIST)
+			 <CROSS-OPT .TOPCOD <1 .CMP> !<REST .CMP>>>
+		 .COMPS>)>>
+      .MODLN>
+     <SET MODLN <CLEAN-IT-UP .MODLN>>
+     <MAPR <>
+      <FUNCTION (NCOD "AUX" (INST <1 .NCOD>)) 
+	 #DECL ((NCOD) TUPLE)
+	 <COND
+	  (<AND <OR <AND <TYPE? .INST JUMP-INS> <UNCON-JMP .INST>>
+		    <AND <TYPE? .INST FORM>
+			 <==? <1 .INST> `JRST >
+			 <NOT <=? <2 .INST> '.HERE!-OP!-PACKAGE>>>>
+		<REPEAT ((NC <BACK .NCOD>))
+			<COND (<TYPE? <1 .NC> ATOM NULL>
+			       <COND (<==? .NC .TOPCOD> <RETURN T>)
+				     (<SET NC <BACK .NC>>)>)
+			      (<RETURN <NOT <SKIPPABLE <1 .NC>>>>)>>>
+	   <REPEAT ()
+	     <COND
+	      (<EMPTY? <SET NCOD <REST .NCOD>>> <RETURN>)
+	      (<OR
+		<TYPE? <SET QD <1 .NCOD>> ATOM>
+		<AND <TYPE? .QD FORM>
+		     <OR <==? <1 .QD> INTERNAL-ENTRY!-OP!-PACKAGE>
+			 <PSEUDO? .QD>
+			 <AND <TYPE? <1 .QD> ATOM>
+			      <OR <FIND-NOD .MODLN <1 .QD>>
+				  <NOT <GASSIGNED? <1 .QD>>>>>>>
+		<MAPF <>
+		 <FUNCTION (LN) 
+			 #DECL ((LN) LNODE)
+			 <COND (<AND <NOT <EMPTY? <JUMPS-LN .LN>>>
+				     <==? <CODE-LN .LN> .NCOD>>
+				<MAPLEAVE>)>>
+		 .MODLN>>
+	       <RETURN>)
+	      (<TYPE? .QD NULL>)
+	      (ELSE
+	       <COND (<TYPE? <1 .NCOD> JUMP-INS> <DEL-JUMP-LN .NCOD>)>
+	       <PUT .NCOD 1 ,NULL-INST>
+	       <SET REDO "FLUSH UNREACHABLE CODE">)>>)>>
+      .COD>
+     <SET MODLN <FLUSH-LABELS .MODLN>>
+     <REPEAT FFY ((PTR1 <REST .COD <- <LENGTH .COD> 1>>)
+		  (PTR2 <REST .COD <- <LENGTH .COD> 1>>) XD)
+	     #DECL ((PTR2 PTR1) TUPLE)
+	     <MAPF <>
+		   <FUNCTION (X) <COND (<==? <2 .X> .PTR1> <PUT .X 2 .PTR2>)>>
+		   .NLABLS>
+	     <COND (<TYPE? <SET XD <1 .PTR1>> NULL>)
+		   (<PUT .PTR2 1 .XD>
+		    <COND (<TYPE? .XD ATOM>
+			   <AND <SET XD <FIND-NOD .MODLN .XD>>
+				<PUT .XD ,CODE-LN .PTR2>>)
+			  (<TYPE? .XD JUMP-INS>
+			   <PUT <MEMQ .PTR1 <JUMPS-LN <WHERE-JMP .XD>>>
+				1
+				.PTR2>)>
+		    <SET PTR2 <BACK .PTR2>>)>
+	     <COND (<==? .PTR1 .TOPCOD>
+		    <REPEAT ()
+			    <COND (<==? .PTR2 .TOPCOD>
+				   <PUT .PTR2 1 ,NULL-INST>
+				   <RETURN T .FFY>)
+				  (<PUT .PTR2 1 ,NULL-INST>
+				   <SET PTR2 <BACK .PTR2>>)>>)
+		   (<SET PTR1 <BACK .PTR1>>)>>
+     <REPEAT (P1 (PTR1 .COD) (PTR2 .COD))
+	     <COND (<EMPTY? .PTR1>
+		    <MAPR <> <FUNCTION (X) <PUT .X 1 ,NULL-INST>> .PTR2>
+		    <RETURN>)>
+	     <MAPF <>
+		   <FUNCTION (X) 
+			   <COND (<==? <2 .X> .PTR1>
+				  <SET NNUMLABS <- .NNUMLABS 1>>
+				  <PUT .PTR2 1 <1 .X>>
+				  <PUT <FIND-NOD .MODLN <1 .X>> ,CODE-LN .PTR2>
+				  <SET PTR2 <REST .PTR2>>)>>
+		   .NLABLS>
+	     <COND (<TYPE? <SET P1 <1 .PTR1>> NULL>)
+		   (ELSE
+		    <COND (<NOT .REDO> <PUT .PTR2 1 <INSFIX .P1>>)
+			  (<PUT .PTR2 1 .P1>)>
+		    <COND (<TYPE? .P1 ATOM>
+			   <AND <SET XD <FIND-NOD .MODLN .P1>>
+				<PUT .XD ,CODE-LN .PTR2>>)
+			  (<TYPE? .P1 JUMP-INS>
+			   <PUT <MEMQ .PTR1 <JUMPS-LN <WHERE-JMP .P1>>>
+				1
+				.PTR2>)>
+		    <SET PTR2 <REST .PTR2>>)>
+	     <SET PTR1 <REST .PTR1>>>
+     <COND (.REDO <SET NLABLS ()> <SET REDO <>> <AGAIN .REOPT>)
+	   (ELSE
+	    <SET NLN
+		 <REPEAT ((N 0))
+			 <COND (<EMPTY? .COD> <RETURN .N>)
+			       (<TYPE? <1 .COD> NULL>)
+			       (ELSE
+				<PUT .XCOD 1 <1 .COD>>
+				<SET NNCOD .XCOD>
+				<SET XCOD <REST .XCOD>>
+				<SET N <+ .N 1>>)>
+			 <SET COD <REST .COD>>>>
+	    <OR <EMPTY? .NNCOD> <PUTREST .NNCOD ()>>)>>
+   <COND (<AND <ASSIGNED? PEEP> .PEEP>
+	  <PEEP-PRINT .LN .NLN .NUMLABS .NNUMLABS>)>>
+
+\ 
+
+<DEFINE INSTYPE (INST "AUX" AT QX QY) 
+	#DECL ((QX) <PRIMTYPE WORD>)
+	<COND
+	 (<AND <TYPE? .INST FORM>
+	       <TYPE? <SET AT <1 .INST>> OPCODE!-OP!-PACKAGE>
+	       <SET QX <CHTYPE <GETBITS .AT <BITS 9 27>> FIX>>
+	       <OR <==? .QX ,JRST1>
+		   <AND <G=? .QX ,LOW-SKP1> <L=? .QX ,HI-JMP2>>>>
+	  <SET QY <CHTYPE <GETBITS .QX <BITS 6 3>> FIX>>
+	  <COND (<AND <OR <==? .QX ,JRST1> <AND <N==? .QY 24> <0? <MOD .QY 2>>>>
+		      <NOT <0? <SET QY <CHTYPE <GETBITS .QX <BITS 3>> FIX>>>>>
+		 <CHTYPE (.QX .QY <==? .QY 4> <> !<REST .INST>) JUMP-INS>)
+		(<NOT <0? <SET QY <CHTYPE <GETBITS .QX <BITS 3>> FIX>>>>
+		 <CHTYPE (.QX .QY <> <==? .QY 4> !<REST .INST>) SKIP-INS>)
+		(.INST)>)
+	 (<AND <ASSIGNED? QX>
+	       <G=? .QX ,LO-TST1>
+	       <L=? .QX ,HI-TST1>
+	       <NOT <0? <SET QY <CHTYPE <GETBITS .QX <BITS 2 1>> FIX>>>>>
+	  <CHTYPE (.QX .QY T <==? .QY 2> !<REST <CHTYPE .INST LIST>>)
+		  SKIP-INS>)
+	 (.INST)>>
+
+<DEFINE NFIND-LAB (INST) 
+	<COND (<TYPE? .INST ATOM> .INST)
+	      (<MONAD? .INST> <>)
+	      (<MAPF <>
+		     <FUNCTION (X) 
+			     <COND (<SET X <NFIND-LAB .X>> <MAPLEAVE .X>)>>
+		     .INST>)>>
+
+<DEFINE FIND-NOD (MD AT) 
+	#DECL ((MD) LIST (AT) ATOM)
+	<MAPF <>
+	      <FUNCTION (X) 
+		      #DECL ((X) LNODE)
+		      <COND (<MEMQ .AT <LABLS-LN .X>> <MAPLEAVE .X>)>>
+	      .MD>>
+
+<DEFINE INSFIX (X "AUX" XD) 
+   <COND
+    (<TYPE? .X JUMP-INS>
+     <INSTRUCTION
+      <CHTYPE <PUTBITS #WORD *000000000000*
+		       <BITS 9 27>
+		       <CHTYPE <ORB <ANDB <INS-JMP .X> 504> <COND-JMP .X>> FIX>>
+	      OPCODE!-OP!-PACKAGE>
+      !<COND (<==? <LENGTH <SET XD <REST .X 4>>> 2>
+	      (<1 .XD> <NAME-LN <WHERE-JMP .X>>))
+	     (ELSE (<NAME-LN <WHERE-JMP .X>>))>>)
+    (<TYPE? .X SKIP-INS>
+     <INSTRUCTION
+      <COND (<TEST-SKP .X>
+	     <CHTYPE <PUTBITS #WORD *000000000000*
+			      <BITS 9 27>
+			      <CHTYPE <ORB <ANDB <INS-SKP .X> 505>
+					   <* <COND-SKP .X> 2>>
+				      FIX>>
+		     OPCODE!-OP!-PACKAGE>)
+	    (ELSE
+	     <CHTYPE <PUTBITS #WORD *000000000000*
+			      <BITS 9 27>
+			      <CHTYPE <ORB <ANDB <INS-SKP .X> 504>
+					   <COND-SKP .X>>
+				      FIX>>
+		     OPCODE!-OP!-PACKAGE>)>
+      !<REST .X 4>>)
+    (ELSE .X)>>
+
+<DEFINE PRT (X) 
+	#DECL ((X) STRUCTURED)
+	<MAPF <>
+	      <FUNCTION (X) 
+		      <COND (<TYPE? .X ATOM>) (ELSE <PRINC "	">)>
+		      <PRIN1 .X>
+		      <CRLF>>
+	      .X>>
+
+<DEFINE CROSS-OPT (TOPCOD NCOD "TUPLE" COMPS "AUX" NEWLN) 
+   #DECL ((TOPCOD NCOD) TUPLE (COMPS) TUPLE (MODLN NLABS) LIST)
+   <REPEAT (QD LABL (CNT 0) (NEEDLABEL T))
+     #DECL ((CNT) FIX (COMPS) TUPLE)
+     <AND <==? .NCOD .TOPCOD> <RETURN>>
+     <SET NCOD <BACK .NCOD>>
+     <MAPR <>
+	   <FUNCTION (XD "AUX" (XR <1 .XD>))
+		   #DECL ((XD) TUPLE (XR) <OR TUPLE NULL>)
+		   <COND (<TYPE? .XR NULL>)
+			 (<==? .XR .TOPCOD>)
+			 (ELSE
+			  <REPEAT ()
+				  <PUT .XD 1 <SET XR <BACK .XR>>>
+				  <SET CNT -1>
+				  <COND (<TYPE? <1 .XR> NULL>) (<RETURN>)>>)>>
+	   .COMPS>
+     <COND (<0? .CNT> <RETURN>) (<SET CNT 0>)>
+     <COND (.NEEDLABEL <SET LABL <MAKE:LABEL>> <SET NEEDLABEL <>>)>
+     <SET NEWLN <CHTYPE [(.LABL) () .NCOD .LABL] LNODE>>
+     <SET QD <1 .NCOD>>
+     <COND (<OR <SKIPPABLE <1 <BACK .NCOD>>> <SKIPPABLE <1 .NCOD>>> <RETURN>)>
+     <MAPR <>
+      <FUNCTION (NPCOD "AUX" (NNCOD <1 .NPCOD>) ITEM)
+	      #DECL ((NPCOD) TUPLE (NNCOD) <OR NULL TUPLE>)
+	      <COND (<TYPE? .NNCOD NULL>)
+		    (<SET ITEM <1 .NNCOD>>
+		     <COND (<AND <N==? .NCOD .NNCOD> <=? .ITEM .QD>>
+			    <SET NEEDLABEL T>
+			    <COND (<TYPE? <1 .NNCOD> JUMP-INS>
+				   <DEL-JUMP-LN .NNCOD>)>
+			    <COND (<==? .NCOD <NEXTS <REST .NNCOD> T>>
+				   <PUT .NNCOD 1 ,NULL-INST>)
+				  (ELSE
+				   <PUT .NNCOD
+					1
+					<CHTYPE (,JRST1 4 T .NEWLN .LABL)
+						JUMP-INS>>
+				   <PUT .NEWLN
+					,JUMPS-LN
+					(.NNCOD !<JUMPS-LN .NEWLN>)>)>
+			    <SET REDO "CROSS-OPTIMIZATION">
+			    <SET CNT -1>)
+			   (<PUT .NPCOD 1 ,NULL-INST>)>)>>
+      .COMPS>
+     <COND (<NOT <0? .CNT>>
+	    <SET NLABLS ((.LABL .NCOD) !.NLABLS)>
+	    <SET MODLN (.NEWLN !.MODLN)>)>
+     <COND (<0? .CNT> <RETURN>) (<SET CNT 0>)>>>
+
+<DEFINE FF (X) #DECL ((X) STRUCTURED) <MAPF <> ,& .X> <CRLF>>
+
+"ROUTINE TO DETERMINE WHETHER AN INSTRUCTION CAN SKIP"
+
+<DEFINE HACK-PRINT (X) <PRIN1 <INSFIX .X>>>
+
+<DEFINE SKIPPABLE (INST) 
+	<OR <TYPE? .INST SKIP-INS>
+	    <AND <TYPE? .INST FORM>
+		 <OR <==? <1 .INST> `XCT >
+		     <==? <1 .INST> `PUSHJ >
+		     <AND <G=? <LENGTH .INST> 2>
+			  <MEMBER '.HERE!-OP!-PACKAGE .INST>>>>>>
+
+"ROUTINE TO DELETE A JUMP-LN FROM AN LNODE."
+
+<DEFINE DEL-JUMP-LN (COD "AUX" XD QD (JMP <1 .COD>)) 
+	#DECL ((JMP) JUMP-INS (COD) TUPLE (XD QD) <OR FALSE LIST>)
+	<COND (<SET XD <MEMQ .COD
+			     <SET QD <JUMPS-LN <CHTYPE <WHERE-JMP .JMP>
+							LNODE>>>>>
+	       <COND (<==? .QD .XD> <PUT <CHTYPE <WHERE-JMP .JMP> LNODE>
+					 ,JUMPS-LN <REST .XD>>)
+		     (ELSE
+		      <PUTREST <REST .QD <- <LENGTH .QD> <LENGTH .XD> 1>>
+			       <REST .XD>>)>
+	       T)>>
+
+<DEFINE CHANGE-COND (INST) 
+	#DECL ((INST) SKIP-INS)
+	<PUT .INST
+	     ,COND-SKP
+	     <COND (<TEST-SKP .INST> <NTH ,TEST-TBL <+ <COND-SKP .INST> 1>>)
+		   (<NTH ,SKIP-TBL <+ <COND-SKP .INST> 1>>)>>>
+
+<DEFINE MAKE:LABEL ("AUX" XX) #DECL ((LABNUM) FIX)
+	<OR <LOOKUP <SET XX
+			 <STRING "OPT" <UNPARSE <SET LABNUM <+ .LABNUM 1>>>>>
+		    <GET TMP OBLIST>>
+	    <INSERT .XX <GET TMP OBLIST>>>>
+
+<DEFINE NEXTS (XX "OPTIONAL" (XT <>) (NN 1) "AUX" XR) 
+	#DECL ((XX) TUPLE (NN) FIX)
+	<REPEAT ()
+		<COND (<TYPE? <SET XR <1 .XX>> NULL ATOM>)
+		      (<0? <SET NN <- .NN 1>>> <RETURN .XR>)>
+		<AND <EMPTY? <SET XX <REST .XX>>>
+		     <SET XX <BACK .XX>>
+		     <RETURN .XR>>>
+	<COND (.XT .XX) (ELSE .XR)>>
+
+<DEFINE BACKS (XX TOPCOD "OPTIONAL" (XT <>) (NN 1) "AUX" XR)
+	#DECL ((XX TOPCOD) TUPLE (NN) FIX)
+	<REPEAT ()
+		<AND <==? <SET XX <BACK .XX>> .TOPCOD> <RETURN .XR>>
+		<COND (<TYPE? <SET XR <1 .XX>> NULL ATOM>)
+		      (<0? <SET NN <- .NN 1>>> <RETURN .XR>)>>
+	<COND (.XT .XX)(ELSE .XR)>>
+	
+
+<DEFINE ADDON (AD OB) 
+	#DECL ((AD OB) <PRIMTYPE LIST>)
+	<COND (<EMPTY? .OB> .AD)
+	      (ELSE <PUTREST <REST .OB <- <LENGTH .OB> 1>> .AD> .OB)>>
+
+<DEFINE FIND-LAB (INST) 
+	<MAPF <>
+	      <FUNCTION (X) <COND (<TYPE? .X ATOM> <MAPLEAVE .X>)>>
+	      .INST>>
+
+<DEFINE PSEUDO? (AT) 
+	#DECL ((VALUE) <OR ATOM FALSE>)
+	<AND <TYPE? .AT FORM>
+	     <==? <1 .AT> PSEUDO!-OP!-PACKAGE>
+	     <==? <LENGTH .AT> 2>
+	     <TYPE? <SET AT <2 .AT>> FORM>
+	     <==? <LENGTH .AT> 3>
+	     <==? <1 .AT> SETG>
+	     <=? <3 .AT> '<ANDB 262143 <CHTYPE .HERE!-OP!-PACKAGE FIX>>>
+	     <2 .AT>>>
+
+<DEFINE MUNG-LAB (INST ATM) 
+	<COND (<TYPE? .INST ATOM> .ATM)
+	      (<MONAD? .INST> <>)
+	      (ELSE
+	       <MAPR <>
+		     <FUNCTION (IN "AUX" (OB <1 .IN>)) 
+			     <COND (<SET OB <MUNG-LAB .OB .ATM>>
+				    <PUT .IN 1 .OB>
+				    <MAPLEAVE <>>)>>
+		     .INST>
+	       .INST)>>
+
+<PRINTTYPE SKIP-INS ,HACK-PRINT>
+
+<PRINTTYPE JUMP-INS ,HACK-PRINT>
+
+<DEFINE PEEP-PRINT (LN NLN NUMLABS NNUMLABS) 
+    <COND (<NOT <ASSIGNED? OUTL>>
+	<PRINC "Peephole  ">
+	<SET LN <- .LN .NUMLABS>>
+	<SET NLN <- .NLN .NUMLABS <- .NNUMLABS>>>
+	<PRIN1 <FIX <* 100 </ <FLOAT <- .LN .NLN>> .LN>>>>
+	<PRINC "% ">
+	<PRIN1 .LN>
+	<PRINC "/">
+	<PRIN1 .NLN>)
+       (ELSE
+	<PRINLC "Peephole   ">
+	<SET LN <- .LN .NUMLABS>>
+	<SET NLN <- .NLN .NUMLABS <- .NNUMLABS>>>
+	<PRINL1 <FIX <* 100 </ <FLOAT <- .LN .NLN>> .LN>>>>
+	<PRINLC "% ">
+	<PRINL1 .LN>
+	<PRINLC "/">
+	<PRINL1 .NLN>)>>
+
+<DEFINE CLEAN-IT-UP (MDLN) 
+   #DECL ((MDLN) <LIST [REST LNODE]>)
+   <MAPF <>
+    <FUNCTION (LND "AUX" JMP FIN-LNODE) 
+	    #DECL ((LND) LNODE)
+	    <COND
+	     (<OR <AND <TYPE? <SET JMP <1 <CODE-LN .LND>>> JUMP-INS>
+		       <UNCON-JMP .JMP>
+		       <SET FIN-LNODE <FIND-END-OF-CHAIN .JMP>>>
+		  <AND <TYPE? <SET JMP <1 <BACK <CODE-LN .LND>>>> ATOM>
+		       <SET JMP <FIND-NOD .MDLN .JMP>>
+		       <==? <CODE-LN .JMP> <BACK <CODE-LN .LND>>>
+		       <SET FIN-LNODE .JMP>>>
+	      <MAPF <>
+		    <FUNCTION (JMPL "AUX" JMP) 
+			    #DECL ((JMPL) TUPLE (JMP) JUMP-INS)
+			    <DEL-JUMP-LN .JMPL>
+			    <SET JMP <1 .JMPL>>
+			    <PUT .JMP ,WHERE-JMP .FIN-LNODE>
+			    <PUT .FIN-LNODE
+				 ,JUMPS-LN
+				 <ADDON (.JMPL) <JUMPS-LN .FIN-LNODE>>>>
+		    <JUMPS-LN .LND>>)>>
+    .MDLN>
+   <FLUSH-LABELS .MDLN>>
+
+<DEFINE FIND-END-OF-CHAIN (JMP "AUX" (DEFAULT <WHERE-JMP .JMP>)) 
+	#DECL ((JMP) JUMP-INS)
+	<REPEAT (NJMP)
+		<COND (<TYPE? <SET NJMP <1 <CODE-LN <WHERE-JMP .JMP>>>>
+			      JUMP-INS>
+		       <SET DEFAULT <WHERE-JMP .JMP>>
+		       <SET JMP .NJMP>)
+		      (<RETURN .DEFAULT>)>>>
+
+<DEFINE FLUSH-LABELS (MODLN "AUX" (TEM ()))
+   #DECL ((MODLN) LIST (SLABS) <LIST [REST LNODE]> (NLABLS) <LIST [REST LIST]>
+	  (NNUMLABS) FIX)
+   <MAPR <>
+    <FUNCTION (Y "AUX" (X <1 .Y>)) #DECL ((Y) <LIST LNODE [REST LNODE]>
+					  (X) LNODE)
+	    <COND (<AND <NOT <MEMQ .X .SLABS>>
+			<EMPTY? <JUMPS-LN .X>>
+			<CODE-LN .X>>
+		   <REPEAT ((N .NLABLS) N1 (LL <LABLS-LN .X>))
+			   #DECL ((N1 N) <LIST [REST LIST]>
+				  (LL) <LIST [REST ATOM]>)
+			   <AND <EMPTY? .N> <RETURN>>
+			   <COND (<MEMQ <1 <1 .N>> .LL>
+				  <COND (<==? .N .NLABLS>
+					 <SET NLABLS <REST .NLABLS>>)
+					(ELSE <PUTREST .N1 <REST .N>>)>
+				  <RETURN>)>
+			   <SET N <REST <SET N1 .N>>>>
+		   <COND (<==? .Y .MODLN> <SET MODLN <REST .MODLN>>)
+			 (ELSE <PUTREST .TEM <REST .Y>> <SET Y .TEM>)>
+		   <COND (<==? <NAME-LN .X> <1 <CODE-LN .X>>>
+			  <PUT <CODE-LN .X> 1 ,NULL-INST>
+			  <SET NNUMLABS <+ .NNUMLABS 1>>)>
+		   <SET REDO "FLUSH REDUNDANT LABELS">)>
+	    <SET TEM .Y>>
+    .MODLN>
+   .MODLN>
+
+<ENDPACKAGE>
+

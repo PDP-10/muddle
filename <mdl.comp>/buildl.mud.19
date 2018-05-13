@@ -1,0 +1,260 @@
+<PACKAGE "BUILDL">
+
+<ENTRY LIST-BUILD>
+
+<USE "CACS" "CODGEN" "COMCOD" "COMPDEC" "CHKDCL">
+
+<DEFINE LIST-BUILD (NOD W
+		    "AUX" (K <KIDS .NOD>) (KK ()) N TEM TT T1 D1 D2 D3
+			  (OOPSF <>))
+   #DECL ((K KK) <LIST [REST NODE]> (N NOD) NODE)
+   <COND
+    (<MAPF <>
+	   <FUNCTION (N) 
+		   #DECL ((N) NODE)
+		   <COND (<AND <G=? <LENGTH .N> <CHTYPE <INDEX ,SIDE-EFFECTS>
+							 FIX>>
+			       <SIDE-EFFECTS .N>>
+			  <MAPLEAVE <>>)
+			 (ELSE <SET KK (.N !.KK)> T)>>
+	   .K>
+     <COND (<AND <==? <NODE-TYPE <SET N <1 .KK>>> ,SEG-CODE>
+		 <==? <STRUCTYP <RESULT-TYPE <SET N <1 <KIDS .N>>>>> LIST>>
+	    <SET TEM
+		 <GEN .N
+		      <COND (<EMPTY? <REST .KK>> .W)
+			    (ELSE <DATUM LIST ,AC-E>)>>>
+	    <SET KK <REST .KK>>)
+	   (ELSE <SET TEM <REFERENCE ()>>)>
+     <MAPF <>
+	   <FUNCTION (N "AUX" (COD <DEFERN <RESULT-TYPE .N>>)) 
+		   #DECL ((N) NODE (COD) FIX)
+		   <COND (<==? <NODE-TYPE .N> ,SEG-CODE>
+			  <SET TEM
+			       <SEG-BUILD-LIST <1 <KIDS .N>> .TEM <> <> <>>>)
+			 (ELSE
+			  <SET T1 <GEN .N <DATUM ,AC-C ,AC-D>>>
+			  <SET TEM <MOVE:ARG .TEM <DATUM LIST ,AC-E>>>
+			  <RET-TMP-AC .TEM>
+			  <RET-TMP-AC .T1>
+			  <REGSTO T>
+			  <EMIT <INSTRUCTION `PUSHJ 
+					     `P* 
+					     <COND (<0? .COD> |C1CONS )
+						   (ELSE |CICONS )>>>
+			  <SET TEM <FUNCTION:VALUE T>>)>>
+	   .KK>
+     <MOVE:ARG .TEM .W>)
+    (ELSE
+     <COND (<==? <NODE-TYPE <SET N <1 .K>>> ,SEG-CODE>
+	    <SET TEM <SEG-BUILD-LIST <1 <KIDS .N>> <REFERENCE ()> T T <>>>
+	    <SET D3 <2 .TEM>>
+	    <SET D2 <1 .TEM>>
+	    <SET OOPSF <3 .TEM>>)
+	   (ELSE
+	    <SET D1 <GEN .N <DATUM ,AC-C ,AC-D>>>
+	    <SGETREG ,AC-E <>>
+	    <MUNG-AC ,AC-E>
+	    <EMIT <INSTRUCTION `MOVEI  `E*  0>>
+	    <RET-TMP-AC .D1>
+	    <REGSTO T>
+	    <EMIT <INSTRUCTION
+		   `PUSHJ 
+		   `P* 
+		   <COND (<0? <DEFERN <RESULT-TYPE .N>>> |C1CONS )
+			 (ELSE |CICONS )>>>
+	    <SET D2 <DATUM LIST ,AC-B>>
+	    <SET D3 <DATUM LIST ,AC-B>>
+	    <PUT ,AC-B ,ACLINK (.D2)>
+	    <REGSTO T>
+	    <PUT ,AC-B ,ACLINK (.D3)>)>
+     <MAPR <>
+      <FUNCTION (L "AUX" (N <1 .L>)) 
+	 #DECL ((N) NODE)
+	 <COND
+	  (<==? <NODE-TYPE .N> ,SEG-CODE>
+	   <COND
+	    (<AND <==? <STRUCTYP <RESULT-TYPE <SET N <1 <KIDS .N>>>>> LIST>
+		  <EMPTY? <REST .L>>>
+	     <SET D1 <GEN .N <DATUM LIST ANY-AC>>>
+	     <COND (.OOPSF
+		    <TOACV .D1>
+		    <PUT <DATVAL .D1> ,ACPROT T>
+		    <EMIT <INSTRUCTION `SKIPE 
+				       <ACSYM <SET TEM <GETREG <>>>>
+				       !<ADDR:VALUE .D3>>>
+		    <PUT <DATVAL .D1> ,ACPROT <>>)>
+	     <EMIT <INSTRUCTION `HRRM 
+				<ACSYM <DATVAL .D1>>
+				`@ 
+				!<ADDR:VALUE .D3>>>
+	     <COND (.OOPSF
+		    <EMIT <INSTRUCTION `SKIPN  <ADDRSYM .TEM>>>
+		    <COND (<TYPE? <DATVAL .D2> AC>
+			   <EMIT <INSTRUCTION
+				  `MOVE 
+				  <ACSYM <DATVAL .D2>>
+				  !<ADDR:VALUE .D1>>>)
+			  (ELSE
+			   <EMIT <INSTRUCTION
+				  `MOVEM 
+				  <ACSYM <DATVAL .D1>>
+				  !<ADDR:VALUE .D2>>>)>)>
+	     <RET-TMP-AC .D1>)
+	    (ELSE <SET D3 <SEG-BUILD-LIST .N .D3 T <> <COND (.OOPSF .D2)>>>)>)
+	  (ELSE
+	   <SET D1 <GEN .N <DATUM ,AC-C ,AC-D>>>
+	   <SGETREG ,AC-E <>>
+	   <SET D1 <MOVE:ARG .D1 <DATUM ,AC-C ,AC-D>>>
+	   <EMIT '<`MOVEI  `E* >>
+	   <RET-TMP-AC .D1>
+	   <REGSTO T>
+	   <EMIT <INSTRUCTION
+		  `PUSHJ 
+		  `P* 
+		  <COND (<0? <DEFERN <RESULT-TYPE .N>>> |C1CONS )
+			(ELSE |CICONS )>>>
+	   <COND (.OOPSF <EMIT <INSTRUCTION `SKIPE  `C*  !<ADDR:VALUE .D3>>>)>
+	   <EMIT <INSTRUCTION `HRRM  `B*  `@  !<ADDR:VALUE .D3>>>
+	   <EMIT <INSTRUCTION `MOVEM  `B*  !<ADDR:VALUE .D3>>>
+	   <COND (.OOPSF
+		  <EMIT '<`SKIPN  `C >>
+		  <EMIT <INSTRUCTION `MOVEM  `B*  !<ADDR:VALUE .D2>>>)>)>>
+      <REST .K>>
+     <RET-TMP-AC .D3>
+     <MOVE:ARG .D2 .W>)>>
+
+<DEFINE SEG-BUILD-LIST (NOD DAT FLG FST SMQ
+			"AUX" (TYP <RESULT-TYPE .NOD>) (TG2 <MAKE:TAG>)
+			      (ITYP <ISTYPE? .TYP>) (TPS <STRUCTYP .TYP>)
+			      (ET <GET-ELE-TYPE .TYP ALL>) (DF <DEFERN .ET>)
+			      (ML <MINL .TYP>) (TG1 <MAKE:TAG>) TEM D1 D3 FDAT
+			      D4)
+	#DECL ((NOD) NODE (DAT D1 D2 FDAT) DATUM (SMQ) <OR DATUM FALSE>)
+	<SET ET <ISTYPE-GOOD? .ET>>
+	<SET D1
+	     <GEN .NOD
+		  <DATUM <COND (<ISTYPE-GOOD? .ITYP> .ITYP)
+			       (<ISTYPE-GOOD? .TPS> .TPS)
+			       (ELSE ANY-AC)>
+			 ANY-AC>>>
+	<COND (<ISTYPE-GOOD? .TPS> <DATTYP-FLUSH .D1> <PUT .D1 ,DATTYP .TPS>)>
+	<COND (<OR .FST <NOT .FLG>>
+	       <COND (<0? .ML>
+		      <SET DAT
+			   <MOVE:ARG .DAT
+				     <DATUM LIST
+					    <COND (.FST ,AC-B) (ELSE ,AC-E)>>>>
+		      <COND (.FST
+			     <RET-TMP-AC .D1>
+			     <SET FDAT <DATUM LIST <DATVAL .DAT>>>
+			     <REGSTO T>
+			     <PUT ,AC-B ,ACLINK (.FDAT)>
+			     <PUT <DATVAL .D1> ,ACLINK (.D1)>
+			     <COND (<TYPE? <DATTYP .D1> AC>
+				    <PUT <DATTYP .D1> ,ACLINK (.D1)>)>)>
+		      <MT-TEST .D1 .TG1 .TPS>)>
+	       <SET TEM
+		    <OFFPTR <COND (<==? .TPS UVECTOR> -1) (ELSE 0)> .D1 .TPS>>
+	       <SET D3 <DATUM <COND (.ET) (ELSE .TEM)> .TEM>>
+	       <SET D3 <MOVE:ARG .D3 <DATUM ,AC-C ,AC-D> T>>
+	       <COND (<AND .FLG .FST> <RET-TMP-AC .FDAT>)
+		     (<NOT .FLG>
+		      <SET DAT <MOVE:ARG .DAT <DATUM LIST ,AC-E>>>
+		      <RET-TMP-AC .DAT>)>
+	       <RET-TMP-AC .D3>
+	       <REGSTO T>
+	       <AND .FST <EMIT '<`MOVEI  `E* >>>
+	       <EMIT <INSTRUCTION `PUSHJ 
+				  `P* 
+				  <COND (<0? .DF> |C1CONS ) (ELSE |CICONS )>>>
+	       <COND (<AND .FST <0? .ML>>
+		      <EMIT <INSTRUCTION `MOVEM  `B*  !<ADDR:VALUE .DAT>>>)>)>
+	<COND (<OR <NOT .FST> <NOT <0? .ML>>>
+	       <SET FDAT <DATUM LIST ,AC-B>>
+	       <PUT ,AC-B ,ACLINK (.FDAT)>)>
+	<COND (<OR .FST <NOT .FLG>> <SET D1 <1REST .D1 .TPS>>)>
+	<COND (<OR <NOT .FST> <NOT <0? .ML>>>
+	       <SET DAT <MOVE:ARG .FDAT <DATUM LIST ,AC-E> T>>)>
+	<RET-TMP-AC .D1>
+	<RET-TMP-AC .FDAT>
+	<REGSTO T>
+	<PUT <DATVAL .D1> ,ACLINK (.D1)>
+	<COND (<TYPE? <DATTYP .D1> AC> <PUT <DATTYP .D1> ,ACLINK (.D1)>)>
+	<PUT ,AC-B ,ACLINK (.FDAT)>
+	<COND (<L=? .ML 1> <MT-TEST .D1 .TG1 .TPS>)>
+	<SET D4 <DATUM !.D1>>
+	<LABEL:TAG .TG2>
+	<SET TEM <OFFPTR <COND (<==? .TPS UVECTOR> -1) (ELSE 0)> .D1 .TPS>>
+	<SET D3
+	     <MOVE:ARG <DATUM <COND (.ET) (ELSE .TEM)> .TEM>
+		       <DATUM ,AC-C ,AC-D>
+		       T>>
+	<SGETREG ,AC-E <>>
+	<RET-TMP-AC .D3>
+	<COND (.FLG <EMIT '<`MOVEI  `E* >>)
+	      (ELSE <EMIT <INSTRUCTION `HRRZ  `E*  `@  !<ADDR:VALUE .FDAT>>>)>
+	<REGSTO T>
+	<EMIT <INSTRUCTION `PUSHJ 
+			   `P* 
+			   <COND (<0? .DF> |C1CONS ) (ELSE |CICONS )>>>
+	<COND (.SMQ <EMIT <INSTRUCTION `SKIPE  `C*  !<ADDR:VALUE .FDAT>>>)>
+	<EMIT <INSTRUCTION `HRRM  `B*  `@  !<ADDR:VALUE .FDAT>>>
+	'<EMIT <INSTRUCTION `MOVEM  `B*  !<ADDR:VALUE .FDAT>>>
+	<COND (.SMQ
+	       <EMIT '<`SKIPN  `C >>
+	       <EMIT <INSTRUCTION `MOVEM  `B*  !<ADDR:VALUE .SMQ>>>)>
+	<REST-N-JMP .D1 .TPS .TG2 .D4>
+	<COND (.FLG <SET FDAT <DATUM LIST ,AC-B>> <PUT ,AC-B ,ACLINK (.FDAT)>)
+	      (ELSE <SET DAT <MOVE:ARG .DAT <DATUM LIST ,AC-E>>>)>
+	<LABEL:TAG .TG1>
+	<COND (<AND .FLG .FST> (.DAT .FDAT <0? .ML>)) (.FLG .FDAT) (ELSE .DAT)>>
+
+<DEFINE MT-TEST (D TG TP) #DECL ((TP) ATOM (D) DATUM)
+	<SET D <TOACV .D>>
+	<COND (<==? .TP LIST> <EMIT <INSTRUCTION `JUMPE <ACSYM <DATVAL .D>> .TG>>)
+	      (ELSE <EMIT <INSTRUCTION `JUMPGE <ACSYM <DATVAL .D>> .TG>>)>>
+
+<DEFINE 1REST (D TP
+	       "AUX" (DD
+		      <DATUM <COND (<ISTYPE-GOOD? .TP> .TP) (ELSE ANY-AC)>
+			     ANY-AC>) AC)
+	#DECL ((TP) ATOM (D DD) DATUM (AC) AC)
+	<COND (<==? .TP LIST>
+	       <PUT .DD ,DATVAL <SET AC <GETREG .DD>>>
+	       <EMIT <INSTRUCTION `HRRZ  <ACSYM .AC> `@  !<ADDR:VALUE .D>>>
+	       <RET-TMP-AC .D>)
+	      (ELSE
+	       <SET DD <MOVE:ARG .D .DD>>
+	       <EMIT <INSTRUCTION `ADD 
+				  <ACSYM <DATVAL .DD>>
+				  <COND (<==? .TP UVECTOR> '[<1 (1)>])
+					(ELSE '[<2 (2)>])>>>)>
+	.DD>
+
+<DEFINE REST-N-JMP (D TP TG D1 "AUX" (AC <DATVAL .D1>)) 
+	#DECL ((D D1) DATUM (TP) ATOM (AC) AC)
+	<COND (<==? .TP LIST>
+	       <EMIT <INSTRUCTION `HRRZ  <ACSYM .AC> `@  !<ADDR:VALUE .D>>>
+	       <EMIT <INSTRUCTION `JUMPN  <ACSYM .AC> .TG>>
+	       <RET-TMP-AC .D>
+	       <PUT .AC ,ACLINK (.D1 !<ACLINK .AC>)>)
+	      (ELSE
+	       <EMIT <INSTRUCTION `MOVE  <ACSYM .AC> !<ADDR:VALUE .D>>>
+	       <COND (<TYPE? <DATTYP .D1> AC>
+		      <EMIT <INSTRUCTION `MOVE 
+					 <ACSYM <DATTYP .D1>>
+					 !<ADDR:TYPE .D>>>
+		      <PUT <DATTYP .D1> ,ACLINK (.D1 !<ACLINK
+						       <DATTYP .D1>>)>)>
+	       <RET-TMP-AC .D>
+	       <PUT .AC ,ACLINK (.D1 !<ACLINK .AC>)>
+	       <COND (<==? .TP UVECTOR>
+		      <EMIT <INSTRUCTION `AOBJN  <ACSYM .AC> .TG>>)
+		     (ELSE
+		      <EMIT <INSTRUCTION `ADD  <ACSYM .AC> '[<2 (2)>]>>
+		      <EMIT <INSTRUCTION `JUMPL  <ACSYM .AC> .TG>>)>)>
+	T>
+
+
+<ENDPACKAGE>

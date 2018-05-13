@@ -1,0 +1,132 @@
+<PACKAGE "NOTANA">
+
+<ENTRY NOT-ANA TYPE?-ANA ==?-ANA>
+
+<USE "SYMANA" "CHKDCL" "COMPDEC" "CARANA" "ADVMESS">
+
+
+"	This module contains analysis and generation functions for
+NOT, TYPE? and ==?.  See SYMANA for more details about ANALYSIS and
+CODGEN for more detali abour code generation.
+"
+
+"Analyze NOT usage make sure arg can be FALSE."
+
+<DEFINE NOT-ANA (NOD RTYP
+		 "AUX" TEM (FLG <==? .PRED <PARENT .NOD>>) (STR .TRUTH)
+		       (SUNT .UNTRUTH))
+	#DECL ((NOD) NODE)
+	<PROG ((PRED <AND .FLG .NOD>) (TRUTH ()) (UNTRUTH ()))
+	      #DECL ((PRED) <SPECIAL ANY> (TRUTH UNTRUTH) <SPECIAL LIST>)
+	      <COND (<SET TEM <SEGFLUSH .NOD .RTYP>> <SET FLG <>>)
+		    (ELSE
+		     <OR <1? <LENGTH <KIDS .NOD>>>
+			     <MESSAGE ERROR "WRONG NUMBER OF ARGS TO  NOT " .NOD>>
+		     <SET TEM <ANA <1 <KIDS .NOD>> ANY>>
+		     <PUT .NOD ,NODE-TYPE ,NOT-CODE>
+		     <SET TEM
+			  <COND (<==? <ISTYPE? .TEM> FALSE>
+				 <TYPE-OK? ATOM .RTYP>)
+				(<TYPE-OK? .TEM FALSE>
+				 <TYPE-OK? '<OR FALSE ATOM> .RTYP>)
+				(ELSE <TYPE-OK? FALSE .RTYP>)>>
+		     <SET STR .UNTRUTH>
+		     <SET SUNT .TRUTH>)>>
+	<COND (.FLG
+	       <SET TRUTH (!.STR !.TRUTH)>
+	       <SET UNTRUTH (!.SUNT !.UNTRUTH)>)>
+	.TEM>
+
+<PUT ,NOT ANALYSIS ,NOT-ANA>
+
+"	Analyze N==? and ==? usage.  Complain if types differ such that
+ the args  can never be ==?."
+
+<DEFINE ==?-ANA (NOD RTYP
+		 "AUX" (K <KIDS .NOD>)
+		       (WHON <AND <==? .PRED <PARENT .NOD>> .NOD>) (WHO ())
+		       (GLN .NOD) (GLE ()))
+	#DECL ((NOD) NODE (K) <LIST [REST NODE]> (WHON GLN) <SPECIAL NODE>
+	       (WHO GLE) <SPECIAL LIST>)
+	<COND (<SEGFLUSH .NOD .RTYP>)
+	      (ELSE
+	       <ARGCHK 2 <LENGTH .K> ==?>
+	       <ANA <1 .K> ANY>
+	       <ANA <2 .K> ANY>
+	       <PUT .NOD ,NODE-TYPE ,EQ-CODE>
+	       <COND (<AND <==? <ISTYPE? <RESULT-TYPE <1 .K>>> FIX>
+			   <==? <ISTYPE? <RESULT-TYPE <2 .K>>> FIX>>
+		      <PUT .NOD ,NODE-TYPE ,TEST-CODE>
+		      <HACK-BOUNDS .WHO .GLE .NOD .K>)>
+	       <TYPE-OK? '<OR FALSE ATOM> .RTYP>)>>
+
+<PUT ,==? ANALYSIS ,==?-ANA>
+
+<PUT ,N==? ANALYSIS ,==?-ANA>
+
+"	Ananlyze TYPE? usage warn about any potential losers by using
+TYPE-OK?. "
+
+<DEFINE TYPE?-ANA (NOD RTYP
+		   "AUX" (K <KIDS .NOD>) (LN <LENGTH .K>) ITYP (ALLGOOD T)
+			 (WHO ()) (FTYP ()) (FNOK <>)
+			 (WHON <AND <==? .PRED <PARENT .NOD>> .NOD>) TTYP)
+   #DECL ((NOD) NODE (K) <LIST [REST NODE]> (LN) FIX (ITYP) ANY
+	  (ALLGOOD) <OR FALSE ATOM> (WHON) <SPECIAL <OR NODE FALSE>>
+	  (WHO) <SPECIAL LIST> (FTYP) LIST)
+   <COND
+    (<SEGFLUSH .NOD .RTYP>)
+    (ELSE
+     <OR <G? .LN 1>
+	     <MESSAGE ERROR "TOO FEW ARGS TO TYPE? " .NOD>>
+     <SET ITYP <EANA <1 .K> ANY TYPE?>>
+     <MAPF <>
+	   <FUNCTION (N "AUX" FLG) 
+		   #DECL ((N) NODE)
+		   <PROG ()
+			 <EANA .N ATOM TYPE?>
+			 <OR <==? <NODE-TYPE .N> ,QUOTE-CODE>
+				 <RETURN <SET ALLGOOD <>>>>
+			 <OR <MEMQ <NODE-NAME .N> <ALLTYPES>>
+				 <MESSAGE ERROR
+					  "ARG TO TYPE? NOT A TYPE "
+					  .NOD>>
+			 <AND <TYPE-OK? <NODE-NAME .N> .ITYP>
+			     <SET FTYP (<NODE-NAME .N> !.FTYP)>>>>
+	   <REST .K>>
+     <COND (<AND .ALLGOOD <NOT <EMPTY? .FTYP>>>
+	    <SET TTYP
+		 <COND (<EMPTY? <REST .FTYP>> <1 .FTYP>)
+		       (ELSE <CHTYPE (OR !.FTYP) FORM>)>>
+	    <PUT .NOD ,NODE-TYPE ,TY?-CODE>
+	    <SET FNOK <NOT <TYPE-OK? <FORM NOT .TTYP> .ITYP>>>
+	    <MAPF <>
+		  <FUNCTION (L "AUX" (FLG <1 .L>) (SYM <2 .L>)) 
+			  #DECL ((L) <LIST <OR ATOM FALSE> SYMTAB> (SYM) SYMTAB)
+			  <SET TRUTH
+			       <ADD-TYPE-LIST .SYM
+					      .TTYP
+					      .TRUTH
+					      .FLG
+					      <REST .L 2>>>
+			  <OR .FNOK
+			      <SET UNTRUTH
+				   <ADD-TYPE-LIST .SYM
+						  <FORM NOT .TTYP>
+						  .UNTRUTH
+						  .FLG
+						  <REST .L 2>>>>>
+		  .WHO>)
+	   (.ALLGOOD <PUT .NOD ,NODE-TYPE ,TY?-CODE>)
+	   (ELSE
+	    <AND .VERBOSE <ADDVMESS .NOD ("Not open compiled.")>>
+	    <PUT .NOD ,NODE-TYPE ,ISUBR-CODE>)>)>
+   <TYPE-OK? <COND (<NOT .ALLGOOD> '<OR FALSE ATOM>)
+		   (<EMPTY? .FTYP> FALSE)
+		   (.FNOK ATOM)
+		   (ELSE '<OR FALSE ATOM>)>
+	     .RTYP>>
+
+<PUT ,TYPE? ANALYSIS ,TYPE?-ANA>
+
+<ENDPACKAGE>

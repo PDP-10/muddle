@@ -1,0 +1,859 @@
+<PACKAGE "CACS">
+
+<ENTRY GETREG SGETREG RET-TMP-AC TOACT TOACV FLUSH-RESIDUE TOACT FLUSH-RESIDUE 
+	SAVE-STATE MUNG-AC TOACV AC+1OK? DATTYP-FLUSH SAVE:RES PREFER-DATUM
+	MERGE-STATE GET2REG SMASH-INACS SAVE-NUM-SYM ANY2ACS  RESTORE-STATE KILL-LIST 
+	CHECK:VARS CALL-INTERRUPT  SINACS FREE-ACS  REGSTO FIX-NUM-SYM SPEC-OFFPTR
+	KILL-LOOP-AC SMASH-NUM-SYM GET-NUM-SYM STORE-VAR STORE-TVAR STOREV VAR-STORE
+        KILL-STORE UNPREFER>
+
+<USE "COMPDEC" "CHKDCL" "COMCOD" "CODGEN" "CUP">
+
+<DEFINE GETREG (DAT
+		"OPTIONAL" (TYPE-AC <>)
+		"AUX" AC (BEST <>) (OLDAGE <CHTYPE <MIN> FIX>)(WINNAGE -1))
+   #DECL ((DAT) ANY (BEST) <OR FALSE AC> (VALUE) AC (WINNAGE OLDAGE) FIX)
+   <MAPF <>
+    <FUNCTION (AC "AUX" (SCORE 0) PAC NAC) 
+	    #DECL ((AC PAC NAC) AC (SCORE) FIX)
+	    <PROG ()
+		  <COND (<ACPROT .AC> <RETURN>)>
+		  <COND (<ACLINK .AC>
+			 <COND (<G? .WINNAGE ,LINKED> <RETURN>)>
+			 <COND (<G? <ACAGE .AC> .OLDAGE> <RETURN>)>
+			 <SET WINNAGE ,LINKED>
+			 <SET OLDAGE <ACAGE <SET BEST .AC>>>
+			 <RETURN>)>
+		  <COND (<ACRESIDUE .AC>
+			 <COND (<G? .WINNAGE ,NO-RESIDUE> <RETURN>)>
+			 <COND (<ALL-STORED? <ACRESIDUE .AC>>
+				<COND (<G? .WINNAGE ,STORED-RESIDUE> <RETURN>)>
+				<SET SCORE ,STORED-RESIDUE>)
+			       (<G? .WINNAGE ,NOT-STORED-RESIDUE> <RETURN>)
+			       (ELSE <SET SCORE ,NOT-STORED-RESIDUE>)>)
+			(ELSE <SET SCORE ,NO-RESIDUE>)>
+		  <COND (<NOT <ACPREF .AC>> <SET SCORE <+ .SCORE ,NOT-PREF>>)>
+		  <COND (<NOT .TYPE-AC> <SET SCORE <+ .SCORE <RATE .AC PREV>>>)
+			(ELSE <SET SCORE <+ .SCORE ,P-N-CLEAN>>)>
+		  <SET SCORE <+ .SCORE <RATE .AC NEXT>>>
+		  <COND (<G? .SCORE .WINNAGE>
+			 <SET WINNAGE .SCORE>
+			 <SET BEST .AC>)>>>
+    ,ALLACS>
+   <SET BEST <CHTYPE .BEST AC>>
+			 ;"Make sure the poor compiler knows this guy is an AC"
+   <COND (<TYPE? .DAT DATUM> <PUT .BEST ,ACLINK (.DAT)>)
+	 (ELSE <PUT .BEST ,ACLINK .DAT>)>
+   <COND (<ACRESIDUE .BEST>
+	  <MAPF <>
+		<FUNCTION (SYMT "AUX" (INAC <SINACS .SYMT>) IAC) 
+			#DECL ((INAC) DATUM)
+			<COND (<AND <TYPE? <SET IAC <DATTYP .INAC>> AC>
+				    <N==? .IAC .BEST>>
+			       <FLUSH-RESIDUE .IAC .SYMT>)>
+			<COND (<AND <TYPE? <SET IAC <DATVAL .INAC>> AC>
+				    <N==? .IAC .BEST>>
+			       <FLUSH-RESIDUE .IAC .SYMT>)>
+			<STOREV .SYMT>>
+		<ACRESIDUE .BEST>>
+	  <PUT .BEST ,ACRESIDUE <>>)>
+   <PUT .BEST ,ACAGE <SETG ATIME <+ ,ATIME 1>>>
+   .BEST>
+
+<DEFINE ALL-STORED? (L) #DECL ((L) LIST)
+	<MAPF <> <FUNCTION (S) <COND (<AND <TYPE? .S SYMTAB>
+					   <NOT <STORED .S>>>
+				       <MAPLEAVE <>>)> T> .L>>
+
+<DEFINE RATE (AC PREV-OR-NEXT
+	      "AUX" (PREV <==? .PREV-OR-NEXT PREV>) (SCORE 0) OTHAC)
+	#DECL ((AC OTHAC) AC (PREV-OR-NEXT) ATOM)
+	<PROG ()
+	      <COND (.PREV
+		     <COND (<OR <==? .AC ,AC-A>
+				<ACPROT <SET OTHAC
+					     <NTH ,ALLACS <- <ACNUM .AC> 1>>>>>
+			    <RETURN 0>)>)
+		    (<OR <==? .AC ,LAST-AC>
+			 <ACPROT <SET OTHAC <NTH ,ALLACS <+ <ACNUM .AC> 1>>>>>
+		     <RETURN 0>)>
+	      <COND (<ACLINK .OTHAC> <RETURN ,P-N-LINKED>)>
+	      <COND (<ACRESIDUE .OTHAC>
+		     <COND (<ALL-STORED? <ACRESIDUE .OTHAC>>
+			    <RETURN ,P-N-STO-RES>)
+			   (ELSE <RETURN ,P-N-NO-STO-RES>)>)
+		    (ELSE <RETURN ,P-N-CLEAN>)>>>
+
+<DEFINE UNPREFER () <MAPF <> <FUNCTION (X) <PUT .X ,ACPREF <>>> ,ALLACS>>
+
+<DEFINE PREFER-DATUM (WHERE) 
+	#DECL ((WHERE) <OR DATUM ATOM>)
+	<COND (<NOT <TYPE? .WHERE ATOM>>
+	       <PREF-AC <1 .WHERE>>
+	       <PREF-AC <2 .WHERE>>)>>
+
+<DEFINE PREF-AC (DAT) <COND (<TYPE? .DAT AC> <PUT .DAT ,ACPREF T>)>>
+
+<DEFINE RELREG (AC D "AUX" (ACL <ACLINK .AC>)) 
+	#DECL ((AC) AC (ACL) <OR FALSE <LIST [REST DATUM]>> (D) DATUM)
+	<COND (.ACL
+	       <REPEAT ((ACP ()))
+		       #DECL ((ACP) LIST)
+		       <AND <EMPTY? .ACL> <RETURN>>
+		       <COND (<==? <1 .ACL> .D>
+			      <COND (<==? .ACL <ACLINK .AC>>
+				     <PUT .AC ,ACLINK <REST .ACL>>)
+				    (ELSE <PUTREST .ACP <REST .ACL>>)>)>
+		       <SET ACL <REST <SET ACP .ACL>>>>
+	       <AND <EMPTY? <ACLINK .AC>> <PUT .AC ,ACLINK <>>>)>
+	<PUT .AC ,ACPROT <>>
+	.AC>
+
+<DEFINE GETTMP (TYP) <CHTYPE <VECTOR <CREATE-TMP .TYP> <>> TEMP>>
+
+<DEFINE SAVE:REG (AC FLS
+		  "OPTIONAL" (HANDLE-VARS T)
+		  "AUX" TMP (ACL <ACLINK .AC>) (TYPS <>) (VALS <>) TTMP HLAC)
+   #DECL ((AC) AC (TMP) TEMP (ACL) <OR FALSE <LIST [REST DATUM]>> (TTMP) DATUM)
+   <COND
+    (<AND .HANDLE-VARS <ACRESIDUE .AC>>
+     <MAPF <>
+      <FUNCTION (SYM "AUX" SAC (INAC <SINACS .SYM>)) 
+	      #DECL ((SYM) SYMBOL (INAC) DATUM)
+	      <COND (<AND <TYPE? .SYM SYMTAB> <NOT <STORED .SYM>>>
+		     <STOREV .SYM .FLS>)>
+	      <COND (.FLS
+		     <COND (<AND <TYPE? <SET SAC <DATTYP .INAC>> AC>
+				 <N==? .SAC .AC>>
+			    <FLUSH-RESIDUE .SAC .SYM>)
+			   (<AND <TYPE? <SET SAC <DATVAL .INAC>> AC>
+				 <N==? .SAC .AC>>
+			    <FLUSH-RESIDUE .SAC .SYM>)>
+		     <SMASH-INACS .SYM <>>
+		     <COND (<AND .FLS
+				 <TYPE? .SYM SYMTAB>
+				 <TYPE? <NUM-SYM .SYM> LIST>
+				 <1 <NUM-SYM .SYM>>>
+			    <PUT <NUM-SYM .SYM> 1 <>>)>)>>
+      <ACRESIDUE .AC>>)>
+   <COND
+    (.ACL
+     <SET TMP
+	  <GETTMP <COND (<AND <TYPE? <DATTYP <1 .ACL>> ATOM>
+			      <VALID-TYPE? <DATTYP <1 .ACL>>>>
+			 <DATTYP <1 .ACL>>)
+			(ELSE <>)>>>
+     <OR .FLS <PUT .TMP ,TMPAC <DATUM !<1 .ACL>>>>
+     <COND (<TYPE? <DATTYP <SET TTMP <1 .ACL>>> TEMP>
+	    <PUT <CHTYPE <DATVAL .TTMP> AC> ,ACPROT T>
+	    <TOACT .TTMP>
+	    <PUT <CHTYPE <DATVAL .TTMP> AC> ,ACPROT <>>)
+	   (<TYPE? <DATVAL .TTMP> TEMP>
+	    <PUT <CHTYPE <DATTYP .TTMP> AC> ,ACPROT T>
+	    <TOACV .TTMP>
+	    <PUT <CHTYPE <DATTYP .TTMP> AC> ,ACPROT <>>)>
+     <MAPF <>
+	   <FUNCTION (D) 
+		   #DECL ((D) DATUM)
+		   <COND (<TYPE? <SET HLAC <DATTYP .D>> AC>
+			  <OR .TYPS <SET TYPS .HLAC>>
+			  <PUT <PUT .HLAC ,ACLINK <>> ,ACPROT <>>
+			  <OR .FLS
+			      <MEMQ .TMP <ACRESIDUE .HLAC>>
+			      <PUT .HLAC
+				   ,ACRESIDUE
+				   (.TMP !<ACRESIDUE <DATTYP .D>>)>>
+			  <PUT .D ,DATTYP .TMP>)
+			 (<TYPE? .HLAC OFFPTR>
+			  <SET VALS <HACK-OFFPTR .HLAC .TMP>>
+			  <SET VALS <3 .HLAC>>)>
+		   <COND (<TYPE? <SET HLAC <DATVAL .D>> AC>
+			  <OR .VALS <SET VALS .HLAC>>
+			  <PUT <PUT .HLAC ,ACLINK <>> ,ACPROT <>>
+			  <OR .FLS
+			      <MEMQ .TMP <ACRESIDUE .HLAC>>
+			      <PUT .HLAC ,ACRESIDUE (.TMP !<ACRESIDUE
+							    .HLAC>)>>
+			  <PUT .D ,DATVAL .TMP>)
+			 (<TYPE? .HLAC OFFPTR>
+			  <SET VALS <HACK-OFFPTR .HLAC .TMP>>
+			  <SET TYPS <3 .HLAC>>)>>
+	   .ACL>
+     <OR .TYPS <SET TYPS <DATTYP <1 .ACL>>>>
+     <SET VALS <CHTYPE <OR .VALS <DATVAL <1 .ACL>>> AC>>
+     <COND (<TYPE? .TYPS AC>
+	    <STORE-TMP <ACSYM .TYPS> <ACSYM .VALS> <STEMP:ADDR .TMP>>)
+	   (ELSE <STORE-TMP .TYPS <ACSYM .VALS> <STEMP:ADDR .TMP>>)>)>
+   <AND .FLS
+	<NOT .HANDLE-VARS>
+	<MESSAGE INCONSISTENCY "AC-LOSSAGE">>
+   <AND .FLS <PUT .AC ,ACRESIDUE <>>>
+   .AC>
+
+<DEFINE RETTMP (TMP "AUX" INAC AC) 
+	#DECL ((TMP) TEMP (INAC) <OR FALSE DATUM>)
+	<COND (<SET INAC <SINACS .TMP>>
+	       <COND (<TYPE? <SET AC <DATTYP .INAC>> AC>
+		      <FLUSH-RESIDUE .AC .TMP>)>
+	       <COND (<TYPE? <SET AC <DATVAL .INAC>> AC>
+		      <FLUSH-RESIDUE .AC .TMP>)>)>>
+
+<DEFINE MUNG-AC (AC "OPTIONAL" (GD <>) (FLS T)  "AUX" ACL (ACPR <ACPROT .AC>)) 
+   #DECL ((AC) AC (GD ACL) <PRIMTYPE LIST>)
+   <COND
+    (<ACRESIDUE .AC>
+     <MAPF <>
+      <FUNCTION (V "AUX" (INAC <SINACS .V>) TT) 
+	      #DECL ((INAC) <OR DATUM FALSE>)
+	      <STOREV .V .FLS>
+	      <AND .INAC
+		   .FLS
+		   <OR <COND (<OR <AND <==? .AC <DATTYP .INAC>>
+				       <TYPE? <SET TT <DATVAL .INAC>> AC>>
+				  <AND <==? .AC <DATVAL .INAC>>
+				       <TYPE? <SET TT <DATTYP .INAC>> AC>>>
+			      <MUNG-AC .TT .GD .FLS>)>
+		       <PROG ()
+			     <AND <TYPE? <SET TT <DATTYP .INAC>> AC>
+				  <NOT <==? .TT .AC>>
+				  <MUNG-AC .TT .INAC .FLS>>
+			     <AND <TYPE? <SET TT <DATVAL .INAC>> AC>
+				  <NOT <==? .TT .AC>>
+				  <MUNG-AC .TT .INAC .FLS>>>>>>
+      <ACRESIDUE .AC>>
+     <COND (.FLS <PUT .AC ,ACRESIDUE <>>)>)>
+   <COND (<AND .GD <SET ACL <ACLINK .AC>>>
+	  <REPEAT ((OA ()))
+		  #DECL ((OA) LIST)
+		  <AND <EMPTY? .ACL> <RETURN <SET GD <>>>>
+		  <COND (<==? <1 .ACL> .GD>
+			 <COND (<EMPTY? .OA>
+				<COND (<EMPTY? <REST .ACL>>
+				       <PUT .AC ,ACLINK <>>)
+				      (ELSE <PUT .AC ,ACLINK <REST .ACL>>)>)
+			       (ELSE <PUTREST .OA <REST .ACL>>)>
+			 <RETURN>)>
+		  <SET ACL <REST <SET OA .ACL>>>>)
+	 (ELSE <SET GD <>>)>
+   <COND (.GD
+	  <PUT .AC ,ACPROT <>>
+	  <SGETREG .AC .GD>
+	  <PUT .AC ,ACPROT .ACPR>)>
+   .AC>
+
+<DEFINE VAR-STORE ("OPTIONAL" (FLS T)) 
+	<UNPREFER>
+	<MAPF <> <FUNCTION (AC) <MUNG-AC .AC <> .FLS>> ,ALLACS>>
+
+<DEFINE GET:ACS () <MAPF ,LIST
+			 <FUNCTION (X) <CHTYPE <VECTOR !.X> AC>>
+			 ,ALLACS>>
+
+<DEFINE REGSTO (FLUSH-RES "OPTIONAL" (HANDLE-VARS T)) 
+	<MAPF <>
+	      <FUNCTION (AC) #DECL ((AC) AC) <SAVE:REG .AC .FLUSH-RES .HANDLE-VARS>>
+	      ,ALLACS>>
+
+<DEFINE SGETREG (AC DAT "AUX" (ACL <ACLINK .AC>)) 
+   #DECL ((AC) AC (ACL) <OR FALSE <LIST [REST DATUM]>>)
+   <AND <ACPROT .AC>
+        <MESSAGE INCONSISTENCY "NEEDED AC IS PROTECTED? ">>
+   <COND
+    (.ACL
+     <COND
+      (<MAPF <>
+	     <FUNCTION (AC1)
+	       #DECL ((AC1) AC)
+	       <COND
+		(<AND <NOT <ACLINK .AC1>> <NOT <ACPROT .AC1>>>
+		 <MUNG-AC .AC1>
+		 <PUT .AC1 ,ACLINK .ACL>
+		 <PUT .AC1 ,ACRESIDUE <ACRESIDUE .AC>>
+		 <MAPF <>
+		       <FUNCTION (D "AUX" (L <MEMQ .AC .D>)) 
+			       #DECL ((D) DATUM (L) <PRIMTYPE LIST>)
+			       <COND (.L <PUT .L 1 .AC1>)
+				     (ELSE
+				      <MESSAGE INCONSISTENCY " AC LOSSAGE ">)>>
+		       .ACL>
+		 <MAPF <>
+		       <FUNCTION (SYM "AUX" L) 
+			       #DECL ((SYM) SYMBOL)
+			       <COND (<SET L <MEMQ .AC <CHTYPE <SINACS .SYM> DATUM>>>
+				      <PUT .L 1 .AC1>)>>
+		       <ACRESIDUE .AC1>>
+		 <PUT .AC ,ACRESIDUE <>>
+		 <MOVE:VALUE .AC .AC1>
+		 <MAPLEAVE T>)>> ,ALLACS>)
+      (ELSE <SAVE:REG .AC T>)>)
+    (ELSE <MUNG-AC .AC>)>
+   <COND (<TYPE? .DAT DATUM> <PUT .AC ,ACLINK (.DAT)>)
+	 (ELSE <PUT .AC ,ACLINK .DAT>)>
+   <PUT .AC ,ACAGE <SETG ATIME <+ ,ATIME 1>>>
+   .AC>
+
+<DEFINE DATUM (TY VA) #DECL ((VALUE) DATUM) <CHTYPE (.TY .VA) DATUM>>
+
+<DEFINE OFFPTR (OFF DAT TYP) <CHTYPE (.OFF .DAT .TYP) OFFPTR>>
+
+<DEFINE SPEC-OFFPTR (OFF DAT TYP AT) <CHTYPE (.OFF .DAT .TYP .AT) OFFPTR>>
+
+<DEFINE DATTYP-FLUSH (DAT) 
+	#DECL ((DAT) DATUM)
+	<COND (<N==? <DATVAL .DAT> <DATTYP .DAT>>
+	       <RET-TMP-AC <DATTYP .DAT> .DAT>)>>
+
+<DEFINE RET-TMP-AC (ADR "OPTIONAL" D "AUX" (AD .ADR)) 
+	#DECL ((D) DATUM)
+	<COND (<TYPE? .ADR AC> <RELREG .ADR .D>)
+	      (<TYPE? .ADR TEMP> <RETTMP .ADR>)
+	      (<TYPE? .ADR DATUM>
+	       <REPEAT ()
+		       <AND <EMPTY? .ADR> <RETURN>>
+		       <RET-TMP-AC <DATTYP .ADR> .AD>
+		       <RET-TMP-AC <DATVAL .ADR> .AD>
+		       <SET ADR <REST .ADR 2>>>)
+	      (<TYPE? .ADR OFFPTR> <RET-TMP-AC <2 .ADR>>)>>
+
+
+<DEFINE TOACV (DAT "AUX" AC) 
+	#DECL ((DAT) DATUM (AC) AC)
+	<TEMP-MOD .DAT>
+	<COND (<NOT <TYPE? <DATVAL .DAT> AC>>
+	       <MOVE:VALUE <DATVAL .DAT> <SET AC <GETREG .DAT>>>
+	       <RET-TMP-AC <DATVAL .DAT>>
+	       <PUT .DAT ,DATVAL .AC>)>
+	.DAT>
+
+<DEFINE TOACT (DAT "AUX" AC) 
+	#DECL ((DAT) DATUM (AC) AC)
+	<TEMP-MOD .DAT>
+	<COND (<NOT <TYPE? <DATTYP .DAT> AC>>
+	       <MOVE:TYP <DATTYP .DAT> <SET AC <GETREG .DAT>>>
+	       <DATTYP-FLUSH .DAT>
+	       <PUT .DAT ,DATTYP .AC>)>
+	.DAT>
+
+<DEFINE AC+1OK? (AC) 
+	<COND (<TYPE? .AC AC>
+	       <REPEAT ((F ,ALLACS) (AC .AC))
+		       #DECL ((F) <UVECTOR [REST AC]> (AC) AC)
+		       <AND <==? .AC <1 .F>> <RETURN <NOT <ACLINK <2 .F>>>>>
+		       <AND <EMPTY? <REST <SET F <REST .F>>>> <RETURN <>>>>)>>
+
+<DEFINE GET2REG () 
+	#DECL ((VALUE) <OR AC FALSE>)
+	<REPEAT ((F ,ALLACS))
+		#DECL ((F) <UVECTOR [REST AC]>)
+		<AND <NOT <ACLINK <1 .F>>>
+		     <NOT <ACLINK <2 .F>>>
+		     <RETURN <1 .F>>>
+		<AND <EMPTY? <REST <SET F <REST .F>>>> <RETURN <>>>>>
+
+<DEFINE ANY2ACS ("AUX" T) 
+	#DECL ((VALUE) DATUM)
+	<RELREG <DATTYP <SET T <DATUM <GETREG ()> <GETREG <>>>>>
+		.T>
+	.T>
+
+<DEFINE GET1REG () 
+	#DECL ((VALUE) <OR AC FALSE>)
+	<REPEAT ((F ,ALLACS))
+		#DECL ((F) <UVECTOR [REST AC]>)
+		<OR <ACLINK <1 .F>> <RETURN <1 .F>>>
+		<AND <EMPTY? <SET F <REST .F>>> <RETURN <>>>>>
+
+<DEFINE FREE-ACS ("OPTIONAL" (SUPER-FREE <>) "AUX" (N 0)) 
+	#DECL ((N VALUE) FIX)
+	<MAPF <>
+	      <FUNCTION (AC) 
+		      #DECL ((AC) AC)
+		      <COND (<AND <NOT <ACPROT .AC>>
+				  <NOT <ACLINK .AC>>
+				  <OR <NOT .SUPER-FREE>
+				      <AND <NOT <ACRESIDUE .AC>>
+					   <NOT <ACPREF .AC>>>>>
+			     <SET N <+ .N 1>>)>>
+	      ,ALLACS>
+	.N>
+
+<DEFINE SAVE-STATE ("AUX" (STATV #SAVED-STATE ()) ST) 
+   #DECL ((STATV) SAVED-STATE (ST) <OR FALSE <LIST NODE>>)
+   <MAPF <>
+    <FUNCTION (AC) #DECL ((AC) AC) 
+       <SET STATV
+	<CHTYPE
+	 ((.AC
+	   <LIST !<ACRESIDUE .AC>>
+	   !<MAPF ,LIST
+	     <FUNCTION (X) 
+		     (.X
+		      <DATUM !<SINACS .X>>
+		      <AND <TYPE? .X SYMTAB> <STORED .X>>
+		      <AND <TYPE? .X SYMTAB>
+			   <AND <SET ST <PROG-AC .X>>
+				<NOT <MEMQ .X <LOOP-VARS <1 .ST>>>>>>)>
+	     <CHTYPE <ACRESIDUE .AC> LIST>>)
+	  !.STATV)
+	 SAVED-STATE>>>
+    ,ALLACS>
+   .STATV>
+
+<DEFINE RESTORE-STATE (STATV
+		       "OPTIONAL" (NORET T)
+		       "AUX" (MUNGED-SYMS ()) PA OACR)
+   #DECL ((STATV) SAVED-STATE (PA) <OR FALSE <LIST NODE>> (OACR) <OR FALSE LIST>)
+   <MAPF <>
+    <FUNCTION (ACLST
+	       "AUX" (AC <1 .ACLST>) (SMT <2 .ACLST>) (SYMT <REST .ACLST 2>))
+       #DECL ((ACLST)
+	      <LIST AC
+		    <OR FALSE <LIST [REST SYMBOL]>>
+		    [REST <LIST SYMBOL ANY>]>
+	      (SYMT)
+	      <LIST [REST <LIST SYMBOL ANY>]>
+	      (AC)
+	      AC
+	      (SMT)
+	      <OR FALSE <LIST [REST SYMBOL]>>)
+       <AND .SMT <EMPTY? .SMT> <SET SMT <>>>
+       <MAPF <>
+	     <FUNCTION (ST) 
+		     <OR <MEMQ .ST .MUNGED-SYMS> <SMASH-INACS .ST <> <>>>>
+	     <ACRESIDUE .AC>>
+       <AND .SMT <SET SMT <LIST !.SMT>>>
+       <SET OACR <ACRESIDUE .AC>>
+       <PUT .AC ,ACRESIDUE .SMT>
+       <MAPF <>
+	<FUNCTION (SYMB "AUX" (SYMT <1 .SYMB>) (INAC <2 .SYMB>)) 
+		#DECL ((SYMB) <LIST SYMBOL ANY> (SYMT) SYMBOL)
+		<COND (<TYPE? .SYMT SYMTAB>
+		       <PUT .SYMT
+			    ,STORED
+			    <GET-STORED .SYMT <3 .SYMB> <4 .SYMB>>>
+		       <COND (<SET PA <PROG-AC .SYMT>>
+			      <AND <STORED .SYMT>
+				   <NOT <MEMQ .SYMT <LOOP-VARS <1 .PA>>>>
+				   <NOT .NORET>
+				   <NOT <MEMQ .SYMT .OACR>>
+				   <KILL-LOOP-AC .SYMT>
+				   <FLUSH-RESIDUE .AC .SYMT>
+				   <SET INAC <>>>)
+			     (<4 .SYMB>
+			      <FLUSH-RESIDUE .AC .SYMT>
+			      <SET INAC <>>)>)>
+		<OR <MEMQ .SYMT .MUNGED-SYMS>
+		    <SET MUNGED-SYMS (.SYMT !.MUNGED-SYMS)>>
+		<SMASH-INACS .SYMT .INAC>>
+	.SYMT>>
+    .STATV>>
+
+<DEFINE GET-STORED (SYMT PREV-STORED PROG-AC-POSS "AUX" PAC) 
+	#DECL ((PREV-STORED PROG-AC-POSS) <OR FALSE ATOM> (PAC) <OR FALSE <LIST NODE>>
+	       (SYMT) SYMTAB)
+	<COND (.PROG-AC-POSS
+	       <AND .PREV-STORED
+		    <OR <NOT <SET PAC <PROG-AC .SYMT>>>
+			<NOT <MEMQ .SYMT <LOOP-VARS <1 .PAC>>>>>>)
+	      (.PREV-STORED)>>
+
+<DEFINE MERGE-STATE (STATV) 
+   #DECL ((STATV) SAVED-STATE)
+   <MAPF <>
+    <FUNCTION (STATV
+	       "AUX" (AC <1 .STATV>) (DATS <REST .STATV 2>)
+		     (STATAC <ACRESIDUE .AC>) (NINACS ()) (NRES ()))
+       #DECL ((STATV) <LIST AC ANY [REST <LIST SYMBOL ANY>]>
+	      (AC) AC (DATS) <LIST [REST <LIST SYMBOL ANY>]>
+	      (STATAC) <OR FALSE <LIST [REST SYMBOL]>>
+	      (NRES) <LIST [REST SYMBOL]>
+	      (NINACS) <LIST [REST <LIST SYMBOL ANY>]>)
+       <MAPF <>
+	<FUNCTION (ACX
+		   "AUX" (SYMT <1 .ACX>) (INAC <2 .ACX>) (OINAC <SINACS .SYMT>)
+			 (TEM <>) (PMERG T))
+		#DECL ((ACX) <LIST SYMBOL ANY>
+		       (SYMT) SYMBOL
+		       (INAC OINAC) <PRIMTYPE LIST>)
+		<COND (<TYPE? .SYMT SYMTAB>
+		       <COND (<STORED .SYMT>
+			      <PUT .SYMT
+				   ,STORED
+				   <GET-STORED .SYMT <3 .ACX> <4 .ACX>>>)>
+		       <COND (<AND <SS-POTENT-SLOT .ACX> <NOT <PROG-AC .SYMT>>>
+			      <SET PMERG <>>)>)>
+		<COND
+		 (<AND <MEMQ .SYMT .STATAC>
+		       .OINAC
+		       .INAC
+		       .PMERG
+		       <==? <DATVAL .INAC> <DATVAL .OINAC>>
+		       <OR <==? <DATTYP .INAC> <DATTYP .OINAC>>
+			   <AND <TYPE? .SYMT SYMTAB>
+				<SET TEM
+				     <ISTYPE? <1 <CHTYPE <DECL-SYM .SYMT>
+							 LIST>>>>
+				<OR <==? <DATTYP .INAC> .TEM>
+				    <==? <DATTYP .OINAC> .TEM>>>>>
+		  <SET NRES (.SYMT !.NRES)>
+		  <SET NINACS
+		       ((.SYMT <DATUM <OR .TEM <DATTYP .INAC>> <DATVAL .INAC>>)
+			!.NINACS)>
+		  <COND (<AND .TEM
+			      <OR <TYPE? <SET TEM <DATTYP .INAC>> AC>
+				  <TYPE? <SET TEM <DATTYP .OINAC>> AC>>>
+			 <FLUSH-RESIDUE .TEM .SYMT>)>)>
+		<COND (<AND .OINAC
+			    <OR <==? .AC <DATTYP .OINAC>>
+				<==? .AC <DATVAL .OINAC>>>>
+		       <SMASH-INACS .SYMT <> <>>)>>
+	.DATS>
+       <MAPF <>
+	     <FUNCTION (SYMT) 
+		     #DECL ((SYMT) SYMBOL)
+		     <SMASH-INACS .SYMT <> <>>>
+	     <ACRESIDUE .AC>>
+       <PUT .AC ,ACRESIDUE <COND (<NOT <EMPTY? .NRES>> .NRES)>>
+       <MAPF <>
+	     <FUNCTION (SYMB "AUX" (SYMT <1 .SYMB>) (ELEIN <2 .SYMB>)) 
+		     #DECL ((SYMT) SYMBOL)
+		     <SMASH-INACS .SYMT .ELEIN>>
+	     .NINACS>>
+    .STATV>>
+
+<DEFINE SINACS (SYM) 
+	#DECL ((SYM) SYMBOL (VALUE) <OR DATUM FALSE>)
+	<COND (<TYPE? .SYM TEMP> <TMPAC .SYM>)
+	      (<TYPE? .SYM COMMON> <COMMON-DATUM .SYM>)
+	      (<INACS .SYM>)>>
+
+<DEFINE SMASH-INACS (ITEM OBJ "OPTIONAL" (SMASH-NUM-SYM T)) 
+	#DECL ((ITEM) SYMBOL)
+	<COND (<TYPE? .ITEM COMMON> <PUT .ITEM ,COMMON-DATUM .OBJ>)
+	      (<TYPE? .ITEM TEMP> <PUT .ITEM ,TMPAC .OBJ>)
+	      (ELSE <PUT .ITEM ,INACS .OBJ>)>>
+
+<DEFINE TEMP-MOD (DAT "AUX" TAC VAC TDAC VDAC) 
+	#DECL ((DAT) DATUM)
+	<COND (<TYPE? <SET TDAC <DATTYP .DAT>> TEMP>
+	       <COND (<SET TAC <TMPAC .TDAC>>
+		      <AND <TYPE? <SET TAC <DATTYP .TAC>> AC>
+			   <PUT .TAC ,ACLINK (.DAT)>
+			   <PUT .DAT ,DATTYP .TAC>
+			   <OR <MEMQ .TDAC <CHTYPE <ACRESIDUE .TAC> LIST>>
+			       <PUT .TAC
+				    ,ACRESIDUE
+				    (.TDAC !<ACRESIDUE .TAC>)>>>)>)>
+	<COND (<TYPE? <SET VDAC <DATVAL .DAT>> TEMP>
+	       <COND (<SET VAC <TMPAC .VDAC>>
+		      <AND <TYPE? <SET VAC <DATVAL .VAC>> AC>
+			   <PUT .VAC ,ACLINK (.DAT)>
+			   <PUT .DAT ,DATVAL .VAC>
+			   <OR <MEMQ .VDAC <CHTYPE <ACRESIDUE .VAC> LIST>>
+			       <PUT .VAC
+				    ,ACRESIDUE
+				    (.VDAC !<ACRESIDUE .VAC>)>>>)>)>>
+
+<DEFINE POTENT-L-V? (SYM "AUX" PA) #DECL ((SYM) SYMTAB (PA) <OR FALSE <LIST NODE>>)
+	<COND (<AND <STORED .SYM>
+		    <SET PA <PROG-AC .SYM>>
+		    <NOT <MEMQ .SYM <LOOP-VARS <1 .PA>>>>> T)>>
+
+
+
+<DEFINE SAVE:RES ("AUX" (SYM-LIST ())) #DECL ((SYM-LIST) LIST) 
+   <MAPF <>
+    <FUNCTION (AC) 
+	    #DECL ((AC) AC)
+	    <MAPF <>
+	     <FUNCTION (SYMT "AUX" ONSYMT OP!-PACKAGE) 
+		     <COND (<AND <TYPE? .SYMT SYMTAB>
+				 <NOT <MEMQ .SYMT .SYM-LIST>>>
+			    <SET OP!-PACKAGE <POTLV .SYMT>>
+			    <SET ONSYMT <NUM-SYM .SYMT>>
+			    <SMASH-NUM-SYM .SYMT>
+			    <SET SYM-LIST
+				 (.SYMT
+				  <INACS .SYMT>
+				  .ONSYMT
+				  .OP!-PACKAGE
+				  <>
+				  !.SYM-LIST)>
+			    <COND (<NOT <STORED .SYMT>> <STOREV .SYMT <>>)
+				  (<POTENT-L-V? .SYMT>
+				   <COND (<NOT .OP!-PACKAGE>
+					  <PUT .SYMT ,STORED <>>
+					  <STOREV .SYMT <>>
+					  <PUT .SYMT ,POTLV T>)>
+				   <PUT .SYM-LIST 5 <LIST !<NUM-SYM .SYMT>>>)>)>>
+	     <ACRESIDUE .AC>>>
+    ,ALLACS>
+   .SYM-LIST>
+
+<DEFINE SAVE-NUM-SYM (SYM-LIST "AUX" (L (())) (LP .L) TMP) 
+   #DECL ((SYM-LIST) <LIST [REST SYMTAB ANY ANY <OR FALSE ATOM> ANY]>)
+   <REPEAT ()
+     <COND (<EMPTY? .SYM-LIST> <RETURN <REST .L>>)>
+     <SET LP
+      <REST
+       <PUTREST
+	.LP
+	(<LIST !<COND (<AND <TYPE? <SET TMP <NUM-SYM <1 .SYM-LIST>>> LIST>
+			    <NOT <EMPTY? .TMP>>>
+		       <REST .TMP>)
+		      (ELSE ())>>)>>>
+     <SET SYM-LIST <REST .SYM-LIST 5>>>>
+
+<DEFINE FIX-NUM-SYM (L1 L2 "AUX" LL TMP) 
+	#DECL ((L1) <LIST [REST LIST]>
+	       (L2) <LIST [REST SYMTAB ANY ANY <OR FALSE ATOM> ANY]>)
+	<REPEAT ()
+		<COND (<OR <EMPTY? .L1> <EMPTY? .L2>> <RETURN>)
+		      (<AND <TYPE? <SET TMP <NUM-SYM <1 .L2>>> LIST>
+			    <NOT <EMPTY? .TMP>>>
+		       <SET LL <1 .L1>>
+		       <REPEAT ((L <REST .TMP>))
+			       <COND (<EMPTY? .L> <RETURN>)>
+			       <COND (<NOT <MEMQ <1 .L> .LL>>
+				      <PUTREST .TMP <REST .L>>
+				      <SET L <REST .TMP>>)
+				     (ELSE <SET L <REST <SET TMP .L>>>)>>)>
+		<SET L1 <REST .L1>>
+		<SET L2 <REST .L2 5>>>>
+
+<DEFINE CHECK:VARS (RES UNK "AUX" SLOT TEM SYMT PRGAC) 
+	#DECL ((RES)
+	       <LIST [REST SYMTAB ANY ANY <OR FALSE ATOM> <OR FALSE LIST>]>
+	       (SYMT)
+	       SYMTAB
+	       (SLOT)
+	       LIST
+	       (PRGAC)
+	       <OR FALSE <LIST NODE>>
+	       (TEM)
+	       <OR FALSE LIST>)
+	<REPEAT ((PTR .RES))
+		<COND (<EMPTY? .PTR> <RETURN>)>
+		<SET SYMT <1 .PTR>>
+		<COND (<AND <INACS .SYMT> .UNK>
+		       <COND (<AND <1 <SET SLOT <NUM-SYM .SYMT>>>
+				   <NOT <EMPTY? <REST .SLOT>>>>
+			      <PUT .SYMT ,STORED <POTENT-L-V? .SYMT>>
+			      <MAPF <> ,KILL-STORE <REST .SLOT>>)>)>
+		<COND (<AND <POTLV .SYMT>
+			    <NOT <AND <SET PRGAC <PROG-AC .SYMT>>
+				      <MEMQ .SYMT <LOOP-VARS <1 .PRGAC>>>>>
+			    <SET TEM <5 .PTR>>
+			    <G=? <LENGTH .TEM> 1>
+			    <NUM-SYM .SYMT>
+			    <1 .TEM>>
+		       <MAPF <> ,KILL-STORE <REST .TEM>>)>
+		<COND (<=? <NUM-SYM .SYMT> '(#FALSE ())>
+		       <PUT .SYMT ,NUM-SYM <3 .PTR>>
+		       <COND (<AND <TYPE? <NUM-SYM .SYMT> LIST>
+				   <NOT <EMPTY? <NUM-SYM .SYMT>>>>
+			      <PUT <NUM-SYM .SYMT> 1 <>>)>)
+		      (ELSE <PUT .SYMT ,NUM-SYM <3 .PTR>>)>
+		<PUT .SYMT ,POTLV <4 .PTR>>
+		<SET PTR <REST .PTR 5>>>>
+
+
+<DEFINE STORE-TVAR (NAME DAT1 DAT2 ADDR) 
+	<EMIT <CHTYPE [,STORE:TVAR
+		       .NAME
+		       .ADDR
+		       .DAT1
+		       .DAT2
+		       <NOT <TYPE? .DAT1 AC>>]
+		      TOKEN>>>
+
+<DEFINE KILL-STORE (SS)
+	<SET SS <CHTYPE .SS ATOM>> 
+	<SET KILL-LIST (.SS !.KILL-LIST)>
+	<EMIT <CHTYPE [,KILL:STORE .SS] TOKEN>>>
+
+<DEFINE STORE-VAR (NAME DAT ADDR  BOOL) 
+	#DECL ((DAT) DATUM)
+	<EMIT <CHTYPE [,STORE:VAR
+		       .NAME
+		       .ADDR
+		       <COND (<TYPE? <DATTYP .DAT> AC> <ACSYM <DATTYP .DAT>>)
+			     (<DATTYP .DAT>)>
+		       <COND (<TYPE? <DATVAL .DAT> AC> <ACSYM <DATVAL .DAT>>)
+			     (<DATVAL .DAT>)>
+		       .BOOL]
+		      TOKEN>>>
+
+<DEFINE FLUSH-RESIDUE (AC SYMT) #DECL ((AC) AC (SYMT) SYMBOL) 
+	<AND <NOT <EMPTY? <ACRESIDUE .AC>>>
+	     <PUT .AC ,ACRESIDUE <RES-FLS <ACRESIDUE .AC> .SYMT>>>>
+
+
+<DEFINE CALL-INTERRUPT ("AUX" (ACDATA ![0 0!]) (ACLIST ()) (ACNUM 1)) 
+   #DECL ((ACNUM) FIX (ACDATA) <UVECTOR FIX FIX> (ACLIST) <SPECIAL LIST>)
+   <MAPF <>
+    <FUNCTION (AC "AUX" TYP (ACL <ACLINK .AC>) (ACR <ACRESIDUE .AC>)) 
+	    #DECL ((AC) AC (ACR) <OR FALSE LIST> (ACL) <OR FALSE <LIST [REST DATUM]>>)
+	    <COND (.ACL
+		   <COND (<L? .ACNUM 7>
+			  <PUT .ACDATA
+			       1
+			       <DEPOSIT-DATA <1 .ACDATA>
+					     .ACNUM
+					     .AC
+					     <DATTYP <1 .ACL>>>>)
+			 (ELSE
+			  <PUT .ACDATA
+			       2
+			       <DEPOSIT-DATA <2 .ACDATA>
+					     <- .ACNUM 6>
+					     .AC
+					     <DATTYP <1 .ACL>>>>)>)
+		  (.ACR
+		   <COND (<L? .ACNUM 7>
+			  <PUT .ACDATA
+			       1
+			       <DEPOSIT-DATA <1 .ACDATA>
+					     .ACNUM
+					     .AC
+					     <SINACS <1 .ACR>>>>)
+			 (ELSE
+			  <PUT .ACDATA
+			       2
+			       <DEPOSIT-DATA
+				<2 .ACDATA>
+				<- .ACNUM 6>
+				.AC
+				<SINACS <1 .ACR>>>>)>)>
+	    <SET ACNUM <+ .ACNUM 1>>>
+    ,ALLACS>
+   <COND (<AND <0? <1 .ACDATA>> <0? <2 .ACDATA>>> <EMIT '<INTGO!-OP!-PACKAGE>>)
+	 (ELSE
+	  <EMIT '<`SKIPGE  |INTFLG >>
+	  <MAPR <>
+		<FUNCTION (PTR "AUX" (TYP <1 .PTR>)) 
+			#DECL ((TYP) ATOM)
+			<PUT .PTR
+			     1
+			     <FORM 0 <FORM TYPE-WORD!-OP!-PACKAGE .TYP>>>>
+		.ACLIST>
+	  <EMIT <INSTRUCTION <COND (<0? <2 .ACDATA>> `SAVAC* ) (ELSE `LSAVA* )>
+			     <COND (<0? <2 .ACDATA>>
+				    [<FORM (<GETBITS <1 .ACDATA> <BITS 18 18>>)
+					   <GETBITS <1 .ACDATA> <BITS 18>>>
+				     !.ACLIST])
+				   (ELSE
+				    [<FORM (<GETBITS <1 .ACDATA> <BITS 18 18>>)
+					   <GETBITS <1 .ACDATA> <BITS 18>>>
+				     <FORM (<GETBITS <2 .ACDATA> <BITS 18 18>>)
+					   <GETBITS <2 .ACDATA> <BITS 18>>>
+				     !.ACLIST])>>>)>>
+
+<DEFINE DEPOSIT-DATA (DATA ACNUM AC DAT "AUX" TYP) 
+	#DECL ((DATA ACNUM) FIX (AC) AC (DAT) DATUM)
+	<COND (<TYPE? <SET TYP <DATTYP .DAT>> ATOM>
+	       <DEPOSIT-TYPE .DATA .ACNUM .TYP>)
+	      (<TYPE? .TYP AC>
+	       <COND (<N=? .AC .TYP> <DEPOSIT-AC .DATA .ACNUM .TYP>)
+		     (.DATA)>)
+	      (<TYPE? .TYP OFFPTR> <DEPOSIT-TYPE .DATA .ACNUM <3 .TYP>>)>>
+
+<DEFINE DEPOSIT-TYPE (DATA ACNUM TYP "AUX" (ACL .ACLIST)) 
+	#DECL ((DATA ACNUM) FIX (TYP) ATOM (ACLIST ACL) LIST)
+	<COND (<==? <TYPEPRIM .TYP> TEMPLATE>
+	       <SET DATA
+		    <CHTYPE <PUTBITS .DATA
+				     <NTH ,DATABITS .ACNUM>
+				     #WORD *000000000077*>
+			    FIX>>
+	       <COND (<EMPTY? .ACL> <SET ACLIST (.TYP)>)
+		     (<PUTREST <REST .ACL <- <LENGTH .ACL> 1>> (.TYP)>)>)
+	      (<==? <TYPEPRIM .TYP> WORD>)
+	      (<SET DATA
+		    <CHTYPE <PUTBITS .DATA
+				     <NTH ,DATABITS .ACNUM>
+				     <+ <CHTYPE <PRIM-CODE <TYPE-C .TYP>> FIX> 8>>
+			    FIX>>)>
+	.DATA>
+
+<DEFINE DEPOSIT-AC (DATA ACNUM TYP) 
+	#DECL ((DATA ACNUM) FIX (TYP) AC)
+	<CHTYPE <PUTBITS .DATA <NTH ,DATABITS .ACNUM> <ACNUM .TYP>>
+		FIX>>
+
+<SETG DATABITS
+      ![<BITS 6 30>
+	<BITS 6 24>
+	<BITS 6 18>
+	<BITS 6 12>
+	<BITS 6 6>
+	<BITS 6 0>!]>
+
+<GDECL (DATABITS) <UVECTOR [6 BITS]>>
+
+<DEFINE FIND-AC-TYPE (OBJ) <COND (<TYPE? .OBJ OFFPTR> <3 .OBJ>) (.OBJ)>>
+
+<DEFINE FIND-AC-VAL (OBJ) <COND (<TYPE? .OBJ OFFPTR> <DATVAL <2 .OBJ>>)>>
+
+<DEFINE FIND-TYPE-OF-ACL (DAT "AUX" D1) 
+	#DECL ((DAT) DATUM)
+	<COND (<OR <TYPE? <SET D1 <DATTYP .DAT>> OFFPTR>
+		   <TYPE? <SET D1 <DATVAL .DAT>> OFFPTR>>
+	       <3 <CHTYPE .D1 OFFPTR>>) ;"This CHTYPE to get around compiler bug."
+	      (<AND <TYPE? <SET D1 <DATTYP .DAT>> ATOM> <VALID-TYPE? .D1>>
+	       .D1)>>
+
+<DEFINE HACK-OFFPTR (OFF TMP "AUX" DAT) 
+	#DECL ((OFF) OFFPTR (TMP) TEMP)
+	<SET DAT <2 .OFF>>
+	<PUT .DAT ,DATVAL .TMP>>
+
+
+
+<DEFINE STOREV (SYM "OPTIONAL" (FLS T)  "AUX" (DAT <SINACS .SYM>)) 
+   #DECL ((SYM) <OR TEMP SYMTAB COMMON> (DAT) <OR FALSE DATUM>)
+   <SMASH-INACS .SYM <> <>>
+   <COND
+    (<TYPE? .SYM SYMTAB>
+     <AND
+      .DAT
+      <NOT <STORED .SYM>>
+      <PROG ((SLOT <NUM-SYM .SYM>) NT ADDR)
+	<SET NT <GET-NUM-SYM .SYM>>
+	<COND
+	 (<TYPE? <ADDR-SYM .SYM> TEMPV>
+	  <STORE-TVAR .NT
+		      <COND (<TYPE? <DATTYP .DAT> AC> <ACSYM <DATTYP .DAT>>)
+			    (ELSE <DATTYP .DAT>)>
+		      <ACSYM <CHTYPE <DATVAL .DAT> AC>>
+		      <DATVAL <SET ADDR
+				<LADDR .SYM <> <ISTYPE-GOOD? <DATTYP .DAT>> <>>>>>)
+	 (<STORE-VAR
+	   .NT
+	   .DAT
+	   <DATVAL <SET ADDR <LADDR .SYM <> <ISTYPE-GOOD? <DATTYP .DAT>> <>>>>
+	   <ISTYPE-GOOD? <DATTYP .ADDR>>>)>
+	<RET-TMP-AC .ADDR>
+	<PUT .SYM ,STORED T>>>)>
+   <COND (.FLS <SMASH-INACS .SYM <>>)
+	 (<SMASH-INACS .SYM .DAT>)>>
+
+
+<DEFINE GET-NUM-SYM (SYM "AUX" (SLOT <NUM-SYM .SYM>) NT) 
+	<COND (<AND <TYPE? .SLOT LIST> <1 .SLOT>>
+	       <PUTREST .SLOT (<SET NT <MAKE:TAG "VAR">> !<REST .SLOT>)>)
+	      (ELSE <SET NT T>)>
+	.NT>
+
+
+<DEFINE KILL-LOOP-AC (SYMT "AUX" PNOD) 
+	<COND (<AND <TYPE? .SYMT SYMTAB>
+		    <SET PNOD <PROG-AC .SYMT>>
+		    <NOT <MEMQ .SYMT <LOOP-VARS <PROG-SLOT .PNOD>>>>>
+	       <PUT .SYMT ,PROG-AC <>>)>>
+
+
+<DEFINE SMASH-NUM-SYM (SYM) #DECL ((SYM) SYMTAB) <PUT .SYM ,NUM-SYM (T)>>
+
+
+<ENDPACKAGE>

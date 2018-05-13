@@ -1,0 +1,20 @@
+
+
+	<TITLE HACK-NAME>
+	<DECLARE ("VALUE" ATOM SUBR)>
+	<PUSH	TP* (AB)>
+	<PUSH	TP* 1(AB)>
+	<PUSHJ	P* IHACK-NAME>
+	<JRST	FINIS>
+
+	<INTERNAL-ENTRY IHACK-NAME 1>
+	<SUBM	M* (P)>
+	<MOVSI	A* <TYPE-CODE ATOM>>
+	<HRRZ	B* (TP)>
+	<MOVE	B* @ -1 (B)>
+	<SUB	TP* [<2 (2)>]>
+	<JRST	MPOPJ>
+
+
+
+

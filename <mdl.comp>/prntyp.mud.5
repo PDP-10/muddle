@@ -1,0 +1,59 @@
+<PACKAGE "PRNTYP">
+
+<ENTRY SYMTAB-PRINT AC-PRINT>
+
+<USE "COMPDEC">
+
+<DEFINE SYMTAB-PRINT (SYM "AUX" TT TEM (OUTCHAN .OUTCHAN))
+	#DECL ((SYM) SYMTAB)
+	<PRINC "#SYMTAB [">
+	<PRIN1 <NAME-SYM .SYM>>
+	<PRINC " ">
+	<COND (<SET TT <INACS .SYM>>
+	       <PRINC "#DATUM (">
+	       <COND (<TYPE? <SET TEM <DATTYP .TT>> AC>
+		      <PRIN1 <ACSYM .TEM>>)
+		     (<TYPE? .TEM ATOM> <PRIN1 .TEM>)
+		     (<TYPE? .TEM TEMP>
+		      <PRIN1 <TMPNO .TEM>>)
+		     (ELSE <ERROR LOSING-SYMTAB!-ERRORS>)>
+	       <PRINC " ">
+	       <COND (<TYPE? <SET TEM <DATVAL .TT>> AC>
+		      <PRIN1 <ACSYM .TEM>>)
+		     (ELSE <ERROR LOSING-SYMTAB!-ERRORS>)>
+	       <PRINC ")">)>
+	<PRINC "]">>
+
+<DEFINE AC-PRINT (AC "AUX" TT TEM (OUTCHAN .OUTCHAN))
+	#DECL ((AC) AC)
+	<PRINC "#AC [">
+	<PRIN1 <ACSYM .AC>>
+	<PRINC " ">
+	<OR <ACLINK .AC> <DATUM-PRINT <ACLINK .AC>>>
+	<MAPF <> <FUNCTION (S)
+			<PRINC " ">
+			<COND (<TYPE? .S SYMTAB> <PRIN1 <NAME-SYM .S>>)
+			      (ELSE <PRIN1 <TYPE .S>>)>>
+		 <ACRESIDUE .AC>>
+	<PRINC "]">>
+
+<DEFINE DATUM-PRINT (TT "AUX" TEM)
+	<COND (.TT
+	       <PRINC "#DATUM (">
+	       <COND (<TYPE? <SET TEM <DATTYP .TT>> AC>
+		      <PRIN1 <ACSYM .TEM>>)
+		     (<TYPE? .TEM ATOM> <PRIN1 .TEM>)
+		     (<TYPE? .TEM TEMP>
+		      <PRIN1 <TMPNO .TEM>>)
+		     (ELSE <ERROR LOSING-SYMTAB!-ERRORS>)>
+	       <PRINC " ">
+	       <COND (<TYPE? <SET TEM <DATVAL .TT>> AC>
+		      <PRIN1 <ACSYM .TEM>>)
+		     (ELSE <ERROR LOSING-SYMTAB!-ERRORS>)>
+	       <PRINC ")">)>>
+<PRINTTYPE AC ,AC-PRINT>
+
+<PRINTTYPE SYMTAB ,SYMTAB-PRINT>
+
+<ENDPACKAGE>
+

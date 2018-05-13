@@ -1,0 +1,126 @@
+<PACKAGE "MAPPS1">
+
+<ENTRY PMAPF-R>
+
+<USE "PASS1" "CHKDCL" "COMPDEC" "ADVMESS">
+
+<DEFINE PMAPF-R (OB AP
+		 "AUX" (NAME <1 .OB>) TT ITRF OBJ (RQRG 0)
+		       (LN <LENGTH <SET OBJ <REST .OB>>>) FINALF TAPL (APL ())
+		       (DCL #DECL ()) (ARGL ()) (HATOM <>) (NN 0) TEM L2 L3
+		       (TRG 0))
+   #DECL ((OBJ OB) <PRIMTYPE LIST> (LN NN) FIX
+	  (DCL) DECL (ARGL APL) LIST (ITRF FINALF TT) NODE
+	  (TRG RQRG) <SPECIAL FIX>)
+   <PROG ()
+     <AND <SEG? <REST .OBJ>>
+	  <COND (.VERBOSE
+		 <VMESS "MAPF/MAPR cannot be open compiled due to SEGMENT."
+			.OB> T)(ELSE T)>
+	  <RETURN <PSUBR-C .OB .AP>>>
+     <AND <L? .LN 2>
+	 <MESSAGE ERROR "TOO FEW ARGS TO " .NAME .OBJ>>
+     <SET TT <NODEFM ,MAP-CODE .PARENT <> .NAME () .AP>>
+     <SET FINALF <PCOMP <1 .OBJ> .TT>>
+     <COND
+      (<OR <TYPE? <SET TAPL <2 .OBJ>> FUNCTION>
+	   <AND <TYPE? .TAPL FORM>
+		<NOT <EMPTY? <SET APL <CHTYPE .TAPL LIST>>>>
+		<TYPE? <SET TEM <1 .APL>> ATOM>
+		<GASSIGNED? .TEM>
+		<==? ,.TEM ,FUNCTION>
+		<SET TAPL <REST .APL>>>>
+       <AND <EMPTY? <SET APL <CHTYPE .TAPL LIST>>>
+	   <MESSAGE ERROR "EMPTY FUNCTION IN MAPF " .OBJ>>
+       <AND <TYPE? <1 .APL> ATOM>
+	   <SET HATOM <1 .APL>>
+	   <SET APL <REST .APL>>>
+       <AND <EMPTY? .APL>
+	   <MESSAGE ERROR "MAPF FUNCTION HAS NO ARG LIST " .OBJ>>
+       <SET ARGL <1 .APL>>
+       <REPEAT ((I <+ <LENGTH <REST .OBJ 2>> 1>))
+	       <COND (<L? <SET I <- .I 1>> 0> <RETURN>)>
+	       <SET ARGL (DUMMY-MAPF !.ARGL)>>
+       <SET APL <REST .APL>>
+       <AND <NOT <EMPTY? .APL>>
+	    <TYPE? <1 .APL> DECL>
+	    <SET DCL <1 .APL>>
+	    <SET APL <REST .APL>>>
+       <AND <EMPTY? .APL>
+	   <MESSAGE ERROR "MAPF FUNCTION HAS NO BODY " .OBJ>>
+       <PROG ((VARTBL .VARTBL)) #DECL ((VARTBL) <SPECIAL SYMTAB>)
+	<SET ITRF
+	    <NODEPR ,MFCN-CODE
+		    .TT
+		    <OR <FIND:DECL VALUE .DCL> ANY>
+		    <>
+		    ()
+		    <>
+		    <2 <GEN-D .ARGL .DCL .HATOM <>>>
+		    .HATOM
+		    .VARTBL>>
+       <COND
+	(<ACT-FIX .ITRF <BINDING-STRUCTURE .ITRF>>
+	 <SET L3 <SET L2 ()>>
+	 <PUT
+	  .ITRF
+	  ,BINDING-STRUCTURE
+	  <REPEAT ((L <BINDING-STRUCTURE .ITRF>) (LL .L) (L1 .L) SYM)
+		  #DECL ((L L1 LL) <LIST [REST SYMTAB]>)
+		  <AND <EMPTY? .L> <RETURN .L1>>
+		  <COND (<==? <CODE-SYM <SET SYM <1 .L>>> 1>
+			 <SET L2 ("ACT" <NAME-SYM .SYM> !.L2)>
+			 <SET L3
+			      ((<NAME-SYM .SYM>)
+			       <COND (<SPEC-SYM .SYM>
+				      <FORM SPECIAL <1 <DECL-SYM .SYM>>>)
+				     (ELSE
+				      <FORM UNSPECIAL <1 <DECL-SYM .SYM>>>)>
+			       !.L3)>
+			 <COND (<==? .L .L1> <SET L1 <REST .L1>>)
+			       (ELSE <PUTREST .LL <REST .L>>)>)>
+		  <SET L <REST <SET LL .L>>>>>
+	 <SET APL (<FORM PROG .L2 <CHTYPE .L3 DECL> !.APL>)>)>
+       <PUT .ITRF
+	    ,KIDS
+	    <MAPF ,LIST <FUNCTION (O) <PCOMP .O .ITRF>> .APL>>>)
+      (<OR <AND <TYPE? .TAPL FIX> <==? .LN 3>>
+	   <AND <TYPE? .TAPL FORM>
+		<==? <LENGTH <SET APL <CHTYPE .TAPL LIST>>> 2>
+		<TYPE? <SET TEM <1 .APL>> ATOM>
+		<==? ,.TEM ,GVAL>
+		<TYPE? <SET TEM <2 .APL>> ATOM>
+		<GASSIGNED? .TEM>
+		<OR <NOT <TYPE? ,.TEM FUNCTION>>
+		    <==? .TEM .FCNS>
+		    <AND <TYPE? .FCNS LIST> <MEMQ .TEM .FCNS>>>>>
+       <PUT .IND PTHIS-OBJECT ,PMARGS>
+       <SET ITRF
+	    <COND (<TYPE? .TAPL FIX> <PCOMP <FORM NTH .IND .TAPL> .TT>)
+		  (ELSE
+		   <PCOMP <FORM <2 .APL> !<ILIST <- .LN 2> '.IND>> .TT>)>>
+       <PUT .IND PTHIS-OBJECT>
+       <MAPF <>
+	     <FUNCTION (N) 
+		     #DECL ((N) NODE)
+		     <AND <==? <NODE-TYPE .N> ,MARGS-CODE>
+			  <PUT .N ,NODE-NAME <SET NN <+ .NN 1>>>>>
+	     <KIDS .ITRF>>
+       <SET ITRF <NODEFM ,MPSBR-CODE .TT <> <> (.ITRF) <>>>)
+      (ELSE <SET ITRF <PCOMP .TAPL .TT>>)>
+     <PUT .TT
+	  ,KIDS
+	  (.FINALF
+	   .ITRF
+	   !<MAPF ,LIST <FUNCTION (O) <PCOMP .O .TT>> <REST .OBJ 2>>)>
+     .TT>>
+
+\ 
+
+<DEFINE PMARGS (O) #DECL ((VALUE) NODE) <NODEFM ,MARGS-CODE .PARENT <> <> () <>>>    
+ 
+<PUT ,MAPF PAPPLY-OBJECT ,PMAPF-R>
+
+<PUT ,MAPR PAPPLY-OBJECT ,PMAPF-R>
+
+<ENDPACKAGE>

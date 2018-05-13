@@ -1,0 +1,45 @@
+<PACKAGE "NEWREP">
+
+<ENTRY PROG-REP-GEN RETURN-GEN AGAIN-GEN TAG-GEN GO-GEN CLEANUP-STATE
+       AGAIN-UP RETURN-UP PROG-START-AC>
+
+<USE "CODGEN" "COMCOD" "CACS" "CHKDCL" "COMPDEC" "CUP">
+
+<DEFINE CLEAN-AC (AC "AUX" ACRES INAC OAC) 
+   #DECL ((AC) AC (INAC) DATUM)
+   <COND
+    (<SET ACRES <ACRESIDUE .AC>>
+     <PUT .AC ,ACRESIDUE <>>
+     <MAPF <>
+      <FUNCTION (SYM) 
+	 <COND
+	  (<TYPE? .SYM SYMTAB>
+	   <MAPF <>
+		 <FUNCTION (SYMT) 
+			 <COND (<N==? .SYMT .SYM>
+				<COND (<OR <NOT <TYPE? .SYMT SYMTAB>>
+					   <STORED .SYMT>>
+				       <SMASH-INACS .SYMT <>>)
+				      (ELSE <STOREV .SYMT T>)>)>>
+		 .ACRES>
+	   <COND
+	    (<AND <SET INAC <INACS .SYM>>
+		  <OR <AND <==? <DATTYP .INAC> .AC>
+			   <TYPE? <SET OAC <DATVAL .INAC>> AC>>
+		      <AND <==? <DATVAL .INAC> .AC>
+			   <TYPE? <SET OAC <DATTYP .INAC>> AC>>>>
+	     <MAPF <>
+		   <FUNCTION (SYMT) 
+			   <COND (<N==? .SYMT .SYM>
+				  <COND (<OR <NOT <TYPE? .SYMT SYMTAB>>
+					     <STORED .SYMT>>
+					 <SMASH-INACS .SYMT <>>)
+					(ELSE <STOREV .SYMT T>)>)>>
+		   <ACRESIDUE .OAC>>
+	     <PUT .OAC ,ACRESIDUE (.SYM)>)>
+	   <PUT .AC ,ACRESIDUE (.SYM)>
+	   <MAPLEAVE <1 <ACRESIDUE .AC>>>)
+	  (ELSE <SMASH-INACS .SYM <>> <>)>>
+      .ACRES>)>>
+
+<ENDPACKAGE>

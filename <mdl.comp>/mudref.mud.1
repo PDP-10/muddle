@@ -1,0 +1,135 @@
+
+	<NEWTYPE	MUDREF!-OP WORD>
+
+
+	<TITLE	MUDREFIN>
+	<DECLARE ("VALUE" MUDREF!-OP CHARACTER)>
+	<PUSH	TP* (AB)>
+	<PUSH	TP* 1(AB)>
+	<PUSHJ	P* MUDR1>
+	<JRST	FINIS>
+
+	<INTERNAL-ENTRY MUDR1 1>
+	<SUBM	M* (P)>
+	<SUB	TP* [<2 (2)>]>			; "CLEAN OFF USELESS ARGUMENT"
+	<PUSH	P* [0]>				; "NUMBER OF ARGUMENTS TO STRING"
+	<MOVSI	A* <TYPE-CODE ATOM>>		; "GET CHANNEL AND PUSH IT"
+	<MOVE	B* <MQUOTE INCHAN>>
+	<PUSHJ	P* CILVAL>
+	<PUSH	TP* A>
+	<PUSH	TP* B>
+	<PUSH	P* [0]>
+LP1	<MOVE	A* -1(TP)>
+	<MOVE	B* (TP)>
+	<PUSHJ	P* CNXTC1>
+	<CAIE	B* <ASCII !"$>>
+	<CAIN	B* <ASCII !".>>
+	<JRST	LP3>
+	<CAIN	B* <ASCII !"%>>
+	<JRST	LP3>
+	<CAIG	B* *132*>			; "Between 0 and Z?"
+	<CAIGE	B* *57*>
+	<JRST	LP2>
+	<CAILE	B* *71*>			; "Skip if digit."
+	<CAILE	B* *100*>			; "Skip if an upper case letter."
+LP3	<SKIPA	B* (TP)>			; "GET BACK CHANNEL"
+	<JRST	LP2>
+	<PUSHJ	P* CREDC1>
+	<MOVE	A* (P)>
+	<TLNE	A* *770000*>
+	<JRST	LP1>
+	<LSH	A* 6>
+	<SUBI	B* *40*>
+	<DPB	B* [<(*000600* ) A>]>
+	<MOVEM	A* (P)>
+	<JRST	LP1>
+LP2
+ISYM	<MOVSI	C* (<CHTYPE <* *50* *50* *50* *50* *50* *50*> OPCODE>)>
+	<MOVEI	B* 0>
+	<MOVE	E* [<(*440600*) (P)>]>
+
+ISYM0	<ILDB	A* E>
+	<JUMPE	A* ISYM0>
+	<SUBI	A* <- <ASCII !"0> 33>>
+	<CAIL	A* <- <ASCII !"A> <ASCII !"0> -1>>
+	<SUBI	A* <- <ASCII !"A> <ASCII !"0> *12*>>
+	<JUMPGE	A* ISYM2>
+	<ADDI	A* *61*>
+	<CAIN	A* *60*>
+	<MOVEI	A* *45*>
+ISYM2	<IDIVI	C* *50*>
+	<IMUL	A* C>
+	<ADDM	A* B>
+	<TLNE	E* *770000*>
+	<JRST	ISYM0>
+
+ISYM3	<MOVSI	A* <TYPE-CODE MUDREF!-OP >>
+	<SUB	P* [<2 (2)>]>
+	<JRST	MPOPJ>
+
+
+
+	<SUB-ENTRY OUTPUT-MUDREF ("VALUE" ANY MUDREF!-OP )>
+	<PUSH	TP* (AB)>
+	<PUSH	TP* 1 (AB)>
+	<PUSHJ	P* IOUT>
+	<JRST	FINIS>
+
+	<INTERNAL-ENTRY	IOUT 1>
+	<SUBM	M* (P)>
+	<MOVSI	A* <TYPE-CODE ATOM>>
+	<MOVE	B* <MQUOTE OUTCHAN>>
+	<PUSHJ	P* CILVAL>
+	<PUSH	TP* A>
+	<PUSH	TP* B>
+	<GETYP E* A>
+	<CAIE E* <TYPE-CODE CHANNEL>>
+	<JRST STARTP>
+	<MOVE E* 27 (B)>
+	<ADDI E* 7>
+	<CAMGE E* 25 (B)>
+	<JRST STARTP>
+	<MOVEI D* 13>		; "Carriage ret lf first"
+	<PUSHJ	P* CPCH>
+	<MOVEI	D* 10>
+	<MOVSI	A* <TYPE-CODE CHANNEL>>
+	<MOVE	B* (TP)>
+	<PUSHJ	P* CPCH>
+	<MOVSI	A* <TYPE-CODE CHANNEL>>
+	<MOVE	B* (TP)>
+
+STARTP	<MOVEI	D* <ASCII !"|>>
+	<PUSHJ	P* CPCH>
+LPS	<MOVE	D* -2 (TP)>
+	<PUSHJ	P* SPT1>
+	<POP	TP* B>
+	<POP	TP* A>
+	<MOVEI	D* <ASCII !" >>
+	<PUSHJ	P* CPCH>
+LEAVE	<SUB	TP* [<2 (2)>]>
+	<JRST	MPOPJ>
+
+SPT1	<SUBM	M* (P)>
+SPT2	<IDIVI	D* *50*>
+	<HRLM	E* (P)>
+	<JUMPE	D* SPT3>
+	<JUMPE	E* SPT2>
+	<PUSHJ	P* SPT1>
+SPT3	<HLRE	D* (P)>
+	<ADDI	D* <- <ASCII !"0> 1>>
+	<CAILE	D* <ASCII !"9>>
+	<ADDI	D* <- <ASCII !"A> <ASCII !"9> 1>>
+	<CAILE	D* <ASCII !"Z>>
+	<SUBI	D* <- <ASCII !"Z> <ASCII !"#> -1>>
+	<CAIN	D* <ASCII !"#>>
+	<MOVEI	D* <ASCII !".>>
+	<CAIN	D* <ASCII !"/>>
+SPC	<MOVEI	D* *40*>
+	<MOVE	A* -1 (TP)>
+	<MOVE	B* (TP)>
+	<PUSHJ	P* CPCH>
+	<HRROS	(P)>
+	<JRST	MPOPJ>
+
+
+

@@ -1,0 +1,1205 @@
+
+<PACKAGE "COMPDEC">
+
+<ENTRY FCNS
+       DEATH
+       TMPS
+       IDT
+       STYPES
+       PLUSINF
+       MINUSINF
+       IPUT
+       TEMPV
+       DEBUGSW
+       INSTRUCTION
+       INTH
+       FCN
+       IRSUBR
+       STACK
+       SNODES
+       PSTACK
+       ANY-AC
+       DUMMY-MAPF
+       INCONSISTENCY
+       SEGS
+       SPEC
+       CODVEC
+       QUOTE-CODE
+       RETURN-CODE
+       IPUT-CODE
+       SEG-CODE
+       PREDV
+       ACAGE
+       NUMACS
+       SYM-SLOT
+       SAVED-STK
+       PARENT
+       TYPE-INFO
+       PROG-VARS
+       CURRENT-TYPE
+       NODE1
+       PUTR-CODE
+       ISUBR-CODE
+       EOF-CODE
+       IREMAS-CODE
+       GVAL-CODE
+       SPARE4-CODE
+       ACRESIDUE
+       AC-F
+       LOOPVARS-LENGTH
+       ADDVAR
+       FSET-CODE
+       OFFPTR
+       CSYMT-SLOT
+       CPOTLV-SLOT
+       PROG-CODE
+       COMP-TYPES
+       INACS-SLOT
+       SAVED-STACK-STATE
+       NODE-NAME
+       AGND
+       REQARGS
+       LOOP-VARS
+       DECL-SYM
+       PUT-CODE
+       FLVAL-CODE
+       SETG-CODE
+       BACK-CODE
+       PUT-SAME-CODE
+       AC-E
+       SS-POTENT-SLOT
+       NUM-SYM-SLOT
+       RSUBR-DECLS
+       NODEF
+       AND-CODE
+       MT-CODE
+       BITS-CODE
+       PUTBITS-CODE
+       COPY-LIST-CODE
+       SPARE1-CODE
+       ACLINK
+       LINKED
+       SS-SYM-SLOT
+       ATAG
+       ASSUM
+       RETURN-STATES
+       PURE-SYM
+       NUM-SYM
+       KID
+       GNAME-SYM
+       CHTYPE-CODE
+       SAVED-NUM-SYM-SLOT
+       NODE
+       SYMTAB
+       INACS
+       USAGE-SYM
+       GDECL-SYM
+       MAP-CODE
+       MARGS-CODE
+       DATVAL
+       ALLACS
+       AC-D
+       SAVED-AC-STATE
+       NODE-SUBR
+       LIVE-VARS
+       SPEC-SYM
+       AS-NXT-CODE
+       SUBSTRUC-CODE
+       BIT-TEST-CODE
+       SPARE3-CODE
+       TMPAC
+       NO-RESIDUE
+       NOT-PREF
+       P-N-STO-RES
+       P-N-NO-STO-RES
+       FRMNO
+       NOT-CODE
+       TEST-CODE
+       MIN-MAX-CODE
+       READ-EOF2-CODE
+       TAG-CODE
+       LENGTH-CONTROL-STATE
+       SAVED-NTSLOTS
+       KIDS
+       PREDIC
+       MAKE:TAG
+       NODEPR
+       NODEFM
+       GNEXT-SYM
+       FIX-CODE
+       MFCN-CODE
+       IRSUBR-CODE
+       CASE-CODE
+       SCL
+       ACSYM
+       ACNUM
+       AC-C
+       P-N-CLEAN
+       CINACS-SLOT
+       NODE-TYPE
+       USLOTS
+       DEAD-VARS
+       DEATH-LIST
+       COMPOSIT-TYPE
+       PROG-AC
+       PRED
+       COPY-CODE
+       LENGTH?-CODE
+       AC
+       LINACS-SLOT
+       TMPLS
+       INIT-DECL-TYPE
+       NODECOND
+       FUNCTION-CODE
+       AGAIN-CODE
+       0-TST-CODE
+       GETBITS-CODE
+       MAPRET-STOP-CODE
+       LSH-CODE
+       SYMBOL
+       SAVED-STATE
+       ACO
+       LENGTH-PROG-VARS
+       CSTORED-SLOT
+       NODEB
+       SET-CODE
+       ROT-CODE
+       AC-B
+       REGS
+       PROG-SLOT
+       SAVED-BSTB
+       BINDING-STRUCTURE
+       CDST
+       VSPCD
+       NAME-SYM
+       INIT-SYM
+       EQ-CODE
+       ALL-REST-CODE
+       DISPATCH
+       TMPNO
+       AC1SYM
+       REACS
+       LSYM-SLOT
+       DST
+       RTAG
+       ACCUM-TYPE
+       DATUM
+       ARGNUM-SYM
+       ADDR-SYM
+       STORED
+       USED-AT-ALL
+       POTLV
+       NAME
+       ARGNUM
+       FGVAL-CODE
+       ID-CODE
+       FORM-F-CODE
+       INFO-CODE
+       TEMP
+       STORED-RESIDUE
+       SAVED-POTLV-SLOT
+       SAVED-CODE:PTR
+       CLAUSES
+       TRG
+       VARTBL
+       LVARTBL
+       SUBR-CODE
+       LNTH-CODE
+       STACKFORM-CODE
+       ASSIGNED?-CODE
+       GET2-CODE
+       AS-IT-IND-VAL-CODE
+       COMMON
+       DATTYP
+       AC-A
+       ACS
+       RET-AGAIN-ONLY
+       SEGMENT-CODE
+       FSETG-CODE
+       ISTRUC-CODE
+       MFIRST-CODE
+       ACPREF
+       SS-STORED-SLOT
+       STORED-SLOT
+       STK-B
+       AGAIN-STATES
+       CODE-SYM
+       BST
+       RSUBR-CODE
+       1?-CODE
+       REST-CODE
+       ABS-CODE
+       MPSBR-CODE
+       UNWIND-CODE
+       PRINT-CODE
+       OBLIST?-CODE
+       ADDRSYM
+       AC-H
+       LAST-AC-1
+       NOT-STORED-RESIDUE
+       P-N-LINKED
+       SAVED-RET-FLAG
+       SAVED-FRMS
+       STACKS
+       ASS?
+       BRANCH-CODE
+       LVAL-CODE
+       OR-CODE
+       ISTRUC2-CODE
+       READ-EOF-CODE
+       MAPLEAVE-CODE
+       MEMQ-CODE
+       REP-STATE
+       SS-DAT-SLOT
+       SAVED-PROG-AC-SLOT
+       LENGTH-CSTATE
+       RESULT-TYPE
+       SIDE-EFFECTS
+       SSLOTS
+       PRE-ALLOC
+       NEXT-SYM
+       FORM-CODE
+       TY?-CODE
+       FLOAT-CODE
+       GET-CODE
+       SPECS-START
+       BTP-B
+       SPCS-X
+       RES-TYP
+       GO-CODE
+       BITL-CODE
+       TOP-CODE
+       SPARE2-CODE
+       AC-G
+       LAST-AC
+       ATIME
+       ACTIVATED
+       TOTARGS
+       VTB
+       RQRG
+       COND-CODE
+       ARITH-CODE
+       NTH-CODE
+       MOD-CODE
+       ACPROT
+       IND
+       ALL
+       NOTE
+       WARNING
+       PRIM-CODE
+       DONT-CARE
+       FLUSHED
+       NO-RETURN
+       NO-DATUM
+       MESSAGE
+       GROUP-NAME
+       FUZZ
+       COMMON-TYPE
+       COMMON-SYMTAB
+       COMMON-ITEM
+       COMMON-PRIMTYPE
+       COMMON-DATUM
+       COMMON-SYMT
+       TRANSFORM
+       TRANS
+       N0?
+       POPWR2
+       DEALLOCATE
+       TOKEN
+       ERRS
+       WARNS
+       NOTES
+       DEBUG-COMPILE
+       REASONABLE
+       CAREFUL
+       PRECOMPILED
+       HAIRY-ANALYSIS
+       SRC-FLG
+       BIN-FLG
+       GLOSP
+       ANALY-OK
+       VERBOSE
+       COMPILER
+       IND
+       ADDRESS:C
+       FUNNY-STACK>
+
+
+<SETG PLUSINF <CHTYPE <MIN> FIX>>
+
+<SETG MINUSINF <CHTYPE <MAX> FIX>>
+
+"Type specification for NODE."
+
+<NEWTYPE NODE
+	 VECTOR
+	 '<VECTOR FIX
+		  ANY
+		  ANY
+		  ANY
+		  <LIST [REST NODE]>
+		  FIX
+		  <OR FALSE ATOM>
+		  [REST
+		   LIST
+		   ANY
+		   ANY
+		   LIST
+		   FIX
+		   SYMTAB
+		   FIX
+		   FIX
+		   <OR FALSE ATOM>
+		   ATOM
+		   ANY
+		   LIST
+		   LIST
+		   ANY
+		   ANY
+		   ANY
+		   ANY
+		   ANY
+		   ANY
+		   ANY
+		   <PRIMTYPE LIST>
+		   FIX
+		   FIX
+		   LIST
+		   LIST
+		   LIST
+		   LIST
+		   LIST]>>
+
+"Offsets into pass 1 structure entities and functions to create same."
+
+<SETG NODE-TYPE <OFFSET 1 NODE>>
+
+;"Code specifying the node type."
+
+<SETG PARENT <OFFSET 2 NODE>>
+
+;"Pointer to parent node."
+
+<SETG RESULT-TYPE <OFFSET 3 NODE>>
+
+;"Type expression for result returned by code
+				   generated by this node."
+
+<SETG NODE-NAME <OFFSET 4 NODE>>
+
+;"Usually name of SUBR associated with  this node."
+
+<SETG KIDS <OFFSET 5 NODE>>
+
+;"List of sub-nodes for this node."
+
+<SETG STACKS <OFFSET 6 NODE>>
+
+;"Amount of stack needed by this node."
+
+<SETG SEGS <OFFSET 7 NODE>>
+
+;"Predicate:  any segments among kids?"
+
+<SETG TYPE-INFO <OFFSET 8 NODE>>
+
+;"Points to transient type info for this node."
+
+<SETG SIDE-EFFECTS <OFFSET 9 NODE>>
+
+;"General info about side effects (format not yet firm.)"
+
+<SETG RSUBR-DECLS <OFFSET 10 NODE>>
+
+;"Function only: final rsubr decls."
+
+<SETG BINDING-STRUCTURE <OFFSET 11 NODE>>
+
+;"Partially compiled arg list."
+
+<SETG SPECS-START <OFFSET 12 NODE>>
+
+;"Offset to 1st special."
+
+<SETG SYMTAB <OFFSET 13 NODE>>
+
+;"Pointer to local symbol table."
+
+<SETG SSLOTS <OFFSET 14 NODE>>
+
+;"Number of specials."
+
+<SETG USLOTS <OFFSET 15 NODE>>
+
+;"Number of unspecials."
+
+<SETG ACTIVATED <OFFSET 16 NODE>>
+
+;"Predicate: any named activation?"
+
+<SETG TMPLS <OFFSET 17 NODE>>
+
+;"Offset to unamed temps."
+
+<SETG PRE-ALLOC <OFFSET 18 NODE>>
+
+;"Variable slots allocated in advance."
+
+<SETG STK-B <OFFSET 19 NODE>>
+
+;"Base of stack at entry."
+
+<SETG BTP-B <OFFSET 20 NODE>>
+
+;"Base of stack after bindings."
+
+<SETG SPCS-X <OFFSET 21 NODE>>
+
+;"Predicate:  any specials bound?"
+
+<SETG DST <OFFSET 22 NODE>>
+
+;"Destination spec for value of node."
+
+<SETG CDST <OFFSET 23 NODE>>
+
+;"Current destination used."
+
+<SETG ATAG <OFFSET 24 NODE>>
+
+;"Label for local againing."
+
+<SETG RTAG <OFFSET 25 NODE>>
+
+;"Label for local Returning."
+
+<SETG ASSUM <OFFSET 26 NODE>>
+
+;"Node type assumptions."
+
+<SETG AGND <OFFSET 27 NODE>>
+
+;"Predicate:  Again possible?"
+
+<SETG ACS <OFFSET 28 NODE>>
+
+;"Predicate:  AC call possible? (if not false
+				   ac structure)"
+
+<SETG TOTARGS <OFFSET 29 NODE>>
+
+;"Total number of args (including optional)."
+
+<SETG REQARGS <OFFSET 30 NODE>>
+
+;"Required arguemnts."
+
+<SETG LOOP-VARS <OFFSET 31 NODE>>
+
+"Variables kept in acs thru loop."
+
+<SETG AGAIN-STATES <OFFSET 32 NODE>>
+
+"States at agains"
+
+<SETG RETURN-STATES <OFFSET 33 NODE>>
+
+"States at repeats."
+
+<SETG PROG-VARS <OFFSET 34 NODE>>
+
+"Vars handled in this prog/repeat."
+
+;"Information used for merging states with prog-nodes"
+
+<SETG CLAUSES <OFFSET <INDEX ,KIDS> NODE>>
+
+;"For COND clauses."
+
+<SETG NODE-SUBR <OFFSET <INDEX ,RSUBR-DECLS> NODE>>
+
+;"For many nodes, the SUBR (not its name)."
+
+<SETG PREDIC <OFFSET <INDEX ,NODE-NAME> NODE>>
+
+;"For cond clause nodes, the predicate."
+
+<SETG ACCUM-TYPE <OFFSET <INDEX ,DST> NODE>>
+
+;"Accumulated type from all returns etc."
+
+<SETG DEAD-VARS <OFFSET <INDEX ,CDST> NODE>>
+
+<SETG LIVE-VARS <OFFSET <INDEX ,TYPE-INFO> NODE>>
+
+<SETG VSPCD <OFFSET <INDEX ,ATAG> NODE>>
+
+<SETG INIT-DECL-TYPE <OFFSET <INDEX ,RTAG> NODE>>
+
+"	Definitions associated with compiler symbol tables."
+
+"Offsets for variable description blocks"
+
+<NEWTYPE SYMTAB
+	 VECTOR
+	 '<VECTOR <PRIMTYPE VECTOR>
+		  ATOM
+		  <OR FALSE ATOM>
+		  FIX
+		  <OR ATOM FIX>
+		  <OR FALSE ATOM>
+		  LIST
+		  ANY
+		  ANY
+		  FIX
+		  <OR FALSE NODE>
+		  <OR FALSE 'T>
+		  <OR FALSE DATUM LIST>
+		  <OR FALSE 'T>
+		  <OR FALSE 'T>
+		  LIST
+		  ANY
+		  ANY
+		  <OR FALSE FIX>>>
+
+<SETG NEXT-SYM <OFFSET 1 SYMTAB>>
+
+;"Pointer to next symbol table entry."
+
+<SETG NAME-SYM <OFFSET 2 SYMTAB>>
+
+;"Name of variable."
+
+<SETG SPEC-SYM <OFFSET 3 SYMTAB>>
+
+;"Predicate:  special?"
+
+<SETG CODE-SYM <OFFSET 4 SYMTAB>>
+
+;"Code specifying whether AUX, OPTIONAL etc."
+
+<SETG ARGNUM-SYM <OFFSET 5 SYMTAB>>
+
+;"If an argument, which one."
+
+<SETG PURE-SYM <OFFSET 6 SYMTAB>>
+
+;"Predicate:  unchanged in function?"
+
+<SETG DECL-SYM <OFFSET 7 SYMTAB>>
+
+;"Decl for this variable."
+
+<SETG ADDR-SYM <OFFSET 8 SYMTAB>>
+
+;"Where do I live?"
+
+<SETG INIT-SYM <OFFSET 9 SYMTAB>>
+
+;"Predicate:  initial value? if so what."
+
+<SETG FRMNO <OFFSET 10 SYMTAB>>
+
+;"ID of my frame."
+
+<SETG RET-AGAIN-ONLY <OFFSET 11 SYMTAB>>
+
+;"Predicate:  used only in AGAIN/RETURN?"
+
+<SETG ASS? <OFFSET 12 SYMTAB>>
+
+;"Predicate:  used in ASSIGNED?"
+
+<SETG INACS <OFFSET 13 SYMTAB>>
+
+;"Predicate:  currently in some AC?"
+
+<SETG STORED <OFFSET 14 SYMTAB>>
+
+;"Predicate:  stored in slot?"
+
+<SETG USED-AT-ALL <OFFSET 15 SYMTAB>>
+
+;"Predicate:  symbolused at all."
+
+<SETG DEATH-LIST <OFFSET 16 SYMTAB>>
+
+;"List of info associated with life time."
+
+<SETG CURRENT-TYPE <OFFSET 17 SYMTAB>>
+
+;"Current decl determined by analysis"
+
+<SETG COMPOSIT-TYPE <OFFSET 18 SYMTAB>>
+
+<SETG USAGE-SYM <OFFSET 19 SYMTAB>>
+
+"How a variable is used in a loop."
+
+<SETG PROG-AC <OFFSET <INDEX ,CURRENT-TYPE> SYMTAB>>
+
+<SETG NUM-SYM <OFFSET <INDEX ,COMPOSIT-TYPE> SYMTAB>>
+
+<SETG POTLV <OFFSET <INDEX ,USED-AT-ALL> SYMTAB>>
+
+
+"Slot used to store information for variables in loops."
+
+;"Type as figured out by all uses of symbol."
+
+<DEFINE NODE1 (TYP PAR RES-TYP NAME KID)
+	<CHTYPE [.TYP .PAR .RES-TYP .NAME .KID 0 <>] NODE>>
+
+"Create a function node with all its hair."
+
+<DEFINE NODEF (TYP PAR RES-TYP NAME KID RSD BST HAT VTB ACS? TRG RQRG)
+	<CHTYPE [.TYP .PAR .RES-TYP .NAME .KID 0 <> () <> .RSD .BST 0 .VTB 0
+		 0 <> <MAKE:TAG "FRM"> <> () () <> <> <> <> .RES-TYP <> <> 
+		 .ACS? .TRG .RQRG] NODE>>
+
+"Create a PROG/REPEAT node with nearly as much hair."
+
+<DEFINE NODEPR (TYP PAR RES-TYP NAME KID VL BST HAT VTB) 
+	<CHTYPE [.TYP
+		 .PAR
+		 .RES-TYP
+		 .NAME
+		 .KID
+		 0
+		 <>
+		 ()
+		 <>
+		 .VL
+		 .BST
+		 0
+		 .VTB
+		 0
+		 0
+		 <>
+		 <MAKE:TAG "FRM">
+		 <>
+		 ()
+		 ()
+		 <>
+		 <>
+		 <>
+		 <>
+		 .RES-TYP
+		 <>
+		 <>
+		 <>
+		 0
+		 0
+		 ()
+		 ()
+		 ()
+		 ()]
+		NODE>>
+
+"Create a COND node."
+
+<DEFINE NODECOND (TYP PAR RES-TYP NAME CLAU)
+	<CHTYPE [.TYP .PAR .RES-TYP .NAME .CLAU 0 <> () <>] NODE>>
+
+"Create a node for a COND clause."
+
+<DEFINE NODEB (TYP PAR RES-TYP PRED CLAU)
+	<CHTYPE [.TYP .PAR .RES-TYP .PRED .CLAU 0 <> () <>] NODE>>
+
+"Create a node for a SUBR call etc."
+
+<DEFINE NODEFM (TYP PAR RES-TYP NAME KID SUB)
+	<CHTYPE [.TYP .PAR .RES-TYP .NAME .KID 0 <> () <> .SUB] NODE>>
+
+
+<DEFINE ADDVAR (NAM SPEC CODE ARGNUM PURE DCL ADDR INIT)
+	<SET VARTBL <CHTYPE [.VARTBL .NAM .SPEC .CODE .ARGNUM .PURE .DCL .ADDR .INIT 0 <>
+			     <> <> T <> () <> ANY 0] SYMTAB>>>
+
+
+"Some specialized decl stuff."
+
+<SETG LVARTBL
+      <PROG ((VARTBL []))
+	    #DECL ((VARTBL) <SPECIAL ANY>)
+	    <ADDVAR OBLIST T -1 0 T '(<OR LIST OBLIST>) <> <>>
+	    <ADDVAR OUTCHAN T -1 0 T '(CHANNEL) <> <>>
+	    <ADDVAR INCHAN T -1 0 T '(CHANNEL) <> <>>
+	    .VARTBL>>
+
+<PUT CHANNEL DECL '<CHANNEL FIX [11 ANY] [5 FIX]>>
+
+<PUT STRING DECL '<STRING [REST CHARACTER]>>
+
+<PUT OBLIST DECL '<UVECTOR [REST <LIST [REST <OR ATOM LINK>]>]>>
+
+"Codes for the node types in the tree built by pass1 and modified by
+other passes."
+
+"Give symbolic codes arbitrary increasing values."
+
+<PROG ((N 1))
+      <SETG CODVEC
+	    <MAPF ,UVECTOR
+		  <FUNCTION (ATM) <SETG .ATM .N> <SET N <+ .N 1>> .ATM>
+		  ![FUNCTION-CODE
+		    QUOTE-CODE
+		    SEGMENT-CODE
+		    FORM-CODE
+		    PROG-CODE
+		    SUBR-CODE
+		    COND-CODE
+		    BRANCH-CODE
+		    RSUBR-CODE
+		    LVAL-CODE
+		    SET-CODE
+		    OR-CODE
+		    AND-CODE
+		    RETURN-CODE
+		    COPY-CODE
+		    GO-CODE
+		    AGAIN-CODE
+		    ARITH-CODE
+		    0-TST-CODE
+		    NOT-CODE
+		    1?-CODE
+		    TEST-CODE
+		    EQ-CODE
+		    TY?-CODE
+		    LNTH-CODE
+		    MT-CODE
+		    NTH-CODE
+		    REST-CODE
+		    PUT-CODE
+		    PUTR-CODE
+		    FLVAL-CODE
+		    FSET-CODE
+		    FGVAL-CODE
+		    FSETG-CODE
+		    MIN-MAX-CODE
+		    STACKFORM-CODE
+		    CHTYPE-CODE
+		    ABS-CODE
+		    FIX-CODE
+		    FLOAT-CODE
+		    MOD-CODE
+		    ID-CODE
+		    ASSIGNED?-CODE
+		    ISTRUC-CODE
+		    ISTRUC2-CODE
+		    BITS-CODE
+		    BITL-CODE
+		    GETBITS-CODE
+		    PUTBITS-CODE
+		    MAP-CODE
+		    MFCN-CODE
+		    ISUBR-CODE
+		    READ-EOF-CODE
+		    READ-EOF2-CODE
+		    EOF-CODE
+		    GET-CODE
+		    GET2-CODE
+		    IPUT-CODE
+		    IREMAS-CODE
+		    IRSUBR-CODE
+		    MARGS-CODE
+		    MPSBR-CODE
+		    MAPLEAVE-CODE
+		    MAPRET-STOP-CODE
+		    UNWIND-CODE
+		    GVAL-CODE
+		    SETG-CODE
+		    SEG-CODE
+		    LENGTH?-CODE
+		    TAG-CODE
+		    MFIRST-CODE
+		    PRINT-CODE
+		    MEMQ-CODE
+		    FORM-F-CODE
+		    INFO-CODE
+		    OBLIST?-CODE
+		    AS-NXT-CODE
+		    AS-IT-IND-VAL-CODE
+		    ALL-REST-CODE
+		    CASE-CODE
+		    SUBSTRUC-CODE
+		    BACK-CODE
+		    TOP-CODE
+		    COPY-LIST-CODE
+		    PUT-SAME-CODE
+		    ROT-CODE
+		    LSH-CODE
+		    BIT-TEST-CODE
+		    SPARE1-CODE
+		    SPARE2-CODE
+		    SPARE3-CODE
+		    SPARE4-CODE!]>>
+      <SETG COMP-TYPES .N>>
+
+
+<USE "NPRINT">
+
+"Build a dispatch table based on node types."
+
+<DEFINE DISPATCH (DEFAULT "TUPLE" PAIRS
+		  "AUX" (TT <IVECTOR ,COMP-TYPES '.DEFAULT>))
+	#DECL ((PAIRS) <TUPLE [REST <LIST FIX ANY>]>
+	       (TT) VECTOR)
+	<REPEAT ((PAIR '(1 1))) #DECL ((PAIR) <LIST FIX ANY>)
+		<COND (<EMPTY? .PAIRS><RETURN .TT>)>
+		<PUT .TT <1 <SET PAIR <1 .PAIRS>>> <2 .PAIR>>
+		<SET PAIRS <REST .PAIRS>>>>
+
+<SETG PREDV <IUVECTOR ,COMP-TYPES 0>>
+
+<MAPF <>
+      <FUNCTION (N) <PUT ,PREDV .N 1>>
+      ![,0-TST-CODE
+	,1?-CODE
+	,NOT-CODE
+	,TEST-CODE
+	,EQ-CODE
+	,TY?-CODE
+	,MT-CODE
+	,OR-CODE
+	,AND-CODE
+	,ASSIGNED?-CODE
+	,ISUBR-CODE
+	,NTH-CODE
+	,MEMQ-CODE
+	,LENGTH?-CODE
+	,OBLIST?-CODE
+	,AS-NXT-CODE
+	,COND-CODE
+	,BIT-TEST-CODE!]>
+
+"Predicate:  does this type have special predicate code?"
+
+<PUT REP-STATE
+     DECL
+     '<LIST [5 <LIST [REST SYMTAB DATUM <OR FALSE ATOM> <OR ATOM FALSE>]>]>>
+
+<PUT SYMBOL DECL '<OR SYMTAB TEMP COMMON>>
+
+<NEWTYPE TEMP VECTOR '<VECTOR SCL <OR FALSE DATUM>>>
+
+<NEWTYPE SAVED-STATE
+	 LIST
+	 '<LIST [REST
+		 <LIST AC
+		       <OR FALSE <LIST [REST SYMBOL]>>
+		       [REST <LIST SYMBOL [3 ANY]>]>]>>
+
+<SETG TMPNO <OFFSET 1 TEMP>>
+
+<SETG TMPAC <OFFSET 2 TEMP>>
+
+<SETG DATTYP <OFFSET 1 DATUM>>
+
+<SETG DATVAL <OFFSET 2 DATUM>>
+
+<SETG ADDRSYM <OFFSET 1 AC>>
+
+<SETG ACSYM <OFFSET 2 AC>>
+
+<SETG ACLINK <OFFSET 3 AC>>
+
+<SETG ACAGE <OFFSET 4 AC>>
+
+<SETG ACNUM <OFFSET 5 AC>>
+
+<SETG ACPROT <OFFSET 6 AC>>
+
+<SETG AC1SYM <OFFSET 7 AC>>
+
+<SETG ACRESIDUE <OFFSET 8 AC>>
+
+<SETG ACPREF <OFFSET 9 AC>>
+
+<NEWTYPE AC
+	 VECTOR
+	 '<<PRIMTYPE VECTOR> <PRIMTYPE WORD>
+			     <PRIMTYPE WORD>
+			     <OR <LIST [REST DATUM]> FALSE>
+			     FIX
+			     FIX
+			     <OR FALSE ATOM>
+			     <PRIMTYPE WORD>
+			     <OR FALSE LIST>
+			     <OR FALSE ATOM>>>
+
+<NEWTYPE DATUM
+	 LIST
+	 '<<PRIMTYPE LIST> <OR ATOM <PRIMTYPE LIST> <PRIMTYPE VECTOR>>
+			   <OR ATOM <PRIMTYPE LIST> <PRIMTYPE VECTOR>>>>
+
+<NEWTYPE OFFPTR LIST '<<PRIMTYPE LIST> FIX DATUM ATOM>>
+
+<NEWTYPE TEMPV LIST>
+
+<NEWTYPE IRSUBR LIST>
+
+"A TOKEN GIVES INFORMATION TO CUP"
+
+<NEWTYPE TOKEN VECTOR '<<PRIMTYPE VECTOR> FIX>> 
+
+<NEWTYPE ADDRESS:PAIR LIST>
+
+<NEWTYPE ADDRESS:C LIST>
+
+<SETG ALLACS
+      <MAPF ,UVECTOR
+	    <FUNCTION (N1 N2 N N+1 NAME "AUX"  THISAC) 
+		    <SETG .NAME <SET THISAC <CHTYPE [.N1 .N2 <> 0 .N <> .N+1 <> <>] AC>>>
+		    <EVAL <FORM GDECL (.NAME) AC>> .THISAC>
+	    ![`A `B `C `D `E `F `TVP `SP!]
+	    ![`A* `B* `C* `D* `E* `F* `TVP* `SP*!]
+	    ![1 2 3 4 5 6 7 8!]
+	    ![`B* `C* `D* `E* `F* `TVP* `SP* `AB*!]
+	    ![AC-A AC-B AC-C AC-D AC-E AC-F AC-G AC-H!]>>
+
+<SETG NUMACS <LENGTH ,ALLACS>>
+
+<SETG LAST-AC ,AC-H>
+
+<SETG LAST-AC-1 ,AC-G>
+
+<DEFINE REACS () 
+	<MAPF <>
+	      <FUNCTION (AC) 
+		      #DECL ((AC) AC)
+		      <PUT .AC ,ACLINK <>>
+		      <PUT .AC ,ACPROT <>>
+		      <PUT .AC ,ACAGE 0>
+		      <PUT .AC ,ACRESIDUE <>>
+		      <PUT .AC ,ACPREF <>>>
+	      ,ALLACS>
+	<SETG REGS 8>
+	<SETG ATIME 0>>
+
+<GDECL (ALLACS) !<UVECTOR [8 AC]> (ATIME REGS) FIX (LAST-AC LAST-AC-1 AC0) AC>
+
+<MANIFEST SS-SYM-SLOT SS-DAT-SLOT SS-STORED-SLOT SS-POTENT-SLOT>
+
+<MANIFEST TMPFRM TMPNO THOME TUSERS DATTYP DATVAL  ADDRSYM ACSYM ACLINK ACAGE
+	  ACNUM ACPROT AC1SYM ACRESIDUE ACPREF ACINUSE TMPAC COMMON-DATUM
+	  NUMACS POTLV>
+
+<MAPF <> ,MANIFEST ,CODVEC>
+
+<MANIFEST TOT-MODES RESTS RMODES COMP-TYPES
+GDECL-SYM GNAME-SYM GNEXT-SYM FRMNO INIT-SYM ADDR-SYM TOTARGS REQARGS
+DECL-SYM PURE-SYM ARGNUM-SYM CODE-SYM SPEC-SYM NAME-SYM NEXT-SYM PREDIC 
+NODE-SUBR CLAUSES ACS TMPLS ACTIVATED USLOTS SSLOTS SYMTAB SPECS-START 
+BINDING-STRUCTURE RSUBR-DECLS SEGS STACKS KIDS NODE-NAME RESULT-TYPE PARENT 
+NODE-TYPE SIDE-EFFECTS RET-AGAIN-ONLY ASS? INACS STORED DST CDST ACCUM-TYPE
+INIT-DECL-TYPE VSPCD AGND ASSUM RTAG ATAG SPCS-X BTP-B STK-B PRE-ALLOC
+USED-AT-ALL CURRENT-TYPE DEATH-LIST COMPOSIT-TYPE AGAIN-STATES RETURN-STATES
+PROG-VARS LOOP-VARS PROG-AC NUM-SYM  TYPE-INFO USAGE-SYM LIVE-VARS
+DEAD-VARS>
+
+<REACS>
+
+<SETG LINKED 1>
+
+<SETG NO-RESIDUE 10000000>
+
+<SETG STORED-RESIDUE 1000000>
+
+<SETG NOT-STORED-RESIDUE 100000>
+
+<SETG NOT-PREF 10000>
+
+<SETG P-N-CLEAN 1000>
+
+<SETG P-N-STO-RES 100>
+
+<SETG P-N-NO-STO-RES 10>
+
+<SETG P-N-LINKED 1>
+
+<MANIFEST LINKED
+	  NO-RESIDUE
+	  STORED-RESIDUE
+	  NOT-STORED-RESIDUE
+	  NOT-PREF
+	  P-N-LINKED
+	  P-N-CLEAN
+	  P-N-STO-RES
+	  P-N-NO-STO-RES>
+
+<SETG ACO <CHTYPE [`O* `O* <> 0 0 <> `A* <> <>] AC>>
+
+<SETG SS-SYM-SLOT 1>
+
+"POINTER TO SYMBOL"
+
+<SETG SS-DAT-SLOT 2>
+
+"DATUM OF THE SYMBOL"
+
+<SETG SS-STORED-SLOT 3>
+
+"IS THE SYMBOL STORED"
+
+<SETG SS-POTENT-SLOT 4>
+
+"IS THE SYMBOL POTENTIAL"
+
+<MANIFEST SS-SYM-SLOT SS-DAT-SLOT SS-STORED-SLOT SS-POTENT-SLOT>
+
+"MANIFESTS FOR PROG-AC"
+
+<SETG PROG-SLOT 1>
+
+<SETG NUM-SYM-SLOT 2>
+
+<SETG STORED-SLOT 3>
+
+<SETG INACS-SLOT 4>
+
+"MANIFESTED VARIABLES FOR SLOT STORE IN PROG-VARS"
+
+<SETG SYM-SLOT 1>
+
+<SETG SAVED-NUM-SYM-SLOT 2>
+
+<SETG SAVED-PROG-AC-SLOT 3>
+
+<SETG SAVED-POTLV-SLOT 4>
+
+<SETG LENGTH-PROG-VARS 4>
+
+"MANIFESTS FOR AGAIN AND RETURN STATES"
+
+<SETG SAVED-AC-STATE 1>
+
+<SETG SAVED-CODE:PTR 2>
+
+<SETG SAVED-STACK-STATE 3>
+
+<SETG SAVED-RET-FLAG 4>
+
+<SETG LENGTH-CONTROL-STATE 4>
+
+"OFFSETS FOR STACK:INFO"
+
+<SETG SAVED-FRMS 1>
+
+<SETG SAVED-BSTB 2>
+
+<SETG SAVED-NTSLOTS 3>
+
+<SETG SAVED-STK 4>
+
+"SLOTS FOR SAVED-AC-SLOT"
+
+<SETG CSYMT-SLOT 1>
+
+<SETG CINACS-SLOT 2>
+
+<SETG CSTORED-SLOT 3>
+
+<SETG CPOTLV-SLOT 4>
+
+<SETG LENGTH-CSTATE 4>
+
+"SLOTS FOR LOOP-VARS"
+
+<SETG LSYM-SLOT 1>
+
+<SETG LINACS-SLOT 2>
+
+<SETG LOOPVARS-LENGTH 2>
+
+<MANIFEST NUM-SYM-SLOT
+	  LSYM-SLOT
+	  LOOPVARS-LENGTH
+	  LINACS-SLOT
+	  SAVED-FRMS
+	  CSYMT-SLOT
+	  CINACS-SLOT
+	  CSTORED-SLOT
+	  CPOTLV-SLOT
+	  LENGTH-CSTATE
+	  SAVED-BSTB
+	  SAVED-NTSLOTS
+	  SAVED-STK
+	  STORED-SLOT
+	  INACS-SLOT
+	  PROG-SLOT
+	  SYM-SLOT
+	  SAVED-NUM-SYM-SLOT
+	  SAVED-POTLV-SLOT
+	  SAVED-PROG-AC-SLOT
+	  LENGTH-PROG-VARS
+	  LENGTH-CONTROL-STATE
+	  SAVED-AC-STATE
+	  SAVED-CODE:PTR
+	  SAVED-STACK-STATE
+	  SAVED-RET-FLAG>
+
+<NEWTYPE COMMON
+	 VECTOR
+	 '<<PRIMTYPE VECTOR> ATOM <OR COMMON SYMTAB> FIX ANY <PRIMTYPE LIST>>>
+
+<SETG COMMON-TYPE <OFFSET 1 COMMON>>
+
+"TYPE OF COMMON (ATOM)"
+
+<SETG COMMON-SYMT <OFFSET 2 COMMON>>
+
+"POINTER TO OR COMMON SYMTAB"
+
+<SETG COMMON-ITEM <OFFSET 3 COMMON>>
+
+"3RD ARGUMENT TO NTH,REST,PUT ETC."
+
+<SETG COMMON-PRIMTYPE <OFFSET 4 COMMON>>
+
+"PRIMTYPE OF OBJECT IN COMMON"
+
+<SETG COMMON-DATUM <OFFSET 5 COMMON>>
+
+"DATUM FOR THIS COMMON"
+
+<MANIFEST COMMON-TYPE COMMON-SYMTAB COMMON-ITEM COMMON-PRIMTYPE COMMON-DATUM>
+
+<NEWTYPE TRANS
+	 VECTOR
+	 '<<PRIMTYPE VECTOR> NODE <UVECTOR [7 FIX]> <UVECTOR [7 FIX]>>>
+
+<DEFINE MESSAGE (SEVERITY STR "TUPLE" TEXT) 
+	<AND <GASSIGNED? DEBUGSW> <ERROR .SEVERITY .STR>>
+	<MAPF <>
+	      <FUNCTION (SEV ATM) 
+		      #DECL ((ATM SEV) ATOM)
+		      <COND (<==? .SEV .SEVERITY>
+			     <AND <ASSIGNED? .ATM> <SET .ATM T>>
+			     <MAPLEAVE>)>>
+	      '(ERROR NOTE WARNING INCONSISTANCY INCONSISTENCY)
+	      '(ERRS NOTES WARNS INCONS INCONS)>
+	<PRINC "*** ">
+	<PRINC .SEVERITY>    ;"Typically NOTE, WARNING, ERROR, or INCONSISTANCY"
+	<PRINC "	">
+	<PRINC .STR>
+	<REPEAT ()
+		<COND (<EMPTY? .TEXT> <RETURN 0>)
+		      (<==? <TYPE <1 .TEXT>> ATOM> <PRINC <1 .TEXT>>)
+		      (<TYPE? <1 .TEXT> NODE>
+		       <COND (<GASSIGNED? NODE-COMPLAIN>
+			      <TERPRI>
+			      <NODE-COMPLAIN <1 .TEXT>>
+			      <TERPRI>)>)
+		      (ELSE <PRIN1 <1 .TEXT>>)>
+		<PRINC " ">					        ;"Space"
+		<SET TEXT <REST .TEXT>>>
+	<TERPRI>
+	<COND (<==? .SEVERITY ERROR> <RETURN " COMPILATION ABORTED " .COMPILER>)
+	      (<OR <==? .SEVERITY INCONSISTANCY> <==? .SEVERITY INCONSISTENCY>>
+	       <RETURN " INFORM  BKD; OR CLR; " .COMPILER>)>
+	T>
+
+<SETG INSTRUCTION ,FORM>
+
+<ENDPACKAGE>

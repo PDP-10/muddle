@@ -1,0 +1,40 @@
+<PACKAGE "ADVMESS">
+
+<ENTRY VMESS ANA-MESS ADDVMESS>
+
+<USE "NPRINT" "COMPDEC">
+
+<DEFINE VMESS ("TUPLE" MSG) 
+	#DECL ((MSG) TUPLE)
+	<PRINC "===== ">
+	<MAPF <>
+	      <FUNCTION (O) 
+		      <COND (<TYPE? .O STRING> <PRINC .O>) (ELSE <PRIN1 .O>)>>
+	      .MSG>
+	<CRLF>>
+
+<DEFINE ANA-MESS (L) 
+	#DECL ((L) <LIST ANY [REST NODE LIST]>)
+	<REPEAT ((LL <REST .L>))
+		#DECL ((LL) <LIST [REST NODE LIST]>)
+		<COND (<EMPTY? .LL> <RETURN>)>
+		<PRINC "===== ">
+		<MAPF <>
+		      <FUNCTION (O) 
+			      <COND (<TYPE? .O NODE> <NODE-COMPLAIN .O>)
+				    (<TYPE? .O STRING> <PRINC .O>)
+				    (ELSE <PRIN1 .O>)>>
+		      <2 .LL>>
+		<CRLF>
+		<NODE-COMPLAIN <1 .LL>>
+		<SET LL <REST .LL 2>>>>
+
+<DEFINE ADDVMESS (N L "AUX" LL)
+	#DECL ((N) NODE (L) LIST (VERBOSE) <LIST [REST NODE LIST]>)
+	<COND (<SET LL <MEMQ .N .VERBOSE>>
+	       <PUTREST <REST <SET LL <2 .LL>> <- <LENGTH .LL> -1>> .L>)
+	      (ELSE
+	       <SET VERBOSE <REST <PUTREST .VERBOSE (.N .L)> 2>>)>>
+
+<ENDPACKAGE>
+

@@ -1,0 +1,145 @@
+
+<DEFINE PRINT-ANA (N R "AUX" (K <KIDS .N>) (LN <LENGTH .K>) RT) 
+	#DECL ((N) NODE (LN) FIX (K) <LIST [REST NODE]>)
+	<COND (<SEGFLUSH .N .R>)
+	      (ELSE
+	       <ARGCHK .LN '(1 2) <NODE-NAME .N>>
+	       <SET RT <EANA <1 .K> ANY <NODE-NAME .N>>>
+	       <COND (<1? .LN>
+		      <PUTREST .K (<NODEFM ,SUBR-CODE .N ANY LVAL () ,LVAL>)>
+		      <PUT <2 .K>
+			   ,KIDS
+			   (<NODE1 ,QUOTE-CODE <2 .K> ATOM OUTCHAN ()>)>)>
+	       <EANA <2 .K> CHANNEL <NODE-NAME .N>>
+	       <PUT .N ,NODE-TYPE ,PRINT-CODE>
+	       <TYPE-OK? .RT .R>)>>
+
+<DEFINE FLATSIZE-ANA (N R "AUX" (K <KIDS .N>) (LN <LENGTH .K>)) 
+	#DECL ((N) NODE (K) <LIST [REST NODE]> (LN) FIX)
+	<COND (<SEGFLUSH .N .R>)
+	      (ELSE
+	       <ARGCHK .LN '(2 3) FLATSIZE>
+	       <EANA <1 .K> ANY FLATSIZE>
+	       <EANA <2 .K> FIX FLATSIZE>
+	       <COND (<==? .LN 2>
+		      <PUTREST <REST .K> (<NODE1 ,QUOTE-CODE .N FIX 10 ()>)>)>
+	       <EANA <3 .K> FIX FLATSIZE>
+	       <PUT .N ,NODE-TYPE ,ISUBR-CODE>
+	       <TYPE-OK? '<OR FIX FALSE> .R>)>>
+
+<DEFINE UNPARSE-ANA (N R "AUX" (K <KIDS .N>) (LN <LENGTH .K>)) 
+	#DECL ((N) NODE (K) <LIST [REST NODE]>)
+	<COND (<SEGFLUSH .N .R>)
+	      (ELSE
+	       <ARGCHK .LN '(1 2) UNPARSE>
+	       <EANA <1 .K> ANY UNPARSE>
+	       <COND (<1? .LN> <PUTREST .K (<NODE1 ,QUOTE-CODE .N FIX 10 ()>)>)>
+	       <EANA <2 .K> FIX UNPARSE>
+	       <PUT .N ,NODE-TYPE ,ISUBR-CODE>
+	       <TYPE-OK? STRING .R>)>>
+
+<DEFINE TERPRI-ANA (N R "AUX" (K <KIDS .N>) (LN <LENGTH .K>)) 
+	#DECL ((N) NODE (K) <LIST [REST NODE]> (LN) FIX)
+	<COND (<SEGFLUSH .N .R>)
+	      (ELSE
+	       <ARGCHK .LN '(0 1) TERPRI>
+	       <COND (<0? .LN>
+		      <PUT .N
+			   ,KIDS
+			   <SET K (<NODEFM ,SUBR-CODE .N ANY LVAL () ,LVAL>)>>
+		      <PUT <1 .K>
+			   ,KIDS
+			   (<NODE1 ,QUOTE-CODE <1 .K> ATOM OUTCHAN ()>)>)>
+	       <EANA <1 .K> CHANNEL TERPRI>
+	       <PUT .N ,NODE-TYPE ,ISUBR-CODE>
+	       <TYPE-OK? <COND (<==? <NODE-SUBR .N> ,CRLF> ATOM) (ELSE FALSE)> .R>)>>
+
+<DEFINE READCHR-ANA (N R "AUX" (K <KIDS .N>) (LN <LENGTH .K>)) 
+	#DECL ((N) NODE (LN) FIX)
+	<COND (<SEGFLUSH .N .R>)
+	      (ELSE
+	       <ARGCHK .LN '(0 1) <NODE-NAME .N>>
+	       <COND (<0? .LN>
+		      <PUT .N
+			   ,KIDS
+			   <SET K (<NODEFM ,SUBR-CODE .N ANY LVAL () ,LVAL>)>>
+		      <PUT <1 .K>
+			   ,KIDS
+			   (<NODE1 ,QUOTE-CODE <1 .K> ATOM INCHAN ()>)>)>
+	       <EANA <1 .K> CHANNEL <NODE-NAME .N>>
+	       <PUT .N ,NODE-TYPE ,ISUBR-CODE>
+	       <TYPE-OK? ANY .R>)>>
+
+<PUT ,READCHR ANALYSIS ,READCHR-ANA>
+
+<PUT ,NEXTCHR ANALYSIS ,READCHR-ANA>
+
+<PUT ,PRINC ANALYSIS ,PRINT-ANA>
+
+<PUT ,PRIN1 ANALYSIS ,PRINT-ANA>
+
+<PUT ,PRINT ANALYSIS ,PRINT-ANA>
+
+<PUT ,FLATSIZE ANALYSIS ,FLATSIZE-ANA>
+
+<PUT ,UNPARSE ANALYSIS ,UNPARSE-ANA>
+
+<PUT ,TERPRI ANALYSIS ,TERPRI-ANA>
+
+<PUT ,CRLF ANALYSIS ,TERPRI-ANA>
+
+<DEFINE PRINT-GEN (N W
+		   "AUX" (K <KIDS .N>) (OB <1 .K>) (CH <2 .K>)
+			 (RT <ISTYPE? <RESULT-TYPE .OB>>)
+			 (PCOD <LENGTH <MEMQ <NODE-SUBR .N> ,PRINTERS>>) DAT
+			 CDAT)
+   #DECL ((N OB CH) NODE (K) <LIST [REST NODE]> (PCOD) FIX (DAT CDAT) DATUM)
+   <SET DAT
+	<GEN .OB
+	     <COND (<SIDE-EFFECTS .CH> <DATUM ,AC-C ,AC-D>)
+		   (ELSE DONT-CARE)>>>
+   <SET PCOD
+	<+ <COND (<==? .RT ATOM> 3)
+		 (<==? .RT STRING> 6)
+		 (<==? .RT CHARACTER> 9)
+		 (ELSE 0)>
+	   .PCOD>>
+   <COND (<OR <==? <DATTYP .DAT> ,AC-A>
+	      <==? <DATVAL .DAT> ,AC-A>
+	      <==? <DATTYP .DAT> ,AC-B>
+	      <==? <DATVAL .DAT> ,AC-B>>
+	  <SET DAT
+	       <MOVE:ARG
+		.DAT
+		<DATUM <COND (<AND <TYPE? <DATTYP .DAT> ATOM>
+				   <ISTYPE? <DATTYP .DAT>>>
+			      <DATTYP .DAT>)
+			     (ELSE ,AC-C)>
+		       ,AC-D>>>)>
+   <SET CDAT <GEN .CH <DATUM ,AC-A ,AC-B>>>
+   <SET DAT    <MOVE:ARG .DAT
+			 <DATUM <COND (<OR <==? .RT ATOM> <==? .PCOD 12>> .RT)
+				      (ELSE ,AC-C)>
+				,AC-D>>>
+   <RET-TMP-AC <MOVE:ARG .CDAT <DATUM ,AC-A ,AC-B>>>
+   <RET-TMP-AC .DAT>
+   <REGSTO T>
+   <EMIT <INSTRUCTION `PUSHJ  `P*  <NTH ,IPRINTERS .PCOD>>>
+   <MOVE:ARG <FUNCTION:VALUE T> .W>>
+
+<SETG PRINTERS ![,PRINC ,PRIN1 ,PRINT!]>
+
+<SETG IPRINTERS
+      ![|CIPRIN
+	|CIPRN1
+	|CIPRNC
+	|CPATM
+	|CP1ATM
+	|CPCATM
+	|CPSTR
+	|CP1STR
+	|CPCSTR
+	|CIPRIN
+	|CIPRN1
+	|CPCH!]>
+

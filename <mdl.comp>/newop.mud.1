@@ -1,0 +1,48 @@
+;"Define symbolic opcodes"
+
+<PACKAGE "OP" "IOP" 199 5>
+
+<BLOCK (<GET OP!-PACKAGE!- OBLIST>)>
+
+<NEWTYPE!- MUDREF WORD!->
+<NEWTYPE!- ADDRESS WORD!->
+<NEWTYPE!- OPCODE WORD!->
+
+<SETG!- MCALL* #OPCODE *2000000000*>		;"Define UUO's"
+<SETG!- ACALL* #OPCODE *3000000000*>
+
+
+
+;"Assembler psuedo-ops;		defined in the assembler (CODING)"
+PSEUDO MQUOTE DECLARE SUB-ENTRY GETYP MCALL ACALL TYPE-CODE
+*INSERT SYMDEF TYPE-WORD ENTER INTGO VARIABLE ADDR HERE
+
+
+
+
+<ENDBLOCK!->
+
+
+
+;"Define ac's"
+
+
+
+"Set up MUDDLE oblist:
+	Global symbols are, in general, internal MUDDLE addresses;
+	therefore they need to be 'fixed up' upon every loading"
+
+
+
+<COND (<LOOKUP "TTP" <GET MUDDLE OBLIST>>
+       <INSERT <REMOVE "TTP" <GET MUDDLE OBLIST>> <GET OP!-PACKAGE OBLIST>>
+       <INSERT <REMOVE "TDEFER" <GET MUDDLE OBLIST>> <GET OP!-PACKAGE OBLIST>>)>
+
+<MAPF <> <FUNCTION (L) <MAPF <> ,REMOVE .L> > <1 .OBLIST>>
+<PUT IOP!-OP!-PACKAGE!- OBLIST>
+<PUT <1 .OBLIST> OBLIST>
+<ENDPACKAGE>
+
+
+
+

@@ -1,0 +1,56 @@
+<BLOCK (<ROOT>)>
+COMBAT
+<ENDBLOCK>
+
+<DEFINE COMBAT-HACKER ("AUX" CH)
+	<COND (<NOT <GASSIGNED? PLANNED!-COMBAT!->>
+	       <REALTIMER 20>)
+	      (<AND <=? ,PLANNED!-COMBAT!- "RIOT">
+		    <SET CH <OPEN "READ" "MUDSYS;T.PRINT >">>>
+	       <OFF "REALT">
+	       <REALTIMER 0>
+	       <CLOSE .CH>
+	       <SETG FR& <FUNCTION ("TUPLE" T) T>>
+	       <ERROR "Rioting is no longer available, please use Plans">)
+	      (ELSE
+	       <OFF "REALT">
+	       <REALTIMER 0>)>>
+
+
+<DEFINE HACKER (A B)
+	<COND (<==? .A <ASCII 4>> <SETG DONT-HACK-ME T>)>
+	<QUITTER .A .B>>
+
+<DEFINE RHACK ()
+	<OFF "CHAR" ,INCHAN>
+	<COND (,DONT-HACK-ME
+	       <SETG DONT-HACK-ME <>>
+	       <ON "CHAR" ,QUITTER 8 0 ,INCHAN>
+	       <REALTIMER 0>
+	       <OFF "REALT">)
+	      (ELSE
+	       <REALTIMER 0>
+	       <OFF "REALT">
+	       <MPV-IN-GC>)>>
+
+
+
+<SETG MPV-IN-GC
+      <FIXUP!-RSUBRS '[
+#CODE ![23852220422 23852482567 23849036821 23852220423 268671802 23085677464 
+10223615 -262143 6718806673 0 2!]
+		       MPV-IN-GC
+		       #DECL ("VALUE" ANY)
+		       ""]
+		     '(51
+		       $TLOSE!-MUDDLE
+		       224256
+		       (3)
+		       GC
+		       236346
+		       (5)
+		       FINIS!-MUDDLE
+		       228248
+		       (6))>>
+
+
