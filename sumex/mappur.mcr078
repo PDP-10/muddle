@@ -1,0 +1,936 @@
+TITLE PURE-PAGE LOADER
+
+RELOCATABLE
+
+MAPCH==0			; channel for MAPing
+ELN==3				; Length of table entry
+
+.GLOBAL PURVEC,PURTOP,PURBOT,P.TOP,MUDSTR,STRTO6,PLOAD,AGC,GCDOWN
+.GLOBAL SQUTOA,IGVAL,IBLOCK,PURCLN,MOVPUR,GETPAG,GCFLG,NOSHUF
+
+.INSRT MUDDLE >
+
+SYSQ
+
+IFE ITS,[
+IF1, .INSRT STENEX >
+]
+
+IFN ITS,[
+PURDIR==SIXBIT /MUD50/		; directory containing pure pages
+OPURDI==SIXBIT /MHILIB/
+OFIXDI==SIXBIT /MHILIB/
+FIXDIR==SIXBIT /MUD50/
+ARC==1				; flag saying fixups on archive
+]
+IFN ITS,[
+PGMSK==1777
+PGSHFT==10.
+]
+IFE ITS,[
+PGMSK==777
+PGSHFT==9.
+]
+
+; This routine taskes a slot offset in register A and
+; maps in the associated file.  It clobbers all ACs
+; It skip returns if it wins.
+
+PLOAD:	PUSH	P,A		; save slot offset
+	ADD	A,PURVEC+1(TVP)	; point into pure vector
+	MOVE	B,(A)		; get sixbit of name
+IFN ITS,[
+	MOVE	C,MUDSTR+2	; get version number
+	PUSHJ	P,CSIXBT	; vers # to six bit
+	HRRI	C,(SIXBIT /SAV/)
+	MOVSS	C
+	.SUSET	[.RSNAM,,0]	; GET CURRENT SNAME TO 0
+	.SUSET	[.SSNAM,,[PURDIR]]	; get sname for it
+	MOVE	A,[SIXBIT /  &DSK/]	; build open block
+	.OPEN	MAPCH,A		; try to open file
+	JRST	FIXITU		; no current version, fix one up
+	PUSH	P,0		; for compat wit tenex and save old sname
+	DOTCAL	FILLEN,[[1000,,MAPCH],[2000,,A]]
+	JRST	MAPLOS
+	ADDI	A,PGMSK		; in case not even # of pages
+        ASH     A,-PGSHFT	; to pages
+        PUSH    P,A             ; save the length
+]
+IFE ITS,[
+	MOVE	E,P		; save pdl base
+	PUSH	P,[0]		; slots for building strings
+	PUSH	P,[0]
+	MOVE	A,[440700,,1(E)]
+	MOVE	C,[440600,,B]
+	MOVEI	D,6
+	ILDB	0,C
+	JUMPE	0,.+4		; violate cardinal ".+ rule"
+	ADDI	0,40		; to ASCII
+	IDPB	0,A
+	SOJG	D,.-4
+
+	PUSH	P,[ASCII /  SAV/]
+	MOVE	C,MUDSTR+2	; get ascii of vers no.
+	IORI	C,1		; hair to change r.o. to space
+	MOVE	0,C
+	ADDI	C,1
+	ANDCM	C,0		; C has 1st 1
+	JFFO	C,.+3
+	MOVEI	0,0		; use zer name
+	JRST	ZER...
+	MOVEI	C,(D)
+	IDIVI	C,7
+	AND	0,MSKS(C)	; get rid of r.o.s
+ZER...:	PUSH	P,0
+	MOVEI	B,-1(P)		; point to it
+	HRLI	B,260700
+	HRROI	D,1(E)		; point to name
+	MOVEI	A,1(P)
+
+	PUSH	P,[100000,,]
+	PUSH	P,[377777,,377777]
+	PUSH	P,[-1,,[ASCIZ /DSK/]]
+	PUSH	P,[-1,,[ASCIZ /MUDLIB/]]
+	PUSH	P,D
+	PUSH	P,B
+	PUSH	P,[0]
+	PUSH	P,[0]
+	PUSH	P,[0]
+	MOVEI	B,0
+	MOVE	D,4(E)		; save final version string
+	GTJFN
+	JRST	FIXITU
+
+	MOVE	B,[440000,,240000]
+	OPENF
+	JRST	FIXITU
+	MOVE	P,E		; flush crap
+	PUSH	P,A
+	SIZEF			; get length
+	JRST	MAPLOS
+	PUSH	P,C		; save # of pages
+	MOVEI	A,(C)
+]
+        PUSHJ   P,ALOPAG        ; get the necessary pages
+        JRST    MAPLS1
+        PUSH    P,B             ; save page number
+IFN ITS,[
+        MOVN    A,-1(P)         ; get neg count
+        MOVSI   A,(A)           ; build aobjn pointer
+        HRR     A,(P)           ; get page to start
+        MOVE    B,A             ; save for later
+        HLLZ    0,A             ; page pointer for file
+        DOTCAL	CORBLK,[[1000,,200000],[1000,,-1],A,[1000,,MAPCH],0]
+        JRST    MAPLS3          ; total wipe out
+        .CLOSE  MAPCH,          ; no need to have file open anymore
+]
+IFE ITS,[
+	MOVE	D,-1(P)		; # of pages to D
+	HRLI	B,400000	; specify this fork
+	HRROI	E,(B)		; build page aobjn for later
+	TLC	E,-1(D)		; sexy way of doing lh
+	HRLZ	A,-2(P)		; JFN to lh of A
+	MOVSI	C,120000	; bits for read/execute
+
+	PMAP
+	ADDI	A,1
+	ADDI	B,1
+	SOJG	D,.-3		; map 'em all
+	MOVE	A,-2(P)
+	CLOSF			; try to close file
+	JFCL			; ignore failure
+	MOVE	B,E
+]
+
+; now try to smash slot in PURVEC
+
+PLOAD1:	MOVE    A,PURVEC+1(TVP) ; get pointer to it
+        ASH     B,PGSHFT        ; convert to aobjn pointer to words
+	MOVE	C,-3(P)		; get slot offset
+        ADDI    C,(A)           ; point to slot
+        MOVEM   B,1(C)          ; clobber it in
+        ANDI    B,-1            ; isolate address of page
+        HRRZ    D,PURVEC(TVP)   ; get offset into vector for start of chain
+	TRNE	D,400000	; skip if not end marker
+	JRST	SCHAIN
+        HRLI    D,A             ; set up indexed pointer
+        ADDI    D,1
+        HRRZ    0,@D            ; get its address
+	JUMPE	0,SCHAIN	; no chain exists, start one
+	CAILE	0,(B)		; skip if new one should be first
+	AOJA	D,INLOOP	; jump into the loop
+
+	SUBI	D,1		; undo ADDI
+FCLOB:	MOVE	E,-3(P)		; get offset for this guy
+	HRRM	D,2(C)		; link up
+	HRRM	E,PURVEC(TVP)	; store him away
+	JRST	PLOADD
+
+SCHAIN:	MOVEI	D,400000	; get end of chain indicator
+	JRST	FCLOB		; and clobber it in
+
+INLOOP:	MOVE	E,D		; save in case of later link up
+	HRR	D,@D		; point to next table entry
+	TRNE	D,400000	; 400000 is the end of chain bit
+	JRST	SLFOUN		; found a slot, leave loop
+	ADDI	D,1		; point to address of progs
+	HRRZ	0,@D		; get address of block
+	CAILE	0,(B)		; skip if still haven't fit it in
+	AOJA	D,INLOOP	; back to loop start and point to chain link
+	SUBI	D,1		; point back to start of slot
+
+SLFOUN:	MOVE	0,-3(P)		; get offset into vector of this guy
+	HRRM	0,@E		; make previous point to us
+	HRRM	D,2(C)		; link it in
+
+
+PLOADD:	AOS	-4(P)		; skip return
+
+MAPLS3:	SUB	P,[1,,1]	; flush stack crap
+MAPLS1:	SUB	P,[1,,1]
+MAPLOS:
+IFN ITS,[
+	MOVE	0,(P)
+	.SUSET	[.SSNAM,,0]	; restore SNAME
+]
+	SUB	P,[2,,2]
+	POPJ	P,
+
+; Here if no current version exists
+
+FIXITU:	PUSH	TP,$TFIX
+	PUSH	TP,0		; maybe save sname
+
+IFN ITS,[
+	PUSH	P,C		; save final name
+	MOVE	C,[SIXBIT /FIXUP/]	; name of fixup file
+IFN <PURDIR-OFIXDI>,.SUSET [.SSNAM,,[OFIXDI]]
+IFN ARC,	HRRI	A,(SIXBIT /ARC/)
+	.OPEN	MAPCH,A
+IFE ARC,	JRST MAPLOS
+IFN ARC,	PUSHJ P,ARCLOS
+	MOVE	0,[-2,,A]	; prepare to read version and length
+	PUSH	P,B		; save program name
+	.IOT	MAPCH,0
+	SKIPGE	0
+	FATAL BAD FIXUP FILE
+	PUSH	P,B		; save version number of fixup file
+	MOVEI	A,-2(A)		; length -2 (for vers and length)
+	PUSHJ	P,IBLOCK	; get a UVECTOR for the fixups
+	PUSH	TP,$TUVEC	; and save
+	PUSH	TP,B
+	MOVE	A,B
+	MOVSI	0,TUVEC
+	MOVEM	0,ASTO(PVP)	; prepare for moby iot (interruptable)
+	ENABLE
+	.IOT	MAPCH,A		; get fixups
+	DISABLE
+	.CLOSE	MAPCH,
+	SETZM	ASTO(PVP)
+	POP	P,A		; restore version number
+	IDIVI	A,100.		; get 100s digit in a rest in B
+	ADDI	A,20		; convert to sixbit
+	IDIVI	B,10.		; B tens digit C 1s digit
+	ADDI	B,20
+	ADDI	C,20
+	MOVE	0,[220600,,D]
+	MOVSI	D,(SIXBIT /SAV/)
+	CAIE	A,20
+	IDPB	A,0
+	CAIE	B,20
+	IDPB	B,0
+	IDPB	C,0
+	MOVE	B,[SIXBIT /  &DSK/]
+	MOVE	C,(P)		; program name
+IFN <OPURDI-OFIXDI>,.SUSET [.SSNAM,,[OPURDI]]
+	.OPEN	MAPCH,B		; try for this one
+	JRST	MAPLS1
+	DOTCAL	FILLEN,[[1000,,MAPCH],[2000,,A]]
+	JRST	MAPLS1
+	ADDI	A,PGMSK		; in case not exact pages
+	ASH	A,-PGSHFT	; to pages
+	PUSH	P,A		; save
+	PUSHJ	P,ALOPAG	; find some pages
+	JRST	MAPLS4
+	MOVN	A,(P)		; build aobjn pointer
+	MOVSI	A,(A)
+	HRRI	A,(B)
+	MOVE	B,A
+	HLLZ	0,B
+	DOTCAL	CORBLK,[[1000,,104000],[1000,,-1],A,[1000,,MAPCH],0]
+	JRST	MAPLS4
+	SUB	P,[1,,1]
+	.CLOSE	MAPCH,
+]
+IFE ITS,[
+	PUSH	TP,$TPDL	; save stack pointer
+	PUSH	TP,E
+	PUSH	P,D		; save vers string
+	HRROI	A,[ASCIZ /FIXUP/]
+	MOVEM	A,10.(E)	; into name slot
+	MOVEI	A,5(E)		; point to arg block
+	SETZB	B,C
+	GTJFN
+	JRST	MAPLS4
+	MOVEI	C,(A)		; save JFN in case OPNEF loses
+	MOVE	B,[440000,,200000]
+	OPENF
+	JRST	MAPLS4
+	BIN			; length of fixups to B
+	PUSH	P,A		; save JFN
+	MOVEI	A,-2(B)		; length of uvextor to get
+	PUSHJ	P,IBLOCK
+	PUSH	TP,$TUVEC
+	PUSH	TP,B		; sav it
+	POP	P,A		; restore JFN
+	BIN			; read in vers #
+	MOVE	D,B		; save vers #
+	MOVE	B,(TP)
+	HLRE	C,B
+	HRLI	B,444400
+	SIN			; read in entire fixups
+	CLOSF			; and close file of same
+	JFCL			; ignore cailure to close
+	HRROI	C,1(E)		; point to name
+	MOVEM	C,9.(E)
+	MOVEI	C,3(E)
+	HRLI	C,260700
+	MOVEM	C,10.(E)
+	MOVE	0,[ASCII /     /]
+	MOVEM	0,4(E)		; all spaces
+	MOVEI	A,(D)
+	IDIVI	A,100.		; to ascii
+	ADDI	A,60
+	IDIVI	B,10.
+	ADDI	B,60
+	ADDI	C,60
+	MOVE	0,[440700,,4(E)]
+	CAIE	A,60
+	IDPB	A,0
+	CAIE	B,60
+	IDPB	B,0
+	IDPB	C,0
+	SETZB	C,B
+	MOVEI	A,5(E)		; ready for 'nother GTJFN
+	GTJFN
+	JRST	MAPLS5
+	MOVEI	C,(A)		; save JFN in case OPENF loses
+	MOVE	B,[440000,,240000]
+	OPENF
+	JRST	MAPLS5
+	SIZEF
+	JRST	MAPLS5
+	PUSH	P,A
+	PUSH	P,C
+	MOVEI	A,(C)
+	PUSHJ	P,ALOPAG	; get the pages
+	JRST	MAPLS5
+	MOVEI	D,(B)		; save pointer
+	MOVN	A,(P)		; build page aobjn pntr
+	HRLI	D,(A)
+	EXCH	D,(P)		; get length
+	HRLI	B,400000
+
+	HRLZ	A,-1(P)		; JFN for PMAP
+	MOVSI	C,120400	; bits for read/execute/copy-on-write
+
+	PMAP
+	ADDI	A,1
+	ADDI	B,1
+	SOJG	D,.-3
+
+	HLRZS	A
+	CLOSF
+	JFCL
+	POP	P,B		; restore page #
+	SUB	P,[1,,1]
+]
+; now to do fixups
+
+	MOVE	A,(TP)		; pointer to them
+	ASH	B,PGSHFT	; aobjn to program
+
+FIX1:	SKIPL	E,(A)		; read one hopefully squoze
+	FATAL	ATTEMPT TO TYPE FIX PURE
+	TLZ	E,740000
+	PUSHJ	P,SQUTOA	; look it up
+	FATAL	BAD FIXUPS
+
+	AOBJP	A,FIX2
+	HLRZ	D,(A)		; get old value
+	SUBM	E,D		; D is diff between old and new
+	HRLM	E,(A)		; fixup the fixups
+	MOVEI	0,0		; flag for which half
+FIX4:	JUMPE	0,FIXRH		; jump if getting rh
+	MOVEI	0,0		; next time will get rh
+	AOBJP	A,FIX2		; done?
+	HLRZ	C,(A)		; get lh
+	JUMPE	C,FIX3		; 0 terminates
+FIX5:	ADDI	C,(B)		; access the code
+	ADDM	D,-1(C)		; and fix it up
+	JRST	FIX4
+
+FIXRH:	MOVEI	0,1		; change flag
+	HRRZ	C,(A)		; get it and
+	JUMPN	C,FIX5
+
+FIX3:	AOBJN	A,FIX1		; do next one
+
+FIX2:
+IFN ITS,[
+IFN <PURDIR-OPURDI>	.SUSET	[.SSNAM,,[PURDIR]]
+	.OPEN	MAPCH,[SIXBIT /  'DSK_PURE_>/]
+	JRST	MAPLS1
+	MOVE	E,B		; save pointer
+	ASH	E,-PGSHFT	; to page AOBJN
+	.IOT	MAPCH,B		; write out the goodie
+	SETZB	0,A
+	MOVEI	B,MAPCH
+	MOVE	C,(P)
+	MOVE	D,-1(P)
+	.FDELE	0		; attempt to rename to right thing
+	JRST	MAPLS1
+	.CLOSE	MAPCH,
+	MOVE	B,[SIXBIT /  &DSK/]
+	.OPEN	MAPCH,B
+	FATAL	WHERE DID THE FILE GO?
+	HLLZ	0,E		; pointer to file pages
+	PUSH	P,E		; SAVE FOR END
+	DOTCAL	CORBLK,[[1000,,200000],[1000,,-1],E,[1000,,MAPCH],0]
+	FATAL	LOSSAGE LOSSAGE PAGES LOST
+	.CLOSE	MAPCH,
+
+	SKIPGE	MUDSTR+2	; skip if not experimental
+	JRST	NOFIXO
+	PUSHJ	P,GENVN		; get version number as a number
+	MOVE	E,(TP)
+IFN <PURDIR-FIXDIR>,.SUSET [.SSNAM,,[FIXDIR]]
+IFE ARC,	.OPEN	MAPCH,[SIXBIT /  'DSK_FIXU_>/]
+IFN ARC,	.OPEN	MAPCH,[SIXBIT /  'ARC_FIXU_>/]
+IFE ARC,	FATAL	CANT WRITE FIXUPS
+IFN ARC,	PUSHJ	P,ARCFAT
+	HLRE	A,E		; get length
+	MOVNS	A
+	ADDI	A,2		; account for these 2 words
+	MOVE	0,[-2,,A]	; write version and length
+	.IOT	MAPCH,0
+	.IOT	MAPCH,E		; out go the fixups
+	SETZB	0,A
+	MOVEI	B,MAPCH
+	MOVE	C,-1(P)
+	MOVE	D,[SIXBIT /FIXUP/]
+	.FDELE	0
+	FATAL	FIXUP WRITE OUT FAILED
+	.CLOSE	MAPCH,
+NOFIXO:
+]
+IFE ITS,[
+	MOVE	E,-2(TP)	; restore P-stack base
+	MOVEI	0,600000	; fixup args to GTJFN
+	HRLM	0,5(E)
+	MOVE	D,B		; save page number
+	POP	P,4(E)		; current version name in
+	MOVEI	A,5(E)		; pointer ro arg block
+	MOVEI	B,0
+	GTJFN
+	FATAL MAP FIXUP LOSSAGE
+	MOVE	B,[440000,,100000]
+	OPENF
+	FATAL MAP FIXUP LOSSAGE
+	MOVEI	B,(D)		; ready to write it out
+	HRLI	B,444400
+	HLRE	C,D
+	SOUT			; zap it out
+	TLO	A,400000	; dont recycle the JFN
+	CLOSF
+	JFCL
+	ANDI	A,-1		; kill sign bit
+	MOVE	B,[440000,,240000]
+	OPENF
+	FATAL MAP FIXUP LOSSAGE
+	MOVE	B,D
+	ASH	B,-PGSHFT	; aobjn to pages
+	PUSH	P,B
+	HLRE	D,B		; -count
+	HRLI	B,400000
+	MOVSI	A,(A)
+	MOVSI	C,120000
+
+	PMAP
+	ADDI	A,1
+	ADDI	B,1
+	AOJL	D,.-3
+
+	HLRZS	A
+	CLOSF
+	JFCL
+
+	HRROI	0,[ASCIZ /FIXUP/]	; now write out new fixup file
+	MOVEM	0,10.(E)
+	MOVEI	A,5(E)
+	MOVEI	B,0
+
+	SKIPGE	MUDSTR+2
+	JRST	NOFIXO		; exp vers, dont write out
+
+	PUSHJ	P,GENVN
+	MOVEI	D,(B)		; save vers in D
+	GTJFN
+	FATAL MAP FIXUP LOSSAGE
+	MOVE	B,[440000,,100000]
+	OPENF
+	FATAL MAP FIXUP LOSSAGE
+	HLRE	B,(TP)		; length of fixup vector
+	MOVNS	B
+	ADDI	B,2		; for length and version words
+	BOUT
+	MOVE	B,D		; and vers #
+	BOUT
+	MOVSI	B,444400	; byte pointer to fixups
+	HRR	B,(TP)
+	HLRE	C,(TP)
+	SOUT
+	CLOSF
+	JFCL
+NOFIXO:	MOVE	A,(P)		; save aobjn to pages
+	MOVE	P,-2(TP)
+	SUB	TP,[2,,2]
+	PUSH	P,A
+]
+	HRRZ	A,(P)		; get page #
+	HLRE	C,(P)		; and # of same
+	MOVE	B,(P)		; set B up for return
+	MOVNS	C
+IFN ITS,[
+	SUB	P,[2,,2]
+	MOVE	0,-2(TP)		; saved sname
+	MOVEM	0,(P)
+]
+	PUSH	P,C
+	PUSH	P,A
+	SUB	TP,[4,,4]
+	JRST	PLOAD1
+
+IFN ITS,[
+MAPLS4:	.CLOSE	MAPCH,
+	SUB	P,[1,,1]
+	JRST	MAPLS1
+]
+IFE ITS,[
+MAPLS4:	SKIPA	A,[4,,4]
+MAPLS5:	MOVE	A,[6,,6]
+	MOVE	P,E
+	SUB	TP,A
+	SKIPE	A,C
+	CLOSF
+	JFCL
+	JRST	MAPLOS
+]
+
+IFN ITS,[
+IFN ARC,[
+ARCLOS:	PUSHJ	P,CKLOCK
+	JRST	MAPLS1
+
+ARCRTR:	SOS	(P)
+	SOS	(P)
+	POPJ	P,
+
+ARCFAT:	PUSHJ	P,CKLOCK
+	FATAL	CANT WRITE FIXUP FILE
+	JRST	ARCRTR
+
+CKLOCK:	PUSH	P,0
+	.STATUS	MAPCH,0
+	LDB	0,[220600,,0]
+	CAIN	0,23		; file locked?
+	JRST	WAIT		; wait and retry
+	POP	P,0
+	POPJ	P,
+
+WAIT:	MOVEI	0,1
+	.SLEEP	0,
+	POP	P,0
+	AOS	(P)
+	POPJ	P,
+]
+]
+
+; Here to try to get a free page block for new thing
+;	A/	# of pages to get
+
+ALOPAG:	PUSHJ	P,GETPAG	; try to get enough pages
+	POPJ	P,
+	AOS	(P)		; won skip return
+	MOVEI	0,(B)		; update PURBOT/PURTOP to reflect current state
+	ASH	0,PGSHFT
+	MOVEM	0,PURBOT
+	POPJ	P,
+
+GETPAG:	MOVE	C,P.TOP		; top of GC space
+	ASH	C,-PGSHFT	; to page number
+	MOVE	B,PURBOT	; current bottom of pure space
+	ASH	B,-PGSHFT	; also to pages
+	SUBM	B,C		; pages available ==> C
+	CAIGE	C,(A)		; skip if have enough already
+	JRST	GETPG1		; no, try to shuffle around
+	SUBI	B,(A)		; B/  first new page
+	AOS	(P)
+	POPJ	P,		; return with new free page in B
+
+; Here if shuffle must occur or gc must be done to make room
+
+GETPG1:	MOVEI	0,0
+	SKIPE	NOSHUF		; if can't shuffle, then ask gc
+	JRST	ASKAGC
+	MOVE	0,PURTOP	; get top of mapped pure area
+	SUB	0,P.TOP		; total free words to 0
+	ASH	0,-PGSHFT	; to pages
+	CAIGE	0,(A)		; skip if winnage possible
+	JRST	ASKAGC		; please AGC give me some room!!
+	SUBM	A,C		; C/ amount we must flush to make room
+
+; Here to find pages for flush using LRU algorithm
+
+GL1:	MOVE	B,PURVEC+1(TVP)	; get pointer to pure sr vector
+	MOVEI	0,-1		; get very large age
+
+GL2:	SKIPN	1(B)		; skip if not already flushed
+	JRST	GL3
+	HLRZ	D,2(B)		; get this ones age
+	CAMLE	D,0		; skip if this is a candidate
+	JRST	GL3
+	MOVE	E,B		; point to table entry with E
+	MOVEI	0,(D)		; and use as current best
+GL3:	ADD	B,[ELN,,ELN]	; look at next
+	JUMPL	B,GL2
+
+	HLRE	B,1(E)		; get length of flushee
+	ASH	B,-PGSHFT	; to negative # of pages
+	ADD	C,B		; update amount needed
+	SETZM	1(E)		; indicate it will be gone
+	JUMPG	C,GL1		; jump if more to get
+
+; Now compact pure space
+
+	PUSH	P,A		; need all acs
+	SETZB	E,A
+	HRRZ	D,PURVEC(TVP)	; point to first in core addr order
+	HRRZ	C,PURTOP	; get destination page
+	ASH	C,-PGSHFT	; to page number
+
+CL1:	ADD	D,PURVEC+1(TVP)	; to real pointer
+	SKIPE	1(D)		; skip if this one is a flushee
+	JRST	CL2
+
+	HRRZ	D,2(D)		; point to next one in chain
+	JUMPN	E,CL3		; jump if not first one
+	HRRM	D,PURVEC(TVP)	; and use its next as first
+	JRST	CL4
+
+CL3:	HRRM	D,2(E)		; link up
+	JRST	CL4
+
+; Found a stayer, move it if necessary
+
+CL2:	MOVEI	E,(D)		; another pointer to slot
+	HLRE	B,1(D)		; - length of block
+	HRRZ	D,1(D)		; pointer to block
+	SUB	D,B		; point to top of block
+	ASH	D,-PGSHFT		; to page number
+	CAIN	D,(C)		; if not moving, jump
+	JRST	CL6
+
+	ASH	B,-PGSHFT	; to pages
+IFN ITS,[
+CL5:	SUBI	C,1		; move to pointer and from pointer
+	SUBI	D,1
+	DOTCAL	CORBLK,[[1000,,200000],[1000,,-1],C,[1000,,-1],D]
+	FATAL	PURE SHUFFLE LOSSAGE
+	AOJL	B,CL5		; count down
+]
+IFE ITS,[
+	PUSH	P,B		; save # of pages
+	MOVEI	A,-1(D)		; copy from pointer
+	HRLI	A,400000	; get this fork code
+	RMAP			; get a JFN (hopefully)
+	EXCH	D,(P)		; D # of pages (save from)
+	ADDM	D,(P)		; update from
+	MOVEI	B,-1(C)		; to pointer in B
+	HRLI	B,400000
+	MOVSI	C,120000	; read/execute modes
+
+	PMAP			; move a page
+	SUBI	A,1
+	SUBI	B,1
+	AOJL	D,.-3		; move them all
+
+	MOVEI	C,1(B)
+	POP	P,D
+	ADDI	D,1
+]
+; Update the table address for this loser
+
+	SUBM	C,D		; compute offset (in pages)
+	ASH	D,PGSHFT	; to words
+	ADDM	D,1(E)		; update it
+CL7:	HRRZ	D,2(E)		; chain on
+CL4:	TRNN	D,400000	; skip if end of chain
+	JRST	CL1
+
+	ASH	C,PGSHFT	; to words
+	MOVEM	C,PURBOT	; reset pur bottom
+	POP	P,A
+	JRST	GETPAG
+
+CL6:	HRRZ	C,1(E)		; get new top of world
+	ASH	C,-PGSHFT	; to page #
+	JRST	CL7
+
+; SUBR to create an entry in the vector for one of these guys
+
+MFUNCTION PCODE,SUBR
+
+	ENTRY	2
+
+	GETYP	0,(AB)		; check 1st arg is string
+	CAIE	0,TCHSTR
+	JRST	WTYP1
+	GETYP	0,2(AB)		; second must be fix
+	CAIE	0,TFIX
+	JRST	WTYP2
+
+	MOVE	A,(AB)		; convert name of program to sixbit
+	MOVE	B,1(AB)
+	PUSHJ	P,STRTO6
+PCODE4:	MOVE	C,(P)		; get name in sixbit
+
+; Now look for either this one or an empty slot
+
+	MOVEI	E,0
+	MOVE	B,PURVEC+1(TVP)
+
+PCODE2:	CAMN	C,(B)		; skip if this is not it
+	JRST	PCODE1		; found it, drop out of loop
+	JUMPN	E,.+3		; dont record another empty if have one
+	SKIPN	(B)		; skip if slot filled
+	MOVE	E,B		; remember pointer
+	ADD	B,[ELN,,ELN]
+	JUMPL	B,PCODE2	; jump if more to look at
+
+	JUMPE	E,PCODE3	; if E=0, error no room
+	MOVEM	C,(E)		; else stash away name and zero rest
+	SETZM	1(E)
+	SETZM	2(E)
+	JRST	.+2
+
+PCODE1:	MOVE	E,B		; build <slot #>,,<offset>
+	MOVEI	0,0		; flag whether new slot
+	SKIPE	1(E)		; skip if mapped already
+	MOVEI	0,1
+	MOVE	B,3(AB)
+	HLRE	D,E
+	HLRE	E,PURVEC+1(TVP)
+	SUB	D,E
+	HRLI	B,(D)
+	MOVSI	A,TPCODE
+	SKIPN	NOSHUF		; skip if not shuffling
+	JRST	FINIS
+	JUMPN	0,FINIS		; jump if winner
+	PUSH	TP,A
+	PUSH	TP,B
+	HLRZ	A,B
+	PUSHJ	P,PLOAD
+	JRST	PCOERR
+	POP	TP,B
+	POP	TP,A
+	JRST	FINIS
+
+PCOERR:	PUSH	TP,$TATOM
+	PUSH	TP,EQUOTE PURE-LOAD-FAILURE
+	JRST	CALER1
+
+
+PCODE3:	HLRE	A,PURVEC+1(TVP)	; get current length
+	MOVNS	A
+	ADDI	A,10*ELN	; add 10(8) more entry slots
+	PUSHJ	P,IBLOCK
+	EXCH	B,PURVEC+1(TVP)	; store new one and get old
+	HLRE	A,B		; -old length to A
+	MOVSI	B,(B)		; start making BLT pointer
+	HRR	B,PURVEC+1(TVP)
+	SUBM	B,A		; final dest to A
+	BLT	B,-1(A)
+	JRST	PCODE4
+
+; Here if must try to GC for some more core
+
+ASKAGC:	SKIPE	GCFLG		; if already in GC, lose
+	POPJ	P,
+	SUBM	A,0		; amount required to 0
+	ASH	0,PGSHFT	; TO WORDS
+	MOVEM	0,GCDOWN	; pass as funny arg to AGC
+	EXCH	A,C		; save A from gc's destruction
+IFN ITS,	.IOPUSH	MAPCH,		; gc uses same channel
+	PUSH	P,C
+	MOVE	C,[8,,9.]	; SET UP INDICATORS FOR GC
+	PUSHJ	P,AGC
+	POP	P,C
+IFN ITS,	.IOPOP	MAPCH,
+	EXCH	C,A
+	JUMPGE	C,GETPAG
+	PUSH	TP,$TATOM
+	PUSH	TP,EQUOTE NO-MORE-PAGES
+	AOJA	TB,CALER1
+
+; Here to clean up pure space by flushing all shared stuff
+
+PURCLN:	SKIPE	NOSHUF
+	POPJ	P,
+	MOVEI	B,400000
+	HRRM	B,PURVEC(TVP)	; flush chain pointer
+	MOVE	B,PURVEC+1(TVP)	; get pointer to table
+	SETZM	1(B)		; zero pointer entry
+	SETZM	2(B)		; zero link and age slots
+	ADD	B,[ELN,,ELN]	; go to next slot
+	JUMPL	B,.-3		; do til exhausted
+	MOVE	B,PURBOT	; now return pages
+	SUB	B,PURTOP	; compute page AOBJN pointer
+	JUMPE	B,CPOPJ		; no pure pages?
+	MOVSI	B,(B)
+	HRR	B,PURBOT
+	ASH	B,-PGSHFT
+IFN ITS,[
+	DOTCAL	CORBLK,[[1000,,0],[1000,,-1],B]
+	FATAL	SYSTEM WONT TAKE CORE BACK?
+]
+IFE ITS,[
+	HLRE	D,B		; - # of pges to flush
+	HRLI	B,400000	; specify hacking hom fork
+	MOVNI	A,1
+
+	PMAP
+	ADDI	B,1
+	AOJL	D,.-2
+]
+	MOVE	B,PURTOP	; now fix up pointers
+	MOVEM	B,PURBOT	;   to indicate no pure
+CPOPJ:	POPJ	P,
+
+; Here to move the entire pure space.
+;	A/	# and direction of pages to move (+ ==> up)
+
+MOVPUR:	SKIPE	NOSHUF
+	FATAL	CANT MOVE PURE SPACE AROUND
+	IFE ITS [ASH A,1]
+	SKIPN	B,A		; zero movement, ignore call
+	POPJ	P,
+
+	ASH	B,PGSHFT	; convert to words for pointer update
+	MOVE	C,PURVEC+1(TVP)	; loop through updating non-zero entries
+	SKIPE	1(C)
+	ADDM	B,1(C)
+	ADD	C,[ELN,,ELN]
+	JUMPL	C,.-3
+
+	MOVE	C,PURTOP	; found pages at top and bottom of pure
+	ASH	C,-PGSHFT
+	MOVE	D,PURBOT
+	ASH	D,-PGSHFT
+	ADDM	B,PURTOP	; update to new boundaries
+	ADDM	B,PURBOT
+	CAIN	C,(D)		; differ?
+	POPJ	P,
+	JUMPG	A,PUP		; if moving up, go do separate CORBLKs
+
+IFN ITS,[
+	SUBM	D,C		; -size of area to C (in pages)
+	MOVEI	E,(D)		; build pointer to bottom of destination
+	ADD	E,A
+	HRLI	E,(C)
+	HRLI	D,(C)
+	DOTCAL	CORBLK,[[1000,,200000],[1000,,-1],E,[1000,,-1],D]
+	FATAL	CANT MOVE PURE
+	POPJ	P,
+
+PUP:	SUBM	C,D		; pages to move to D
+	ADDI	A,(C)		; point to new top
+
+PUPL:	SUBI	C,1
+	SUBI	A,1
+	DOTCAL	CORBLK,[[1000,,200000],[1000,,-1],A,[1000,,-1],C]
+	FATAL	CANT MOVE PURE
+	SOJG	D,PUPL
+	POPJ	P,
+]
+IFE ITS,[
+	SUBM	D,C		; pages to move to D
+	MOVSI	E,(C)		; build aobjn pointer
+	HRRI	E,(D)		; point to lowest
+	ADD	D,A		; D==> new lowest page
+PURCL1:	MOVSI	A,400000	; specify here
+	HRRI	A,(E)		; get a page
+	RMAP			; get a real handle on it
+	MOVE	B,D		; where to go
+	HRLI	B,400000
+	MOVSI	C,120000
+	PMAP
+	ADDI	D,1
+	AOBJN	E,PURCL1
+	POPJ	P,
+
+PUP:	SUB	D,C		; - count to D
+	MOVSI	E,(D)		; start building AOBJN
+	HRRI	E,(C)		; aobjn to top
+	ADD	C,A		; C==> new top
+	MOVE	D,C
+
+PUPL:	MOVSI	A,400000
+	HRRI	A,(E)
+	RMAP			; get real handle
+	MOVE	B,D
+	HRLI	B,400000
+	MOVSI	C,120000
+	PMAP
+	SUBI	E,2
+	SUBI	D,1
+	AOBJN	E,PUPL
+
+	POPJ	P,
+]
+IFN ITS,[
+CSIXBT:	MOVEI	0,5
+	PUSH	P,[440700,,C]
+	PUSH	P,[440600,,D]
+	MOVEI	D,0
+CSXB2:	ILDB	E,-1(P)
+	CAIN	E,177
+	JRST	CSXB1
+	SUBI	E,40
+	IDPB	E,(P)
+	SOJG	0,CSXB2
+CSXB1:	SUB	P,[2,,2]
+	MOVE	C,D
+	POPJ	P,
+]
+GENVN:	MOVE	C,[440700,,MUDSTR+2]
+	MOVEI	D,5
+	MOVEI	B,0
+VNGEN:	ILDB	0,C
+	CAIN	0,177
+	POPJ	P,
+	IMULI	B,10.
+	SUBI	0,60
+	ADD	B,0
+	SOJG	D,VNGEN
+	POPJ	P,
+
+IFE ITS,[
+MSKS:	774000,,0
+	777760,,0
+	777777,,700000
+	777777,,777400
+	777777,,777776
+]
+END
+
