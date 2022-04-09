@@ -1,0 +1,52 @@
+27-MAY-75 09:19:05-PDT,2584;000000000000
+Mail from MIT-DMS rcvd at 27-MAY-75 0918-PDT
+DATE: 27 MAY 75 1135-EDT
+FROM: XXX at MIT-DMS
+SUBJECT: muddle source code
+ACTION-TO: xxxxxxx at SUMEX-AIM
+MESSAGE-ID: <[MIT-DMS]27 MAY 75 12:16:34-EDT.17282>
+
+Dear Xxxx,
+	Here is a list of the files that constitute the source for MUDDLE.
+I don't know if you want all of them (total approximately 156000 36-bit
+words of text--almost 1 million characters).  Please let me know which
+you like FTPd to your machine.  MIDAS is very poorly documented, although
+it is similar enough to other PDP-10 assmeblers that the code should
+be readable by your system programmers.
+		Xxxxx
+
+
+Muddle source file list.
+
+_________     ______   ___________                       _____________
+
+AGC    MCR273 19       garbage collector                 no
+ARITH  MBD079 3        arithmetic SUBRs                  no
+ATOMHK MCR098 4        atom/oblist SUBRs                 no
+CREATE MCR035 2        process creator/resumers          no
+DECL   MCR072 4        declaration processor             no
+EVAL   MCR349 17       evaluator                         no
+FOPEN  MCR352 18       i/o SUBRs                         yes
+GCHACK MCR020 2        storage handlers                  no
+INITM  MCR186 4        initializer (destroyed during
+                       initialization)                   small amount
+INTERR MCR239 9        inerrupt routines                 yes
+MAIN   MCR227 8        startup code, main loop and misc. no
+MAPPUR MCR078 5        page sharing code                 yes
+MAPS   MCR017 2        MAPF/MAPR code                    no
+MUDDLE MCR291 5        insert file used during assembly  no
+MUDEX  MCR030 2        TENEX specific code               yes
+MUDSQU MCR004 1        internal symbol table routine     no
+NFREE  MCR032 2        special storage module            no
+PFLOAT MCR003 1        floating point number printer     no
+PRIMIT MCR169 12       structure manipulating SUBRs      no
+PRINT  MCR246 12       printer (muddle objs==>ascii)     no
+PUTGET MCR047 2        association handling routines     no
+READCH MCR116 4        teletype handling code            yes
+READER MCR264 10       reader (ascii==>muddle obj)       no
+SAVE   MCR083 3        entire muddle saver/restorer      yes
+SPECS  MCR062 2        common data bases etc.            yes
+STENEX MCR002 1        TENEX symbols for midas           yes
+UUOH   MCR072 2        call/return uuos                  no
+
+*length in number of 1024 word blocks.
